@@ -25,7 +25,7 @@ my %opts;
 getopts('xshv:o:', \%opts);
 
 if($opts{h}) {
-	die qq[Usage message should appear here\n];
+	die qq{viv.pl [-s] [-x] [-v <verbose_level>] [-o <logname>] <config.json>\n};
 }
 
 my $do_exec = $opts{x};
