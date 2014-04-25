@@ -1,0 +1,11 @@
+
+25/4/14 (kl2)
+
+To produce a JSON config file from the supplied ".cfg" example files, you must remove the comment lines, tabs and newlines.
+
+For example:
+  grep -v "^#" example_01.cfg | tr -d "\n\t" > example_01_cfg.json
+
+You can then use the viv script with this JSON file (if you are working from the examples directory):
+  ../viv.pl -s -x -o example_01.log example_01_cfg.json
+  
