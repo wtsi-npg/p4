@@ -51,7 +51,7 @@ if(!cfg_name) {
 var e=document.getElementById('main_header');
 e.innerHTML = cfg_name;
 
-var json_url="http://sf2-farm-srv2.internal.sanger.ac.uk:8888/"+cfg_name+".json";
+var json_url=cfg_name+".json";
 d3.json(json_url, function(error, graph) {
 var nodes = {};
 var linx = [];

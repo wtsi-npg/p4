@@ -7,5 +7,3 @@ Then use your browser to look at the configs:
   http://sf2-farm-srv2.internal.sanger.ac.uk:8888/config_view.html?cfg_name=tophat2
 
 
-NOTE: within config_view.html, URLs are hard-coded to sf2-farm-srv2.internal.sanger.ac.uk - this will need to be amended before
-this will work (unless you happen to be running on that server).
