@@ -30,6 +30,18 @@ circle {
   stroke-width: 1.5px;
 }
 
+.node.INFILE {
+  fill: lightgreen;
+}
+
+.node.OUTFILE {
+  fill: darkgreen;
+}
+
+.node.RAFILE {
+  fill: lightblue;
+}
+
 text {
   font: 10px sans-serif;
   pointer-events: none;
@@ -70,8 +82,16 @@ graph.edges.forEach(function(link) {
   linx.push(link);
 });
 
-var width = 1800,
-    height = 900;
+graph.nodes.forEach(function(node) {
+  var name = node.id;
+  var gnode = nodes[name];
+  if(gnode){
+    gnode.type = node.type;
+  }
+});
+
+var width = 900,
+    height = 600;
 
 var force = d3.layout.force()
     .nodes(d3.values(nodes))
@@ -110,6 +130,7 @@ var circle = svg.append("g").selectAll("circle")
     .data(force.nodes())
   .enter().append("circle")
     .attr("r", 12)
+    .attr("class", function(d) { return "node " + d.type; })
     .call(force.drag);
 
 // var circle = svg.append("g").selectAll("cross")
