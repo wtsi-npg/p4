@@ -72,7 +72,7 @@
 	{
 		"id":"tophat2",
 		"type":"EXEC",
-		"cmd":"tophat2 --no-sort-bam --output-dir tophat_out_12597_8#20 --mate-inner-dist 100 --num-threads 12 --library-type fr-unstranded --no-coverage-search --microexon-search --transcriptome-index __TRANSCRIPTOME_INDEX__ __REFERENCE_GENOME__ __FQIN1__ __FQIN2__"
+		"cmd":"tophat2 --no-sort-bam --output-dir tophat_out --mate-inner-dist 100 --num-threads 12 --library-type fr-unstranded --no-coverage-search --microexon-search --transcriptome-index __TRANSCRIPTOME_INDEX__ __REFERENCE_GENOME__ __FQIN1__ __FQIN2__"
 	},
 	{
 		"id":"accepted_hits_bam",
