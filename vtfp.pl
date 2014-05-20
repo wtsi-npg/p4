@@ -63,7 +63,7 @@ my $cfg = from_json($s);
 my $substitutable_params = {};
 walk($cfg, []);
 
-if($query_mode) { print join("\t", qw[KeyID AttribName Req RawAttrib]), "\n"; }
+if($query_mode) { print join("\t", qw[KeyID AttribName Req Id RawAttrib]), "\n"; }
 for my $k (keys %$substitutable_params) {
 	if(!$query_mode) {
 		my $node = $substitutable_params->{$k}->{target_node};
@@ -82,7 +82,7 @@ for my $k (keys %$substitutable_params) {
 		delete $node->{$old_key}
 	}
 	else {
-		print $out join(qq[\t], ($k, $substitutable_params->{$k}->{param_name}, ($substitutable_params->{$k}->{required}? q[required]: q[not_required]), $substitutable_params->{$k}->{target}->[1], )), "\n";
+		print $out join(qq[\t], ($k, $substitutable_params->{$k}->{param_name}, ($substitutable_params->{$k}->{required}? q[required]: q[not_required]), $substitutable_params->{$k}->{id}, $substitutable_params->{$k}->{old_key}, )), "\n";
 	}
 }
 
