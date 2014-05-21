@@ -35,14 +35,14 @@
 #     biobambam (temporary measure)
 ####################################################################################
 	{
+		"id":"bamcollate2",
+		"type":"EXEC",
+		"cmd":"bamcollate2 collate=1 level=0"
+	},
+	{
 		"id":"bamfilteraux",
 		"type":"EXEC",
                 "cmd":"bamfilteraux remove=AS,AF,AA,AH,A3,AR,as,af,aa,ah,a3,ar level=0"
-	},
-	{
-		"id":"bamcollate2",
-		"type":"EXEC",
-		"cmd":"bamcollate2 collate=3 level=0"
 	},
 	{
 		"id":"bamadapterfind",
@@ -50,9 +50,19 @@
 		"cmd":"bamadapterfind level=0 clip=1"
 	},
 	{
+		"id":"bamrecompress_input",
+		"type":"EXEC",
+		"cmd":"bamrecompress verbose=0 numthreads=2"
+	},
+	{
 		"id":"int_adp_bam",
 		"type":"RAFILE",
 		":name:":"int_adp.bam"
+	},
+	{
+		"id":"bamcollate2_ranking",
+		"type":"EXEC",
+		"cmd":"bamcollate2 collate=3 level=0"
 	},
 	{
 		"id":"bamtofastq",
@@ -92,6 +102,11 @@
 		"cmd":"bamcat I=__IN_BAM1__ I=__IN_BAM2__ level=0"
 	},
 	{
+		"id":"bam12split_tophat",
+		"type":"EXEC",
+		"cmd":"bam12split verbose=0 level=0"
+	},
+	{
 		"id":"bamsort_qname",
 		"type":"EXEC",
 		"cmd":"bamsort SO=queryname level=0"
@@ -99,22 +114,12 @@
 	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
-		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 __PREALN_BAM__"
+		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
 	},
 	{
 		"id":"int_merged_bam",
 		"type":"RAFILE",
 		":name:":"int_merged.bam"
-	},
-	{
-		"id":"bam_split_strip_1",
-		"type":"EXEC",
-		"cmd":"bam12split level=0 | bam12strip level=0"
-	},
-	{
-		"id":"bam_split_strip_2",
-		"type":"EXEC",
-		"cmd":"bam12split level=0 | bam12strip level=0"
 	},
 #####################################
 # alignment filter and metrics output
@@ -143,16 +148,6 @@
 		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
 	},
 	{
-		"id":"bam12split_phix",
-		"type":"EXEC",
-		"cmd":"bam12split level=0"
-	},
-	{
-		"id":"bam12strip_phix",
-		"type":"EXEC",
-		"cmd":"bam12strip level=0"
-	},
-	{
 		"id":"bamrecompress_phix",
 		"type":"EXEC",
 		"cmd":"bamrecompress numthreads=2"
@@ -174,16 +169,6 @@
 		"id":"bammarkduplicates_target",
 		"type":"EXEC",
 		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
-	},
-	{
-		"id":"bam12split_target",
-		"type":"EXEC",
-		"cmd":"bam12split level=0"
-	},
-	{
-		"id":"bam12strip_target",
-		"type":"EXEC",
-		"cmd":"bam12strip level=0"
 	},
 	{
 		"id":"bamrecompress_target",
@@ -215,29 +200,39 @@
 	{
 		"id":"bfa_to_bc2",
 		"from":"bamreset",
-		"to":"bamfilteraux"
-	},
-	{
-		"id":"bfa_to_bc2",
-		"from":"bamfilteraux",
 		"to":"bamcollate2"
 	},
 	{
-		"id":"bc_to_baf",
+		"id":"bc2_to_bfa",
 		"from":"bamcollate2",
+		"to":"bamfilteraux"
+	},
+	{
+		"id":"bfa_to_baf",
+		"from":"bamfilteraux",
 		"to":"bamadapterfind"
 	},
 	{
 		"id":"baf_to_brc",
 		"from":"bamadapterfind",
+		"to":"bamrecompress_input"
+	},
+	{
+		"id":"brc_to_int_adp_bam",
+		"from":"bamrecompress_input",
 		"to":"int_adp_bam"
 	},
 ############################################################
 # tophat alignment
 ############################################################
 	{
-		"id":"int_adp_bam_to_bamtofastq",
+		"id":"int_adp_bam_to_bamcollate2_ranking",
 		"from":"int_adp_bam",
+		"to":"bamcollate2_ranking"
+	},
+	{
+		"id":"bamcollate2_ranking_to_bamtofastq",
+		"from":"bamcollate2_ranking",
 		"to":"bamtofastq"
 	},
 	{
@@ -281,8 +276,13 @@
 		"to":"bamcat:__IN_BAM2__"
 	},
 	{
-		"id":"bamcat_to_bamsort_qname",
+		"id":"bamcat_to_bam12split_tophat",
 		"from":"bamcat",
+		"to":"bam12split_tophat"
+	},
+	{
+		"id":"bam12split_tophat_to_bamsort_qname",
+		"from":"bam12split_tophat",
 		"to":"bamsort_qname"
 	},
 	{
@@ -304,23 +304,13 @@
 # AlignmentFilter
 #################
 	{
-		"id":"iab_to_bss1",
+		"id":"iab_to_alignment_filter",
 		"from":"int_adp_bam",
-		"to":"bam_split_strip_1"
-	},
-	{
-		"id":"bss1_to_alignment_filter",
-		"from":"bam_split_strip_1",
 		"to":"alignment_filter:__PHIX_INBAM__"
 	},
 	{
-		"id":"imb_to_bss2",
+		"id":"imb_to_alignment_filter",
 		"from":"int_merged_bam",
-		"to":"bam_split_strip_2"
-	},
-	{
-		"id":"bss2_to_alignment_filter",
-		"from":"bam_split_strip_2",
 		"to":"alignment_filter:__TARGET_INBAM__"
 	},
 	{
@@ -342,18 +332,8 @@
 		"to":"bammarkduplicates_phix"
 	},
 	{
-		"id":"bammarkduplicates_phix_to_bam12strip_phix",
+		"id":"bammarkduplicates_phix_to_bamrecompress_phix",
 		"from":"bammarkduplicates_phix",
-		"to":"bam12split_phix"
-	},
-	{
-		"id":"bammarkduplicates_phix_to_bam12strip_phix",
-		"from":"bam12split_phix",
-		"to":"bam12strip_phix"
-	},
-	{
-		"id":"bamstrip_to_bamrecompress_phix",
-		"from":"bam12strip_phix",
 		"to":"bamrecompress_phix"
 	},
 	{
@@ -375,18 +355,8 @@
 		"to":"bammarkduplicates_target"
 	},
 	{
-		"id":"bmd_to_bam12strip",
+		"id":"bmd_to_bamrecompress",
 		"from":"bammarkduplicates_target",
-		"to":"bam12split_target"
-	},
-	{
-		"id":"bmd_to_bam12strip",
-		"from":"bam12split_target",
-		"to":"bam12strip_target"
-	},
-	{
-		"id":"bam12strip_to_brc2",
-		"from":"bam12strip_target",
 		"to":"bamrecompress_target"
 	},
 	{
