@@ -22,24 +22,15 @@
 # First preprocess input BAM, create adapter-clipped intermediate BAM
 #####################################################################
 #
-####################################################################################
-#   filteraux: remove any pre-existing or "legacy" A[dapter] tags to avoid confusing
-#     biobambam (temporary measure)
-####################################################################################
 	{
 		"id":"bamcollate2",
 		"type":"EXEC",
 		"cmd":"bamcollate2 collate=1 level=0"
 	},
 	{
-		"id":"bamfilteraux",
+		"id":"bamadapterclip",
 		"type":"EXEC",
-                "cmd":"bamfilteraux remove=AS,AF,AA,AH,A3,AR,as,af,aa,ah,a3,ar level=0"
-	},
-	{
-		"id":"bamadapterfind",
-		"type":"EXEC",
-		"cmd":"bamadapterfind level=0 clip=1"
+		"cmd":"bamadapterclip level=0"
 	},
 	{
 		"id":"bamrecompress_input",
@@ -190,18 +181,13 @@
 		"to":"bamcollate2"
 	},
 	{
-		"id":"bc2_to_bfa",
+		"id":"bc2_to_bac",
 		"from":"bamcollate2",
-		"to":"bamfilteraux"
+		"to":"bamadapterclip"
 	},
 	{
-		"id":"bfa_to_baf",
-		"from":"bamfilteraux",
-		"to":"bamadapterfind"
-	},
-	{
-		"id":"baf_to_brc",
-		"from":"bamadapterfind",
+		"id":"bac_to_brc",
+		"from":"bamadapterclip",
 		"to":"bamrecompress_input"
 	},
 	{
