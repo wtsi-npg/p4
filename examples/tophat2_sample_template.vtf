@@ -22,14 +22,6 @@
 # First preprocess input BAM, create adapter-clipped intermediate BAM
 #####################################################################
 #
-#############################################################
-# if using previously aligned bam file as source, reset first
-#############################################################
-	{
-		"id":"bamreset",
-		"type":"EXEC",
-                "cmd":"bamreset resetaux=0 level=0"
-	},
 ####################################################################################
 #   filteraux: remove any pre-existing or "legacy" A[dapter] tags to avoid confusing
 #     biobambam (temporary measure)
@@ -193,13 +185,8 @@
 		"to":"tophat2:__TRANSCRIPTOME_INDEX__"
 	},
 	{
-		"id":"src_to_bfa",
+		"id":"src_to_bc2",
 		"from":"src_bam",
-		"to":"bamreset"
-	},
-	{
-		"id":"bfa_to_bc2",
-		"from":"bamreset",
 		"to":"bamcollate2"
 	},
 	{
