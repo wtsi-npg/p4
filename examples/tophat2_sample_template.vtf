@@ -50,17 +50,17 @@
 	{
 		"id":"bamtofastq",
 		"type":"EXEC",
-		"cmd":"bamtofastq F=__FQOUT1__ F2=__FQOUT2__"
+		"cmd":"bamtofastq gz=1 F=__FQOUT1__ F2=__FQOUT2__"
 	},
 	{
 		"id":"fq1",
 		"type":"RAFILE",
-		":name:":"intfile.fq1"
+		":name:":"intfile_1.fq.gz"
 	},
 	{
 		"id":"fq2",
 		"type":"RAFILE",
-		":name:":"intfile.fq2"
+		":name:":"intfile_2.fq.gz"
 	},
 	{
 		"id":"tophat2",
