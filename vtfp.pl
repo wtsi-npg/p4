@@ -110,7 +110,7 @@ sub walk {
 				}
 				my $id = $node->{id};
 				$id ||= q[noid];  # or croak? Should IDs be require here?
-				my $label = join(q[_], (@$labels, $id, $pname));
+				my $label = join(q[_], ($id, $pname));
 				$logger->($VLMED, ">>> label: $label, param name: $pname");
 				$substitutable_params->{$label} = { param_name => $pname, target_node => $node, old_key => $k, required => $req_param, id => $id, };
 			}
