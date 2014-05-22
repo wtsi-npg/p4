@@ -115,7 +115,7 @@
 	{
 		"id":"alignment_filter",
 		"type":"EXEC",
-		"cmd":"/software/jdk1.7.0_25/bin/java -Xmx1000m -jar /nfs/team105/kl2/repos/git/illumina2bam.js10/dist/AlignmentFilter.jar IN=__PHIX_INBAM__ IN=__TARGET_INBAM__ OUT=__PHIX_OUTBAM__ OUT=/dev/stdout METRICS_FILE=__AF_METRICS__ VALIDATION_STRINGENCY=SILENT CREATE_MD5_FILE=false VERBOSITY=INFO QUIET=false COMPRESSION_LEVEL=5 MAX_RECORDS_IN_RAM=500000 CREATE_INDEX=false"
+		"cmd":"/software/jdk1.7.0_25/bin/java -Xmx1000m -jar /nfs/users/nfs_d/dj3/repos/illumina2bam/dist/AlignmentFilter.jar IN=__PHIX_INBAM__ IN=__TARGET_INBAM__ OUT=__PHIX_OUTBAM__ OUT=/dev/stdout METRICS_FILE=__AF_METRICS__ VALIDATION_STRINGENCY=SILENT CREATE_MD5_FILE=false VERBOSITY=INFO QUIET=false COMPRESSION_LEVEL=5 MAX_RECORDS_IN_RAM=500000 CREATE_INDEX=false"
 	},
 	{
 		"id":"af_metrics",
