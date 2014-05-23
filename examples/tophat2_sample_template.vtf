@@ -95,6 +95,11 @@
 		"cmd":"bamsort SO=queryname level=0"
 	},
 	{
+		"id":"bamreset_prealn",
+		"type":"EXEC",
+		"cmd":"bamreset resetaux=0 level=0 verbose=0 __PREALN_BAM__"
+	},
+	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
@@ -264,8 +269,13 @@
 		"to":"bamsort_qname"
 	},
 	{
-		"id":"bam_to_bam12auxmerge",
+		"id":"bam_to_bamreset_prealn",
 		"from":"int_adp_bam",
+		"to":"bamreset_prealn"
+	},
+	{
+		"id":"bamreset_prealn_to_bam12auxmerge",
+		"from":"bamreset_prealn",
 		"to":"bam12auxmerge:__PREALN_BAM__"
 	},
 	{
