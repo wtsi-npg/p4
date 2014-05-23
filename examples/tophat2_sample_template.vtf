@@ -3,12 +3,12 @@
 	{
 		"id":"reference_genome",
 		"type":"INFILE",
-		"::name::":"/nfs/srpipe_references/references/Mus_musculus/NCBIm37/all/bowtie2/mm_ref_NCBI37_1.fasta"
+		"name":{"subst_param_name":"reference_genome","required":"yes","default":"/nfs/srpipe_references/references/Mus_musculus/NCBIm37/all/bowtie2/mm_ref_NCBI37_1.fasta"}
 	},
 	{
 		"id":"transcriptome",
 		"type":"INFILE",
-		"::name::":"/nfs/srpipe_references/transcriptomes/Mus_musculus/ensembl_67_transcriptome/NCBIm37/tophat2/NCBIm37.known"
+		"name":{"subst_param_name":"transcriptome","required":"yes","default":"/nfs/srpipe_references/transcriptomes/Mus_musculus/ensembl_67_transcriptome/NCBIm37/tophat2/NCBIm37.known"}
 	},
 #############################################
 # src_bam already contains alignments to phiX
@@ -16,33 +16,25 @@
 	{
 		"id":"src_bam",
 		"type":"INFILE",
-		"::name::":"src.bam"
+		"name":{"subst_param_name":"src_bam","required":"yes","default":"src.bam"}
 	},
 #####################################################################
 # First preprocess input BAM, create adapter-clipped intermediate BAM
 #####################################################################
 #
-#############################################################
-# if using previously aligned bam file as source, reset first
-#############################################################
-	{
-		"id":"bamreset",
-		"type":"EXEC",
-                "cmd":"bamreset resetaux=0 level=0"
-	},
 ####################################################################################
 #   filteraux: remove any pre-existing or "legacy" A[dapter] tags to avoid confusing
 #     biobambam (temporary measure)
 ####################################################################################
 	{
+		"id":"bamcollate2",
+		"type":"EXEC",
+		"cmd":"bamcollate2 collate=1 level=0"
+	},
+	{
 		"id":"bamfilteraux",
 		"type":"EXEC",
                 "cmd":"bamfilteraux remove=AS,AF,AA,AH,A3,AR,as,af,aa,ah,a3,ar level=0"
-	},
-	{
-		"id":"bamcollate2",
-		"type":"EXEC",
-		"cmd":"bamcollate2 collate=3 level=0"
 	},
 	{
 		"id":"bamadapterfind",
@@ -50,9 +42,19 @@
 		"cmd":"bamadapterfind level=0 clip=1"
 	},
 	{
+		"id":"bamrecompress_input",
+		"type":"EXEC",
+		"cmd":"bamrecompress verbose=0 numthreads=2"
+	},
+	{
 		"id":"int_adp_bam",
 		"type":"RAFILE",
-		":name:":"int_adp.bam"
+		"name":{"subst_param_name":"int_clipped_adapters_bam","required":"no","default":"int_adp.bam"}
+	},
+	{
+		"id":"bamcollate2_ranking",
+		"type":"EXEC",
+		"cmd":"bamcollate2 collate=3 level=0"
 	},
 	{
 		"id":"bamtofastq",
@@ -62,34 +64,39 @@
 	{
 		"id":"fq1",
 		"type":"RAFILE",
-		":name:":"intfile.fq1"
+		"name":{"subst_param_name":"fastq1","required":"no","default":"intfile.fq1"}
 	},
 	{
 		"id":"fq2",
 		"type":"RAFILE",
-		":name:":"intfile.fq2"
+		"name":{"subst_param_name":"fastq2","required":"no","default":"intfile.fq2"}
 	},
 	{
 		"id":"tophat2",
 		"type":"EXEC",
-		"cmd":"tophat2 --no-sort-bam --output-dir tophat_out_12597_8#20 --mate-inner-dist 100 --num-threads 12 --library-type fr-unstranded --no-coverage-search --microexon-search --transcriptome-index __TRANSCRIPTOME_INDEX__ __REFERENCE_GENOME__ __FQIN1__ __FQIN2__"
+		"cmd":"tophat2 --no-sort-bam --output-dir tophat_out --mate-inner-dist 100 --num-threads 12 --library-type fr-unstranded --no-coverage-search --microexon-search --transcriptome-index __TRANSCRIPTOME_INDEX__ __REFERENCE_GENOME__ __FQIN1__ __FQIN2__"
 	},
 	{
 		"id":"accepted_hits_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		":name:":"tophat_out/accepted_hits.bam"
+		"name":{"subst_param_name":"accepted_hits_bam","required":"no","default":"tophat_out/accepted_hits.bam"}
 	},
 	{
 		"id":"unmapped_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		":name:":"tophat_out/unmapped.bam"
+		"name":{"subst_param_name":"unmapped_bam","required":"no","default":"tophat_out/unmapped.bam"}
 	},
 	{
 		"id":"bamcat",
 		"type":"EXEC",
 		"cmd":"bamcat I=__IN_BAM1__ I=__IN_BAM2__ level=0"
+	},
+	{
+		"id":"bam12split_tophat",
+		"type":"EXEC",
+		"cmd":"bam12split verbose=0 level=0"
 	},
 	{
 		"id":"bamsort_qname",
@@ -99,22 +106,12 @@
 	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
-		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 __PREALN_BAM__"
+		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
 	},
 	{
 		"id":"int_merged_bam",
 		"type":"RAFILE",
-		":name:":"int_merged.bam"
-	},
-	{
-		"id":"bam_split_strip_1",
-		"type":"EXEC",
-		"cmd":"bam12split level=0 | bam12strip level=0"
-	},
-	{
-		"id":"bam_split_strip_2",
-		"type":"EXEC",
-		"cmd":"bam12split level=0 | bam12strip level=0"
+		"name":{"subst_param_name":"int_merged_bam","required":"no","default":"int_merged.bam"}
 	},
 #####################################
 # alignment filter and metrics output
@@ -127,7 +124,7 @@
 	{
 		"id":"af_metrics",
 		"type":"OUTFILE",
-		":name:":"af_metrics.log"
+		"name":{"subst_param_name":"af_metrics","required":"no","default":"af_metrics.log"}
 	},
 #######################
 # phiX final processing
@@ -143,16 +140,6 @@
 		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
 	},
 	{
-		"id":"bam12split_phix",
-		"type":"EXEC",
-		"cmd":"bam12split level=0"
-	},
-	{
-		"id":"bam12strip_phix",
-		"type":"EXEC",
-		"cmd":"bam12strip level=0"
-	},
-	{
 		"id":"bamrecompress_phix",
 		"type":"EXEC",
 		"cmd":"bamrecompress numthreads=2"
@@ -160,7 +147,7 @@
 	{
 		"id":"phix_bam",
 		"type":"OUTFILE",
-		"::name::":"aln_phix.bam"
+		"name":{"subst_param_name":"phix_bam","required":"yes","default":"aln_phix.bam"}
 	},
 #############################
 # target BAM final processing
@@ -176,16 +163,6 @@
 		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
 	},
 	{
-		"id":"bam12split_target",
-		"type":"EXEC",
-		"cmd":"bam12split level=0"
-	},
-	{
-		"id":"bam12strip_target",
-		"type":"EXEC",
-		"cmd":"bam12strip level=0"
-	},
-	{
 		"id":"bamrecompress_target",
 		"type":"EXEC",
 		"cmd":"bamrecompress numthreads=2"
@@ -193,7 +170,7 @@
 	{
 		"id":"target_bam",
 		"type":"OUTFILE",
-		"::name::":"aln.bam"
+		"name":{"subst_param_name":"target_bam","required":"yes","default":"aln.bam"}
 	}
 ],
 "edges":[
@@ -208,36 +185,41 @@
 		"to":"tophat2:__TRANSCRIPTOME_INDEX__"
 	},
 	{
-		"id":"src_to_bfa",
+		"id":"src_to_bc2",
 		"from":"src_bam",
-		"to":"bamreset"
-	},
-	{
-		"id":"bfa_to_bc2",
-		"from":"bamreset",
-		"to":"bamfilteraux"
-	},
-	{
-		"id":"bfa_to_bc2",
-		"from":"bamfilteraux",
 		"to":"bamcollate2"
 	},
 	{
-		"id":"bc_to_baf",
+		"id":"bc2_to_bfa",
 		"from":"bamcollate2",
+		"to":"bamfilteraux"
+	},
+	{
+		"id":"bfa_to_baf",
+		"from":"bamfilteraux",
 		"to":"bamadapterfind"
 	},
 	{
 		"id":"baf_to_brc",
 		"from":"bamadapterfind",
+		"to":"bamrecompress_input"
+	},
+	{
+		"id":"brc_to_int_adp_bam",
+		"from":"bamrecompress_input",
 		"to":"int_adp_bam"
 	},
 ############################################################
 # tophat alignment
 ############################################################
 	{
-		"id":"int_adp_bam_to_bamtofastq",
+		"id":"int_adp_bam_to_bamcollate2_ranking",
 		"from":"int_adp_bam",
+		"to":"bamcollate2_ranking"
+	},
+	{
+		"id":"bamcollate2_ranking_to_bamtofastq",
+		"from":"bamcollate2_ranking",
 		"to":"bamtofastq"
 	},
 	{
@@ -281,8 +263,13 @@
 		"to":"bamcat:__IN_BAM2__"
 	},
 	{
-		"id":"bamcat_to_bamsort_qname",
+		"id":"bamcat_to_bam12split_tophat",
 		"from":"bamcat",
+		"to":"bam12split_tophat"
+	},
+	{
+		"id":"bam12split_tophat_to_bamsort_qname",
+		"from":"bam12split_tophat",
 		"to":"bamsort_qname"
 	},
 	{
@@ -304,23 +291,13 @@
 # AlignmentFilter
 #################
 	{
-		"id":"iab_to_bss1",
+		"id":"iab_to_alignment_filter",
 		"from":"int_adp_bam",
-		"to":"bam_split_strip_1"
-	},
-	{
-		"id":"bss1_to_alignment_filter",
-		"from":"bam_split_strip_1",
 		"to":"alignment_filter:__PHIX_INBAM__"
 	},
 	{
-		"id":"imb_to_bss2",
+		"id":"imb_to_alignment_filter",
 		"from":"int_merged_bam",
-		"to":"bam_split_strip_2"
-	},
-	{
-		"id":"bss2_to_alignment_filter",
-		"from":"bam_split_strip_2",
 		"to":"alignment_filter:__TARGET_INBAM__"
 	},
 	{
@@ -342,18 +319,8 @@
 		"to":"bammarkduplicates_phix"
 	},
 	{
-		"id":"bammarkduplicates_phix_to_bam12strip_phix",
+		"id":"bammarkduplicates_phix_to_bamrecompress_phix",
 		"from":"bammarkduplicates_phix",
-		"to":"bam12split_phix"
-	},
-	{
-		"id":"bammarkduplicates_phix_to_bam12strip_phix",
-		"from":"bam12split_phix",
-		"to":"bam12strip_phix"
-	},
-	{
-		"id":"bamstrip_to_bamrecompress_phix",
-		"from":"bam12strip_phix",
 		"to":"bamrecompress_phix"
 	},
 	{
@@ -375,18 +342,8 @@
 		"to":"bammarkduplicates_target"
 	},
 	{
-		"id":"bmd_to_bam12strip",
+		"id":"bmd_to_bamrecompress",
 		"from":"bammarkduplicates_target",
-		"to":"bam12split_target"
-	},
-	{
-		"id":"bmd_to_bam12strip",
-		"from":"bam12split_target",
-		"to":"bam12strip_target"
-	},
-	{
-		"id":"bam12strip_to_brc2",
-		"from":"bam12strip_target",
 		"to":"bamrecompress_target"
 	},
 	{
