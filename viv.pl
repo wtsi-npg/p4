@@ -290,6 +290,7 @@ sub _fork_off {
 sub mklogger {
 	my ($verbosity_level, $log, $label) = @_;
 	my $logf;
+	my @mnthnames = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
 
 	# $log can be an open file handle, a string (file name) or undef (log to STDERR)
 	if(ref $log eq 'GLOB') {
@@ -309,14 +310,16 @@ sub mklogger {
 		$label = '';
 	}
 
-	unless($verbosity_level == 0) { printf $logf "*** %02d:%02d:%02d - %s%s (%d) ***\n", (reverse((localtime)[0..2])), "created logger", $label, $verbosity_level; }
+	my @hlt = localtime;
+	unless($verbosity_level == 0) { printf $logf "*** %d-%s-%d %02d:%02d:%02d - %s%s (%d) ***\n", $hlt[3], $mnthnames[$hlt[4]], $hlt[5]+1900, (reverse((@hlt)[0..2])), "created logger", $label, $verbosity_level; }
 
 	return sub {
 		my ($ms_level, @ms) = @_;
 
 		return if ($ms_level > $verbosity_level);
 
-		printf $logf "*** %02d:%02d:%02d (%d/%d) %s- %s ***\n", (reverse((localtime)[0..2])), $ms_level, $verbosity_level, $label, join("", @ms);
+		my @lt = localtime;
+		printf $logf "*** %d-%s-%d %02d:%02d:%02d (%d/%d) %s- %s ***\n", $lt[3], $mnthnames[$lt[4]], $lt[5]+1900, (reverse((localtime)[0..2])), $ms_level, $verbosity_level, $label, join("", @ms);
 
 		return;
 	}

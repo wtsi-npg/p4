@@ -1,0 +1,161 @@
+
+23/5/14 (kl2)
+
+vtfp.pl
+  A utility for preprocessing template files for viv. Input should be JSON, with substitutable parameters.
+
+  Usage: vtfp.pl [-q] [-l <logname>] [-o <output_file_name>] [-keys <keyid> ...] [-vals <val> ...]
+
+  The keyid is specified in the template file with the "subst_param_name" attribute and the corresponding <val> is the value that should be substituted.
+
+  EXAMPLES (Note: newlines and spaces have been added to the JSON to aid readability)
+
+  Example template file (from examples/example_06.vtf):
+
+     {
+     "nodes":[
+             {
+                     "id":"hello",
+                     "type":"EXEC",
+                     "cmd":"printf \"olleH\nyzarc\ndlrow\n\""
+             },
+             {
+                     "id":"intercept_file",
+                     "type":"RAFILE",
+                     "name":{"subst_param_name":"intercept_file","required":"no","default":"ex03_hello_raw.txt"}
+             },
+             {
+                     "id":"rev",
+                     "type":"EXEC",
+                     "cmd":"rev"
+             },
+             {
+                     "id":"greetings_file",
+                     "type":"OUTFILE",
+                     "name":{"subst_param_name":"greetings_file","required":"yes","default":"must_replace.txt"}
+             }
+     ],
+     "edges":[
+             {
+                     "id":"hello_rev",
+                     "from":"hello",
+                     "to":"intercept_file"
+             },
+             {
+                     "id":"hello_rev",
+                     "from":"intercept_file",
+                     "to":"rev"
+             },
+             {
+                     "id":"output",
+                     "from":"rev",
+                     "to":"greetings_file"
+             }
+     ]
+     }
+
+   Processing this with vtfp.pl in query mode ('-q' flag) gives:
+
+     kl2@sf2-farm-srv1:~/projects/viv$ grep -v "^#" examples/example_06.vtf | tr -d "\n\t" > example_06_vtf.json
+
+     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -q example_06_vtf.json
+     KeyID	Req	Id	RawAttrib
+     greetings_file	required	greetings_file	name
+     intercept_file	not_required	intercept_file	name
+
+  Preprocessing this, specifying only the required KeyID "greetings_file" gives:
+
+     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -keys greetings_file -vals Hello.txt example_06_vtf.json
+
+     {
+     'nodes' => [
+                {
+                        'id' => 'hello',
+                        'type' => 'EXEC'
+                        'cmd' => 'printf "olleH\nyzarc\ndlrow\n"',
+                },
+                {
+                        'id' => 'intercept_file',
+                        'type' => 'RAFILE'
+                        'name' => 'ex03_hello_raw.txt',
+                },
+                {
+                        'id' => 'rev',
+                        'type' => 'EXEC'
+                        'cmd' => 'rev',
+                        },
+                {
+                        'id' => 'greetings_file',
+                        'type' => 'OUTFILE'
+                        'name' => 'Hello.txt',
+                }
+      ],
+     'edges' => [
+                {
+                        'id' => 'hello_rev'
+                        'from' => 'hello',
+                        'to' => 'intercept_file',
+                },
+                {
+                        'id' => 'hello_rev'
+                        'from' => 'intercept_file',
+                        'to' => 'rev',
+                },
+                {
+                        'id' => 'output'
+                        'from' => 'rev',
+                        'to' => 'greetings_file',
+                }
+     ]
+     }
+
+
+  Preprocessing this, both substitutable parameters gives:
+
+     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -keys greetings_file -vals Hello.txt -keys intercept_file -vals intercept.txt example_06_vtf.json
+  or:
+     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -keys greetings_file,intercept_file -vals Hello.txt,intercept.txt example_06_vtf.json
+
+     {
+     'nodes' => [
+                {
+                        'id' => 'hello',
+                        'type' => 'EXEC'
+                        'cmd' => 'printf "olleH\nyzarc\ndlrow\n"',
+                },
+                {
+                        'id' => 'intercept_file',
+                        'type' => 'RAFILE'
+                        'name' => 'intercept.txt',
+                },
+                {
+                        'id' => 'rev',
+                        'type' => 'EXEC'
+                        'cmd' => 'rev',
+                        },
+                {
+                        'id' => 'greetings_file',
+                        'type' => 'OUTFILE'
+                        'name' => 'Hello.txt',
+                }
+      ],
+     'edges' => [
+                {
+                        'id' => 'hello_rev'
+                        'from' => 'hello',
+                        'to' => 'intercept_file',
+                },
+                {
+                        'id' => 'hello_rev'
+                        'from' => 'intercept_file',
+                        'to' => 'rev',
+                },
+                {
+                        'id' => 'output'
+                        'from' => 'rev',
+                        'to' => 'greetings_file',
+                }
+     ]
+     }
+
+

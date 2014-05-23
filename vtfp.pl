@@ -17,16 +17,13 @@ use JSON;
 use Carp;
 use Readonly;
 
+Readonly::Scalar my $VLFATAL => -2;
+
 Readonly::Scalar my $VLMIN => 1;
 Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
-#getopts('hsv:l:o:r:q', \%opts);
-
-if($opts{h}) {
-	die qq{vtfp.pl [-h] [-q] [-s] [-l <log_file>] [-o <output_config_name>] [-v <verbose_level>] [-keys <key> -vals <val> ...]  <viv_template>\n};
-}
 
 my $help;
 my $strict_checks;
@@ -45,14 +42,16 @@ if($help) {
 # allow multiple options to be separated by commas
 my @keys = split(/,/, join(',', @keys));
 my @vals = split(/,/, join(',', @vals));
+
 my %subst_requests;
 @subst_requests{@keys} = @vals;
+
 $query_mode ||= 0;
 $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[vtfp]);
 my $vtf_name = $ARGV[0];
 
-croak q[vtf unspecified] unless($vtf_name);
+croak q[template file unspecified] unless($vtf_name);
 
 my $out;
 if($outname) { open $out, ">$outname" or croak "Failed to open $outname for output"; } else { $out = *STDOUT; }
@@ -63,35 +62,45 @@ my $cfg = from_json($s);
 my $substitutable_params = {};
 walk($cfg, []);
 
-if($query_mode) { print join("\t", qw[KeyID AttribName Req Id RawAttrib]), "\n"; }
-for my $k (keys %$substitutable_params) {
+if($query_mode) { print join("\t", qw[KeyID Req Id RawAttrib]), "\n"; }
+for my $subst_param (keys %$substitutable_params) {
 	if(!$query_mode) {
-		my $node = $substitutable_params->{$k}->{target_node};
-		my $new_key = $substitutable_params->{$k}->{param_name};
-		my $old_key = $substitutable_params->{$k}->{old_key};
+		my $node = $substitutable_params->{$subst_param}->{parent_node};
+		my $attrib_name = $substitutable_params->{$subst_param}->{attrib_name};
 
-		if($subst_requests{$k}) {
-			$node->{$new_key} = $subst_requests{$k};
+		if($subst_requests{$subst_param}) {
+			$node->{$attrib_name} = $subst_requests{$subst_param};
 		}
 		else {
-			if($substitutable_params->{$k}->{required}) {
-				croak q[No substitution specified for required key ], $k, q[ (], $old_key, q[) - use -q for full list of substitutable parameters];
+			my $parent_id = $substitutable_params->{$subst_param}->{parent_id};
+			$parent_id ||= q[NO_PARENT_ID];
+
+			if($substitutable_params->{$subst_param}->{required}) {
+				$logger->($VLFATAL, q[No substitution specified for required substitutable param (], $subst_param, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
 			}
-			$node->{$new_key} = $node->{$old_key};
+
+			my $default_value = $substitutable_params->{$subst_param}->{default_value};
+			if(defined $default_value) {
+				$node->{$attrib_name} = $default_value;  # what if default isn't specified?
+			}
+			else { # maybe this should be fatal
+				$logger->($VLMIN, q[No default value specified for apparent substitutable param (], $subst_param, q[ for ], $attrib_name, q[ in ], $parent_id, q[)]);
+				
+			}
 		}
-		delete $node->{$old_key}
+		$subst_requests{$subst_param} = { status => q[PROCESSED], subst_val => $subst_requests{$subst_param} };  # allows detection and reporting of unprocessed substitution requests
 	}
-	else {
-		print $out join(qq[\t], ($k, $substitutable_params->{$k}->{param_name}, ($substitutable_params->{$k}->{required}? q[required]: q[not_required]), $substitutable_params->{$k}->{id}, $substitutable_params->{$k}->{old_key}, )), "\n";
+	else { # UPDATE ME
+		print $out join(qq[\t], ($subst_param, ($substitutable_params->{$subst_param}->{required}? q[required]: q[not_required]), $substitutable_params->{$subst_param}->{parent_id}, $substitutable_params->{$subst_param,}->{attrib_name}, )), "\n";
 	}
 }
 
 unless($query_mode) { print $out to_json($cfg) };
 
-#######################################################################
-# walk: walk the config structure, identifying substitable keys and add 
+#########################################################################
+# walk: walk the config structure, identifying substitable params and add 
 #  an entry for them in the substitutable_params hash
-#######################################################################
+#########################################################################
 sub walk {
 	my ($node, my $labels) = @_;
 
@@ -101,18 +110,12 @@ sub walk {
 	}
 	elsif(ref $node eq q[HASH]) {
 		for my $k (keys %$node) {
-			if($k =~ /^:(.*):$/) {
-				my $pname = $1;
-				my $req_param = 0;
-				if($pname =~ /^:(.*):$/) {
-					$pname = $1;
-					$req_param = 1;
-				}
-				my $id = $node->{id};
-				$id ||= q[noid];  # or croak? Should IDs be require here?
-				my $label = join(q[_], ($id, $pname));
-				$logger->($VLMED, ">>> label: $label, param name: $pname");
-				$substitutable_params->{$label} = { param_name => $pname, target_node => $node, old_key => $k, required => $req_param, id => $id, };
+			if(ref $node->{$k} eq q[HASH] and my $param_name = $node->{$k}->{subst_param_name}) {
+				my $parent_id = $node->{id};
+				my $req_param = ($node->{$k}->{required} and $node->{$k}->{required} eq q[yes])? 1: 0;
+				my $default_value = $node->{$k}->{default};
+				$default_value ||= q[NO_DEFAULT_SPECIFIED];
+				$substitutable_params->{$param_name} = { parent_node => $node, parent_id => $parent_id, attrib_name => $k, required => $req_param, default_value => $default_value, };
 			}
 			if(ref $node->{$k}) {
 				push @$labels, $k;
@@ -173,7 +176,11 @@ sub mklogger {
 		return if ($ms_level > $verbosity_level);
 
 		my @lt = localtime;
-		printf $logf "*** %d-%s-%d %02d:%02d:%02d (%d/%d) %s- %s ***\n", $lt[3], $mnthnames[$lt[4]], $lt[5]+1900, (reverse((localtime)[0..2])), $ms_level, $verbosity_level, $label, join("", @ms);
+		my $ms = join("", @ms);
+		printf $logf "*** %d-%s-%d %02d:%02d:%02d (%d/%d) %s- %s ***\n", $lt[3], $mnthnames[$lt[4]], $lt[5]+1900, (reverse((localtime)[0..2])), $ms_level, $verbosity_level, $label, $ms;
+		if($ms_level == $VLFATAL) {
+			croak $ms;
+		}
 
 		return;
 	}

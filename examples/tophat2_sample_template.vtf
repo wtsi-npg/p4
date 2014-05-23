@@ -3,12 +3,12 @@
 	{
 		"id":"reference_genome",
 		"type":"INFILE",
-		"::name::":"/nfs/srpipe_references/references/Mus_musculus/NCBIm37/all/bowtie2/mm_ref_NCBI37_1.fasta"
+		"name":{"subst_param_name":"reference_genome","required":"yes","default":"/nfs/srpipe_references/references/Mus_musculus/NCBIm37/all/bowtie2/mm_ref_NCBI37_1.fasta"}
 	},
 	{
 		"id":"transcriptome",
 		"type":"INFILE",
-		"::name::":"/nfs/srpipe_references/transcriptomes/Mus_musculus/ensembl_67_transcriptome/NCBIm37/tophat2/NCBIm37.known"
+		"name":{"subst_param_name":"transcriptome","required":"yes","default":"/nfs/srpipe_references/transcriptomes/Mus_musculus/ensembl_67_transcriptome/NCBIm37/tophat2/NCBIm37.known"}
 	},
 #############################################
 # src_bam already contains alignments to phiX
@@ -16,7 +16,7 @@
 	{
 		"id":"src_bam",
 		"type":"INFILE",
-		"::name::":"src.bam"
+		"name":{"subst_param_name":"src_bam","required":"yes","default":"src.bam"}
 	},
 #####################################################################
 # First preprocess input BAM, create adapter-clipped intermediate BAM
@@ -38,9 +38,19 @@
 		"cmd":"bamrecompress verbose=0 numthreads=2"
 	},
 	{
+		"id":"bamrecompress_input",
+		"type":"EXEC",
+		"cmd":"bamrecompress verbose=0 numthreads=2"
+	},
+	{
 		"id":"int_adp_bam",
 		"type":"RAFILE",
-		":name:":"int_adp.bam"
+		"name":{"subst_param_name":"int_clipped_adapters_bam","required":"no","default":"int_adp.bam"}
+	},
+	{
+		"id":"bamcollate2_ranking",
+		"type":"EXEC",
+		"cmd":"bamcollate2 collate=3 level=0"
 	},
 	{
 		"id":"bamcollate2_ranking",
@@ -60,12 +70,12 @@
 	{
 		"id":"fq1",
 		"type":"RAFILE",
-		":name:":"intfile_1.fq.gz"
+		"name":{"subst_param_name":"fastq1","required":"no","default":"intfile_1.fq.gz"}
 	},
 	{
 		"id":"fq2",
 		"type":"RAFILE",
-		":name:":"intfile_2.fq.gz"
+		"name":{"subst_param_name":"fastq2","required":"no","default":"intfile_2.fq.gz"}
 	},
 	{
 		"id":"tophat2",
@@ -76,13 +86,13 @@
 		"id":"accepted_hits_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		":name:":"tophat_out/accepted_hits.bam"
+		"name":{"subst_param_name":"accepted_hits_bam","required":"no","default":"tophat_out/accepted_hits.bam"}
 	},
 	{
 		"id":"unmapped_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		":name:":"tophat_out/unmapped.bam"
+		"name":{"subst_param_name":"unmapped_bam","required":"no","default":"tophat_out/unmapped.bam"}
 	},
 	{
 		"id":"bamcat",
@@ -125,7 +135,7 @@
 	{
 		"id":"af_metrics",
 		"type":"OUTFILE",
-		":name:":"af_metrics.log"
+		"name":{"subst_param_name":"af_metrics","required":"no","default":"af_metrics.log"}
 	},
 #######################
 # phiX final processing
@@ -148,7 +158,7 @@
 	{
 		"id":"phix_bam",
 		"type":"OUTFILE",
-		"::name::":"aln_phix.bam"
+		"name":{"subst_param_name":"phix_bam","required":"yes","default":"aln_phix.bam"}
 	},
 #############################
 # target BAM final processing
@@ -171,7 +181,7 @@
 	{
 		"id":"target_bam",
 		"type":"OUTFILE",
-		"::name::":"aln.bam"
+		"name":{"subst_param_name":"target_bam","required":"yes","default":"aln.bam"}
 	}
 ],
 "edges":[
