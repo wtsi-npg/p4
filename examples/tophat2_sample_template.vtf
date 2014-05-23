@@ -28,11 +28,6 @@
 		"cmd":"bamcollate2 collate=1 level=0"
 	},
 	{
-		"id":"bamadapterclip",
-		"type":"EXEC",
-		"cmd":"bamadapterclip level=0"
-	},
-	{
 		"id":"bamrecompress_input",
 		"type":"EXEC",
 		"cmd":"bamrecompress verbose=0 numthreads=2"
@@ -46,6 +41,11 @@
 		"id":"bamcollate2_ranking",
 		"type":"EXEC",
 		"cmd":"bamcollate2 collate=3 level=0"
+	},
+	{
+		"id":"bamadapterclip",
+		"type":"EXEC",
+		"cmd":"bamadapterclip verbose=0 level=0"
 	},
 	{
 		"id":"bamtofastq",
@@ -100,6 +100,11 @@
 		"cmd":"bamreset resetaux=0 level=0 verbose=0 __PREALN_BAM__"
 	},
 	{
+		"id":"bamadapterclip_prealn",
+		"type":"EXEC",
+		"cmd":"bamadapterclip verbose=0 level=0"
+	},
+	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
@@ -112,11 +117,6 @@
 #####################################
 # alignment filter and metrics output
 #####################################
-	{
-		"id":"bamclipreinsert",
-		"type":"EXEC",
-		"cmd":"bamclipreinsert verbose=0 level=0"
-	},
 	{
 		"id":"alignment_filter",
 		"type":"EXEC",
@@ -191,13 +191,8 @@
 		"to":"bamcollate2"
 	},
 	{
-		"id":"bc2_to_bac",
+		"id":"bc2_to_brc",
 		"from":"bamcollate2",
-		"to":"bamadapterclip"
-	},
-	{
-		"id":"bac_to_brc",
-		"from":"bamadapterclip",
 		"to":"bamrecompress_input"
 	},
 	{
@@ -209,8 +204,13 @@
 # tophat alignment
 ############################################################
 	{
-		"id":"int_adp_bam_to_bamcollate2_ranking",
+		"id":"int_adp_bam_to_bamadapterclip",
 		"from":"int_adp_bam",
+		"to":"bamadapterclip"
+	},
+	{
+		"id":"bamadapterclip_to_bamcollate2_ranking",
+		"from":"bamadapterclip",
 		"to":"bamcollate2_ranking"
 	},
 	{
@@ -274,8 +274,13 @@
 		"to":"bamreset_prealn"
 	},
 	{
-		"id":"bamreset_prealn_to_bam12auxmerge",
+		"id":"bamreset_prealn_to_bamadapterclip_prealn",
 		"from":"bamreset_prealn",
+		"to":"bamadapterclip_prealn"
+	},
+	{
+		"id":"bamadapterclip_prealn_to_bam12auxmerge",
+		"from":"bamadapterclip_prealn",
 		"to":"bam12auxmerge:__PREALN_BAM__"
 	},
 	{
@@ -292,13 +297,8 @@
 # AlignmentFilter
 #################
 	{
-		"id":"iab_to_bamclipreinsert",
+		"id":"iab_to_alignment_filter",
 		"from":"int_adp_bam",
-		"to":"bamclipreinsert"
-	},
-	{
-		"id":"bamclipreinsert_to_alignment_filter",
-		"from":"bamclipreinsert",
 		"to":"alignment_filter:__PHIX_INBAM__"
 	},
 	{
