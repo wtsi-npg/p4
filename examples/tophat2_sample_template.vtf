@@ -109,11 +109,6 @@
 		"type":"EXEC",
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
 	},
-	{
-		"id":"int_merged_bam",
-		"type":"RAFILE",
-		":name:":"int_merged.bam"
-	},
 #####################################
 # alignment filter and metrics output
 #####################################
@@ -289,22 +284,17 @@
 		"to":"bam12auxmerge"
 	},
 	{
-		"id":"bam12auxmerge_to_imb",
+		"id":"bam12auxmerge_to_alignment_filter",
 		"from":"bam12auxmerge",
-		"to":"int_merged_bam"
-	},
 #################
 # AlignmentFilter
 #################
+		"to":"alignment_filter:__TARGET_INBAM__"
+	},
 	{
 		"id":"iab_to_alignment_filter",
 		"from":"int_adp_bam",
 		"to":"alignment_filter:__PHIX_INBAM__"
-	},
-	{
-		"id":"imb_to_alignment_filter",
-		"from":"int_merged_bam",
-		"to":"alignment_filter:__TARGET_INBAM__"
 	},
 	{
 		"id":"alignment_filter_to_metrics",
