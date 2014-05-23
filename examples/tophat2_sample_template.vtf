@@ -28,6 +28,11 @@
 		"cmd":"bamcollate2 collate=1 level=0"
 	},
 	{
+		"id":"tee_input",
+		"type":"EXEC",
+		"cmd":"tee __FIFO__"
+	},
+	{
 		"id":"bamrecompress_input",
 		"type":"EXEC",
 		"cmd":"bamrecompress verbose=0 numthreads=2"
@@ -186,8 +191,13 @@
 		"to":"bamcollate2"
 	},
 	{
-		"id":"bc2_to_brc",
+		"id":"bc2_to_ti",
 		"from":"bamcollate2",
+		"to":"tee_input"
+	},
+	{
+		"id":"ti_to_brc",
+		"from":"tee_input",
 		"to":"bamrecompress_input"
 	},
 	{
@@ -199,8 +209,8 @@
 # tophat alignment
 ############################################################
 	{
-		"id":"int_adp_bam_to_bamadapterclip",
-		"from":"int_adp_bam",
+		"id":"ti_to_bamadapterclip",
+		"from":"tee_input:__FIFO__",
 		"to":"bamadapterclip"
 	},
 	{
