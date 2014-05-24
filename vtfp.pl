@@ -10,7 +10,8 @@ use strict;
 
 use Getopt::Long;
 use Data::Dumper;
-
+use File::Which qw(which);
+use Cwd qw(abs_path);
 use File::Slurp;
 use JSON;
 
@@ -31,9 +32,10 @@ my $outname;
 my $logfile;
 my $verbosity_level;
 my $query_mode;
+my $absolute_program_paths=1;
 my @keys = ();
 my @vals = ();
-GetOptions('h' => \$help, 's!' => \$strict_checks, 'v=i' => \$verbosity_level, 'l=s' => \$logfile, 'o:s' => \$outname, 'q!' => \$query_mode, 'keys=s' => \@keys, 'vals=s' => \@vals);
+GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'absolute_program_paths!' => \$absolute_program_paths);
 
 if($help) {
 	croak qq{vtfp.pl [-h] [-q] [-s] [-l <log_file>] [-o <output_config_name>] [-v <verbose_level>] [-keys <key> -vals <val> ...]  <viv_template>\n};
@@ -92,6 +94,12 @@ for my $subst_param (keys %$substitutable_params) {
 	}
 	else { # UPDATE ME
 		print $out join(qq[\t], ($subst_param, ($substitutable_params->{$subst_param}->{required}? q[required]: q[not_required]), $substitutable_params->{$subst_param}->{parent_id}, $substitutable_params->{$subst_param,}->{attrib_name}, )), "\n";
+	}
+}
+
+if($absolute_program_paths){
+	foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$cfg->{'nodes'}}) {
+		$node_with_cmd->{'cmd'} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
 	}
 }
 
