@@ -52,13 +52,13 @@ my $edges = $cfg->{edges};
 
 $logger->($VLMAX, "==================================\nEXEC nodes(0):\n==================================\n", Dumper(%exec_nodes), "\n");
 
-# Initial pass through RAFILE nodes to mark the downstream EXEC node dependencies on upstream EXEC nodes
+# Initial pass through RAFILE and OUTFILE nodes to mark the downstream EXEC node dependencies on upstream EXEC nodes
 my %deps = ();
-for my $rafile_node (values %rafile_nodes) {
-	my $current_to_edges = _get_to_edges($rafile_node->{id}, $edges);
-	my $current_from_edges = _get_from_edges($rafile_node->{id}, $edges);
+for my $file_node (values %rafile_nodes, values %outfile_nodes) {
+	my $current_to_edges = _get_to_edges($file_node->{id}, $edges);
+	my $current_from_edges = _get_from_edges($file_node->{id}, $edges);
 
-	# produce list of id values for exec nodes immediately downstream from this RAFILE node
+	# produce list of id values for exec nodes immediately downstream from this node
 	my @downstream_nodes = ();
 	for my $edge (@$current_from_edges) {
 		my $to_id = (split q{:}, $edge->{to})[0];
@@ -73,7 +73,7 @@ for my $rafile_node (values %rafile_nodes) {
 
 # now use the deps hash to update nodes, adding dependants and incrementing wait_counters as appropriate
 for my $from_id (keys %deps) {
-	my $from_node = $exec_nodes{$from_id};	# only EXEC nodes should feed into RAFILE nodes
+	my $from_node = $exec_nodes{$from_id};	# only EXEC nodes should feed into RAFILE and OUTFILE nodes
 
 	my @downstream_nodes = (keys %{$deps{$from_id}});
 	$from_node->{dependants} = \@downstream_nodes;

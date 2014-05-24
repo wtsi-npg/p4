@@ -182,6 +182,29 @@
 		"id":"target_bam",
 		"type":"OUTFILE",
 		"name":{"subst_param_name":"target_bam","required":"yes","default":"aln.bam"}
+	},
+##################################################
+# check input primary/sequence data matches output
+##################################################
+	{
+		"id":"bamcat_output",
+		"type":"EXEC",
+		"cmd":"bamcat verbose=0 level=0 __PHIXBAM__ __TARGETBAM__"
+	},
+	{
+		"id":"seqchksum_output",
+		"type":"EXEC",
+		"cmd":"bamseqchksum"
+	},
+	{
+		"id":"seqchksum_input",
+		"type":"EXEC",
+		"cmd":"bamseqchksum"
+	},
+	{
+		"id":"cmp_seqchksum",
+		"type":"EXEC",
+		"cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__"
 	}
 ],
 "edges":[
@@ -366,6 +389,39 @@
 		"id":"final_stretch",
 		"from":"bamrecompress_target",
 		"to":"target_bam"
+	},
+##################################################
+# check input primary/sequence data matches output
+##################################################
+	{
+		"id":"phix_bam_to_bamcat",
+		"from":"phix_bam",
+		"to":"bamcat_output:__PHIXBAM__"
+	},
+	{
+		"id":"target_bam_to_bamcat",
+		"from":"target_bam",
+		"to":"bamcat_output:__TARGETBAM__"
+	},
+	{
+		"id":"bamcat_to_chk_output",
+		"from":"bamcat_output",
+		"to":"seqchksum_output"
+	},
+	{
+		"id":"src_bam_to_chk_input",
+		"from":"src_bam",
+		"to":"seqchksum_input"
+	},
+	{
+		"id":"seqchksum_output_to_cmp",
+		"from":"seqchksum_output",
+		"to":"cmp_seqchksum:__OUTPUTCHK__"
+	},
+	{
+		"id":"seqchksum_input_to_cmp",
+		"from":"seqchksum_input",
+		"to":"cmp_seqchksum:__INPUTCHK__"
 	}
 ]
 }
