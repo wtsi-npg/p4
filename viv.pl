@@ -128,7 +128,7 @@ for my $edge (@{$edges}) {
 $logger->($VLMAX, "\n==================================\nEXEC nodes(post edges preprocessing):\n==================================\n", Dumper(%exec_nodes), "\n");
 
 $logger->($VLMAX, "EXEC nodes(post EXEC nodes preprocessing): ", Dumper(%exec_nodes), "\n");
-
+setpgrp; # create new processgroup so signals can be fired easily in suitable way later
 # kick off any unblocked EXEC nodes, noting their details for later release of any dependants
 my %pid2id = ();
 for my $node_id (keys %exec_nodes) {
@@ -168,8 +168,8 @@ while((my $pid=wait) > 0) {
 		######################################################################
 		# kill the children
 		######################################################################
-		local $SIG{HUP} = "IGNORE";
-		kill HUP => -$$;
+		local $SIG{TERM} = "IGNORE";
+		kill TERM => 0;
 
 		$logger->($VLMIN, sprintf(qq[\n**********************************************\nExiting due to abnormal return from child %s (pid: %d), return_status: %#04X, wifexited: %#04X, wexitstatus: %d (%#04X)\n**********************************************\n], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
 		$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, ($wifsignaled? $wtermsig: q{NA})), "\n");
