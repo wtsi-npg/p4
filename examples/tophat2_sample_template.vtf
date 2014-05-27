@@ -112,7 +112,8 @@
 	{
 		"id":"bamreset_prealn",
 		"type":"EXEC",
-		"cmd":"bamreset resetaux=0 level=0 verbose=0 __PREALN_BAM__"
+		"cmd":"bamreset resetaux=0 level=0 verbose=0 __PREALN_BAM__",
+		"description":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip_prealn",
