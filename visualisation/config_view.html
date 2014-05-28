@@ -129,7 +129,7 @@ var path = svg.append("g").selectAll("path")
 var circle = svg.append("g").selectAll("circle")
     .data(force.nodes())
   .enter().append("circle")
-    .attr("r", 12)
+    .attr("r", 8)
     .attr("class", function(d) { return "node " + d.type; })
     .call(force.drag);
 
