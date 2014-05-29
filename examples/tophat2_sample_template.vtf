@@ -1,31 +1,29 @@
 {
+"description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
 "nodes":[
 	{
 		"id":"reference_genome",
 		"type":"INFILE",
-		"name":{"subst_param_name":"reference_genome","required":"yes","default":"/nfs/srpipe_references/references/Mus_musculus/NCBIm37/all/bowtie2/mm_ref_NCBI37_1.fasta"}
+		"name":{"subst_param_name":"reference_genome","required":"yes","default":"/nfs/srpipe_references/references/Mus_musculus/NCBIm37/all/bowtie2/mm_ref_NCBI37_1.fasta"},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
 	},
 	{
 		"id":"transcriptome",
 		"type":"INFILE",
-		"name":{"subst_param_name":"transcriptome","required":"yes","default":"/nfs/srpipe_references/transcriptomes/Mus_musculus/ensembl_67_transcriptome/NCBIm37/tophat2/NCBIm37.known"}
+		"name":{"subst_param_name":"transcriptome","required":"yes","default":"/nfs/srpipe_references/transcriptomes/Mus_musculus/ensembl_67_transcriptome/NCBIm37/tophat2/NCBIm37.known"},
+		"description":"Prefix for transcripome files - gtf file and Tophat2 generated indexes for reference"
 	},
-#############################################
-# src_bam already contains alignments to phiX
-#############################################
 	{
 		"id":"src_bam",
 		"type":"INFILE",
-		"name":{"subst_param_name":"src_bam","required":"yes","default":"src.bam"}
+		"name":{"subst_param_name":"src_bam","required":"yes","default":"src.bam"},
+		"description":"BAM using as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
 	},
-#####################################################################
-# First preprocess input BAM, create adapter-clipped intermediate BAM
-#####################################################################
-#
 	{
 		"id":"bamcollate2",
 		"type":"EXEC",
-		"cmd":"bamcollate2 collate=1 level=0"
+		"cmd":"bamcollate2 collate=1 level=0",
+		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
 	{
 		"id":"tee_input",
@@ -38,19 +36,9 @@
 		"cmd":"bamrecompress verbose=0 numthreads=2"
 	},
 	{
-		"id":"bamrecompress_input",
-		"type":"EXEC",
-		"cmd":"bamrecompress verbose=0 numthreads=2"
-	},
-	{
 		"id":"int_adp_bam",
 		"type":"RAFILE",
 		"name":{"subst_param_name":"int_clipped_adapters_bam","required":"no","default":"int_adp.bam"}
-	},
-	{
-		"id":"bamcollate2_ranking",
-		"type":"EXEC",
-		"cmd":"bamcollate2 collate=3 level=0"
 	},
 	{
 		"id":"bamcollate2_ranking",
