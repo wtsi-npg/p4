@@ -22,7 +22,7 @@
 	{
 		"id":"bamcollate2",
 		"type":"EXEC",
-		"cmd":"bamcollate2 collate=1 level=0",
+		"cmd":["bamcollate2", "collate=1", "level=0"],
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
 	{
@@ -60,7 +60,7 @@
 	{
 		"id":"bamtofastq",
 		"type":"EXEC",
-		"cmd":"bamtofastq gz=1 F=__FQOUT1__ F2=__FQOUT2__"
+		"cmd":["bamtofastq", "gz=1", "F=__FQOUT1__", "F2=__FQOUT2__"]
 	},
 	{
 		"id":"fq1",

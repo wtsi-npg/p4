@@ -99,7 +99,9 @@ for my $subst_param (keys %$substitutable_params) {
 
 if($absolute_program_paths){
 	foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$cfg->{'nodes'}}) {
-		$node_with_cmd->{'cmd'} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
+		my $cmd_ref = \$node_with_cmd->{'cmd'};
+		if(ref ${$cmd_ref} eq 'ARRAY') { $cmd_ref = \${${$cmd_ref}}[0]}
+		${$cmd_ref} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
 	}
 }
 

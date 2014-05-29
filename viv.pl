@@ -235,7 +235,10 @@ sub _update_node_data_xfer {
 
 	if($node->{type} eq q[EXEC] and $data_xfer_name ne q[]) {
 		if(defined $port) {
-			$node->{'cmd'} =~ s/$port/$data_xfer_name/;
+			my $cmd = $node->{'cmd'};
+			for my$cmd_part ( ref $cmd eq 'ARRAY' ? @{$cmd}[1..$#{$cmd}] : ($node->{'cmd'}) ){
+				$cmd_part =~ s/\Q$port\E/$data_xfer_name/;
+			}
 		}
 		else {
 			$node->{$edge_side == $FROM? q[STDOUT]: q[STDIN]} = $data_xfer_name;
@@ -268,6 +271,11 @@ sub _get_to_edges {
 sub _fork_off {
 	my ($node, $do_exec) = @_;
 	my $cmd = $node->{'cmd'};
+	my @cmd = ($cmd);
+	if ( ref $cmd eq 'ARRAY' ){
+		@cmd = @{$cmd};
+		$cmd = '[' . (join ',',@cmd)  . ']';
+	} 
 
 	if(my $pid=fork) {     # parent - record the child's departure
 		$logger->($VLMED, qq[*** Forked off pid $pid with cmd: $cmd\n]);
@@ -287,7 +295,7 @@ sub _fork_off {
 			print STDERR ' fileno(STDOUT) writing to '.($node->{'STDOUT'}||'/dev/null').'  '.(fileno STDOUT)."\n";
 			print STDERR ' fileno(STDERR):'.(fileno STDERR)."\n";
 			print STDERR " execing....\n";
-			exec $cmd;
+			exec @cmd;
 		}
 		else {
 			$logger->($VLMED, q[child exec not switched on], "\n");
