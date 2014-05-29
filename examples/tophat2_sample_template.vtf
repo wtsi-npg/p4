@@ -43,7 +43,14 @@
 	{
 		"id":"bamcollate2_ranking",
 		"type":"EXEC",
-		"cmd":"bamcollate2 collate=3 level=0"
+		"cmd":"bamcollate2 collate=3 level=0",
+		"comment":"already collated suitably - just here to do the ranking in the name"
+	},
+	{
+		"id":"bamreset_tophat",
+		"type":"EXEC",
+		"cmd":"bamreset resetaux=0 level=0 verbose=0",
+		"description":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip",
@@ -231,18 +238,23 @@
 # tophat alignment
 ############################################################
 	{
-		"id":"ti_to_bamadapterclip",
+		"id":"ti_to_bamcollate2_ranking",
 		"from":"tee_input:__FIFO__",
-		"to":"bamadapterclip"
-	},
-	{
-		"id":"bamadapterclip_to_bamcollate2_ranking",
-		"from":"bamadapterclip",
 		"to":"bamcollate2_ranking"
 	},
 	{
-		"id":"bamcollate2_ranking_to_bamtofastq",
+		"id":"bamcollate2_ranking_to_bamreset_tophat",
 		"from":"bamcollate2_ranking",
+		"to":"bamreset_tophat"
+	},
+	{
+		"id":"bamreset_tophat_to_bamtofastq",
+		"from":"bamreset_tophat",
+		"to":"bamadapterclip"
+	},
+	{
+		"id":"bamadapterclip_to_bamtofastq",
+		"from":"bamadapterclip",
 		"to":"bamtofastq"
 	},
 	{
