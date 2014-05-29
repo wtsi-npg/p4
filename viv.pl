@@ -282,7 +282,7 @@ sub _fork_off {
 
 		return $pid;
 	}
-	else { # child - note: one way or the other, we're not returning from here
+	elsif(defined $pid) { # child - note: one way or the other, we're not returning from here
 		$logger->($VLMED, qq[Child $$ ; cmd: $cmd\n]);
 
 		if($do_exec) {
@@ -301,6 +301,9 @@ sub _fork_off {
 			$logger->($VLMED, q[child exec not switched on], "\n");
 			exit 0;
 		}
+	}else{
+		$logger->($VLMED, qq[*** Failed to fork off with cmd: $cmd\n]);
+		croak qq[Failed to fork off with cmd: $cmd\n];
 	}
 }
 
