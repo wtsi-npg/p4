@@ -134,9 +134,9 @@ my %pid2id = ();
 for my $node_id (keys %exec_nodes) {
 	if($exec_nodes{$node_id}->{wait_counter} == 0 and not $exec_nodes{$node_id}->{pid}) { # green light - execute
 
-		my $cmd = $exec_nodes{$node_id}->{cmd};
-		if((my $pid=_fork_off($cmd, $do_exec))) {
-			$exec_nodes{$node_id}->{pid} = $pid;
+		my $node = $exec_nodes{$node_id};
+		if((my $pid=_fork_off($node, $do_exec))) {
+			$node->{pid} = $pid;
 			$pid2id{$pid} = $node_id;
 		}
 	}
@@ -188,8 +188,7 @@ while((my $pid=wait) > 0) {
 			$logger->($VLMED, "\tFound dependant: $dep_node_id with wait_counter $dependant_node->{wait_counter}\n");
 			$dependant_node->{wait_counter}--;
 			if($dependant_node->{wait_counter} == 0) { # green light - execute
-				my $cmd = $dependant_node->{cmd};
-				if((my $pid=_fork_off($cmd, $do_exec))) {
+				if((my $pid=_fork_off($dependant_node, $do_exec))) {
 					$dependant_node->{pid} = $pid;
 					$pid2id{$pid} = $dep_node_id;
 				}
@@ -233,14 +232,14 @@ sub _create_fifo {
 
 sub _update_node_data_xfer {
 	my ($node, $port, $data_xfer_name, $edge_side) = @_;
-	my $redir = ($edge_side == $FROM? q[ > ]: q[ < ]);
 
 	if($node->{type} eq q[EXEC] and $data_xfer_name ne q[]) {
 		if(defined $port) {
-			$node->{cmd} =~ s/$port/$data_xfer_name/;
+			$node->{'cmd'} =~ s/$port/$data_xfer_name/;
 		}
 		else {
-			$node->{cmd} .= $redir . $data_xfer_name;
+			$node->{$edge_side == $FROM? q[STDOUT]: q[STDIN]} = $data_xfer_name;
+			#TODO: bail if already set?
 		}
 	}
 	else {
@@ -267,7 +266,8 @@ sub _get_to_edges {
 }
 
 sub _fork_off {
-	my ($cmd, $do_exec) = @_;
+	my ($node, $do_exec) = @_;
+	my $cmd = $node->{'cmd'};
 
 	if(my $pid=fork) {     # parent - record the child's departure
 		$logger->($VLMED, qq[*** Forked off pid $pid with cmd: $cmd\n]);
@@ -278,6 +278,15 @@ sub _fork_off {
 		$logger->($VLMED, qq[Child $$ ; cmd: $cmd\n]);
 
 		if($do_exec) {
+			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
+			select(STDERR);$|=1;
+			open STDIN,  q(<), ($node->{'STDIN'} ||'/dev/null') or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
+			open STDOUT, q(>), ($node->{'STDOUT'}||'/dev/null') or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
+			print STDERR "Process $$ for cmd $cmd:\n";
+			print STDERR ' fileno(STDIN) reading from '.($node->{'STDIN'} ||'/dev/null').'  '.(fileno STDIN)."\n";
+			print STDERR ' fileno(STDOUT) writing to '.($node->{'STDOUT'}||'/dev/null').'  '.(fileno STDOUT)."\n";
+			print STDERR ' fileno(STDERR):'.(fileno STDERR)."\n";
+			print STDERR " execing....\n";
 			exec $cmd;
 		}
 		else {
