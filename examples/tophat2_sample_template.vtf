@@ -8,6 +8,12 @@
 		"description":"Prefix for reference fasta and Bowtie2 index files"
 	},
 	{
+		"id":"reference_dict",
+		"type":"INFILE",
+		"name":{"subst_param_name":"reference_dict","required":"yes","default":"/nfs/srpipe_references/references/Mus_musculus/NCBIm37/all/picard/mm_ref_NCBI37_1.fasta.dict"},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
+	{
 		"id":"transcriptome",
 		"type":"INFILE",
 		"name":{"subst_param_name":"transcriptome","required":"yes","default":"/nfs/srpipe_references/transcriptomes/Mus_musculus/ensembl_67_transcriptome/NCBIm37/tophat2/NCBIm37.known"},
@@ -50,12 +56,13 @@
 		"id":"bamreset_tophat",
 		"type":"EXEC",
 		"cmd":"bamreset resetaux=0 level=0 verbose=0",
-		"description":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
+		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip",
 		"type":"EXEC",
-		"cmd":"bamadapterclip verbose=0 level=0"
+		"cmd":"bamadapterclip verbose=0 level=0",
+		"description":"Hard clip adapter sequence from reads before feeding to Tophat2"
 	},
 	{
 		"id":"bamtofastq",
@@ -95,6 +102,34 @@
 		"cmd":"bamcat I=__IN_BAM1__ I=__IN_BAM2__ level=0"
 	},
 	{
+		"id":"tee_headerSQfix",
+		"type":"EXEC",
+		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
+		"comment":"get deadlock when tee used here"
+	},
+	{
+		"id":"sam_headerSQfix",
+		"type":"EXEC",
+		"cmd":"samtools view -h -"
+	},
+	{
+		"id":"alterSQ_headerSQfix",
+		"type":"EXEC",
+		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_DICT__",
+		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
+		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
+	},
+	{
+		"id":"mbuffer_headerSQfix",
+		"type":"EXEC",
+		"cmd":"mbuffer -f -q -m 5M"
+	},
+	{
+		"id":"reheader_headerSQfix",
+		"type":"EXEC",
+		"cmd":"samtools reheader __IN_SAMHEADER__ __IN_BAM__"
+	},
+	{
 		"id":"bam12split_tophat",
 		"type":"EXEC",
 		"cmd":"bam12split verbose=0 level=0"
@@ -108,7 +143,7 @@
 		"id":"bamreset_prealn",
 		"type":"EXEC",
 		"cmd":"bamreset resetaux=0 level=0 verbose=0 __PREALN_BAM__",
-		"description":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
+		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip_prealn",
@@ -200,7 +235,8 @@
 	{
 		"id":"cmp_seqchksum",
 		"type":"EXEC",
-		"cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__"
+		"cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
+		"description":"check input primary/sequence data matches output"
 	}
 ],
 "edges":[
@@ -298,8 +334,43 @@
 		"to":"bamcat:__IN_BAM2__"
 	},
 	{
-		"id":"bamcat_to_bam12split_tophat",
+		"id":"bamcat_to_tee_headerSQfix",
 		"from":"bamcat",
+		"to":"tee_headerSQfix"
+	},
+	{
+		"id":"tee_headerSQfix_to_sam",
+		"from":"tee_headerSQfix:__OUT1__",
+		"to":"sam_headerSQfix"
+	},
+	{
+		"id":"reference_dict_to_sam_headerSQfix",
+		"from":"reference_dict",
+		"to":"alterSQ_headerSQfix:__IN_DICT__"
+	},
+	{
+		"id":"sam_headerSQfix_to_alterSQ",
+		"from":"sam_headerSQfix",
+		"to":"alterSQ_headerSQfix"
+	},
+	{
+		"id":"alterSQ_headerSQfix_to_reheader",
+		"from":"alterSQ_headerSQfix",
+		"to":"reheader_headerSQfix:__IN_SAMHEADER__"
+	},
+	{
+		"id":"tee_headerSQfix_to_mbuffer",
+		"from":"tee_headerSQfix",
+		"to":"mbuffer_headerSQfix"
+	},
+	{
+		"id":"mbuffer_headerSQfix_to_reheader",
+		"from":"mbuffer_headerSQfix",
+		"to":"reheader_headerSQfix:__IN_BAM__"
+	},
+	{
+		"id":"reheader_headerSQfix_to_bam12split_tophat",
+		"from":"reheader_headerSQfix",
 		"to":"bam12split_tophat"
 	},
 	{
