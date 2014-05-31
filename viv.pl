@@ -241,8 +241,12 @@ sub _update_node_data_xfer {
 			}
 		}
 		else {
-			$node->{$edge_side == $FROM? q[STDOUT]: q[STDIN]} = $data_xfer_name;
-			#TODO: bail if already set?
+			my $node_edge_std = $edge_side == $FROM? q[STDOUT]: q[STDIN];
+			if($node->{$node_edge_std}){
+				croak "Cannot use $node_edge_std for node ".($node->{'id'}).' more than once';
+				#TODO: allow multiple STDOUT with dup?
+			}
+			$node->{$node_edge_std} = $data_xfer_name;
 		}
 	}
 	else {
@@ -288,12 +292,14 @@ sub _fork_off {
 		if($do_exec) {
 			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
 			select(STDERR);$|=1;
-			open STDIN,  q(<), ($node->{'STDIN'} ||'/dev/null') or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
-			open STDOUT, q(>), ($node->{'STDOUT'}||'/dev/null') or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
+			$node->{'STDIN'} ||= '/dev/null';
+			open STDIN,  q(<), $node->{'STDIN'} or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
+			$node->{'STDOUT'} ||= '/dev/null';
+			open STDOUT, q(>), $node->{'STDOUT'} or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
 			print STDERR "Process $$ for cmd $cmd:\n";
-			print STDERR ' fileno(STDIN) reading from '.($node->{'STDIN'} ||'/dev/null').'  '.(fileno STDIN)."\n";
-			print STDERR ' fileno(STDOUT) writing to '.($node->{'STDOUT'}||'/dev/null').'  '.(fileno STDOUT)."\n";
-			print STDERR ' fileno(STDERR):'.(fileno STDERR)."\n";
+			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.$node->{'STDIN'} ."\n";
+			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.$node->{'STDOUT'}."\n";
+			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
 			print STDERR " execing....\n";
 			exec @cmd;
 		}
