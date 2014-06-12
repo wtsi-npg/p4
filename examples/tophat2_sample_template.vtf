@@ -2,6 +2,194 @@
 "description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
 "nodes":[
 	{
+		"id":"bmd_phix_tee0",
+		"type":"EXEC",
+		"cmd":"tee __pFIFO0__"
+	},
+	{
+		"id":"bmd_tee1",
+		"type":"EXEC",
+		"cmd":"tee __FIFO1__"
+	},
+	{
+		"id":"bmd_tee2",
+		"type":"EXEC",
+		"cmd":"tee __FIFO2__"
+	},
+	{
+		"id":"bmd_tee3",
+		"type":"EXEC",
+		"cmd":"tee __FIFO3__"
+	},
+	{
+		"id":"bmd_phix_tee1",
+		"type":"EXEC",
+		"cmd":"tee __pFIFO1__"
+	},
+	{
+		"id":"bmd_phix_tee2",
+		"type":"EXEC",
+		"cmd":"tee __pFIFO2__"
+	},
+	{
+		"id":"scramble",
+		"type":"EXEC",
+		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
+	},
+	{
+		"id":"bamcheck",
+		"type":"EXEC",
+		"cmd":"bamcheck"
+	},
+	{
+		"id":"flagstat",
+		"type":"EXEC",
+		"cmd":"samtools flagstat -"
+	},
+	{
+		"id":"scramble_phix",
+		"type":"EXEC",
+		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
+	},
+	{
+		"id":"bamcheck_phix",
+		"type":"EXEC",
+		"cmd":"bamcheck"
+	},
+	{
+		"id":"flagstat_phix",
+		"type":"EXEC",
+		"cmd":"samtools flagstat -"
+	},
+	{
+		"id":"phix_cram",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"phix_cram",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.cram"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"cram",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"cram",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".cram"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_phix_bamcheck",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_bamcheck",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.bamcheck"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_bamcheck",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_bamcheck",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".bamcheck"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_phix_flagstat",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_flagstat",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.flagstat"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_flagstat",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_flagstat",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".flagstat"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"reference_genome_fasta",
+		"type":"INFILE",
+		"name":{"subst_param_name":"reference_genome_fasta",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"refname_fasta","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
+		"id":"phix_reference_genome_fasta",
+		"type":"INFILE",
+		"name":{"subst_param_name":"phix_reference_genome_fasta",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"phix_refname_fasta","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
 		"id":"reference_genome",
 		"type":"INFILE",
 		"name":{"subst_param_name":"reference_genome",
@@ -305,7 +493,7 @@
 	{
 		"id":"bamreset_prealn",
 		"type":"EXEC",
-		"cmd":"bamreset resetaux=0 level=0 verbose=0 __PREALN_BAM__",
+		"cmd":"bamreset resetaux=0 level=0 verbose=0",
 		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
@@ -461,6 +649,106 @@
 	}
 ],
 "edges":[
+	{
+		"id":"ref_to_scramble",
+		"from":"reference_genome_fasta",
+		"to":"scramble:__REFERENCE_GENOME__"
+	},
+	{
+		"id":"ref_to_scramble_phix",
+		"from":"phix_reference_genome_fasta",
+		"to":"scramble_phix:__REFERENCE_GENOME__"
+	},
+	{   
+		"id":"bammarkduplicates_phix_to_tee",
+		"from":"bammarkduplicates_phix",
+		"to":"bmd_phix_tee0"
+	},
+	{   
+		"id":"bmd_phix_tee0_to_bmd_phix_tee0",
+		"from":"bmd_phix_tee0:__pFIFO0__",
+		"to":"bmd_phix_tee1"
+	},
+	{   
+		"id":"bammarkduplicates_to_tee",
+		"from":"bammarkduplicates_target",
+		"to":"bmd_tee1"
+	},
+	{   
+		"id":"tee_to_scramble_phix",
+		"from":"bmd_phix_tee1:__pFIFO1__",
+		"to":"scramble_phix"
+	},
+	{   
+		"id":"tee_to_scramble",
+		"from":"bmd_tee1:__FIFO1__",
+		"to":"scramble"
+	},
+	{   
+		"id":"bmd_phix_tee1_to_bmd_phix_tee2",
+		"from":"bmd_phix_tee1",
+		"to":"bmd_phix_tee2"
+	},
+	{   
+		"id":"bmd_tee1_to_bmd_tee2",
+		"from":"bmd_tee1",
+		"to":"bmd_tee2"
+	},
+	{
+		"id":"tee_phix_to_bamcheck_phix",
+		"from":"bmd_phix_tee2",
+		"to":"bamcheck_phix"
+	},
+	{
+		"id":"tee_to_bamcheck",
+		"from":"bmd_tee2:__FIFO2__",
+		"to":"bamcheck"
+	},
+	{
+		"id":"bmd_tee2_to_bmd_tee3",
+		"from":"bmd_tee2",
+		"to":"bmd_tee3"
+	},
+	{
+		"id":"bmd_tee2_phix_to_flagstat",
+		"from":"bmd_phix_tee2:__pFIFO2__",
+		"to":"flagstat_phix"
+	},
+	{
+		"id":"bmd_tee3_to_flagstat",
+		"from":"bmd_tee3:__FIFO3__",
+		"to":"flagstat"
+	},
+	{
+		"id":"scramble_to_phix_cram",
+		"from":"scramble_phix",
+		"to":"phix_cram"
+	},
+	{
+		"id":"scramble_to_cram",
+		"from":"scramble",
+		"to":"cram"
+	},
+	{
+		"id":"bamcheck_to_phix",
+		"from":"bamcheck_phix",
+		"to":"out_phix_bamcheck"
+	},
+	{
+		"id":"bamcheck_to_out",
+		"from":"bamcheck",
+		"to":"out_bamcheck"
+	},
+	{
+		"id":"flagstat_to_phix",
+		"from":"flagstat_phix",
+		"to":"out_phix_flagstat"
+	},
+	{
+		"id":"flagstat_to_out",
+		"from":"flagstat",
+		"to":"out_flagstat"
+	},
 	{
 		"id":"ref_to_tophat2",
 		"from":"reference_genome",
@@ -646,8 +934,8 @@
 		"to":"bammarkduplicates_phix"
 	},
 	{
-		"id":"bammarkduplicates_phix_to_bamrecompress_phix",
-		"from":"bammarkduplicates_phix",
+		"id":"bmd_phix_tee0_to_bamrecompress_phix",
+		"from":"bmd_phix_tee0",
 		"to":"bamrecompress_phix"
 	},
 	{
@@ -670,7 +958,7 @@
 	},
 	{
 		"id":"bmd_to_bamrecompress",
-		"from":"bammarkduplicates_target",
+		"from":"bmd_tee3",
 		"to":"bamrecompress_target"
 	},
 	{
