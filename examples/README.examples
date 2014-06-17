@@ -7,6 +7,6 @@ For example:
   grep -v "^#" example_01.cfg | tr -d "\n\t" > example_01_cfg.json
 
 You can then use the viv script with this JSON file (if you are working from the examples directory):
-  ../viv.pl -s -x -v 3 -o example_01.log example_01_cfg.json
+  ../bin/viv.pl -s -x -v 3 -o example_01.log example_01_cfg.json
  
 The resulting log file is verbose - you may want to reduce the verbosity level (the value supplied to the -v flag).

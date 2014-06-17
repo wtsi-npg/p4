@@ -58,14 +58,14 @@ vtfp.pl
 
      kl2@sf2-farm-srv1:~/projects/viv$ grep -v "^#" examples/example_06.vtf | tr -d "\n\t" > example_06_vtf.json
 
-     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -q example_06_vtf.json
+     kl2@sf2-farm-srv1:~/projects/viv$ bin/vtfp.pl -l ex06.log -q example_06_vtf.json
      KeyID	Req	Id	RawAttrib
      greetings_file	required	greetings_file	name
      intercept_file	not_required	intercept_file	name
 
   Preprocessing this, specifying only the required KeyID "greetings_file" gives:
 
-     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -keys greetings_file -vals Hello.txt example_06_vtf.json
+     kl2@sf2-farm-srv1:~/projects/viv$ bin/vtfp.pl -l ex06.log -keys greetings_file -vals Hello.txt example_06_vtf.json
 
      {
      'nodes' => [
@@ -112,9 +112,9 @@ vtfp.pl
 
   Preprocessing this, both substitutable parameters gives:
 
-     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -keys greetings_file -vals Hello.txt -keys intercept_file -vals intercept.txt example_06_vtf.json
+     kl2@sf2-farm-srv1:~/projects/viv$ bin/vtfp.pl -l ex06.log -keys greetings_file -vals Hello.txt -keys intercept_file -vals intercept.txt example_06_vtf.json
   or:
-     kl2@sf2-farm-srv1:~/projects/viv$ vtfp.pl -l ex06.log -keys greetings_file,intercept_file -vals Hello.txt,intercept.txt example_06_vtf.json
+     kl2@sf2-farm-srv1:~/projects/viv$ bin/vtfp.pl -l ex06.log -keys greetings_file,intercept_file -vals Hello.txt,intercept.txt example_06_vtf.json
 
      {
      'nodes' => [
