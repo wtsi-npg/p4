@@ -42,6 +42,10 @@ circle {
   fill: lightblue;
 }
 
+.node.VTFILE {
+  fill: yellow;
+}
+
 text {
   font: 10px sans-serif;
   pointer-events: none;
@@ -62,6 +66,7 @@ if(!cfg_name) {
 }
 var e=document.getElementById('main_header');
 e.innerHTML = cfg_name;
+document.title = cfg_name;
 
 var json_url=cfg_name+".json";
 d3.json(json_url, function(error, graph) {
