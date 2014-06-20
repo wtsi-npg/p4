@@ -516,8 +516,13 @@
 			"required":"no",
 			"subst_constructor":{
 				"vals":[
-					"cp __SRC_DELETIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"}
+					"cp ",
+					"__SRC_DELETIONS_BED__ ",
+					{"subst_param_name":"outdatadir","required":"yes"},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_",
+					{"subst_param_name":"deletion_bed","required":"yes"}
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
@@ -530,8 +535,13 @@
 			"required":"no",
 			"subst_constructor":{
 				"vals":[
-					"cp __SRC_INSERTIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"}
+					"cp ",
+					"__SRC_INSERTIONS_BED__ ",
+					{"subst_param_name":"outdatadir","required":"yes"},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_",
+					{"subst_param_name":"insertion_bed","required":"yes"}
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
@@ -544,8 +554,13 @@
 			"required":"no",
 			"subst_constructor":{
 				"vals":[
-					"cp __SRC_JUNCTIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"}
+					"cp ",
+					"__SRC_JUNCTIONS_BED__ ",
+					{"subst_param_name":"outdatadir","required":"yes"},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_",
+					{"subst_param_name":"junction_bed","required":"yes"}
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
