@@ -410,6 +410,63 @@
 		}
 	},
 	{
+		"id":"junctions_bed",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst_param_name":"junctions_bed",
+			"required":"no",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
+					"_",
+					{"subst_param_name":"rpt","required":"yes"},
+					"/",
+					{"subst_param_name":"junction_bed","required":"no","default":"junctions.bed"}
+				],
+				"postproc":{"op":"concat","pad":""}
+			},
+			"default":"tophat_out/junctions.bed"
+		}
+	},
+	{
+		"id":"insertions_bed",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst_param_name":"insertions_bed",
+			"required":"no",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
+					"_",
+					{"subst_param_name":"rpt","required":"yes"},
+					"/",
+					{"subst_param_name":"insertion_bed","required":"no","default":"insertions.bed"}
+				],
+				"postproc":{"op":"concat","pad":""}
+			},
+			"default":"tophat_out/insertions.bed"
+		}
+	},
+	{
+		"id":"deletions_bed",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst_param_name":"deletions_bed",
+			"required":"no",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
+					"_",
+					{"subst_param_name":"rpt","required":"yes"},
+					"/",
+					{"subst_param_name":"deletion_bed","required":"no","default":"deletions.bed"}
+				],
+				"postproc":{"op":"concat","pad":""}
+			},
+			"default":"tophat_out/deletions.bed"
+		}
+	},
+	{
 		"id":"accepted_hits_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
@@ -451,6 +508,48 @@
 		"id":"bamcat",
 		"type":"EXEC",
 		"cmd":"bamcat I=__IN_BAM1__ I=__IN_BAM2__ level=0"
+	},
+    {
+		"id":"cp_deletions_bed",
+		"type":"EXEC",
+		"cmd":{"subst_param_name":"cp_deletions_bed",
+			"required":"no",
+			"subst_constructor":{
+				"vals":[
+					"cp __SRC_DELETIONS_BED__ ",
+					{"subst_param_name":"outdatadir","required":"yes"}
+				],
+				"postproc":{"op":"concat","pad":""}
+			}
+		}
+	},
+    {
+		"id":"cp_insertions_bed",
+		"type":"EXEC",
+		"cmd":{"subst_param_name":"cp_insertions_bed",
+			"required":"no",
+			"subst_constructor":{
+				"vals":[
+					"cp __SRC_INSERTIONS_BED__ ",
+					{"subst_param_name":"outdatadir","required":"yes"}
+				],
+				"postproc":{"op":"concat","pad":""}
+			}
+		}
+	},
+    {
+		"id":"cp_junctions_bed",
+		"type":"EXEC",
+		"cmd":{"subst_param_name":"cp_junctions_bed",
+			"required":"no",
+			"subst_constructor":{
+				"vals":[
+					"cp __SRC_JUNCTIONS_BED__ ",
+					{"subst_param_name":"outdatadir","required":"yes"}
+				],
+				"postproc":{"op":"concat","pad":""}
+			}
+		}
 	},
 	{
 		"id":"tee_headerSQfix",
@@ -569,7 +668,21 @@
 	{
 		"id":"bamrecompress_phix",
 		"type":"EXEC",
-		"cmd":"bamrecompress numthreads=2"
+        "cmd":{"subst_param_name":"bamrecompress_phix",
+            "required":"yes",
+            "subst_constructor":{
+                "vals":[
+                    "bamrecompress index=1 md5=1 numthreads=2 ",
+                    "indexfilename=",
+                    {"subst_param_name":"rpt","required":"yes"},
+                    "_phix.bai ",
+                    "md5filename=",
+                    {"subst_param_name":"rpt","required":"yes"},
+                    "_phix.bam.md5"
+                ],
+                "postproc":{"op":"concat", "pad":""}
+            }
+        }
 	},
 	{
 		"id":"phix_bam",
@@ -604,7 +717,21 @@
 	{
 		"id":"bamrecompress_target",
 		"type":"EXEC",
-		"cmd":"bamrecompress numthreads=2"
+        "cmd":{"subst_param_name":"bamrecompress_target",
+            "required":"yes",
+            "subst_constructor":{
+                "vals":[
+                    "bamrecompress index=1 md5=1 numthreads=2 ",
+                    "indexfilename=",
+                    {"subst_param_name":"rpt","required":"yes"},
+                    ".bai ",
+                    "md5filename=",
+                    {"subst_param_name":"rpt","required":"yes"},
+                    ".bam.md5"
+                ],
+                "postproc":{"op":"concat", "pad":""}
+            }
+        }
 	},
 	{
 		"id":"target_bam",
@@ -998,6 +1125,36 @@
 		"id":"seqchksum_input_to_cmp",
 		"from":"seqchksum_input",
 		"to":"cmp_seqchksum:__INPUTCHK__"
+	},
+	{
+		"id":"tophat2_to_deletions_bed",
+		"from":"tophat2",
+		"to":"deletions_bed"
+	},
+	{
+		"id":"cp_deletions_bed",
+		"from":"deletions_bed",
+		"to":"cp_deletions_bed:__SRC_DELETIONS_BED__"
+	},
+	{
+		"id":"tophat2_to_insertions_bed",
+		"from":"tophat2",
+		"to":"insertions_bed"
+	},
+	{
+		"id":"cp_insertions_bed",
+		"from":"insertions_bed",
+		"to":"cp_insertions_bed:__SRC_INSERTIONS_BED__"
+	},
+	{
+		"id":"tophat2_to_junctions_bed",
+		"from":"tophat2",
+		"to":"junctions_bed"
+	},
+	{
+		"id":"cp_junctions_bed",
+		"from":"junctions_bed",
+		"to":"cp_junctions_bed:__SRC_JUNCTIONS_BED__"
 	}
 ]
 }
