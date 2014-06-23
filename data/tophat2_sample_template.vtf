@@ -420,8 +420,7 @@
 					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
 					"_",
 					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"junction_bed","required":"no","default":"junctions.bed"}
+					"/junctions.bed"
 				],
 				"postproc":{"op":"concat","pad":""}
 			},
@@ -439,8 +438,7 @@
 					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
 					"_",
 					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"insertion_bed","required":"no","default":"insertions.bed"}
+					"/insertions.bed"
 				],
 				"postproc":{"op":"concat","pad":""}
 			},
@@ -458,8 +456,7 @@
 					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
 					"_",
 					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"deletion_bed","required":"no","default":"deletions.bed"}
+					"/deletions.bed"
 				],
 				"postproc":{"op":"concat","pad":""}
 			},
@@ -522,7 +519,7 @@
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
 					"_",
-					{"subst_param_name":"deletion_bed","required":"yes"}
+					{"subst_param_name":"deletion_bed","required":"no", "default":"deletions.bed"}
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
@@ -541,7 +538,7 @@
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
 					"_",
-					{"subst_param_name":"insertion_bed","required":"yes"}
+					{"subst_param_name":"insertion_bed","required":"no","default":"insertions.bed"}
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
@@ -560,7 +557,7 @@
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
 					"_",
-					{"subst_param_name":"junction_bed","required":"yes"}
+					{"subst_param_name":"junction_bed","required":"no","default":"junctions.bed"}
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
