@@ -379,7 +379,7 @@
 					},
 					"--mate-inner-dist","100",
 					"--num-threads","12",
-					"--library-type","fr-unstranded",
+					"--library-type", {"subst_param_name":"library_type","required":"no","default":"fr-firststrand"},
 					"--no-coverage-search",
 					"--microexon-search",
 					{"subst_param_name":"transcriptome_flag_val",
@@ -629,7 +629,16 @@
 			"vals":[
 					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
 					"-Xmx1000m",
-					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/nfs/users/nfs_d/dj3/repos/illumina2bam/dist/AlignmentFilter.jar"},
+					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no",
+						"subst_constructor":{
+							"vals":[
+								{"subst_param_name":"alignment_filter_jar_path","required":"no","default":"/software/npg/java_jars"},
+								"/",
+								"AlignmentFilter.jar"
+							],
+							"postproc":{"op":"concat","pad":""}
+						}
+					},
 					"IN=__PHIX_INBAM__",
 					"IN=__TARGET_INBAM__",
 					"OUT=__PHIX_OUTBAM__",
@@ -686,9 +695,13 @@
                 "vals":[
                     "bamrecompress index=1 md5=1 numthreads=2 ",
                     "indexfilename=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
                     {"subst_param_name":"rpt","required":"yes"},
                     "_phix.bai ",
                     "md5filename=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
                     {"subst_param_name":"rpt","required":"yes"},
                     "_phix.bam.md5"
                 ],
@@ -735,9 +748,13 @@
                 "vals":[
                     "bamrecompress index=1 md5=1 numthreads=2 ",
                     "indexfilename=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
                     {"subst_param_name":"rpt","required":"yes"},
                     ".bai ",
                     "md5filename=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
                     {"subst_param_name":"rpt","required":"yes"},
                     ".bam.md5"
                 ],
