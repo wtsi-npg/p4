@@ -772,8 +772,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_",
-					{"subst_param_name":"bam_name","required":"no","default":"aln.bam"}
+					{"subst_param_name":"bam_name","required":"no","default":".bam"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
