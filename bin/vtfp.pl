@@ -43,8 +43,8 @@ if($help) {
 }
 
 # allow multiple options to be separated by commas
-my @keys = split(/,/, join(',', @keys));
-my @vals = split(/,/, join(',', @vals));
+@keys = split(/,/, join(',', @keys));
+@vals = split(/,/, join(',', @vals));
 
 my %subst_requests;
 @subst_requests{@keys} = @vals;
