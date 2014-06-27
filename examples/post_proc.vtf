@@ -1,0 +1,193 @@
+{
+"description":"mark duplicates;produce cram, bamcheck, flagstat files; and finally, recompress the bam output",
+"subgraph_io":{"ports":{"inputs":{"_stdin_":"bamsort_coord"},"outputs":{"_stdout_":"bamrecompress"}}},
+"nodes":[
+###########################################################
+# postproc start
+###########################################################
+	{
+		"id":"bamsort_coord",
+		"type":"EXEC",
+		"cmd":"bamsort SO=coordinate level=0"
+	},
+	{
+		"id":"bammarkduplicates",
+		"type":"EXEC",
+		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
+	},
+	{
+		"id":"bmd_tee1",
+		"type":"EXEC",
+		"cmd":"tee __FIFO1__"
+	},
+	{
+		"id":"bmd_tee2",
+		"type":"EXEC",
+		"cmd":"tee __FIFO2__"
+	},
+	{
+		"id":"bmd_tee3",
+		"type":"EXEC",
+		"cmd":"tee __FIFO3__"
+	},
+	{
+		"id":"reference_genome_fasta",
+		"type":"INFILE",
+		"name":{"subst_param_name":"reference_genome_fasta",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"refname_fasta","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
+		"id":"scramble",
+		"type":"EXEC",
+		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
+	},
+	{
+		"id":"bamcheck",
+		"type":"EXEC",
+		"cmd":"bamcheck"
+	},
+	{
+		"id":"flagstat",
+		"type":"EXEC",
+		"cmd":"samtools flagstat -"
+	},
+	{
+		"id":"cram",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"cram",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".cram"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_bamcheck",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_bamcheck",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".bamcheck"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_flagstat",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_flagstat",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".flagstat"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"bamrecompress",
+		"type":"EXEC",
+		"cmd":"bamrecompress numthreads=2"
+	}
+###########################################################
+# postproc end
+###########################################################
+],
+"edges":[
+	{
+		"id":"bamsort_coord_to_bammarkduplicates",
+		"from":"bamsort_coord",
+		"to":"bammarkduplicates"
+	},
+	{   
+		"id":"bammarkduplicates_to_tee1",
+		"from":"bammarkduplicates",
+		"to":"bmd_tee1"
+	},
+	{   
+		"id":"tee_to_scramble_phix",
+		"from":"bmd_tee1:__FIFO1__",
+		"to":"scramble"
+	},
+	{   
+		"id":"tee1_to_scramble",
+		"from":"bmd_tee1:__FIFO1__",
+		"to":"scramble"
+	},
+	{
+		"id":"ref_to_scramble",
+		"from":"reference_genome_fasta",
+		"to":"scramble:__REFERENCE_GENOME__"
+	},
+	{
+		"id":"scramble_to_cram",
+		"from":"scramble",
+		"to":"cram"
+	},
+	{   
+		"id":"bmd_tee1_to_bmd_tee2",
+		"from":"bmd_tee1",
+		"to":"bmd_tee2"
+	},
+	{   
+		"id":"bmd_tee1_to_bmd_tee2",
+		"from":"bmd_tee1",
+		"to":"bmd_tee2"
+	},
+	{
+		"id":"tee_to_bamcheck",
+		"from":"bmd_tee2:__FIFO2__",
+		"to":"bamcheck"
+	},
+	{
+		"id":"bamcheck_to_out",
+		"from":"bamcheck",
+		"to":"out_bamcheck"
+	},
+	{
+		"id":"bmd_tee2_to_bmd_tee3",
+		"from":"bmd_tee2",
+		"to":"bmd_tee3"
+	},
+	{
+		"id":"bmd_tee3_to_flagstat",
+		"from":"bmd_tee3:__FIFO3__",
+		"to":"flagstat"
+	},
+	{
+		"id":"flagstat_to_out",
+		"from":"flagstat",
+		"to":"out_flagstat"
+	},
+	{
+		"id":"tee3_to_bamrecompress",
+		"from":"bmd_tee3",
+		"to":"bamrecompress"
+	}
+]
+}
