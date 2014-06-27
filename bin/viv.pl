@@ -89,16 +89,8 @@ $logger->($VLMAX, "\n==================================\nEXEC nodes(post RAFILE 
 #  otherwise via file whose name is determined by the non-EXEC node's name attribute (communication
 #  between two non-EXEC nodes is of questionable value and is currently considered an error).
 for my $edge (@{$edges}) {
-	my $from_node = $all_nodes{$edge->{from}};
-	my $to_node = $all_nodes{$edge->{to}};
-
-	my $from_node;
-	my ($from_id, $from_port);
-	($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
-
-	my $to_node;
-	my ($to_id, $to_port);
-	($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
+	my ($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
+	my ($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
 	my $data_xfer_name;
 
 	if($from_node->{type} eq q[EXEC]) {
