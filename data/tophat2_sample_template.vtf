@@ -684,7 +684,7 @@
 	{
 		"id":"bammarkduplicates_phix",
 		"type":"EXEC",
-		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
+		"cmd":"bammarkduplicates M=phix_markdups_metrics.txt level=0"
 	},
 	{
 		"id":"bamrecompress_phix",
