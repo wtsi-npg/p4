@@ -44,7 +44,7 @@
 	{
 		"id":"flagstat_filter",
 		"type":"EXEC",
-		"cmd":"samtools view -u -F 0x9ff -",
+		"cmd":"samtools view -u -F 0x900 -",
 		"description":"Filter out secondary and supplimentary alignment records"
 	},
 	{
