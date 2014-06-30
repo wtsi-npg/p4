@@ -700,7 +700,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_markdups_metrics_phix.txt"
+					"_phix.markdups_metrics.txt"
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -767,7 +767,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_markdups_metrics.txt"
+					".markdups_metrics.txt"
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
