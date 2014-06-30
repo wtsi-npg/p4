@@ -42,6 +42,12 @@
 		"cmd":"bamcheck"
 	},
 	{
+		"id":"flagstat_filter",
+		"type":"EXEC",
+		"cmd":"samtools view -u -F 0x9ff -",
+		"description":"Filter out secondary and supplimentary alignment records"
+	},
+	{
 		"id":"flagstat",
 		"type":"EXEC",
 		"cmd":"samtools flagstat -"
@@ -684,7 +690,21 @@
 	{
 		"id":"bammarkduplicates_phix",
 		"type":"EXEC",
-		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
+		"cmd":{"subst_param_name":"bammarkduplicates_phix",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					"bammarkduplicates ",
+					"level=0 ",
+					"M=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_markdups_metrics_phix.txt"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
 	},
 	{
 		"id":"bamrecompress_phix",
@@ -737,7 +757,21 @@
 	{
 		"id":"bammarkduplicates_target",
 		"type":"EXEC",
-		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
+		"cmd":{"subst_param_name":"bammarkduplicates_target",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					"bammarkduplicates ",
+					"level=0 ",
+					"M=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_markdups_metrics.txt"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
 	},
 	{
 		"id":"bamrecompress_target",
@@ -870,8 +904,13 @@
 		"to":"flagstat_phix"
 	},
 	{
-		"id":"bmd_tee3_to_flagstat",
+		"id":"bmd_tee3_to_flagstat_filter",
 		"from":"bmd_tee3:__FIFO3__",
+		"to":"flagstat_filter"
+	},
+	{
+		"id":"flagstat_filter_to_flagstat",
+		"from":"flagstat_filter",
 		"to":"flagstat"
 	},
 	{
