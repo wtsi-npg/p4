@@ -86,22 +86,32 @@ for my $vtnode (@$vtf_nodes) {
 	do_substitutions($substitutable_params, \%subst_requests, $query_mode);
 
 	# add the new nodes and edges to the top-level graph (id alterations will be done first to ensure no clash with existing ids [WIP])
-	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%03d/%s", $arbitrary_prefix, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
-	$subcfg->{edges} = [ (map { $_->{from} = sprintf "%03d/%s", $arbitrary_prefix, $_->{from}; $_->{to} = sprintf "%03d/%s", $arbitrary_prefix, $_->{to}; $_; } @{$subcfg->{edges}}) ];
+	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%03d_%s", $arbitrary_prefix, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
+	$subcfg->{edges} = [ (map { $_->{from} = sprintf "%03d_%s", $arbitrary_prefix, $_->{from}; $_->{to} = sprintf "%03d_%s", $arbitrary_prefix, $_->{to}; $_; } @{$subcfg->{edges}}) ];
 	push @{$cfg->{nodes}}, @{$subcfg->{nodes}};
 	push @{$cfg->{edges}}, @{$subcfg->{edges}};  # in the first instance, I'm assuming this subgraph has no subgraphs of its own
 
-	# determine input and output node(s) in the subgraph - in the first instance, only consider stdin and stdout
-	my $subgraph_node_in = $subcfg->{subgraph_io}->{ports}->{inputs}->{_stdin_};
-	my $subgraph_node_out = $subcfg->{subgraph_io}->{ports}->{outputs}->{_stdout_};
+	# determine input node(s) in the subgraph
+	my $subgraph_nodes_in = $subcfg->{subgraph_io}->{ports}->{inputs};
+	my $subgraph_nodes_out = $subcfg->{subgraph_io}->{ports}->{outputs};
 
 	# now fiddle the edges in the top-level cfg
-	#  first input...
-	my $in_edges = [ (grep { $_->{to} eq $vtnode->{id}; } @{$cfg->{edges}}) ];
-	if(@$in_edges and not $subgraph_node_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No input specified in subgraph ], $vtnode->{name}); }
+
+	#  first inputs to the subgraph...
+	my $in_edges = [ (grep { $_->{to} =~ /^$vtnode->{id}(:|$)/; } @{$cfg->{edges}}) ];
+	if(@$in_edges and not $subgraph_nodes_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No inputs specified in subgraph ], $vtnode->{name}); }
 	for my $edge (@$in_edges) {
-		if($edge->{to} eq $vtnode->{id}) {  # initially only allow stdin/stdout
-			$edge->{to} = sprintf "%03d/%s", $arbitrary_prefix, $subgraph_node_in;  # don't forget to do consistent id munging
+		if($edge->{to} =~ /^$vtnode->{id}:?(.*)$/) {
+			my $portkey = $1;
+			$portkey ||= q[_stdin_];
+
+			my $port;
+			unless(($port = $subgraph_nodes_in->{$portkey})) {
+				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode->{id}, q[:], $portkey);
+			}
+
+			# do check for existence of port in 
+			$edge->{to} = sprintf "%03d_%s", $arbitrary_prefix, $port;
 		}
 		else {
 			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
@@ -109,15 +119,24 @@ for my $vtnode (@$vtf_nodes) {
 		}
 	}
 
-	#  ...then output
-	my $out_edges = [ (grep { $_->{from} eq $vtnode->{id}; } @{$cfg->{edges}}) ];
-	if(@$out_edges and not $subgraph_node_out) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No output specified in subgraph ], $vtnode->{name}); }
+	#  ...then outputs from the subgraph
+	my $out_edges = [ (grep { $_->{from} =~ /^$vtnode->{id}(:|$)/; } @{$cfg->{edges}}) ];
+	if(@$out_edges and not $subgraph_nodes_out) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No outputs specified in subgraph ], $vtnode->{name}); }
 	for my $edge (@$out_edges) {
-		if($edge->{from} eq $vtnode->{id}) {  # initially only allow stdin/stdout
-			$edge->{from} = sprintf "%03d/%s", $arbitrary_prefix, $subgraph_node_out;  # don't forget to do consistent id munging
+		if($edge->{from} =~ /^$vtnode->{id}:?(.*)$/) {
+			my $portkey = $1;
+			$portkey ||= q[_stdout_];
+
+			my $port;
+			unless(($port = $subgraph_nodes_out->{$portkey})) {
+				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode->{id}, q[:], $portkey);
+			}
+
+			# do check for existence of port in 
+			$edge->{from} = sprintf "%03d_%s", $arbitrary_prefix, $port;
 		}
 		else {
-			$logger->($VLMIN, q[Currently only edges from stdout processed when remapping VTFILE edges. Not processing: ], $edge->{from}, q[ in edge: ], $edge->{id});
+			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
 			next;
 		}
 	}
