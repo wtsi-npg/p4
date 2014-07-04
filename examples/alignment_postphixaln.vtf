@@ -1,5 +1,5 @@
 {
-"description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
+"description":"Process sequencing data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc. Assumes input bam contains phix alignments.",
 "nodes":[
 	{
 		"id":"src_bam",
@@ -74,9 +74,9 @@
 		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
-		"id":"bamadapterclip",
+		"id":"bamadapterfind_and_clip_prealignment",
 		"type":"EXEC",
-		"cmd":"bamadapterclip verbose=0 level=0",
+		"cmd": "bamadapterfind clip=1 verbose=0 level=0",
 		"description":"Hard clip adapter sequence from reads before feeding to Tophat2"
 	},
 	{
@@ -88,17 +88,16 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"refname","required":"yes"}
+					{"subst_param_name":"alignment_refname","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
 		},
-		"description":"(path to) reference genome for alignment step in appropriate format"
+		"description":"[path to] reference genome for alignment step in appropriate format"
 	},
 	{
 		"id":"alignment",
 		"type":"VTFILE",
-#		"name":"tophat2_alignment.json",
 		"name":{"subst_param_name":"alignment_vtf",
 			"required":"yes",
 			"subst_constructor":{
@@ -122,7 +121,7 @@
                                 "vals":[
                                         {"subst_param_name":"reposdir","required":"no","default":"."},
                                         "/",
-                                        {"subst_param_name":"refdictname","required":"yes"}
+                                        {"subst_param_name":"picard_dict_name","required":"yes"}
                                 ],
                                 "postproc":{"op":"concat", "pad":""}
                         }
@@ -153,7 +152,7 @@
 	{
 		"id":"bamadapterclip_unaligned",
 		"type":"EXEC",
-		"cmd":"bamadapterclip verbose=0 level=0"
+		"cmd":"bamadapterclip clip=1 verbose=0 level=0"
 	},
 	{
 		"id":"bam12auxmerge",
@@ -447,7 +446,7 @@
 	{
 		"id":"bamreset_prealignment_to_bamtofastq",
 		"from":"bamreset_prealignment",
-		"to":"bamadapterclip"
+		"to":"bamadapterfind_and_clip_prealignment"
 	},
 	{
 		"id":"reference_genome_to_alignment",
@@ -456,7 +455,7 @@
 	},
 	{
 		"id":"bamadapterclip_to_alignment",
-		"from":"bamadapterclip",
+		"from":"bamadapterfind_and_clip_prealignment",
 		"to":"alignment"
 	},
 	{

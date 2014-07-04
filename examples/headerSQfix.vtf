@@ -1,23 +1,7 @@
 {
 "description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
-"subgraph_io":{"ports":{"inputs":{"_stdin_":"tee_headerSQfix"},"outputs":{"_stdout_":"reheader_headerSQfix"}}},
+"subgraph_io":{"ports":{"inputs":{"_stdin_":"tee_headerSQfix","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__"},"outputs":{"_stdout_":"reheader_headerSQfix"}}},
 "nodes":[
-	{
-		"id":"reference_dict",
-		"type":"INFILE",
-		"name":{"subst_param_name":"reference_dict",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"refdictname","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
-		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
-	},
 	{
 		"id":"tee_headerSQfix",
 		"type":"EXEC",
@@ -32,7 +16,7 @@
 	{
 		"id":"alterSQ_headerSQfix",
 		"type":"EXEC",
-		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_DICT__",
+		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_PICARD_DICT__",
 		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
 		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
 	},
@@ -49,9 +33,19 @@
 ],
 "edges":[
 	{
-		"id":"reference_dict_to_sam_headerSQfix",
-		"from":"reference_dict",
-		"to":"alterSQ_headerSQfix:__IN_DICT__"
+		"id":"tee_headerSQfix_to_mbuffer",
+		"from":"tee_headerSQfix",
+		"to":"mbuffer_headerSQfix"
+	},
+	{
+		"id":"tee_headerSQfix_to_sam_headerSQfix",
+		"from":"tee_headerSQfix:__OUT1__",
+		"to":"sam_headerSQfix"
+	},
+	{
+		"id":"mbuffer_headerSQfix_to_reheader",
+		"from":"mbuffer_headerSQfix",
+		"to":"reheader_headerSQfix:__IN_BAM__"
 	},
 	{
 		"id":"sam_headerSQfix_to_alterSQ",
@@ -62,21 +56,6 @@
 		"id":"alterSQ_headerSQfix_to_reheader",
 		"from":"alterSQ_headerSQfix",
 		"to":"reheader_headerSQfix:__IN_SAMHEADER__"
-	},
-	{
-		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"tee_headerSQfix",
-		"to":"mbuffer_headerSQfix"
-	},
-	{
-		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"tee_headerSQfix:__FIFO__",
-		"to":"sam_headerSQfix"
-	},
-	{
-		"id":"mbuffer_headerSQfix_to_reheader",
-		"from":"mbuffer_headerSQfix",
-		"to":"reheader_headerSQfix:__IN_BAM__"
 	}
 ]
 }
