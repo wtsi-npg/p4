@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>p4 Graph Editor</title>
+    <link rel="stylesheet" href="p4_edit.css">
+  </head>
+  
+  <body>
+  <h2>P4 Graphical Editor</h2>
+  <p class='error' id="errms"></p>
+
+  <table border=1 width=100%>
+  <tr>
+  <td width=80%><div id=graph></div></td>
+  <td valign=top class="right_box">
+    <fieldset><legend>Filename</legend>
+      <div id=filename></div>
+    </fieldset>
+    <fieldset><legend>Description</legend>
+      <div id=description></div>
+    </fieldset>
+    <br />
+    <form>
+      <div id=node_edit style='display:none;'>
+        <fieldset><legend>Node</legend>
+          <table>
+             <tr><th>Name</th><td><input id=node_name></td></tr>
+             <tr><th>Command</th><td><input id=node_cmd></td></tr>
+             <tr><th>Description</th><td><input id=node_description></td></tr>
+          </table>
+        </fieldset>
+      </div>
+      <div id=edge_edit style='display:none;'>
+        <fieldset><legend>Edge</legend>
+          <table>
+             <tr><th>Name</th><td><input id=edge_name></td></tr>
+             <tr><th>From</th><td><input id=edge_from></td></tr>
+             <tr><th>To</th><td><input id=edge_to></td></tr>
+          </table>
+        </fieldset>
+      </div>
+    </form>
+  </td>
+  </tr>
+  </table>
+
+  </body>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="view.js"></script>
+</html>
+
