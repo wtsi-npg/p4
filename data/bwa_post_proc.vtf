@@ -1,6 +1,6 @@
 {
 "description":"A HiSeqX processing pipeline",
-"subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__"},"outputs":{"_stdout_":"bam12auxmerge"}}},
+"subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__","bam12auxmerge":"prealign"},"outputs":{"_stdout_":"alignment_filter"}}},
 "nodes":[
 	{
 		"id":"scramble_sam_to_bam",
@@ -44,7 +44,13 @@
 		"id":"bamsort_qname",
 		"type":"EXEC",
 		"cmd":"bamsort SO=queryname level=0"
-	}
+	},
+    {
+        "id":"bam12auxmerge",
+        "type":"EXEC",
+        "cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
+    }
+
 ],
 "edges":[
 	{
@@ -86,6 +92,11 @@
 		"id":"bam12split_to_bamsort_qname",
 		"from":"bam12split",
 		"to":"bamsort_qname"
+	},
+	{
+		"id":"bamsort_qname_to_bam12auxmerge",
+		"from":"bamsort_qname",
+		"to":"bam12auxmerge"
 	}
 ]
 }

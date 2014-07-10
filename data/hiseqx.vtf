@@ -182,6 +182,11 @@
 		"cmd":"tee __PIPE1__"
 	},
 	{
+		"id":"tee_acp",
+		"type":"EXEC",
+		"cmd":"tee __PREALN_BAM__"
+	},
+	{
 		"id":"reference_genome",
 		"type":"INFILE",
 		"name":{"subst_param_name":"reference_genome",
@@ -282,21 +287,9 @@
     },
 
 	{
-		"id":"src_bam",
-		"type":"INFILE",
-		"name":{"subst_param_name":"src_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"indatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".src.bam"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
-		"description":"BAM created as input to this pipeline by Illumina2bam"
+		"id":"tee0",
+		"type":"EXEC",
+		"cmd":"tee __TEE0__"
 	},
 	{
 		"id":"bamcollate2",
@@ -417,11 +410,6 @@
 		"type":"EXEC",
 		"cmd":"bamadapterclip verbose=0 level=0"
 	},
-	{
-		"id":"bam12auxmerge",
-		"type":"EXEC",
-		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
-	},
 #####################################
 # alignment filter and metrics output
 #####################################
@@ -541,9 +529,9 @@
 		"to":"bamadapterfind"
 	},
 	{
-		"id":"bamadapterfind_to_src_bam",
+		"id":"bamadapterfind_to_tee0",
 		"from":"bamadapterfind",
-		"to":"src_bam"
+		"to":"tee0"
 	},
 	{
 		"id":"ref_to_bwa_mem",
@@ -556,8 +544,8 @@
 		"to":"bwa_mem_phix:__REFERENCE_PHIX__"
 	},
 	{
-		"id":"src_to_bc2",
-		"from":"src_bam",
+		"id":"tee0_to_bc2",
+		"from":"tee0",
 		"to":"bamcollate2"
 	},
 	{
@@ -640,9 +628,19 @@
 		"to":"bamadapterclip_prealn"
 	},
 	{
-		"id":"bamadapterclip_prealn_to_bam12auxmerge",
+		"id":"bamadapterclip_prealn_to_tee_acp",
 		"from":"bamadapterclip_prealn",
-		"to":"bam12auxmerge:__PREALN_BAM__"
+		"to":"tee_acp"
+	},
+	{
+		"id":"tee_acp_to_post_proc",
+		"from":"tee_acp",
+		"to":"bwa_post_proc:prealign"
+	},
+	{
+		"id":"tee_acp_to_post_proc_phix",
+		"from":"tee_acp:__PREALN_BAM__",
+		"to":"bwa_post_proc_phix:prealign"
 	},
 	{
 		"id":"bwa_post_proc_to_alignmentfilter_phix",
@@ -650,22 +648,12 @@
 		"to":"alignment_filter:__PHIX__BAM__"
 	},
 	{
-		"id":"bwa_post_proc_to_bam12auxmerge",
+		"id":"bwa_post_proc_to_alignment_filter",
 		"from":"bwa_post_proc",
-		"to":"bam12auxmerge"
-	},
-	{
-		"id":"bam12auxmerge_to_alignment_filter",
-		"from":"bam12auxmerge",
 #################
 # AlignmentFilter
 #################
 		"to":"alignment_filter:__TARGET_INBAM__"
-	},
-	{
-		"id":"iab_to_alignment_filter",
-		"from":"int_adp_bam",
-		"to":"alignment_filter:__ADP_INBAM__"
 	},
 	{
 		"id":"alignment_filter_to_metrics",
@@ -759,8 +747,8 @@
 		"to":"seqchksum_output"
 	},
 	{
-		"id":"src_bam_to_chk_input",
-		"from":"src_bam",
+		"id":"tee0_to_chk_input",
+		"from":"tee0:__TEE0__",
 		"to":"seqchksum_input"
 	},
 	{

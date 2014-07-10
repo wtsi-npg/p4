@@ -1,6 +1,6 @@
 {
 "description":"A HiSeqX processing pipeline",
-"subgraph_io":{"ports":{"inputs":{"_stdin_":"bamcat_coord","reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"},"outputs":{"_stdout_":"bamrecompress","out_cram":"scramble","out_bamcheck":"bamcheck","out_flagstat":"flagstat"}}},
+"subgraph_io":{"ports":{"inputs":{"_stdin_":"bamsort_coord_target","reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"},"outputs":{"_stdout_":"bamrecompress","out_cram":"scramble","out_bamcheck":"bamcheck","out_flagstat":"flagstat"}}},
 "nodes":[
 	{
 		"id":"bamsort_coord_target",
