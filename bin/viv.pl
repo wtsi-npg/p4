@@ -22,7 +22,7 @@ Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
-getopts('xshv:o:', \%opts);
+getopts('xshv:o:r:t:', \%opts);
 
 if($opts{h}) {
 	die qq{viv.pl [-s] [-x] [-v <verbose_level>] [-o <logname>] <config.json>\n};
@@ -36,6 +36,8 @@ $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[viv]);
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
+my $raf_list = process_raf_list($opts{r});    # insert inline RAFILE nodes
+my $tee_list = process_raf_list($opts{t});    # insert tee with branch to RAFILE
 
 my $s = read_file($cfg_file_name);
 
@@ -341,5 +343,16 @@ sub mklogger {
 
 		return;
 	}
+}
+
+sub process_raf_list {
+	my ($rafs) = @_;
+	my $raf_map;
+
+	if($rafs) {
+		$raf_map = { (map {  (split '=', $_); } (split /;/, $rafs)) };
+	}
+
+	return $raf_map;
 }
 

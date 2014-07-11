@@ -171,7 +171,7 @@
 			"vals":[
 					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
 					"-Xmx1000m",
-					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/nfs/users/nfs_d/dj3/repos/illumina2bam/dist/AlignmentFilter.jar"},
+					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/software/npg/java_jars/AlignmentFilter.jar"},
 					"IN=__PHIX_INBAM__",
 					"IN=__TARGET_INBAM__",
 					"OUT=__PHIX_OUTBAM__",
