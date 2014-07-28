@@ -45,7 +45,7 @@
 		"id":"flagstat_filter",
 		"type":"EXEC",
 		"cmd":"samtools view -u -F 0x900 -",
-		"description":"Filter out secondary and supplimentary alignment records"
+		"description":"Filter out secondary and supplementary alignment records"
 	},
 	{
 		"id":"flagstat",
@@ -524,7 +524,7 @@
 					{"subst_param_name":"outdatadir","required":"yes"},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_",
+					".",
 					{"subst_param_name":"deletion_bed","required":"no", "default":"deletions.bed"}
 				],
 				"postproc":{"op":"concat","pad":""}
@@ -543,7 +543,7 @@
 					{"subst_param_name":"outdatadir","required":"yes"},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_",
+					".",
 					{"subst_param_name":"insertion_bed","required":"no","default":"insertions.bed"}
 				],
 				"postproc":{"op":"concat","pad":""}
@@ -562,7 +562,7 @@
 					{"subst_param_name":"outdatadir","required":"yes"},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_",
+					".",
 					{"subst_param_name":"junction_bed","required":"no","default":"junctions.bed"}
 				],
 				"postproc":{"op":"concat","pad":""}
