@@ -524,8 +524,7 @@
 					{"subst_param_name":"outdatadir","required":"yes"},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					".",
-					{"subst_param_name":"deletion_bed","required":"no", "default":"deletions.bed"}
+					".deletions.bed"
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
@@ -543,8 +542,7 @@
 					{"subst_param_name":"outdatadir","required":"yes"},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					".",
-					{"subst_param_name":"insertion_bed","required":"no","default":"insertions.bed"}
+					".insertions.bed"
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
@@ -562,8 +560,7 @@
 					{"subst_param_name":"outdatadir","required":"yes"},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					".",
-					{"subst_param_name":"junction_bed","required":"no","default":"junctions.bed"}
+					".junctions.bed"
 				],
 				"postproc":{"op":"concat","pad":""}
 			}
