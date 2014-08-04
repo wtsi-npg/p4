@@ -165,40 +165,44 @@ while((my $pid=wait) > 0) {
 		$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $exec_nodes{$pid2id{$pid}}->{id}, $pid, $wifsignaled, ($wifsignaled? $wtermsig: q{NA})), "\n");
 		$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifstopped: %#04X, wstopsig: %s], $exec_nodes{$pid2id{$pid}}->{id}, $pid, $wifstopped, ($wifstopped? $wstopsig: q{NA})), "\n");
 
-		######################################################################
-		# kill the children
-		######################################################################
-		local $SIG{TERM} = "IGNORE";
-		kill TERM => 0;
+		$SIG{'ALRM'} ||= sub {
+			######################################################################
+			# kill the children
+			######################################################################
+			local $SIG{'TERM'} = 'IGNORE';
+			kill TERM => 0;
 
-		$logger->($VLMIN, sprintf(qq[\n**********************************************\nExiting due to abnormal return from child %s (pid: %d), return_status: %#04X, wifexited: %#04X, wexitstatus: %d (%#04X)\n**********************************************\n], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
-		$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, ($wifsignaled? $wtermsig: q{NA})), "\n");
-		$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifstopped: %#04X, wstopsig: %s], $completed_node->{id}, $pid, $wifstopped, ($wifstopped? $wstopsig: q{NA})), "\n");
+			$logger->($VLMIN, sprintf(qq[\n**********************************************\nExiting due to abnormal return from child %s (pid: %d), return_status: %#04X, wifexited: %#04X, wexitstatus: %d (%#04X)\n**********************************************\n], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
+			$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, ($wifsignaled? $wtermsig: q{NA})), "\n");
+			$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifstopped: %#04X, wstopsig: %s], $completed_node->{id}, $pid, $wifstopped, ($wifstopped? $wstopsig: q{NA})), "\n");
 
-		croak sprintf(qq[\n**********************************************\nExiting due to abnormal status return from child %s (pid: %d), return_status: %#04X, wifexited: %#04X, wexitstatus: %#04X\n**********************************************\n], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus), "\n";
-	}
+			croak sprintf(qq[\n**********************************************\nExiting due to abnormal status return from child %s (pid: %d), return_status: %#04X, wifexited: %#04X, wexitstatus: %#04X\n**********************************************\n], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus), "\n";
+		};
+		alarm 5;
+	}else{
 
-	$logger->($VLMED, sprintf(q[Child %s (pid: %d), return_status: %#04X, wifexited: %d (%#04X), wexitstatus: %s], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
-	$logger->($VLMED, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, $wtermsig), "\n");
-	$logger->($VLMED, sprintf(q[Child %s (pid: %d), wifexited: %#04X, wexitstatus: %s], $completed_node->{id}, $pid, $wifexited, $wexitstatus), "\n");
+		$logger->($VLMED, sprintf(q[Child %s (pid: %d), return_status: %#04X, wifexited: %d (%#04X), wexitstatus: %s], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
+		$logger->($VLMED, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, $wtermsig), "\n");
+		$logger->($VLMED, sprintf(q[Child %s (pid: %d), wifexited: %#04X, wexitstatus: %s], $completed_node->{id}, $pid, $wifexited, $wexitstatus), "\n");
 
-	if($dependants_list and @$dependants_list) {
-		for my $dep_node_id (@$dependants_list) {
-			my $dependant_node = $exec_nodes{$dep_node_id};
-			$logger->($VLMED, "\tFound dependant: $dep_node_id with wait_counter $dependant_node->{wait_counter}\n");
-			$dependant_node->{wait_counter}--;
-			if($dependant_node->{wait_counter} == 0) { # green light - execute
-				if((my $pid=_fork_off($dependant_node, $do_exec))) {
-					$dependant_node->{pid} = $pid;
-					$pid2id{$pid} = $dep_node_id;
+		if($dependants_list and @$dependants_list) {
+			for my $dep_node_id (@$dependants_list) {
+				my $dependant_node = $exec_nodes{$dep_node_id};
+				$logger->($VLMED, "\tFound dependant: $dep_node_id with wait_counter $dependant_node->{wait_counter}\n");
+				$dependant_node->{wait_counter}--;
+				if($dependant_node->{wait_counter} == 0) { # green light - execute
+					if((my $pid=_fork_off($dependant_node, $do_exec))) {
+						$dependant_node->{pid} = $pid;
+						$pid2id{$pid} = $dep_node_id;
+					}
 				}
 			}
+		} else {
+			$logger->($VLMED, q[No dependants for child ], $completed_node->{id}, q[, pid ], $pid, "\n");
 		}
 	}
-	else {
-		$logger->($VLMED, q[No dependants for child ], $completed_node->{id}, q[, pid ], $pid, "\n");
-	}
 }
+&{$SIG{'ALRM'}||sub{}}(); # fire off bad exit if set
 
 $logger->($VLMIN, "Done\n");
 
@@ -290,6 +294,7 @@ sub _fork_off {
 		$logger->($VLMED, qq[Child $$ ; cmd: $cmd\n]);
 
 		if($do_exec) {
+			#### $SIG{'PIPE'} = 'IGNORE'; # nah - not its nature to be propagated I fear
 			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
 			select(STDERR);$|=1;
 			$node->{'STDIN'} ||= '/dev/null';
