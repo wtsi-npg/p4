@@ -1,0 +1,32 @@
+{
+	"description":	"minimal test pipeline",
+	"nodes":[
+	{	"id": "n1",
+		"type": "EXEC",
+		"cmd": "echo stuff"
+	},
+	{	"id": "n2",
+		"type": "EXEC",
+		"cmd": ["cat"]
+	},
+	{	"id": "m",
+		"type": "EXEC",
+		"cmd": ["echo", "stuff"]
+	},
+	{	"id": "d",
+		"type": "EXEC",
+		"cmd": "diff __IN1__ __IN2__"
+	}
+	],
+	"edges":[
+	{	"from": "n1",
+		"to": "n2"
+	},
+	{	"from": "n2",
+		"to": "d:__IN1__"
+	},
+	{	"from": "m",
+		"to": "d:__IN2__"
+	}
+	]
+}
