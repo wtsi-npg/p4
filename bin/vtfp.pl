@@ -148,6 +148,8 @@ sub walk {
 			}
 		}
 	}
+	elsif(ref $node eq q[JSON::XS::Boolean]) {
+	}
 	else {
 		carp "REF TYPE $r currently not processable";
 	}
