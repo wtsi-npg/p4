@@ -250,6 +250,9 @@ sub _update_node_data_xfer {
 				croak "Cannot use $node_edge_std for node ".($node->{'id'}).' more than once';
 				#TODO: allow multiple STDOUT with dup?
 			}
+			if(exists $node->{"use_$node_edge_std"}){
+				croak 'Node '.($node->{'id'})." configured not to use $node_edge_std" unless $node->{"use_$node_edge_std"};
+			}
 			$node->{$node_edge_std} = $data_xfer_name;
 		}
 	}
