@@ -765,7 +765,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates ",
+					"bammarkduplicates2 ",
 					"level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
@@ -838,7 +838,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates ",
+					"bammarkduplicates2 ",
 					"level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
