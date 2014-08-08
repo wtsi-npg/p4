@@ -4,67 +4,93 @@
 	{
 		"id":"bmd_phix_tee0",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"tee __pFIFO0__"
 	},
 	{
 		"id":"bmd_tee1",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"tee __FIFO1__"
 	},
 	{
 		"id":"bmd_tee2",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"tee __FIFO2__"
 	},
 	{
 		"id":"bmd_tee3",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"tee __FIFO3__"
 	},
 	{
 		"id":"bmd_phix_tee1",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"tee __pFIFO1__"
 	},
 	{
 		"id":"bmd_phix_tee2",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"tee __pFIFO2__"
 	},
 	{
 		"id":"scramble",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
 	},
 	{
 		"id":"bamcheck",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamcheck"
 	},
 	{
 		"id":"flagstat_filter",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"samtools view -u -F 0x900 -",
 		"description":"Filter out secondary and supplementary alignment records"
 	},
 	{
 		"id":"flagstat",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"samtools flagstat -"
 	},
 	{
 		"id":"scramble_phix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
 	},
 	{
 		"id":"bamcheck_phix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamcheck"
 	},
 	{
 		"id":"flagstat_phix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"samtools flagstat -"
 	},
 	{
@@ -247,17 +273,23 @@
 	{
 		"id":"bamcollate2",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":["bamcollate2", "collate=1", "level=0"],
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
 	{
 		"id":"tee_input",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"tee __FIFO__"
 	},
 	{
 		"id":"bamrecompress_input",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamrecompress verbose=0 numthreads=2"
 	},
 	{
@@ -289,24 +321,32 @@
 	{
 		"id":"bamcollate2_ranking",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamcollate2 collate=3 level=0",
 		"comment":"already collated suitably - just here to do the ranking in the name"
 	},
 	{
 		"id":"bamreset_tophat",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamreset resetaux=0 level=0 verbose=0",
 		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamadapterclip verbose=0 level=0",
 		"description":"Hard clip adapter sequence from reads before feeding to Tophat2"
 	},
 	{
 		"id":"bamtofastq",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
 		"cmd":["bamtofastq", "gz=1", "F=__FQOUT1__", "F2=__FQOUT2__"]
 	},
 	{
@@ -364,6 +404,8 @@
 	{
 		"id":"tophat2",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
 		"cmd":{"subst_param_name":"tophat2_cmd",
 			"required":"yes",
 			"subst_constructor":{
@@ -515,6 +557,8 @@
     {
 		"id":"cp_deletions_bed",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
 		"cmd":{"subst_param_name":"cp_deletions_bed",
 			"required":"no",
 			"subst_constructor":{
@@ -533,6 +577,8 @@
     {
 		"id":"cp_insertions_bed",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
 		"cmd":{"subst_param_name":"cp_insertions_bed",
 			"required":"no",
 			"subst_constructor":{
@@ -551,6 +597,8 @@
     {
 		"id":"cp_junctions_bed",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
 		"cmd":{"subst_param_name":"cp_junctions_bed",
 			"required":"no",
 			"subst_constructor":{
@@ -569,17 +617,23 @@
 	{
 		"id":"tee_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
 		"comment":"get deadlock when tee used here"
 	},
 	{
 		"id":"sam_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"samtools view -h -"
 	},
 	{
 		"id":"alterSQ_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_DICT__",
 		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
 		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
@@ -587,37 +641,51 @@
 	{
 		"id":"mbuffer_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"mbuffer -f -q -m 5M"
 	},
 	{
 		"id":"reheader_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
 		"cmd":"samtools reheader __IN_SAMHEADER__ __IN_BAM__"
 	},
 	{
 		"id":"bam12split_tophat",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bam12split verbose=0 level=0"
 	},
 	{
 		"id":"bamsort_qname",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamsort SO=queryname level=0"
 	},
 	{
 		"id":"bamreset_prealn",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamreset resetaux=0 level=0 verbose=0",
 		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip_prealn",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamadapterclip verbose=0 level=0"
 	},
 	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
 	},
 #####################################
@@ -626,6 +694,8 @@
 	{
 		"id":"alignment_filter",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
 		"cmd":{"subst_param_name":"alignment_filter",
 			"required":"yes",
 			"subst_constructor":{
@@ -682,16 +752,20 @@
 	{
 		"id":"bamsort_coord_phix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamsort SO=coordinate level=0"
 	},
 	{
 		"id":"bammarkduplicates_phix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":{"subst_param_name":"bammarkduplicates_phix",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates ",
+					"bammarkduplicates2 ",
 					"level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
@@ -706,6 +780,8 @@
 	{
 		"id":"bamrecompress_phix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
         "cmd":{"subst_param_name":"bamrecompress_phix",
             "required":"yes",
             "subst_constructor":{
@@ -749,16 +825,20 @@
 	{
 		"id":"bamsort_coord_target",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamsort SO=coordinate level=0"
 	},
 	{
 		"id":"bammarkduplicates_target",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":{"subst_param_name":"bammarkduplicates_target",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates ",
+					"bammarkduplicates2 ",
 					"level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
@@ -773,6 +853,8 @@
 	{
 		"id":"bamrecompress_target",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
         "cmd":{"subst_param_name":"bamrecompress_target",
             "required":"yes",
             "subst_constructor":{
@@ -815,21 +897,29 @@
 	{
 		"id":"bamcat_output",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
 		"cmd":"bamcat verbose=0 level=0 __PHIXBAM__ __TARGETBAM__"
 	},
 	{
 		"id":"seqchksum_output",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamseqchksum"
 	},
 	{
 		"id":"seqchksum_input",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"bamseqchksum"
 	},
 	{
 		"id":"cmp_seqchksum",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
 		"cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
 		"description":"check input primary/sequence data matches output"
 	}
