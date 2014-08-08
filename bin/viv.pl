@@ -297,7 +297,6 @@ sub _fork_off {
 		$logger->($VLMED, qq[Child $$ ; cmd: $cmd\n]);
 
 		if($do_exec) {
-			#### $SIG{'PIPE'} = 'IGNORE'; # nah - not its nature to be propagated I fear
 			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
 			select(STDERR);$|=1;
 			$node->{'STDIN'} ||= '/dev/null';
