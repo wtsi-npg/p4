@@ -739,8 +739,8 @@
 					{"subst_param_name":"logdir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_",
-					{"subst_param_name":"af_metrics_name","required":"no","default":"af_metrics.log"}
+					".",
+					{"subst_param_name":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
