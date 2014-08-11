@@ -361,7 +361,7 @@
 				"vals":[
 					{"subst_param_name":"bwa_executable","required":"no","default":"bwa"},
 					"mem",
-					"-t","12",
+					"-t",{"subst_param_name":"num_threads","required":"no","default":"12"},
 					"-p",
 					"-T","0",
 					"__REFERENCE_GENOME__",
