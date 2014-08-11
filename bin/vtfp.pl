@@ -111,7 +111,7 @@ sub walk {
 					$substitutable_params->{$param_name} = { param_name => $param_name, parent_info => [ { parent_node => $node, parent_id => $parent_id, attrib_name => $k, }, ], required => $req_param, subst_constructor => $subst_constructor, default_value => $default_value, depth => scalar @$labels, };
 				}
 				else {
-					push @{$substitutable_params->{$param_name}->{parent_info}}, { parent_node => $node, parent_id => $parent_id, };
+					push @{$substitutable_params->{$param_name}->{parent_info}}, { parent_node => $node, parent_id => $parent_id, attrib_name => $k, };
 				}
 			}
 			if(ref $node->{$k}) {
@@ -147,6 +147,8 @@ sub walk {
 				$logger->($VLMAX, "Non-ref element with ", join(q[_], @$labels));
 			}
 		}
+	}
+	elsif(ref $node eq q[JSON::XS::Boolean]) {
 	}
 	else {
 		carp "REF TYPE $r currently not processable";
