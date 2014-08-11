@@ -1,4 +1,5 @@
 {
+  "description": "Process RNASeq data in BAM files producing WTSI DNAP Sequencing Informatics BAM output (no PhiX treatment): full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
   "nodes": [
     {
       "id": "bmd_tee1",
@@ -931,6 +932,5 @@
       "from": "seqchksum_input",
       "to": "cmp_seqchksum:__INPUTCHK__"
     }
-  ],
-  "description": "Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc"
+  ]
 }
