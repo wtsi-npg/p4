@@ -297,6 +297,7 @@ sub _fork_off {
 		$logger->($VLMED, qq[Child $$ ; cmd: $cmd\n]);
 
 		if($do_exec) {
+			$0 .= q{ (pending }.$node->{'id'}.qq{: $cmd)}; #rename process so fork can be easily identified whilst open waits on fifo
 			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
 			select(STDERR);$|=1;
 			$node->{'STDIN'} ||= '/dev/null';
