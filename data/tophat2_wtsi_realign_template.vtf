@@ -427,7 +427,7 @@
               "default": "tophat_out"
             },
             "--mate-inner-dist","100",
-            "--num-threads","12",
+            "--num-threads",{"subst_param_name":"num_threads","required":"no","default":"12"},
             "--library-type", {"subst_param_name":"library_type","required":"no","default":"fr-firststrand"},
             "--no-coverage-search",
             "--microexon-search",
