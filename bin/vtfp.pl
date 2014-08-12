@@ -81,7 +81,22 @@ for my $vtnode (@$vtf_nodes) {
 
 	my $subcfg = read_the_vtf($vtnode->{name});
 
-	# perform any param substitutions in the the subgraph
+	# perform any param substitutions in the the subgraph after adding/overriding any subst_request mappings specified via subst_map
+	my $stash = { del_keys => [], store_vals => {}, };
+	my $subst_map = {};
+	if($subst_map = $vtnode->{subst_map}) {
+		for my $smk (keys %$subst_map) {
+			if(exists $subst_requests{$smk}) {
+				$stash->{store_vals}->{$smk} = $subst_requests{$smk};   # check subst_map for multiple use of same key?
+			}
+			else {
+				push @{$stash->{del_keys}}, $smk;
+			}
+			$subst_requests{$smk} = $subst_map->{$smk};
+		}
+	}
+
+
 	my $substitutable_params = walk($subcfg, [], {});
 	do_substitutions($substitutable_params, \%subst_requests, $query_mode);
 
@@ -139,6 +154,14 @@ for my $vtnode (@$vtf_nodes) {
 			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
 			next;
 		}
+	}
+
+	# restore subst_request mappings to original state
+	for my $smk (keys %{$stash->{store_vals}}) {
+		$subst_requests{$smk} = $subst_map->{$smk};
+	}
+	for my $dk (@{$stash->{del_keys}}) {
+		delete $subst_requests{$dk};
 	}
 }
 
@@ -341,7 +364,10 @@ sub resolve_subst_to_string {
 		$parent_id ||= q[NO_PARENT_ID];   # should be ARRAY?
 
 		if($subst_param->{required} and not $query_mode) { # required means "must be specified by the caller", so default value is disregarded
-			$logger->($VLFATAL, q[No substitution specified for required substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
+#			$logger->($VLFATAL, q[No substitution specified for required substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
+			# NOTE: the decision to fail can only be decided at the top level of the subst_param structure
+			$logger->($VLMIN, q[No substitution specified for required substitutable param ], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id);
+			return;
 		}
 
 		$subst_value = $subst_param->{default_value};
@@ -521,3 +547,4 @@ sub read_the_vtf {
 
 	return $cfg;
 }
+
