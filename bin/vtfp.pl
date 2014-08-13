@@ -54,9 +54,11 @@ my %subst_requests;
 $query_mode ||= 0;
 $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[vtfp]);
+$logger->($VLMIN, 'vtfp.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $vtf_name = $ARGV[0];
 
 croak q[template file unspecified] unless($vtf_name);
+$logger->($VLMED, 'Using template file '.$vtf_name);
 
 my $out;
 if($outname) { open $out, ">$outname" or croak "Failed to open $outname for output"; } else { $out = *STDOUT; }
