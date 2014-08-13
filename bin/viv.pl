@@ -14,6 +14,8 @@ use Carp;
 
 use Data::Dumper;
 
+our $VERSION = '0';
+
 Readonly::Scalar my $FROM => 0;
 Readonly::Scalar my $TO => 1;
 Readonly::Scalar my $VLALWAYSLOG => 0;
@@ -34,6 +36,7 @@ my $logfile = $opts{o};
 my $verbosity_level = $opts{v};
 $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[viv]);
+$logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
 
@@ -286,7 +289,7 @@ sub _fork_off {
 	if ( ref $cmd eq 'ARRAY' ){
 		@cmd = @{$cmd};
 		$cmd = '[' . (join ',',@cmd)  . ']';
-	} 
+	}
 
 	if(my $pid=fork) {     # parent - record the child's departure
 		$logger->($VLMED, qq[*** Forked off pid $pid with cmd: $cmd\n]);
