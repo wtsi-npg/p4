@@ -36,6 +36,7 @@ my $logfile = $opts{o};
 my $verbosity_level = $opts{v};
 $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[viv]);
+$logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
 
