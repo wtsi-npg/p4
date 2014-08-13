@@ -19,6 +19,8 @@ use JSON;
 use Carp;
 use Readonly;
 
+our $VERSION = '0';
+
 Readonly::Scalar my $VLFATAL => -2;
 
 Readonly::Scalar my $VLMIN => 1;
@@ -43,8 +45,8 @@ if($help) {
 }
 
 # allow multiple options to be separated by commas
-my @keys = split(/,/, join(',', @keys));
-my @vals = split(/,/, join(',', @vals));
+@keys = split(/,/, join(',', @keys));
+@vals = split(/,/, join(',', @vals));
 
 my %subst_requests;
 @subst_requests{@keys} = @vals;
@@ -52,9 +54,11 @@ my %subst_requests;
 $query_mode ||= 0;
 $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[vtfp]);
+$logger->($VLMIN, 'vtfp.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $vtf_name = $ARGV[0];
 
 croak q[template file unspecified] unless($vtf_name);
+$logger->($VLMED, 'Using template file '.$vtf_name);
 
 my $out;
 if($outname) { open $out, ">$outname" or croak "Failed to open $outname for output"; } else { $out = *STDOUT; }
@@ -90,7 +94,7 @@ if($absolute_program_paths){
 unless($query_mode) { print $out to_json($cfg) };
 
 #########################################################################
-# walk: walk the config structure, identifying substitable params and add 
+# walk: walk the config structure, identifying substitable params and add
 #  an entry for them in the substitutable_params hash
 #########################################################################
 sub walk {
@@ -126,7 +130,7 @@ sub walk {
 	}
 	elsif(ref $node eq q[ARRAY]) {
 		for my $i (0 .. $#{$node}) {
-			# if one of the elements is a subst_param hash, 
+			# if one of the elements is a subst_param hash,
 			if(ref $node->[$i] eq q[HASH] and my $param_name = $node->[$i]->{subst_param_name}) {
 				my $req_param = ($node->[$i]->{required} and $node->[$i]->{required} eq q[yes])? 1: 0;
 				my $subst_constructor = $node->[$i]->{subst_constructor};  # I expect this will always be an ARRAY ref, though this will only be enforced by the caller
@@ -147,6 +151,8 @@ sub walk {
 				$logger->($VLMAX, "Non-ref element with ", join(q[_], @$labels));
 			}
 		}
+	}
+	elsif(ref $node eq q[JSON::XS::Boolean]) {
 	}
 	else {
 		carp "REF TYPE $r currently not processable";
@@ -272,14 +278,14 @@ sub resolve_subst_to_string {
 # resolve_subst_array
 #   caller will have already flattened the array (i.e. no ref elements)
 #   process as specified by op directives (pack, concat,...)
-#   validate proposed substitution value 
+#   validate proposed substitution value
 #      1. if it contains any undef elements, it is invalid.
 #      2. if it contains any null string elements but no allow_null_strings opt, it is invalid.
-#      
+#
 #   if invalid and a default is supplied, substition value becomes default (without further validation)
 #   if undef and required, fatal error
 #   return substitution value
-#      
+#
 #   NOTE: this will return undef if no subst_value is given, the sustitution isn't required, and there
 #    is no default
 ############################################################################################################
