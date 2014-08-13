@@ -280,10 +280,11 @@
 	},
 	{
 		"id":"tee_input",
+		"comment":"prelim investigations suggest better CPU/wall time with mbuffer in place of tee",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO__"
+		"use_STDOUT": false,
+		"cmd":"mbuffer -f -q -m 1G -o __OUT1__ -o __OUT2__"
 	},
 	{
 		"id":"bamrecompress_input",
@@ -811,7 +812,7 @@
 	},
 	{
 		"id":"ti_to_brc",
-		"from":"tee_input",
+		"from":"tee_input:__OUT1__",
 		"to":"bamrecompress_input"
 	},
 	{
@@ -821,7 +822,7 @@
 	},
 	{
 		"id":"ti_to_bamcollate2_ranking",
-		"from":"tee_input:__FIFO__",
+		"from":"tee_input:__OUT2__",
 		"to":"bamcollate2_ranking"
 	},
 	{
