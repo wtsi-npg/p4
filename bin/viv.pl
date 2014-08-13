@@ -14,6 +14,8 @@ use Carp;
 
 use Data::Dumper;
 
+our $VERSION = '0';
+
 Readonly::Scalar my $FROM => 0;
 Readonly::Scalar my $TO => 1;
 Readonly::Scalar my $VLALWAYSLOG => 0;
@@ -286,7 +288,7 @@ sub _fork_off {
 	if ( ref $cmd eq 'ARRAY' ){
 		@cmd = @{$cmd};
 		$cmd = '[' . (join ',',@cmd)  . ']';
-	} 
+	}
 
 	if(my $pid=fork) {     # parent - record the child's departure
 		$logger->($VLMED, qq[*** Forked off pid $pid with cmd: $cmd\n]);
