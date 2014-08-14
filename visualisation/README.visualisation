@@ -3,7 +3,8 @@ First kick off a webserver:
 $ python -m SimpleHTTPServer 8888
 
 Then use your browser to look at the configs:
-  http://sf2-farm-srv2.internal.sanger.ac.uk:8888/config_view.html?cfg_name=bwa_aln
-  http://sf2-farm-srv2.internal.sanger.ac.uk:8888/config_view.html?cfg_name=tophat2
+  http://SERVER_NAME:8888/config_view.html?cfg_name=bwa_aln
+  http://SERVER_NAME:8888/config_view.html?cfg_name=tophat2
 
+where "SERVER_NAME" is the name of your webserver.
 
