@@ -63,25 +63,114 @@ $logger->($VLMED, 'Using template file '.$vtf_name);
 my $out;
 if($outname) { open $out, ">$outname" or croak "Failed to open $outname for output"; } else { $out = *STDOUT; }
 
-my $s = read_file($vtf_name);
-my $cfg = from_json($s);
-
-my $substitutable_params = {};
-walk($cfg, []);
+my $cfg = read_the_vtf($vtf_name);
+my $substitutable_params = walk($cfg, [], {});
 
 if($query_mode) { print join("\t", qw[KeyID Req Id RawAttrib]), "\n"; }
-for my $subst_param_name (sort { $substitutable_params->{$a}->{depth} <=> $substitutable_params->{$b}->{depth} } (keys %$substitutable_params)) {
 
-	if(not $query_mode and $substitutable_params->{$subst_param_name}->{processed}) {
-		next;
+do_substitutions($substitutable_params, \%subst_requests, $query_mode);
+
+############################################################################
+# now search the processed graph for subgraphs. Expand the subgraphs using
+#  walk() and make_substitutions() as before
+# Bear in mind that there may be nested subgraphs (beware of Russian dolls).
+# Also a check should be made to avoid infinite recursion where A includes B
+# and B includes A (however camouflaged).
+# The issue of query_mode needs revisiting very soon.
+############################################################################
+my $arbitrary_prefix = 0;
+my $vtf_nodes = [ (grep { $_->{type} eq q[VTFILE]; } @{$cfg->{nodes}}) ];
+for my $vtnode (@$vtf_nodes) {
+	$arbitrary_prefix++;
+
+	my $subcfg = read_the_vtf($vtnode->{name});
+
+	# perform any param substitutions in the the subgraph after adding/overriding any subst_request mappings specified via subst_map
+	my $stash = { del_keys => [], store_vals => {}, };
+	my $subst_map = {};
+	if($subst_map = $vtnode->{subst_map}) {
+		for my $smk (keys %$subst_map) {
+			if(exists $subst_requests{$smk}) {
+				$stash->{store_vals}->{$smk} = $subst_requests{$smk};   # check subst_map for multiple use of same key?
+			}
+			else {
+				push @{$stash->{del_keys}}, $smk;
+			}
+			$subst_requests{$smk} = $subst_map->{$smk};
+		}
 	}
 
-	my $subst_value = make_substitutions($subst_param_name, $substitutable_params, \%subst_requests, $query_mode);
 
-	if($query_mode) {
-		print $out join(qq[\t], ($subst_param_name, ($substitutable_params->{$subst_param_name}->{required}? q[required]: q[not_required]), $substitutable_params->{$subst_param_name}->{parent_id}, $substitutable_params->{$subst_param_name,}->{attrib_name}, )), "\n";
+	my $substitutable_params = walk($subcfg, [], {});
+	do_substitutions($substitutable_params, \%subst_requests, $query_mode);
+
+	# add the new nodes and edges to the top-level graph (id alterations will be done first to ensure no clash with existing ids [WIP])
+	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%03d_%s", $arbitrary_prefix, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
+	$subcfg->{edges} = [ (map { $_->{from} = sprintf "%03d_%s", $arbitrary_prefix, $_->{from}; $_->{to} = sprintf "%03d_%s", $arbitrary_prefix, $_->{to}; $_; } @{$subcfg->{edges}}) ];
+	push @{$cfg->{nodes}}, @{$subcfg->{nodes}};
+	push @{$cfg->{edges}}, @{$subcfg->{edges}};  # in the first instance, I'm assuming this subgraph has no subgraphs of its own
+
+	# determine input node(s) in the subgraph
+	my $subgraph_nodes_in = $subcfg->{subgraph_io}->{ports}->{inputs};
+	my $subgraph_nodes_out = $subcfg->{subgraph_io}->{ports}->{outputs};
+
+	# now fiddle the edges in the top-level cfg
+
+	#  first inputs to the subgraph...
+	my $in_edges = [ (grep { $_->{to} =~ /^$vtnode->{id}(:|$)/; } @{$cfg->{edges}}) ];
+	if(@$in_edges and not $subgraph_nodes_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No inputs specified in subgraph ], $vtnode->{name}); }
+	for my $edge (@$in_edges) {
+		if($edge->{to} =~ /^$vtnode->{id}:?(.*)$/) {
+			my $portkey = $1;
+			$portkey ||= q[_stdin_];
+
+			my $port;
+			unless(($port = $subgraph_nodes_in->{$portkey})) {
+				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode->{id}, q[:], $portkey);
+			}
+
+			# do check for existence of port in 
+			$edge->{to} = sprintf "%03d_%s", $arbitrary_prefix, $port;
+		}
+		else {
+			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
+			next;
+		}
+	}
+
+	#  ...then outputs from the subgraph
+	my $out_edges = [ (grep { $_->{from} =~ /^$vtnode->{id}(:|$)/; } @{$cfg->{edges}}) ];
+	if(@$out_edges and not $subgraph_nodes_out) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No outputs specified in subgraph ], $vtnode->{name}); }
+	for my $edge (@$out_edges) {
+		if($edge->{from} =~ /^$vtnode->{id}:?(.*)$/) {
+			my $portkey = $1;
+			$portkey ||= q[_stdout_];
+
+			my $port;
+			unless(($port = $subgraph_nodes_out->{$portkey})) {
+				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode->{id}, q[:], $portkey);
+			}
+
+			# do check for existence of port in 
+			$edge->{from} = sprintf "%03d_%s", $arbitrary_prefix, $port;
+		}
+		else {
+			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
+			next;
+		}
+	}
+
+	# restore subst_request mappings to original state
+	for my $smk (keys %{$stash->{store_vals}}) {
+		$subst_requests{$smk} = $subst_map->{$smk};
+	}
+	for my $dk (@{$stash->{del_keys}}) {
+		delete $subst_requests{$dk};
 	}
 }
+
+# now remove all the VTFILE nodes (assumption: all remappings were sucessful and complete)
+$cfg->{nodes} = [ (grep { $_->{type} ne q[VTFILE]; } @{$cfg->{nodes}}) ];
 
 if($absolute_program_paths){
         foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$cfg->{'nodes'}}) {
@@ -93,16 +182,16 @@ if($absolute_program_paths){
 
 unless($query_mode) { print $out to_json($cfg) };
 
-#########################################################################
-# walk: walk the config structure, identifying substitable params and add
-#  an entry for them in the substitutable_params hash
-#########################################################################
+#######################################################################
+# walk: walk the config structure, identifying substitutable params and
+#  add an entry for them in the substitutable_params hash
+#######################################################################
 sub walk {
-	my ($node, my $labels) = @_;
+	my ($node, $labels, $substitutable_params) = @_;
 
 	my $r = ref $node;
 	if(!$r) {
-		return;	# substitution only triggered by key names
+		return $substitutable_params;	# substitution only triggered by key names
 	}
 	elsif(ref $node eq q[HASH]) {
 		for my $k (keys %$node) {
@@ -120,7 +209,7 @@ sub walk {
 			}
 			if(ref $node->{$k}) {
 				push @$labels, $k;
-				walk($node->{$k}, $labels);
+				walk($node->{$k}, $labels, $substitutable_params);
 				pop @$labels;
 			}
 			else {
@@ -144,7 +233,7 @@ sub walk {
 			}
 			if(ref $node->[$i]) {
 				push @$labels, $i;
-				walk($node->[$i], $labels);   # index
+				walk($node->[$i], $labels, $substitutable_params);   # index
 				pop @$labels;
 			}
 			else {
@@ -158,7 +247,26 @@ sub walk {
 		carp "REF TYPE $r currently not processable";
 	}
 
-	return;
+	return $substitutable_params;
+}
+
+sub do_substitutions {
+	my ($substitutable_params, $subst_requests, $query_mode) = @_;
+
+	for my $subst_param_name (sort { $substitutable_params->{$a}->{depth} <=> $substitutable_params->{$b}->{depth} } (keys %$substitutable_params)) {
+
+		if(not $query_mode and $substitutable_params->{$subst_param_name}->{processed}) {
+			next;
+		}
+
+		my $subst_value = make_substitutions($subst_param_name, $substitutable_params, \%subst_requests, $query_mode);
+
+		if($query_mode) {
+			print $out join(qq[\t], ($subst_param_name, ($substitutable_params->{$subst_param_name}->{required}? q[required]: q[not_required]), $substitutable_params->{$subst_param_name}->{parent_id}, $substitutable_params->{$subst_param_name,}->{attrib_name}, )), "\n";
+		}
+	}
+
+	return $substitutable_params;
 }
 
 #################################################################################################################
@@ -262,7 +370,10 @@ sub resolve_subst_to_string {
 		$parent_id ||= q[NO_PARENT_ID];   # should be ARRAY?
 
 		if($subst_param->{required} and not $query_mode) { # required means "must be specified by the caller", so default value is disregarded
-			$logger->($VLFATAL, q[No substitution specified for required substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
+#			$logger->($VLFATAL, q[No substitution specified for required substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
+			# NOTE: the decision to fail can only be decided at the top level of the subst_param structure
+			$logger->($VLMIN, q[No substitution specified for required substitutable param ], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id);
+			return;
 		}
 
 		$subst_value = $subst_param->{default_value};
@@ -424,5 +535,22 @@ sub mklogger {
 
 		return;
 	}
+}
+
+######################################################################
+# read_the_vtf:
+#  Open the file, read the JSON content, convert to hash and return it
+######################################################################
+sub read_the_vtf {
+	my ($vtf_name) = @_;
+
+	if(! -e $vtf_name) {
+		$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_name);
+	}
+
+	my $s = read_file($vtf_name);
+	my $cfg = from_json($s);
+
+	return $cfg;
 }
 

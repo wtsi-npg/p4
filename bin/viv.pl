@@ -24,7 +24,7 @@ Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
-getopts('xshv:o:', \%opts);
+getopts('xshv:o:r:t:', \%opts);
 
 if($opts{h}) {
 	die qq{viv.pl [-s] [-x] [-v <verbose_level>] [-o <logname>] <config.json>\n};
@@ -39,6 +39,8 @@ my $logger = mklogger($verbosity_level, $logfile, q[viv]);
 $logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
+my $raf_list = process_raf_list($opts{r});    # insert inline RAFILE nodes
+my $tee_list = process_raf_list($opts{t});    # insert tee with branch to RAFILE
 
 my $s = read_file($cfg_file_name);
 
@@ -92,16 +94,8 @@ $logger->($VLMAX, "\n==================================\nEXEC nodes(post RAFILE 
 #  otherwise via file whose name is determined by the non-EXEC node's name attribute (communication
 #  between two non-EXEC nodes is of questionable value and is currently considered an error).
 for my $edge (@{$edges}) {
-	my $from_node = $all_nodes{$edge->{from}};
-	my $to_node = $all_nodes{$edge->{to}};
-
-	my $from_node;
-	my ($from_id, $from_port);
-	($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
-
-	my $to_node;
-	my ($to_id, $to_port);
-	($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
+	my ($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
+	my ($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
 	my $data_xfer_name;
 
 	if($from_node->{type} eq q[EXEC]) {
@@ -360,5 +354,16 @@ sub mklogger {
 
 		return;
 	}
+}
+
+sub process_raf_list {
+	my ($rafs) = @_;
+	my $raf_map;
+
+	if($rafs) {
+		$raf_map = { (map {  (split '=', $_); } (split /;/, $rafs)) };
+	}
+
+	return $raf_map;
 }
 
