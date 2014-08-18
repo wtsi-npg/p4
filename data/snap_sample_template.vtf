@@ -1,0 +1,944 @@
+{
+"description":"Run the SNAP short read aligner on fastq files (converted from BAM files) within the NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recording indexing sequence etc",
+"nodes":[
+	{
+		"id":"bmd_phix_tee0",
+		"type":"EXEC",
+		"cmd":"tee __pFIFO0__"
+	},
+	{
+		"id":"bmd_tee1",
+		"type":"EXEC",
+		"cmd":"tee __FIFO1__"
+	},
+	{
+		"id":"bmd_tee2",
+		"type":"EXEC",
+		"cmd":"tee __FIFO2__"
+	},
+	{
+		"id":"bmd_tee3",
+		"type":"EXEC",
+		"cmd":"tee __FIFO3__"
+	},
+	{
+		"id":"bmd_phix_tee1",
+		"type":"EXEC",
+		"cmd":"tee __pFIFO1__"
+	},
+	{
+		"id":"bmd_phix_tee2",
+		"type":"EXEC",
+		"cmd":"tee __pFIFO2__"
+	},
+	{
+		"id":"scramble",
+		"type":"EXEC",
+		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
+	},
+	{
+		"id":"bamcheck",
+		"type":"EXEC",
+		"cmd":"bamcheck"
+	},
+	{
+		"id":"flagstat",
+		"type":"EXEC",
+		"cmd":"samtools flagstat -"
+	},
+	{
+		"id":"scramble_phix",
+		"type":"EXEC",
+		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
+	},
+	{
+		"id":"bamcheck_phix",
+		"type":"EXEC",
+		"cmd":"bamcheck"
+	},
+	{
+		"id":"flagstat_phix",
+		"type":"EXEC",
+		"cmd":"samtools flagstat -"
+	},
+	{
+		"id":"phix_cram",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"phix_cram",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.cram"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"cram",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"cram",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".cram"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_phix_bamcheck",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_bamcheck",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.bamcheck"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_bamcheck",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_bamcheck",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".bamcheck"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_phix_flagstat",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_flagstat",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.flagstat"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_flagstat",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_flagstat",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".flagstat"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"reference_genome_fasta",
+		"type":"INFILE",
+		"name":{"subst_param_name":"reference_genome_fasta",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"refname_fasta","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and snap index files"
+	},
+	{
+		"id":"phix_reference_genome_fasta",
+		"type":"INFILE",
+		"name":{"subst_param_name":"phix_reference_genome_fasta",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"phix_refname_fasta","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and snap index files"
+	},
+	{
+		"id":"reference_genome",
+		"type":"INFILE",
+		"name":{"subst_param_name":"reference_genome",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"refname","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and snap index files"
+	},
+	{
+		"id":"reference_dict",
+		"type":"INFILE",
+		"name":{"subst_param_name":"reference_dict",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"refdictname","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
+	{
+		"id":"src_bam",
+		"type":"INFILE",
+		"name":{"subst_param_name":"src_bam",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"indatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".bam"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"BAM using as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
+	},
+	{
+		"id":"bamcollate2",
+		"type":"EXEC",
+		"cmd":["bamcollate2", "collate=1", "level=0"],
+		"comment":"ensure BAM records are gathered by template i.e. queryname"
+	},
+	{
+		"id":"tee_input",
+		"type":"EXEC",
+		"cmd":"tee __FIFO__"
+	},
+	{
+		"id":"bamrecompress_input",
+		"type":"EXEC",
+		"cmd":"bamrecompress verbose=0 numthreads=2"
+	},
+	{
+		"id":"int_adp_bam",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"int_clipped_adapters_bam",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"int_clipped_adapters_bam_name",
+						"required":"no",
+						"default":"int_adp.bam",
+						"subst_constructor":{
+							"vals":[
+								"int_adp_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".bam"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"bamcollate2_ranking",
+		"type":"EXEC",
+		"cmd":"bamcollate2 collate=3 level=0",
+		"comment":"already collated suitably - just here to do the ranking in the name"
+	},
+	{
+		"id":"bamreset_snap",
+		"type":"EXEC",
+		"cmd":"bamreset resetaux=0 level=0 verbose=0",
+		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
+	},
+	{
+		"id":"bamadapterclip",
+		"type":"EXEC",
+		"cmd":"bamadapterclip verbose=0 level=0",
+		"description":"Hard clip adapter sequence from reads before feeding to SNAP"
+	},
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"cmd":["bamtofastq", "gz=1", "F=__FQOUT1__", "F2=__FQOUT2__"]
+	},
+	{
+		"id":"fq1",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"fastq1",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"fastq1_name",
+						"required":"no",
+						"default":"intfile_1.fq.gz",
+						"subst_constructor":{
+							"vals":[
+								"intfile_1_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".fq.gz"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"fq2",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"fastq2",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"fastq2_name",
+						"required":"no",
+						"default":"intfile_2.fq.gz",
+						"subst_constructor":{
+							"vals":[
+								"intfile_2_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".fq.gz"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"snap",
+		"type":"EXEC",
+		"cmd":{"subst_param_name":"snap_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					"snap",
+					"paired",
+					"__REFERENCE_GENOME__/snap",
+					"__FQIN1__",
+					"__FQIN2__",
+					"-o",
+					{"subst_param_name":"snap_out",
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								{"subst_param_name":"snap_dir","required":"no","default":"snap_outdir"},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"},
+								"_snap_output.bam"
+							],
+							"postproc":{"op":"concat","pad":""}
+						},
+						"default":"snap_outdir/snap_output.bam"
+					},
+					"-t","24",
+					"--hp",
+                                        "-rg",
+                                       {"subst_param_name":"rg_name","required":"yes"}
+                                       ],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
+	},
+	{
+		"id":"snap_hits_bam",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst_param_name":"snap_out_ra",
+			"required":"no",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"snap_dir","required":"no","default":"snap_outdir"},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_snap_output.bam"
+				],
+				"postproc":{"op":"concat","pad":""}
+			},
+			"default":"snap_outdir/snap_output.bam"
+		}
+	},
+	{
+		"id":"tee_headerSQfix",
+		"type":"EXEC",
+		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
+		"comment":"get deadlock when tee used here"
+	},
+	{
+		"id":"sam_headerSQfix",
+		"type":"EXEC",
+		"cmd":"samtools view -h -"
+	},
+	{
+		"id":"alterSQ_headerSQfix",
+		"type":"EXEC",
+		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_DICT__",
+		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
+		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
+	},
+	{
+		"id":"mbuffer_headerSQfix",
+		"type":"EXEC",
+		"cmd":"mbuffer -f -q -m 5M"
+	},
+	{
+		"id":"reheader_headerSQfix",
+		"type":"EXEC",
+		"cmd":"samtools reheader __IN_SAMHEADER__ __IN_BAM__"
+	},
+	{
+		"id":"bam12split_snap",
+		"type":"EXEC",
+		"cmd":"bam12split verbose=0 level=0"
+	},
+	{
+		"id":"bamsort_qname",
+		"type":"EXEC",
+		"cmd":"bamsort SO=queryname level=0"
+	},
+	{
+		"id":"bamreset_prealn",
+		"type":"EXEC",
+		"cmd":"bamreset resetaux=0 level=0 verbose=0",
+		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
+	},
+	{
+		"id":"bamadapterclip_prealn",
+		"type":"EXEC",
+		"cmd":"bamadapterclip verbose=0 level=0"
+	},
+	{
+		"id":"bam12auxmerge",
+		"type":"EXEC",
+		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
+	},
+#####################################
+# alignment filter and metrics output
+#####################################
+	{
+		"id":"alignment_filter",
+		"type":"EXEC",
+		"cmd":{"subst_param_name":"alignment_filter",
+			"required":"yes",
+			"subst_constructor":{
+			"vals":[
+					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
+					"-Xmx1000m",
+					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/nfs/users/nfs_d/dj3/repos/illumina2bam/dist/AlignmentFilter.jar"},
+					"IN=__PHIX_INBAM__",
+					"IN=__TARGET_INBAM__",
+					"OUT=__PHIX_OUTBAM__",
+					"OUT=/dev/stdout",
+					"METRICS_FILE=__AF_METRICS__",
+					"VALIDATION_STRINGENCY=SILENT",
+					"CREATE_MD5_FILE=false",
+					"VERBOSITY=INFO",
+					"QUIET=false",
+					"COMPRESSION_LEVEL=5",
+					"MAX_RECORDS_IN_RAM=500000",
+					"CREATE_INDEX=false"
+				],
+				"postproc":{"op":"noconcat", "pad":" "}
+			}
+		}
+	},
+	{
+		"id":"af_metrics",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"af_metrics",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"logdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_",
+					{"subst_param_name":"af_metrics_name","required":"no","default":"af_metrics.log"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+#######################
+# phiX final processing
+#######################
+	{
+		"id":"bamsort_coord_phix",
+		"type":"EXEC",
+		"cmd":"bamsort SO=coordinate level=0"
+	},
+	{
+		"id":"bammarkduplicates_phix",
+		"type":"EXEC",
+		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
+	},
+	{
+		"id":"bamrecompress_phix",
+		"type":"EXEC",
+		"cmd":"bamrecompress numthreads=2"
+	},
+	{
+		"id":"phix_bam",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"phix_bam",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_",
+					{"subst_param_name":"phix_bam_name","required":"no","default":"phix.bam"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+#############################
+# target BAM final processing
+#############################
+	{
+		"id":"bamsort_coord_target",
+		"type":"EXEC",
+		"cmd":"bamsort SO=coordinate level=0"
+	},
+	{
+		"id":"bammarkduplicates_target",
+		"type":"EXEC",
+		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
+	},
+	{
+		"id":"bamrecompress_target",
+		"type":"EXEC",
+		"cmd":"bamrecompress numthreads=2"
+	},
+	{
+		"id":"target_bam",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"target_bam",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_",
+					{"subst_param_name":"bam_name","required":"no","default":"aln.bam"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+##################################################
+# check input primary/sequence data matches output
+##################################################
+	{
+		"id":"bamcat_output",
+		"type":"EXEC",
+		"cmd":"bamcat verbose=0 level=0 __PHIXBAM__ __TARGETBAM__"
+	},
+	{
+		"id":"seqchksum_output",
+		"type":"EXEC",
+		"cmd":"bamseqchksum"
+	},
+	{
+		"id":"seqchksum_input",
+		"type":"EXEC",
+		"cmd":"bamseqchksum"
+	},
+	{
+		"id":"cmp_seqchksum",
+		"type":"EXEC",
+		"cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
+		"description":"check input primary/sequence data matches output"
+	}
+],
+"edges":[
+	{
+		"id":"ref_to_scramble",
+		"from":"reference_genome_fasta",
+		"to":"scramble:__REFERENCE_GENOME__"
+	},
+	{
+		"id":"ref_to_scramble_phix",
+		"from":"phix_reference_genome_fasta",
+		"to":"scramble_phix:__REFERENCE_GENOME__"
+	},
+	{   
+		"id":"bammarkduplicates_phix_to_tee",
+		"from":"bammarkduplicates_phix",
+		"to":"bmd_phix_tee0"
+	},
+	{   
+		"id":"bmd_phix_tee0_to_bmd_phix_tee0",
+		"from":"bmd_phix_tee0:__pFIFO0__",
+		"to":"bmd_phix_tee1"
+	},
+	{   
+		"id":"bammarkduplicates_to_tee",
+		"from":"bammarkduplicates_target",
+		"to":"bmd_tee1"
+	},
+	{   
+		"id":"tee_to_scramble_phix",
+		"from":"bmd_phix_tee1:__pFIFO1__",
+		"to":"scramble_phix"
+	},
+	{   
+		"id":"tee_to_scramble",
+		"from":"bmd_tee1:__FIFO1__",
+		"to":"scramble"
+	},
+	{   
+		"id":"bmd_phix_tee1_to_bmd_phix_tee2",
+		"from":"bmd_phix_tee1",
+		"to":"bmd_phix_tee2"
+	},
+	{   
+		"id":"bmd_tee1_to_bmd_tee2",
+		"from":"bmd_tee1",
+		"to":"bmd_tee2"
+	},
+	{
+		"id":"tee_phix_to_bamcheck_phix",
+		"from":"bmd_phix_tee2",
+		"to":"bamcheck_phix"
+	},
+	{
+		"id":"tee_to_bamcheck",
+		"from":"bmd_tee2:__FIFO2__",
+		"to":"bamcheck"
+	},
+	{
+		"id":"bmd_tee2_to_bmd_tee3",
+		"from":"bmd_tee2",
+		"to":"bmd_tee3"
+	},
+	{
+		"id":"bmd_tee2_phix_to_flagstat",
+		"from":"bmd_phix_tee2:__pFIFO2__",
+		"to":"flagstat_phix"
+	},
+	{
+		"id":"bmd_tee3_to_flagstat",
+		"from":"bmd_tee3:__FIFO3__",
+		"to":"flagstat"
+	},
+	{
+		"id":"scramble_to_phix_cram",
+		"from":"scramble_phix",
+		"to":"phix_cram"
+	},
+	{
+		"id":"scramble_to_cram",
+		"from":"scramble",
+		"to":"cram"
+	},
+	{
+		"id":"bamcheck_to_phix",
+		"from":"bamcheck_phix",
+		"to":"out_phix_bamcheck"
+	},
+	{
+		"id":"bamcheck_to_out",
+		"from":"bamcheck",
+		"to":"out_bamcheck"
+	},
+	{
+		"id":"flagstat_to_phix",
+		"from":"flagstat_phix",
+		"to":"out_phix_flagstat"
+	},
+	{
+		"id":"flagstat_to_out",
+		"from":"flagstat",
+		"to":"out_flagstat"
+	},
+	{
+		"id":"ref_to_snap",
+		"from":"reference_genome",
+		"to":"snap:__REFERENCE_GENOME__"
+	},
+	{
+		"id":"src_to_bc2",
+		"from":"src_bam",
+		"to":"bamcollate2"
+	},
+	{
+		"id":"bc2_to_ti",
+		"from":"bamcollate2",
+		"to":"tee_input"
+	},
+	{
+		"id":"ti_to_brc",
+		"from":"tee_input",
+		"to":"bamrecompress_input"
+	},
+	{
+		"id":"brc_to_int_adp_bam",
+		"from":"bamrecompress_input",
+		"to":"int_adp_bam"
+	},
+############################################################
+# snap alignment
+############################################################
+	{
+		"id":"ti_to_bamcollate2_ranking",
+		"from":"tee_input:__FIFO__",
+		"to":"bamcollate2_ranking"
+	},
+	{
+		"id":"bamcollate2_ranking_to_bamreset_snap",
+		"from":"bamcollate2_ranking",
+		"to":"bamreset_snap"
+	},
+	{
+		"id":"bamreset_snap_to_bamtofastq",
+		"from":"bamreset_snap",
+		"to":"bamadapterclip"
+	},
+	{
+		"id":"bamadapterclip_to_bamtofastq",
+		"from":"bamadapterclip",
+		"to":"bamtofastq"
+	},
+	{
+		"id":"bamtofastq_to_fq1",
+		"from":"bamtofastq:__FQOUT1__",
+		"to":"fq1"
+	},
+	{
+		"id":"bamtofastq_to_fq2",
+		"from":"bamtofastq:__FQOUT2__",
+		"to":"fq2"
+	},
+	{
+		"id":"fq1_to_snap",
+		"from":"fq1",
+		"to":"snap:__FQIN1__"
+	},
+	{
+		"id":"fq2_to_snap",
+		"from":"fq2",
+		"to":"snap:__FQIN2__"
+	},
+	{
+		"id":"snap_to_snap_hits_bam",
+		"from":"snap",
+		"to":"snap_hits_bam"
+	},
+	{
+		"id":"snap_hits_bam_to_tee_headerSQfix",
+		"from":"snap_hits_bam",
+		"to":"tee_headerSQfix"
+	},
+	{
+		"id":"tee_headerSQfix_to_sam",
+		"from":"tee_headerSQfix:__OUT1__",
+		"to":"sam_headerSQfix"
+	},
+	{
+		"id":"reference_dict_to_sam_headerSQfix",
+		"from":"reference_dict",
+		"to":"alterSQ_headerSQfix:__IN_DICT__"
+	},
+	{
+		"id":"sam_headerSQfix_to_alterSQ",
+		"from":"sam_headerSQfix",
+		"to":"alterSQ_headerSQfix"
+	},
+	{
+		"id":"alterSQ_headerSQfix_to_reheader",
+		"from":"alterSQ_headerSQfix",
+		"to":"reheader_headerSQfix:__IN_SAMHEADER__"
+	},
+	{
+		"id":"tee_headerSQfix_to_mbuffer",
+		"from":"tee_headerSQfix",
+		"to":"mbuffer_headerSQfix"
+	},
+	{
+		"id":"mbuffer_headerSQfix_to_reheader",
+		"from":"mbuffer_headerSQfix",
+		"to":"reheader_headerSQfix:__IN_BAM__"
+	},
+	{
+		"id":"reheader_headerSQfix_to_bam12split_snap",
+		"from":"reheader_headerSQfix",
+		"to":"bam12split_snap"
+	},
+	{
+		"id":"bam12split_snap_to_bamsort_qname",
+		"from":"bam12split_snap",
+		"to":"bamsort_qname"
+	},
+	{
+		"id":"bam_to_bamreset_prealn",
+		"from":"int_adp_bam",
+		"to":"bamreset_prealn"
+	},
+	{
+		"id":"bamreset_prealn_to_bamadapterclip_prealn",
+		"from":"bamreset_prealn",
+		"to":"bamadapterclip_prealn"
+	},
+	{
+		"id":"bamadapterclip_prealn_to_bam12auxmerge",
+		"from":"bamadapterclip_prealn",
+		"to":"bam12auxmerge:__PREALN_BAM__"
+	},
+	{
+		"id":"bsqn_to_bam12auxmerge",
+		"from":"bamsort_qname",
+		"to":"bam12auxmerge"
+	},
+	{
+		"id":"bam12auxmerge_to_alignment_filter",
+		"from":"bam12auxmerge",
+#################
+# AlignmentFilter
+#################
+		"to":"alignment_filter:__TARGET_INBAM__"
+	},
+	{
+		"id":"iab_to_alignment_filter",
+		"from":"int_adp_bam",
+		"to":"alignment_filter:__PHIX_INBAM__"
+	},
+	{
+		"id":"alignment_filter_to_metrics",
+		"from":"alignment_filter:__AF_METRICS__",
+		"to":"af_metrics"
+	},
+#####################
+# phiX BAM production
+#####################
+	{
+		"id":"alignmentfilter_to_bamsort_coord_phix",
+		"from":"alignment_filter:__PHIX_OUTBAM__",
+		"to":"bamsort_coord_phix"
+	},
+	{
+		"id":"bamsort_phix_to_bammarkduplicates_phix",
+		"from":"bamsort_coord_phix",
+		"to":"bammarkduplicates_phix"
+	},
+	{
+		"id":"bmd_phix_tee0_to_bamrecompress_phix",
+		"from":"bmd_phix_tee0",
+		"to":"bamrecompress_phix"
+	},
+	{
+		"id":"bamrecompress_to_pb",
+		"from":"bamrecompress_phix",
+		"to":"phix_bam"
+	},
+#######################
+# Target BAM production
+#######################
+	{
+		"id":"alignmentfilter_to_bamsort_coord_target",
+		"from":"alignment_filter",
+		"to":"bamsort_coord_target"
+	},
+	{
+		"id":"bamsort_phix_to_bammarkduplicates_target",
+		"from":"bamsort_coord_target",
+		"to":"bammarkduplicates_target"
+	},
+	{
+		"id":"bmd_to_bamrecompress",
+		"from":"bmd_tee3",
+		"to":"bamrecompress_target"
+	},
+	{
+		"id":"final_stretch",
+		"from":"bamrecompress_target",
+		"to":"target_bam"
+	},
+##################################################
+# check input primary/sequence data matches output
+##################################################
+	{
+		"id":"phix_bam_to_bamcat",
+		"from":"phix_bam",
+		"to":"bamcat_output:__PHIXBAM__"
+	},
+	{
+		"id":"target_bam_to_bamcat",
+		"from":"target_bam",
+		"to":"bamcat_output:__TARGETBAM__"
+	},
+	{
+		"id":"bamcat_to_chk_output",
+		"from":"bamcat_output",
+		"to":"seqchksum_output"
+	},
+	{
+		"id":"src_bam_to_chk_input",
+		"from":"src_bam",
+		"to":"seqchksum_input"
+	},
+	{
+		"id":"seqchksum_output_to_cmp",
+		"from":"seqchksum_output",
+		"to":"cmp_seqchksum:__OUTPUTCHK__"
+	},
+	{
+		"id":"seqchksum_input_to_cmp",
+		"from":"seqchksum_input",
+		"to":"cmp_seqchksum:__INPUTCHK__"
+	}
+]
+}
