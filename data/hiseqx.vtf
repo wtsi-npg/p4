@@ -10,29 +10,80 @@
 			"vals":[
 					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
 					"-Xmx1024m",
-					"-jar", {"subst_param_name":"illumina2bam_jar",
-							"required":"no",
-							"default":"/software/solexa/pkg/illumina2bam/current/Illumina2bam-V1.13.jar"},
-					"I=", {"subst_param_name":"intensity_dir","required":"yes"},
-					"B=", {"subst_param_name":"basecalls_dir",
-							"required":"yes",
-							"subst_constructor":{
-								"vals":[
-									{"subst_param_name":"intensity_dir","required":"yes"},
-									"/",
-									{"subst_param_name":"basecalls_dir_suffix","required":"no","default":"Basecalls"}
-								],
-								"postproc":{"op":"concat","pad":""}
-							}
-						},
+					"-jar",{"subst_param_name":"illumina2bam_jar","required":"no","default":"/software/npg/java_jars/Illumina2bam.jar"},
+					{"subst_param_name":"i2b_intensity_flag",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":["I",{"subst_param_name":"i2b_intensity_dir","required":"no"}],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
+					{"subst_param_name":"i2b_basecalls_flag",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":[
+								"B",
+								{"subst_param_name":"i2b_basecalls_dir",
+									"required":"no",
+									"subst_constructor":{
+										"vals":[
+											{"subst_param_name":"i2b_intensity_dir","required":"yes"},
+											"/",
+											{"subst_param_name":"i2b_basecalls_dir_suffix","required":"no","default":"BaseCalls"}
+										],
+										"postproc":{"op":"concat","pad":""}
+									}
+								}
+							],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
+					{"subst_param_name":"i2b_first_tile_flag",
+						"required":"no",
+						"subst_constructor":{
+							"vals":["FIRST_TILE",{"subst_param_name":"i2b_first_tile","required":"no"}],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
+					{"subst_param_name":"i2b_tile_limit_flag",
+						"required":"no",
+						"subst_constructor":{
+							"vals":["TILE_LIMIT",{"subst_param_name":"i2b_tile_limit","required":"no"}],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
 					"OUTPUT=/dev/stdout",
-					"L=", {"subst_param_name":"lane","required":"yes"},
-					"LIBRARY_NAME=", {"subst_param_name":"library_name","required":"yes"},
-					"SAMPLE_ALIAS=", {"subst_param_name":"sample_alias","required":"yes"},
-					"STUDY_NAME=", {"subst_param_name":"study_name","required":"yes"},
+					{"subst_param_name":"i2b_lane_flag",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":["L",{"subst_param_name":"i2b_lane","required":"no"}],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
+					{"subst_param_name":"i2b_library_flag",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":["LIBRARY_NAME",{"subst_param_name":"i2b_library_name","required":"no"}],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
+					{"subst_param_name":"i2b_sample_alias_flag",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":["SAMPLE_ALIAS",{"subst_param_name":"i2b_sample_alias","required":"no"}],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
+					{"subst_param_name":"i2b_study_name_flag",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":["STUDY_NAME",{"subst_param_name":"i2b_study_name","required":"no"}],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
 					"COMPRESSION_LEVEL=0"
 				],
-				"postproc":{"op":"noconcat", "pad":" "}
+				"postproc":{"op":"pack","pad":" "}
 			}
 		},
 		"description":"Create the initial BAM file from the Illumina machine"
@@ -159,11 +210,13 @@
 	{
 		"id":"bwa_post_proc",
 		"type":"VTFILE",
+		"subst_map":{"phix_or_target":"target"},
 		"name":"bwa_post_proc.json"
 	},
 	{
 		"id":"bwa_post_proc_phix",
 		"type":"VTFILE",
+		"subst_map":{"phix_or_target":"phix"},
 		"name":"bwa_post_proc.json"
 	},
 	{
@@ -176,16 +229,16 @@
 		"type":"VTFILE",
 		"name":"post_alignment.json"
 	},
-	{
-		"id":"bwa_tee",
-		"type":"EXEC",
-		"cmd":"tee __PIPE1__"
-	},
-	{
-		"id":"tee_acp",
-		"type":"EXEC",
-		"cmd":"tee __PREALN_BAM__"
-	},
+#	{
+#		"id":"bwa_tee",
+#		"type":"EXEC",
+#		"cmd":"mbuffer -f -q -m 5M -o __PIPE1__ -o __PIPE1_1__"
+#	},
+#	{
+#		"id":"tee_acp",
+#		"type":"EXEC",
+#		"cmd":"mbuffer -f -q -m 5M -o __PREALN_BAM__ -o __PREALN_BAM_1__"
+#	},
 	{
 		"id":"reference_genome",
 		"type":"INFILE",
@@ -211,7 +264,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"refname","required":"yes"}
+					{"subst_param_name":"refname_phix","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -289,7 +342,7 @@
 	{
 		"id":"tee0",
 		"type":"EXEC",
-		"cmd":"tee __TEE0__"
+		"cmd":"mbuffer -f -q -m 5M -o __TEE0__ -o __TEE0_1__"
 	},
 	{
 		"id":"bamcollate2",
@@ -297,15 +350,103 @@
 		"cmd":["bamcollate2", "collate=1", "level=0"],
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
-	{
-		"id":"tee_input",
-		"type":"EXEC",
-		"cmd":"tee __FIFO__"
-	},
+#	{
+#		"id":"tee_input",
+#		"type":"EXEC",
+#		"cmd":"mbuffer -f -q -m 5M -o __FIFO__ -o __FIFO_1__"
+#	},
 	{
 		"id":"bamrecompress_input",
 		"type":"EXEC",
 		"cmd":"bamrecompress verbose=0 numthreads=2"
+	},
+	{
+		"id":"chksum_in",
+		"type":"RAFILE",
+		"name":"chksum_in.txt"
+	},
+	{
+		"id":"chksum_out",
+		"type":"RAFILE",
+		"name":"chksum_out.txt"
+	},
+	{
+		"id":"tee_input_file",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"tee_input_file",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"tee_input_file_name",
+						"required":"no",
+						"default":"tee_input.bam",
+						"subst_constructor":{
+							"vals":[
+								"tee_input_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".bam"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"tee_bwa_file",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"tee_bwa_file",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"tee_bwa_file_name",
+						"required":"no",
+						"default":"tee_bwa.bam",
+						"subst_constructor":{
+							"vals":[
+								"tee_bwa_in",
+								{"subst_param_name":"rpt","required":"yes"},
+								".fq"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"tee_acp_file",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"tee_acp_file",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"tee_acp_file_name",
+						"required":"no",
+						"default":"tee_acp.bam",
+						"subst_constructor":{
+							"vals":[
+								"tee_acp_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".bam"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
 	},
 	{
 		"id":"int_adp_bam",
@@ -334,6 +475,58 @@
 		}
 	},
 	{
+		"id":"pp_out",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"pp_out",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"pp_out_name",
+						"required":"no",
+						"default":"pp.out",
+						"subst_constructor":{
+							"vals":[
+								"pp_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".bam"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"pp_out_phix",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"pp_out_phix",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"pp_out_phix_name",
+						"required":"no",
+						"default":"pp_phix.out",
+						"subst_constructor":{
+							"vals":[
+								"pp_phix_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".out"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
 		"id":"bamcollate2_ranking",
 		"type":"EXEC",
 		"cmd":"bamcollate2 collate=3 level=0",
@@ -342,7 +535,7 @@
 	{
 		"id":"bamadapterclip",
 		"type":"EXEC",
-		"cmd":"bamadapterclip verbose=0 level=0",
+		"cmd":"bamadapterclip verbose=1 level=0",
 		"description":"Hard clip adapter sequence from reads before feeding to Tophat2"
 	},
 	{
@@ -357,7 +550,7 @@
 		"cmd":{"subst_param_name":"bwa_mem_cmd",
 			"required":"yes",
 			"subst_constructor":{
-				"vals":[ "bwa", "mem", "__REFERENCE_GENOME__" ],
+				"vals":[ "bwa0_6", "mem", "__REFERENCE_GENOME__", "__FQ_IN__" ],
 				"postproc":{"op":"pack","pad":" "}
 			}
 		}
@@ -369,7 +562,7 @@
 		"cmd":{"subst_param_name":"bwa_mem_cmd_phix",
 			"required":"yes",
 			"subst_constructor":{
-				"vals":[ "bwa", "mem", "__REFERENCE_PHIX__" ],
+				"vals":[ "bwa0_6", "mem", "__REFERENCE_PHIX__", "__FQ_IN__" ],
 				"postproc":{"op":"pack","pad":" "}
 			}
 		}
@@ -395,20 +588,9 @@
 		}
 	},
 	{
-		"id":"bamcat",
-		"type":"EXEC",
-		"cmd":"bamcat I=__IN_BAM1__ I=__IN_BAM2__ level=0"
-	},
-	{
 		"id":"bamreset_prealn",
 		"type":"EXEC",
-		"cmd":"bamreset resetaux=0 level=0 verbose=0",
-		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
-	},
-	{
-		"id":"bamadapterclip_prealn",
-		"type":"EXEC",
-		"cmd":"bamadapterclip verbose=0 level=0"
+		"cmd":"bamreset resetaux=0 level=0 verbose=0"
 	},
 #####################################
 # alignment filter and metrics output
@@ -422,8 +604,7 @@
 			"vals":[
 					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
 					"-Xmx1000m",
-					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/nfs/users/nfs_d/dj3/repos/illumina2bam/dist/AlignmentFilter.jar"},
-					"IN=__ADP_INBAM__",
+					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/software/npg/java_jars/AlignmentFilter.jar"},
 					"IN=__PHIX_INBAM__",
 					"IN=__TARGET_INBAM__",
 					"OUT=__PHIX_OUTBAM__",
@@ -545,56 +726,57 @@
 	},
 	{
 		"id":"tee0_to_bc2",
-		"from":"tee0",
+		"from":"tee0:__TEE0_1__",
 		"to":"bamcollate2"
 	},
 	{
-		"id":"bc2_to_ti",
+		"id":"bc2_to_bac",
 		"from":"bamcollate2",
-		"to":"tee_input"
+		"to":"bamadapterclip"
+	},
+	{
+		"id":"bac_to_ti",
+		"from":"bamadapterclip",
+		"to":"tee_input_file"
 	},
 	{
 		"id":"ti_to_brc",
-		"from":"tee_input",
+		"from":"tee_input_file",
 		"to":"bamrecompress_input"
 	},
 	{
 		"id":"brc_to_int_adp_bam",
 		"from":"bamrecompress_input",
-		"to":"int_adp_bam"
+#		"to":"int_adp_bam"
+		"to":"bamreset_prealn"
 	},
 ############################################################
 # tophat alignment
 ############################################################
 	{
 		"id":"ti_to_bamcollate2_ranking",
-		"from":"tee_input:__FIFO__",
+		"from":"tee_input_file",
 		"to":"bamcollate2_ranking"
 	},
 	{
 		"id":"bamcollate2_ranking_to_bamadaptorclip",
 		"from":"bamcollate2_ranking",
-		"to":"bamadapterclip"
-	},
-	{
-		"id":"bamadapterclip_to_bamtofastq",
-		"from":"bamadapterclip",
 		"to":"bamtofastq"
 	},
 	{
 		"id":"bamtofastq_to_bwa_tee",
 		"from":"bamtofastq",
-		"to":"bwa_tee"
+		"to":"tee_bwa_file"
 	},
 	{
 		"id":"bwa_tee_to_bwa_mem",
-		"from":"bwa_tee",
-		"to":"bwa_mem"
+		"from":"tee_bwa_file",
+		"to":"bwa_mem:__FQ_IN__"
 	},
 	{
 		"id":"bwa_tee_to_bwa_mem_phix",
-		"from":"bwa_tee:__PIPE1__",
-		"to":"bwa_mem_phix"
+		"from":"tee_bwa_file",
+		"to":"bwa_mem_phix:__FQ_IN__"
 	},
 
 	{
@@ -615,44 +797,46 @@
 	{
 		"id":"reference_dict_to_post_proc_phix",
 		"from":"reference_picard_dict_phix",
-		"to":"bwa_post_proc_phix:reference_picard_dict_phix"
+		"to":"bwa_post_proc_phix:reference_picard_dict"
 	},
-	{
-		"id":"bam_to_bamreset_prealn",
-		"from":"int_adp_bam",
-		"to":"bamreset_prealn"
-	},
+#	{
+#		"id":"bam_to_bamreset_prealn",
+#		"from":"int_adp_bam",
+#		"to":"bamreset_prealn"
+#	},
 	{
 		"id":"bamreset_prealn_to_bamadapterclip_prealn",
 		"from":"bamreset_prealn",
-		"to":"bamadapterclip_prealn"
-	},
-	{
-		"id":"bamadapterclip_prealn_to_tee_acp",
-		"from":"bamadapterclip_prealn",
-		"to":"tee_acp"
+		"to":"tee_acp_file"
 	},
 	{
 		"id":"tee_acp_to_post_proc",
-		"from":"tee_acp",
+		"from":"tee_acp_file",
 		"to":"bwa_post_proc:prealign"
 	},
 	{
 		"id":"tee_acp_to_post_proc_phix",
-		"from":"tee_acp:__PREALN_BAM__",
+		"from":"tee_acp_file",
 		"to":"bwa_post_proc_phix:prealign"
 	},
 	{
 		"id":"bwa_post_proc_to_alignmentfilter_phix",
 		"from":"bwa_post_proc_phix",
-		"to":"alignment_filter:__PHIX__BAM__"
+		"to":"pp_out_phix"
+	},
+	{
+		"id":"bwa_post_proc_to_alignmentfilter_phix",
+		"from":"pp_out_phix",
+		"to":"alignment_filter:__PHIX_INBAM__"
 	},
 	{
 		"id":"bwa_post_proc_to_alignment_filter",
 		"from":"bwa_post_proc",
-#################
-# AlignmentFilter
-#################
+		"to":"pp_out"
+	},
+	{
+		"id":"bwa_post_proc_to_alignment_filter",
+		"from":"pp_out",
 		"to":"alignment_filter:__TARGET_INBAM__"
 	},
 	{
@@ -667,15 +851,16 @@
 # Target BAM production
 #######################
 	{
-		"id":"alignmentfilter_to_post_alignment",
+		"id":"af_to_post_align",
 		"from":"alignment_filter",
 		"to":"post_alignment"
 	},
 	{
-		"id":"alignmentfilter_to_post_alignment_phix",
-		"from":"alignment_filter",
+		"id":"af_to_post_align_phix",
+		"from":"alignment_filter:__PHIX_OUTBAM__",
 		"to":"post_alignment_phix"
 	},
+
     {
         "id":"ref_genome_to_postproc_target_ref_genome",
         "from":"reference_genome_fasta",
@@ -684,7 +869,7 @@
     {
         "id":"ref_genome_to_postproc_target_ref_genome_phix",
         "from":"reference_genome_fasta_phix",
-        "to":"post_alignment_phix:reference_genome_fasta_phix"
+        "to":"post_alignment_phix:reference_genome_fasta"
     },
 
 	{
@@ -704,7 +889,7 @@
     },
     {
         "id":"post_alignment_to_out_cram_phix",
-        "from":"post_alignment_phix:out_cram_phix",
+        "from":"post_alignment_phix:out_cram",
         "to":"out_cram_phix"
     },
     {
@@ -714,7 +899,7 @@
     },
     {
         "id":"post_alignment_to_out_bamcheck_phix",
-        "from":"post_alignment_phix:out_bamcheck_phix",
+        "from":"post_alignment_phix:out_bamcheck",
         "to":"out_bamcheck_phix"
     },
     {
@@ -724,7 +909,7 @@
     },
     {
         "id":"post_alignment_to_out_flagstat_phix",
-        "from":"post_alignment_phix:out_flagstat_phix",
+        "from":"post_alignment_phix:out_flagstat",
         "to":"out_flagstat_phix"
     },
 
@@ -752,14 +937,26 @@
 		"to":"seqchksum_input"
 	},
 	{
+		"id":"seqchksum_in",
+		"from":"chksum_in",
+		"to":"cmp_seqchksum:__INPUTCHK__"
+	},
+	{
+		"id":"seqchksum_out",
+		"from":"chksum_out",
+		"to":"cmp_seqchksum:__OUTPUTCHK__"
+	},
+	{
 		"id":"seqchksum_output_to_cmp",
 		"from":"seqchksum_output",
-		"to":"cmp_seqchksum:__OUTPUTCHK__"
+#		"to":"cmp_seqchksum:__OUTPUTCHK__"
+		"to":"chksum_out"
 	},
 	{
 		"id":"seqchksum_input_to_cmp",
 		"from":"seqchksum_input",
-		"to":"cmp_seqchksum:__INPUTCHK__"
+#		"to":"cmp_seqchksum:__INPUTCHK__"
+		"to":"chksum_in"
 	}
 ]
 }

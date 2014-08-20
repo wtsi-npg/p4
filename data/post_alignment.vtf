@@ -11,17 +11,7 @@
 	{
 		"id":"bmd_tee1",
 		"type":"EXEC",
-		"cmd":"tee __FIFO1__"
-	},
-	{
-		"id":"bmd_tee2",
-		"type":"EXEC",
-		"cmd":"tee __FIFO2__"
-	},
-	{
-		"id":"bmd_tee3",
-		"type":"EXEC",
-		"cmd":"tee __FIFO3__"
+		"cmd":"mbuffer -f -q -m 5M -o __SCRAMBLE__ -o __BAMRECOMPRESS__ -o __BAMCHECK__ -o __FLAGSTAT_FILTER__"
 	},
 	{
 		"id":"scramble",
@@ -83,34 +73,23 @@
 
     {
         "id":"tee_to_scramble",
-        "from":"bmd_tee1:__FIFO1__",
+        "from":"bmd_tee1:__SCRAMBLE__",
         "to":"scramble"
     },
 
     {
-        "id":"bmd_tee1_to_bmd_tee2",
-        "from":"bmd_tee1",
-        "to":"bmd_tee2"
-    },
-
-    {
         "id":"tee_to_bamcheck",
-        "from":"bmd_tee2:__FIFO2__",
+        "from":"bmd_tee1:__BAMCHECK__",
         "to":"bamcheck"
     },
     {
-        "id":"bmd_tee2_to_bmd_tee3",
-        "from":"bmd_tee2",
-        "to":"bmd_tee3"
-    },
-    {
-        "id":"bmd_tee3_to_flagstat_filter",
-        "from":"bmd_tee3:__FIFO3__",
+        "id":"tee_to_flagstat_filter",
+        "from":"bmd_tee1:__FLAGSTAT_FILTER__",
         "to":"flagstat_filter"
     },
     {
-        "id":"bmd_to_bamrecompress",
-        "from":"bmd_tee3",
+        "id":"tee_to_bamrecompress",
+        "from":"bmd_tee1:__BAMRECOMPRESS__",
         "to":"bamrecompress"
     },
     {

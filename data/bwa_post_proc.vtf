@@ -1,18 +1,76 @@
 {
 "description":"A HiSeqX processing pipeline",
-"subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__","bam12auxmerge":"prealign"},"outputs":{"_stdout_":"alignment_filter"}}},
+"subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__","prealign":"bam12auxmerge:__PREALN_BAM__"},"outputs":{"_stdout_":"bam12auxmerge"}}},
 "nodes":[
+    {
+        "id":"bamsort_file",
+        "type":"RAFILE",
+        "name":{"subst_param_name":"bamsort_file",
+            "required":"yes",
+            "subst_constructor":{
+                "vals":[
+                    {"subst_param_name":"tmpdir","required":"no","default":"."},
+                    "/",
+                    {"subst_param_name":"bamsort_file_name",
+                        "required":"no",
+                        "default":"bamsort.bam",
+                        "subst_constructor":{
+                            "vals":[
+                                "bamsort_",
+								{"subst_param_name":"phix_or_target","required":"yes"},
+								"_",
+                                {"subst_param_name":"rpt","required":"yes"},
+                                ".bam"
+                            ],
+                            "postproc":{"op":"concat", "pad":""}
+                        }
+                    }
+                ],
+                "postproc":{"op":"concat", "pad":""}
+            }
+        }
+    },
+
+	{
+        "id":"tee_bwa",
+        "type":"RAFILE",
+        "name":{"subst_param_name":"tee_bwa",
+            "required":"yes",
+            "subst_constructor":{
+                "vals":[
+                    {"subst_param_name":"tmpdir","required":"no","default":"."},
+                    "/",
+                    {"subst_param_name":"tee_bwa_name",
+                        "required":"no",
+                        "default":"tee.bam",
+                        "subst_constructor":{
+                            "vals":[
+                                "tee_bwa_",
+								{"subst_param_name":"phix_or_target","required":"yes"},
+								"_",
+                                {"subst_param_name":"rpt","required":"yes"},
+                                ".bam"
+                            ],
+                            "postproc":{"op":"concat", "pad":""}
+                        }
+                    }
+                ],
+                "postproc":{"op":"concat", "pad":""}
+            }
+        }
+    },
+
 	{
 		"id":"scramble_sam_to_bam",
 		"type":"EXEC",
-		"cmd":"scramble -I sam -O sam"
+		"cmd":"scramble -I sam -O bam"
 	},
-	{
-		"id":"tee_headerSQfix",
-		"type":"EXEC",
-		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
-		"comment":"get deadlock when tee used here"
-	},
+#	{
+#		"id":"tee_headerSQfix",
+#		"type":"EXEC",
+#		"cmd":"mbuffer -f -q -m 5M -o __OUT1__ -o __OUT2__",
+#		"comment":"get deadlock when tee used here"
+#	},
 	{
 		"id":"sam_headerSQfix",
 		"type":"EXEC",
@@ -24,11 +82,6 @@
 		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_PICARD_DICT__",
 		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
 		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
-	},
-	{
-		"id":"mbuffer_headerSQfix",
-		"type":"EXEC",
-		"cmd":"mbuffer -f -q -m 5M"
 	},
 	{
 		"id":"reheader_headerSQfix",
@@ -56,11 +109,11 @@
 	{
 		"id":"scramble_to_tee_headerSQfix",
 		"from":"scramble_sam_to_bam",
-		"to":"tee_headerSQfix"
+		"to":"tee_bwa"
 	},
 	{
 		"id":"tee_headerSQfix_to_sam",
-		"from":"tee_headerSQfix:__OUT1__",
+		"from":"tee_bwa",
 		"to":"sam_headerSQfix"
 	},
 	{
@@ -74,13 +127,8 @@
 		"to":"reheader_headerSQfix:__IN_SAMHEADER__"
 	},
 	{
-		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"tee_headerSQfix",
-		"to":"mbuffer_headerSQfix"
-	},
-	{
-		"id":"mbuffer_headerSQfix_to_reheader",
-		"from":"mbuffer_headerSQfix",
+		"id":"tee_headerSQfix_to_reheader",
+		"from":"tee_bwa",
 		"to":"reheader_headerSQfix:__IN_BAM__"
 	},
 	{
@@ -96,6 +144,11 @@
 	{
 		"id":"bamsort_qname_to_bam12auxmerge",
 		"from":"bamsort_qname",
+		"to":"bamsort_file"
+	},
+	{
+		"id":"bamsort_to_merge",
+		"from":"bamsort_file",
 		"to":"bam12auxmerge"
 	}
 ]
