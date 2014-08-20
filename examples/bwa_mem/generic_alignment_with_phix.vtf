@@ -331,7 +331,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"cram_name","required":"no","default":".cram"}
+					{"subst_param_name":"phix_cram_name","required":"no","default":"_phix.cram"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -347,7 +347,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"bamcheck_name","required":"no","default":".bamcheck"}
+					{"subst_param_name":"phix_bamcheck_name","required":"no","default":"_phix.bamcheck"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -363,7 +363,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"flagstat_name","required":"no","default":".flagstat"}
+					{"subst_param_name":"phix_flagstat_name","required":"no","default":"_phix.flagstat"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -571,8 +571,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"_",
-					{"subst_param_name":"phix_bam_name","required":"no","default":"phix.bam"}
+					{"subst_param_name":"phix_bam_name","required":"no","default":"_phix.bam"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
