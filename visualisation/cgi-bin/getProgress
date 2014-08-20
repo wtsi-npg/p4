@@ -1,0 +1,23 @@
+#!/software/bin/python
+
+import json
+import glob
+import re
+
+log_dir = '/nfs/users/nfs_j/js10/npg/p4/visualisation/logs/'
+log_files = glob.glob(log_dir+'*.err')
+data = {}
+
+for log_file in log_files:
+	print log_file
+	matches = re.match(log_dir+'(.*)\.(\d*)\.err',log_file)
+	if (matches):
+		data[matches.group(1)] = matches.group(2)
+
+
+json_data = json.dumps(data)
+
+print "Content-Type: application/json"
+print ""
+print json_data
+

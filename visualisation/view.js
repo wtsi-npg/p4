@@ -92,6 +92,7 @@ var circle = svg.append("g").selectAll("circle")
   .enter().append("circle")
     .attr("r", function(d) { return (d.name.match(/tee/) ? 4 : 8); })
     .attr("class", function(d) { return "node " + d.type; })
+	.attr("id",function(d) { return 'x'+d.name; })
 	.on("mousedown", function(d) { display_node(d); }) 
 	.on("dblclick", dblclick)
     .call(force.drag);
@@ -108,6 +109,9 @@ var text = svg.append("g").selectAll("text")
     .attr("x", 8)
     .attr("y", ".31em")
     .text(function(d) { return d.name; });
+
+
+window.setInterval(refresh_progress, 10000);
 
 // Use elliptical arc path segments to doubly-encode directionality.
 function tick() {
@@ -168,6 +172,27 @@ function display_link(d) {
 	d3.select('#edge_comment').text(d.comment);
 }
 
+function refresh_progress() {
+	d3.json("cgi-bin/getProgress", function(error, json) {
+		if (error) return console.warn(error);
+		console.warn(json);
+		var circles = force.nodes();
+		circles.forEach(function(c) { 
+//			console.warn(c.name);
+			if (json[c.name]) {
+				setInterval( function() {
+					d3.select('#x'+c.name).style('stroke','#000').style('stroke-width','1px')
+						.transition().style('stroke-width','3px')
+						.each('end',function() {
+							d3.select(this)
+								.transition().style('stroke','green')
+						})
+				}, 2000);
+			}
+		});
+	});
+}
+
 });
 
 function getUrlQueryStringValue(name) {
@@ -196,4 +221,5 @@ function dblclick(d) {
 function dragstart(d) {
   d3.select(this).classed("fixed", d.fixed = true);
 }
+
 
