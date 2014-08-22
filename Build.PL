@@ -50,14 +50,15 @@ my $builder = $class->new(
   },
 
   'requires' => {
+    'Carp'                  => 0,
+    'Data::Dumper'          => 0,
     'File::Slurp'           => 0,
+    'File::Temp'            => 0,
+    'File::Which'           => 0,
+    'Getopt::Std'           => 0,
     'JSON'                  => 0,
     'POSIX'                 => 0,
-    'File::Temp'            => 0,
-    'Getopt::Std'           => 0,
-    'Readonly'              => 0,
-    'Carp'                  => 0,
-    'Data::Dumper'          => 0
+    'Readonly'              => 0
   },
 
   'build_requires' => {
