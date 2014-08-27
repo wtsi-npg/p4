@@ -1,3 +1,5 @@
+var intervalArray = [];
+
 var cfg_name = getUrlQueryStringValue('cfg_name');
 if(!cfg_name) {
 	cfg_name = 'unspecified';
@@ -111,7 +113,7 @@ var text = svg.append("g").selectAll("text")
     .text(function(d) { return d.name; });
 
 
-window.setInterval(refresh_progress, 10000);
+window.setInterval(refresh_progress, 30000);
 
 // Use elliptical arc path segments to doubly-encode directionality.
 function tick() {
@@ -173,6 +175,12 @@ function display_link(d) {
 }
 
 function refresh_progress() {
+	// clear the intervals
+	var i;
+	for (i=0; i < intervalArray.length; i++) {
+		clearInterval(intervalArray[i]);
+	}
+
 	d3.json("cgi-bin/getProgress", function(error, json) {
 		if (error) return console.warn(error);
 		console.warn(json);
@@ -180,14 +188,15 @@ function refresh_progress() {
 		circles.forEach(function(c) { 
 //			console.warn(c.name);
 			if (json[c.name]) {
-				setInterval( function() {
+				i = setInterval( function() {
 					d3.select('#x'+c.name).style('stroke','#000').style('stroke-width','1px')
-						.transition().style('stroke-width','3px')
+						.transition().style('stroke','green')
 						.each('end',function() {
 							d3.select(this)
-								.transition().style('stroke','green')
+								.transition().style('stroke-width','3px')
 						})
 				}, 2000);
+				intervalArray.push(i);
 			}
 		});
 	});
