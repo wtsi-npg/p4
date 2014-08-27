@@ -550,7 +550,7 @@
 		"cmd":{"subst_param_name":"bwa_mem_cmd",
 			"required":"yes",
 			"subst_constructor":{
-				"vals":[ "bwa0_6", "mem", "__REFERENCE_GENOME__", "__FQ_IN__" ],
+				"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_GENOME__", "__FQ_IN__" ],
 				"postproc":{"op":"pack","pad":" "}
 			}
 		}
@@ -562,7 +562,7 @@
 		"cmd":{"subst_param_name":"bwa_mem_cmd_phix",
 			"required":"yes",
 			"subst_constructor":{
-				"vals":[ "bwa0_6", "mem", "__REFERENCE_PHIX__", "__FQ_IN__" ],
+				"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_PHIX__", "__FQ_IN__" ],
 				"postproc":{"op":"pack","pad":" "}
 			}
 		}
