@@ -3,7 +3,15 @@
 import json
 import glob
 import re
+import subprocess
 
+#
+# returns a status for each job
+#
+# 0		job has completed
+# 1		job is waiting for input or output
+# 2		job is currently executing
+#
 log_dir = '/nfs/users/nfs_j/js10/npg/p4/visualisation/logs/'
 log_files = glob.glob(log_dir+'*.err')
 data = {}
@@ -12,7 +20,19 @@ for log_file in log_files:
 	print log_file
 	matches = re.match(log_dir+'(.*)\.(\d*)\.err',log_file)
 	if (matches):
-		data[matches.group(1)] = matches.group(2)
+		pid = matches.group(2)
+		cmd = ("ps", "-o", "command", "-p", pid)
+		try:
+			output = subprocess.check_output(cmd)
+			m1 = re.search("STDIN",output)
+			m2 = re.search("STDOUT",output)
+			status = 2
+			if (m1 or m2):
+				status=1
+		except:
+			status = 0
+
+		data[matches.group(1)] = status
 
 
 json_data = json.dumps(data)

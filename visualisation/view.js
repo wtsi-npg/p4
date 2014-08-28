@@ -183,20 +183,43 @@ function refresh_progress() {
 
 	d3.json("cgi-bin/getProgress", function(error, json) {
 		if (error) return console.warn(error);
-		console.warn(json);
+//		console.warn(json);
 		var circles = force.nodes();
 		circles.forEach(function(c) { 
 //			console.warn(c.name);
-			if (json[c.name]) {
-				i = setInterval( function() {
-					d3.select('#x'+c.name).style('stroke','#000').style('stroke-width','1px')
-						.transition().style('stroke','green')
-						.each('end',function() {
-							d3.select(this)
-								.transition().style('stroke-width','3px')
-						})
-				}, 2000);
-				intervalArray.push(i);
+			if (typeof(json[c.name]) != 'undefined') {
+				var job_status = json[c.name];
+				if (job_status == 2) {
+					// job currently running
+					i = setInterval( function() {
+						d3.select('#x'+c.name).style('stroke','#000').style('stroke-width','1px')
+							.transition().style('stroke','green')
+							.each('end',function() {
+								d3.select(this)
+									.transition().style('stroke-width','4px')
+							})
+					}, 2000);
+					intervalArray.push(i);
+				}
+				if (job_status == 0) {
+					// job has completed
+					d3.select('#x'+c.name).transition().style('stroke','green').each('end',function() { 
+						d3.select(this).transition().style('stroke-width','4px')
+					});
+				}
+				if (job_status == 1) {
+					// job waating on input or output pipe
+					i = setInterval( function() {
+						d3.select('#x'+c.name).style('stroke','#000').style('stroke-width','1px')
+							.transition().style('stroke','red')
+							.each('end',function() {
+								d3.select(this)
+									.transition().style('stroke-width','4px')
+							})
+					}, 2000);
+					intervalArray.push(i);
+				}
+
 			}
 		});
 	});
