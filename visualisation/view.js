@@ -181,6 +181,9 @@ function refresh_progress() {
 		clearInterval(intervalArray[i]);
 	}
 
+	// this is apparently the quickest and surest way to empty an array
+	while (intervalArray.length > 0) { intervalArray.pop(); }
+
 	d3.json("cgi-bin/getProgress", function(error, json) {
 		if (error) return console.warn(error);
 //		console.warn(json);
