@@ -1,0 +1,32 @@
+
+# create subdirectories
+mkdir vtf outdata cfgdata tmpdata
+
+# move template files to their own subdirectory
+mv -iv *.vtf vtf
+
+# process template
+vtfp.pl -l gawp.vtf.log -o gawp.json \
+-keys outdatadir -vals outdata \
+-keys cfgdatadir -vals cfgdata \
+-keys tmpdir -vals tmpdata \
+-keys i2b_intensity_dir -vals /nfs/sfxx/ILorHSany_sfxx/analysis/nnnnnn_mmm_12345_A_XXXXXXXXX/Data/Intensities \
+-keys i2b_lane -vals 1 \
+-keys i2b_library_name -vals myi2blib \
+-keys i2b_sample_alias -vals myi2bsample \
+-keys i2b_study_name -vals myi2bstudy \
+-keys i2b_first_tile -vals 1101 \
+-keys i2b_tile_limit -vals 1 \
+-keys rpt -vals 12345_1 \
+-keys alignment_method -vals bwa_mem \
+-keys reposdir -vals /path/to/references/repos \
+-keys alignment_refname_target -vals Homo_sapiens/1000Genomes_hs37d5/all/bwa0_6/hs37d5.fa \
+-keys alignment_refname_phix -vals PhiX/default/all/bwa0_6/phix_unsnipped_short_no_N.fa \
+-keys picard_dict_name_target -vals Homo_sapiens/1000Genomes_hs37d5/all/picard/hs37d5.fa.dict \
+-keys picard_dict_name_phix -vals PhiX/default/all/picard/phix_unsnipped_short_no_N.fa.dict \
+-keys refname_fasta_target -vals Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa \
+-keys refname_fasta_phix -vals PhiX/default/all/fasta/phix_unsnipped_short_no_N.fa \
+-keys aligner_numthreads -vals 8 \
+<(grep -v "^#" vtf/generic_alignment_with_phix.vtf | sed -e "s/^ *//" | tr -d "\n\t")
+
+viv.pl -x -s -v 3 -o gawp.log gawp.json

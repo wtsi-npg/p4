@@ -1,96 +1,64 @@
 {
-"description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
+"description":"Run the SNAP short read aligner on fastq files (converted from BAM files) within the NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recording indexing sequence etc",
 "nodes":[
 	{
 		"id":"bmd_phix_tee0",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"tee __pFIFO0__"
 	},
 	{
 		"id":"bmd_tee1",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"tee __FIFO1__"
 	},
 	{
 		"id":"bmd_tee2",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"tee __FIFO2__"
 	},
 	{
 		"id":"bmd_tee3",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"tee __FIFO3__"
 	},
 	{
 		"id":"bmd_phix_tee1",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"tee __pFIFO1__"
 	},
 	{
 		"id":"bmd_phix_tee2",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"tee __pFIFO2__"
 	},
 	{
 		"id":"scramble",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
 	},
 	{
 		"id":"bamcheck",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamcheck"
-	},
-	{
-		"id":"flagstat_filter",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"samtools view -u -F 0x900 -",
-		"description":"Filter out secondary and supplementary alignment records"
 	},
 	{
 		"id":"flagstat",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"samtools flagstat -"
 	},
 	{
 		"id":"scramble_phix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
 	},
 	{
 		"id":"bamcheck_phix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamcheck"
 	},
 	{
 		"id":"flagstat_phix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"samtools flagstat -"
 	},
 	{
@@ -203,7 +171,7 @@
 				"postproc":{"op":"concat", "pad":""}
 			}
 		},
-		"description":"Prefix for reference fasta and Bowtie2 index files"
+		"description":"Prefix for reference fasta and snap index files"
 	},
 	{
 		"id":"phix_reference_genome_fasta",
@@ -219,7 +187,7 @@
 				"postproc":{"op":"concat", "pad":""}
 			}
 		},
-		"description":"Prefix for reference fasta and Bowtie2 index files"
+		"description":"Prefix for reference fasta and snap index files"
 	},
 	{
 		"id":"reference_genome",
@@ -235,7 +203,7 @@
 				"postproc":{"op":"concat", "pad":""}
 			}
 		},
-		"description":"Prefix for reference fasta and Bowtie2 index files"
+		"description":"Prefix for reference fasta and snap index files"
 	},
 	{
 		"id":"reference_dict",
@@ -273,23 +241,17 @@
 	{
 		"id":"bamcollate2",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":["bamcollate2", "collate=1", "level=0"],
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
 	{
 		"id":"tee_input",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"tee __FIFO__"
 	},
 	{
 		"id":"bamrecompress_input",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamrecompress verbose=0 numthreads=2"
 	},
 	{
@@ -321,32 +283,24 @@
 	{
 		"id":"bamcollate2_ranking",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamcollate2 collate=3 level=0",
 		"comment":"already collated suitably - just here to do the ranking in the name"
 	},
 	{
-		"id":"bamreset_tophat",
+		"id":"bamreset_snap",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamreset resetaux=0 level=0 verbose=0",
 		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamadapterclip verbose=0 level=0",
-		"description":"Hard clip adapter sequence from reads before feeding to Tophat2"
+		"description":"Hard clip adapter sequence from reads before feeding to SNAP"
 	},
 	{
 		"id":"bamtofastq",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": false,
 		"cmd":["bamtofastq", "gz=1", "F=__FQOUT1__", "F2=__FQOUT2__"]
 	},
 	{
@@ -402,239 +356,72 @@
 		}
 	},
 	{
-		"id":"tophat2",
+		"id":"snap",
 		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": false,
-		"cmd":{"subst_param_name":"tophat2_cmd",
+		"cmd":{"subst_param_name":"snap_cmd",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"tophat2",
-					"--keep-fasta-order",
-					"--no-sort-bam",
-					"--output-dir",
-					{"subst_param_name":"tophat_out",
+					"snap",
+					"paired",
+					"__REFERENCE_GENOME__/snap",
+					"__FQIN1__",
+					"__FQIN2__",
+					"-o",
+					{"subst_param_name":"snap_out",
 						"required":"no",
 						"subst_constructor":{
 							"vals":[
-								{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-								"_",
-								{"subst_param_name":"rpt","required":"yes"}
+								{"subst_param_name":"snap_dir","required":"no","default":"snap_outdir"},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"},
+								"_snap_output.bam"
 							],
 							"postproc":{"op":"concat","pad":""}
 						},
-						"default":"tophat_out"
+						"default":"snap_outdir/snap_output.bam"
 					},
-					"--mate-inner-dist","100",
-					"--num-threads",{"subst_param_name":"num_threads","required":"no","default":"12"},
-					"--library-type", {"subst_param_name":"library_type","required":"no","default":"fr-firststrand"},
-					"--no-coverage-search",
-					"--microexon-search",
-					{"subst_param_name":"transcriptome_flag_val",
-						"required":"no",
-						"subst_constructor":{
-							"vals":[
-								"--transcriptome-index",
-								{"subst_param_name":"transcriptome_val",
-									"subst_constructor":{
-										"vals":[
-											{"subst_param_name":"reposdir","required":"no"},
-											"/transcriptomes/",
-											{"subst_param_name":"transcriptome_subpath","required":"no"}
-										],
-										"postproc":{"op":"concat","pad":""}
-									}
-								}
-							],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					"__REFERENCE_GENOME__",
-					"__FQIN1__",
-					"__FQIN2__"
-				],
+					"-t","24",
+					"--hp",
+                                        "-rg",
+                                       {"subst_param_name":"rg_name","required":"yes"}
+                                       ],
 				"postproc":{"op":"pack","pad":" "}
 			}
 		}
 	},
 	{
-		"id":"junctions_bed",
+		"id":"snap_hits_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		"name":{"subst_param_name":"junctions_bed",
+		"name":{"subst_param_name":"snap_out_ra",
 			"required":"no",
 			"subst_constructor":{
 				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
+					{"subst_param_name":"snap_dir","required":"no","default":"snap_outdir"},
+					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					"/junctions.bed"
+					"_snap_output.bam"
 				],
 				"postproc":{"op":"concat","pad":""}
 			},
-			"default":"tophat_out/junctions.bed"
-		}
-	},
-	{
-		"id":"insertions_bed",
-		"type":"RAFILE",
-		"subtype":"DUMMY",
-		"name":{"subst_param_name":"insertions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/insertions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/insertions.bed"
-		}
-	},
-	{
-		"id":"deletions_bed",
-		"type":"RAFILE",
-		"subtype":"DUMMY",
-		"name":{"subst_param_name":"deletions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/deletions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/deletions.bed"
-		}
-	},
-	{
-		"id":"accepted_hits_bam",
-		"type":"RAFILE",
-		"subtype":"DUMMY",
-		"name":{"subst_param_name":"accepted_hits_bam",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"accepted_hits","required":"no","default":"accepted_hits.bam"}
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/accepted_hits.bam"
-		}
-	},
-	{
-		"id":"unmapped_bam",
-		"type":"RAFILE",
-		"subtype":"DUMMY",
-		"name":{"subst_param_name":"unmapped_bam",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"unmapped","required":"no","default":"unmapped.bam"}
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/unmapped.bam"
-		}
-	},
-	{
-		"id":"bamcat",
-		"type":"EXEC",
-		"cmd":"bamcat I=__IN_BAM1__ I=__IN_BAM2__ level=0"
-	},
-    {
-		"id":"cp_deletions_bed",
-		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": false,
-		"cmd":{"subst_param_name":"cp_deletions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					"cp ",
-					"__SRC_DELETIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".deletions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		}
-	},
-    {
-		"id":"cp_insertions_bed",
-		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": false,
-		"cmd":{"subst_param_name":"cp_insertions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					"cp ",
-					"__SRC_INSERTIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".insertions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		}
-	},
-    {
-		"id":"cp_junctions_bed",
-		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": false,
-		"cmd":{"subst_param_name":"cp_junctions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					"cp ",
-					"__SRC_JUNCTIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".junctions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
+			"default":"snap_outdir/snap_output.bam"
 		}
 	},
 	{
 		"id":"tee_headerSQfix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
 		"comment":"get deadlock when tee used here"
 	},
 	{
 		"id":"sam_headerSQfix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"samtools view -h -"
 	},
 	{
 		"id":"alterSQ_headerSQfix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_DICT__",
 		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
 		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
@@ -642,51 +429,37 @@
 	{
 		"id":"mbuffer_headerSQfix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"mbuffer -f -q -m 5M"
 	},
 	{
 		"id":"reheader_headerSQfix",
 		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
 		"cmd":"samtools reheader __IN_SAMHEADER__ __IN_BAM__"
 	},
 	{
-		"id":"bam12split_tophat",
+		"id":"bam12split_snap",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bam12split verbose=0 level=0"
 	},
 	{
 		"id":"bamsort_qname",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamsort SO=queryname level=0"
 	},
 	{
 		"id":"bamreset_prealn",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamreset resetaux=0 level=0 verbose=0",
 		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
 		"id":"bamadapterclip_prealn",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamadapterclip verbose=0 level=0"
 	},
 	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
 	},
 #####################################
@@ -695,24 +468,13 @@
 	{
 		"id":"alignment_filter",
 		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
 		"cmd":{"subst_param_name":"alignment_filter",
 			"required":"yes",
 			"subst_constructor":{
 			"vals":[
 					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
 					"-Xmx1000m",
-					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no",
-						"subst_constructor":{
-							"vals":[
-								{"subst_param_name":"alignment_filter_jar_path","required":"no","default":"/software/npg/java_jars"},
-								"/",
-								"AlignmentFilter.jar"
-							],
-							"postproc":{"op":"concat","pad":""}
-						}
-					},
+					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/nfs/users/nfs_d/dj3/repos/illumina2bam/dist/AlignmentFilter.jar"},
 					"IN=__PHIX_INBAM__",
 					"IN=__TARGET_INBAM__",
 					"OUT=__PHIX_OUTBAM__",
@@ -740,8 +502,8 @@
 					{"subst_param_name":"logdir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					".",
-					{"subst_param_name":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"}
+					"_",
+					{"subst_param_name":"af_metrics_name","required":"no","default":"af_metrics.log"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -753,55 +515,17 @@
 	{
 		"id":"bamsort_coord_phix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamsort SO=coordinate level=0"
 	},
 	{
 		"id":"bammarkduplicates_phix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":{"subst_param_name":"bammarkduplicates_phix",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bammarkduplicates ",
-					"level=0 ",
-					"M=",
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix.markdups_metrics.txt"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
 	},
 	{
 		"id":"bamrecompress_phix",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-        "cmd":{"subst_param_name":"bamrecompress_phix",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    "bamrecompress index=1 md5=1 numthreads=2 ",
-                    "indexfilename=",
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    "_phix.bai ",
-                    "md5filename=",
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    "_phix.bam.md5"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
+		"cmd":"bamrecompress numthreads=2"
 	},
 	{
 		"id":"phix_bam",
@@ -826,55 +550,17 @@
 	{
 		"id":"bamsort_coord_target",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamsort SO=coordinate level=0"
 	},
 	{
 		"id":"bammarkduplicates_target",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":{"subst_param_name":"bammarkduplicates_target",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bammarkduplicates ",
-					"level=0 ",
-					"M=",
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".markdups_metrics.txt"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"cmd":"bammarkduplicates M=markdups_metrics.txt level=0"
 	},
 	{
 		"id":"bamrecompress_target",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-        "cmd":{"subst_param_name":"bamrecompress_target",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    "bamrecompress index=1 md5=1 numthreads=2 ",
-                    "indexfilename=",
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    ".bai ",
-                    "md5filename=",
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    ".bam.md5"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
+		"cmd":"bamrecompress numthreads=2"
 	},
 	{
 		"id":"target_bam",
@@ -886,7 +572,8 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"bam_name","required":"no","default":".bam"}
+					"_",
+					{"subst_param_name":"bam_name","required":"no","default":"aln.bam"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -898,29 +585,21 @@
 	{
 		"id":"bamcat_output",
 		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
 		"cmd":"bamcat verbose=0 level=0 __PHIXBAM__ __TARGETBAM__"
 	},
 	{
 		"id":"seqchksum_output",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamseqchksum"
 	},
 	{
 		"id":"seqchksum_input",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
 		"cmd":"bamseqchksum"
 	},
 	{
 		"id":"cmp_seqchksum",
 		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": false,
 		"cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
 		"description":"check input primary/sequence data matches output"
 	}
@@ -992,13 +671,8 @@
 		"to":"flagstat_phix"
 	},
 	{
-		"id":"bmd_tee3_to_flagstat_filter",
+		"id":"bmd_tee3_to_flagstat",
 		"from":"bmd_tee3:__FIFO3__",
-		"to":"flagstat_filter"
-	},
-	{
-		"id":"flagstat_filter_to_flagstat",
-		"from":"flagstat_filter",
 		"to":"flagstat"
 	},
 	{
@@ -1032,9 +706,9 @@
 		"to":"out_flagstat"
 	},
 	{
-		"id":"ref_to_tophat2",
+		"id":"ref_to_snap",
 		"from":"reference_genome",
-		"to":"tophat2:__REFERENCE_GENOME__"
+		"to":"snap:__REFERENCE_GENOME__"
 	},
 	{
 		"id":"src_to_bc2",
@@ -1057,7 +731,7 @@
 		"to":"int_adp_bam"
 	},
 ############################################################
-# tophat alignment
+# snap alignment
 ############################################################
 	{
 		"id":"ti_to_bamcollate2_ranking",
@@ -1065,13 +739,13 @@
 		"to":"bamcollate2_ranking"
 	},
 	{
-		"id":"bamcollate2_ranking_to_bamreset_tophat",
+		"id":"bamcollate2_ranking_to_bamreset_snap",
 		"from":"bamcollate2_ranking",
-		"to":"bamreset_tophat"
+		"to":"bamreset_snap"
 	},
 	{
-		"id":"bamreset_tophat_to_bamtofastq",
-		"from":"bamreset_tophat",
+		"id":"bamreset_snap_to_bamtofastq",
+		"from":"bamreset_snap",
 		"to":"bamadapterclip"
 	},
 	{
@@ -1090,38 +764,23 @@
 		"to":"fq2"
 	},
 	{
-		"id":"fq1_to_tophat2",
+		"id":"fq1_to_snap",
 		"from":"fq1",
-		"to":"tophat2:__FQIN1__"
+		"to":"snap:__FQIN1__"
 	},
 	{
-		"id":"fq2_to_tophat2",
+		"id":"fq2_to_snap",
 		"from":"fq2",
-		"to":"tophat2:__FQIN2__"
+		"to":"snap:__FQIN2__"
 	},
 	{
-		"id":"tophat2_to_accepted_hits_bam",
-		"from":"tophat2",
-		"to":"accepted_hits_bam"
+		"id":"snap_to_snap_hits_bam",
+		"from":"snap",
+		"to":"snap_hits_bam"
 	},
 	{
-		"id":"tophat2_to_unmapped_bam",
-		"from":"tophat2",
-		"to":"unmapped_bam"
-	},
-	{
-		"id":"accepted_hits_bam_to_bamcat",
-		"from":"accepted_hits_bam",
-		"to":"bamcat:__IN_BAM1__"
-	},
-	{
-		"id":"unmapped_bam_to_bamcat",
-		"from":"unmapped_bam",
-		"to":"bamcat:__IN_BAM2__"
-	},
-	{
-		"id":"bamcat_to_tee_headerSQfix",
-		"from":"bamcat",
+		"id":"snap_hits_bam_to_tee_headerSQfix",
+		"from":"snap_hits_bam",
 		"to":"tee_headerSQfix"
 	},
 	{
@@ -1155,13 +814,13 @@
 		"to":"reheader_headerSQfix:__IN_BAM__"
 	},
 	{
-		"id":"reheader_headerSQfix_to_bam12split_tophat",
+		"id":"reheader_headerSQfix_to_bam12split_snap",
 		"from":"reheader_headerSQfix",
-		"to":"bam12split_tophat"
+		"to":"bam12split_snap"
 	},
 	{
-		"id":"bam12split_tophat_to_bamsort_qname",
-		"from":"bam12split_tophat",
+		"id":"bam12split_snap_to_bamsort_qname",
+		"from":"bam12split_snap",
 		"to":"bamsort_qname"
 	},
 	{
@@ -1280,36 +939,6 @@
 		"id":"seqchksum_input_to_cmp",
 		"from":"seqchksum_input",
 		"to":"cmp_seqchksum:__INPUTCHK__"
-	},
-	{
-		"id":"tophat2_to_deletions_bed",
-		"from":"tophat2",
-		"to":"deletions_bed"
-	},
-	{
-		"id":"cp_deletions_bed",
-		"from":"deletions_bed",
-		"to":"cp_deletions_bed:__SRC_DELETIONS_BED__"
-	},
-	{
-		"id":"tophat2_to_insertions_bed",
-		"from":"tophat2",
-		"to":"insertions_bed"
-	},
-	{
-		"id":"cp_insertions_bed",
-		"from":"insertions_bed",
-		"to":"cp_insertions_bed:__SRC_INSERTIONS_BED__"
-	},
-	{
-		"id":"tophat2_to_junctions_bed",
-		"from":"tophat2",
-		"to":"junctions_bed"
-	},
-	{
-		"id":"cp_junctions_bed",
-		"from":"junctions_bed",
-		"to":"cp_junctions_bed:__SRC_JUNCTIONS_BED__"
 	}
 ]
 }
