@@ -5,6 +5,7 @@ use Module::Build;
 my $class = Module::Build->subclass(code => <<'EOF');
 
   sub git_tag {
+    # adding --tags to allow use of non-annotated tags (as produced by github release tagging)
     my $gitver = q[git describe --tags --dirty --always];
     my $version = `$gitver` || 'unknown';
     $version =~ s/\s$//smxg;
@@ -34,7 +35,7 @@ my $class = Module::Build->subclass(code => <<'EOF');
 
     my $gitver = $self->git_tag();
     my @files = ();
-    if (-d 'blib/script') {
+    if (-d 'blib/lib') {
       @files = split q[\n], `find blib/lib -type f -name "*.pm"`;
     }
     if (-d 'blib/script') {
