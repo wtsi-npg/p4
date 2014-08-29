@@ -5,11 +5,27 @@ use Module::Build;
 my $class = Module::Build->subclass(code => <<'EOF');
 
   sub git_tag {
-    my $gitver = q[git describe --dirty --always];
+    # adding --tags to allow use of non-annotated tags (as produced by github release tagging)
+    my $gitver = q[git describe --tags --dirty --always];
     my $version = `$gitver` || 'unknown';
     $version =~ s/\s$//smxg;
     $version=~s/\A(?![\d])/0.0-/smx; #prepend 0.0- if does not start with a number
     return $version;
+  }
+
+  sub process_data_files {
+   `cp -av data blib`;
+
+    return;
+  }
+
+  sub ACTION_install {
+    my $self = shift;
+    $self->SUPER::ACTION_install;
+    my $lib = $self->install_base() .'/lib';
+    if (-d $lib) {
+      `rm -frv $lib`;
+    }
   }
 
   sub ACTION_code {
@@ -18,7 +34,10 @@ my $class = Module::Build->subclass(code => <<'EOF');
     $self->SUPER::ACTION_code;
 
     my $gitver = $self->git_tag();
-    my @files = split q[\n], `find blib/lib -type f -name "*.pm"`;
+    my @files = ();
+    if (-d 'blib/lib') {
+      @files = split q[\n], `find blib/lib -type f -name "*.pm"`;
+    }
     if (-d 'blib/script') {
       push @files, split q[\n],  `find blib/script -type f`;
     }
@@ -70,6 +89,13 @@ my $builder = $class->new(
 
   'dist' => { COMPRESS => 'gzip', SUFFIX => 'gz', }
 );
+
+if ($builder->install_base()) {
+  $builder->install_path('data' => join q{/}, $builder->install_base(), 'data');
+  $builder->add_build_element('data');
+} else {
+  warn "WARNING: '--install_base' option is not given, 'data' element will not be installed\n\n";
+}
 
 $builder->create_build_script();
 
