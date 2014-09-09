@@ -3,7 +3,6 @@ bin/vtfp.pl
 Build.PL
 data/bwamem_wtsi_stage2_template.vtf
 data/snap_sample_template.vtf
-data/tophat2_sample_template.vtf
 data/tophat2_wtsi_realign_template.vtf
 data/tophat2_wtsi_stage2_template.vtf
 examples/bwa_aln_cfg.png
