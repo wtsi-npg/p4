@@ -1,0 +1,382 @@
+{
+"description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
+"nodes":[
+	{
+		"id":"src_bam",
+		"type":"INFILE",
+		"name":{"subst_param_name":"src_bam",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"indatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".bam"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"BAM using as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
+	},
+	{
+		"id":"bamcollate2",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bamcollate2", "collate=1", "level=0"],
+		"comment":"ensure BAM records are gathered by template i.e. queryname"
+	},
+	{
+		"id":"tee0",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"mbuffer -f -o __PHIX_ALN__ -o __TGT_ALN__ "
+	},
+	{
+		"id":"pre_alignment_target",
+		"type":"VTFILE",
+		"name":{"subst_param_name":"pre_alignment_target",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"pre_alignment_name","required":"no","default":"pre_alignment"},
+					".json"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"subgraph containing pre alignment process"
+	},
+	{
+		"id":"alignment_reference_genome",
+		"type":"INFILE",
+		"name":{"subst_param_name":"alignment_reference_genome",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"alignment_refname","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
+		"id":"alignment_target",
+		"type":"VTFILE",
+		"name":{"subst_param_name":"alignment_vtf",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"alignment_method","required":"yes"},
+					"_alignment.json"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"subgraph containing alignment process"
+	},
+	{
+		"id":"picard_reference_dict",
+		"type":"INFILE",
+		"name":{"subst_param_name":"picard_reference_dict",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"picardrefdictname","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
+	{
+		"id":"post_alignment_target",
+		"type":"VTFILE",
+		"name":{"subst_param_name":"post_alignment_target",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"post_alignment","required":"no","default":"post_alignment"},
+					".json"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"subgraph containing post alignment process (target)"
+	},
+	{
+		"id":"bamrecompress_input",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bamrecompress verbose=0 numthreads=2"
+	},
+	{
+		"id":"no_aln_bam",
+		"type":"RAFILE",
+		"name":{"subst_param_name":"no_aln_bam",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"tmpdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"no_aln_bam_name",
+						"required":"no",
+						"default":"no_aln.bam",
+						"subst_constructor":{
+							"vals":[
+								"no_aln_",
+								{"subst_param_name":"rpt","required":"yes"},
+								".bam"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"auxmerge_prep",
+		"type":"VTFILE",
+		"name":{"subst_param_name":"auxmerge_prep",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"auxmerge_prep_name","required":"no","default":"auxmerge_prep_realign"},
+					".json"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"subgraph containing pre alignment process"
+	},
+	{
+		"id":"reference_genome_fasta",
+		"type":"INFILE",
+		"name":{"subst_param_name":"reference_genome_fasta",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"reposdir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"refname_fasta","required":"yes"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+        {
+                "id":"final_output_prep_target",
+                "type":"VTFILE",
+                "subst_map":{"phix_or_target":"target","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "name":{"subst_param_name":"final_output_prep_target",
+                        "required":"yes",
+                        "subst_constructor":{
+                                "vals":[
+                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
+                                        "/",
+                                        {"subst_param_name":"final_output_prep","required":"no","default":"final_output_prep"},
+                                        ".json"
+                                ],
+                                "postproc":{"op":"concat", "pad":""}
+                        }
+                },
+                "description":"subgraph containing post alignment_filter process (target)"
+        },
+	{
+		"id":"target_bam",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"target_bam",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					{"subst_param_name":"bam_name","required":"no","default":".bam"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"cram",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"cram",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".cram"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_bamcheck",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_bamcheck",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".bamcheck"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_flagstat",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_flagstat",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".flagstat"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+        {
+                "id":"seqchksum",
+                "type":"VTFILE",
+                "name":{"subst_param_name":"seqchksum",
+                        "required":"yes",
+                        "subst_constructor":{
+                                "vals":[
+                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
+                                        "/",
+                                        {"subst_param_name":"seqchksum_vtf","required":"no","default":"seqchksum_realign"},
+                                        ".json"
+                                ],
+                                "postproc":{"op":"concat", "pad":""}
+                        }
+                },
+                "description":"subgraph containing seqchksum validation of outputs"
+        }
+],
+"edges":[
+	{
+		"id":"src_to_bc2",
+		"from":"src_bam",
+		"to":"bamcollate2"
+	},
+	{
+		"id":"bc2_to_ti",
+		"from":"bamcollate2",
+		"to":"tee0"
+	},
+	{
+		"id":"t0_to_bamcollate2_ranking",
+		"from":"tee0:__PHIX_ALN__",
+		"to":"bamrecompress_input"
+	},
+	{
+		"id":"brci_to_ipab",
+		"from":"bamrecompress_input",
+		"to":"no_aln_bam"
+	},
+	{
+		"id":"ipab_to_bamreset_pre_aln_flt",
+		"from":"no_aln_bam",
+		"to":"auxmerge_prep"
+	},
+	{
+		"id":"bamreset_pre_aln_flt_to_",
+		"from":"auxmerge_prep",
+		"to":"post_alignment_target:no_align_bam"
+	},
+	{
+		"id":"t0_to_bamcollate2_ranking",
+		"from":"tee0:__TGT_ALN__",
+		"to":"pre_alignment_target"
+	},
+	{
+		"id":"bamadapterclip_to_alignment",
+		"from":"pre_alignment_target",
+		"to":"alignment_target"
+	},
+	{
+		"id":"ref_to_alignment",
+		"from":"alignment_reference_genome",
+		"to":"alignment_target:reference"
+	},
+	{
+		"id":"alignment_target_to_post_alignment_target",
+		"from":"alignment_target",
+		"to":"post_alignment_target"
+	},
+        {
+                "id":"picard_reference_dict_to_post_alignment",
+                "from":"picard_reference_dict",
+                "to":"post_alignment_target:reference_picard_dict"
+        },
+	{
+		"id":"post_alignment_to_alignment_filter",
+		"from":"post_alignment_target",
+		"to":"final_output_prep_target"
+	},
+	{
+		"id":"ref_to_paf_target",
+		"from":"reference_genome_fasta",
+		"to":"final_output_prep_target:reference_genome_fasta"
+	},
+	{
+		"id":"paf_to_bam",
+		"from":"final_output_prep_target",
+		"to":"target_bam"
+	},
+	{
+		"id":"scramble_to_cram",
+		"from":"final_output_prep_target:out_cram",
+		"to":"cram"
+	},
+	{
+		"id":"bamcheck_to_out",
+		"from":"final_output_prep_target:out_bamcheck",
+		"to":"out_bamcheck"
+	},
+	{
+		"id":"flagstat_to_out",
+		"from":"final_output_prep_target:out_flagstat",
+		"to":"out_flagstat"
+	},
+        {
+                "id":"src_bam_to_seqchksum",
+                "from":"src_bam",
+                "to":"seqchksum"
+        },
+        {
+                "id":"target_bam_to_seqchksum",
+                "from":"target_bam",
+                "to":"seqchksum:target_bam"
+        }
+]
+}

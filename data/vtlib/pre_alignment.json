@@ -1,0 +1,51 @@
+{
+"description":"preprocessing of input data before passing to alignment",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamcollate2_ranking"
+		},
+		"outputs":{
+			"_stdout_":"bamadapterclip"
+		}
+	}
+},
+"nodes":[
+	{
+		"id":"bamcollate2_ranking",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bamcollate2 collate=3 level=0",
+		"comment":"already collated suitably - just here to do the ranking in the name"
+	},
+	{
+		"id":"bamreset_pre_alignment",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bamreset resetaux=0 level=0 verbose=0",
+		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
+	},
+	{
+		"id":"bamadapterclip",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bamadapterclip verbose=0 level=0",
+		"description":"Hard clip adapter sequence from reads before feeding to Tophat2"
+	}
+],
+"edges":[
+	{
+		"id":"bamcollate2_ranking_to_bamreset_prealn",
+		"from":"bamcollate2_ranking",
+		"to":"bamreset_pre_alignment"
+	},
+	{
+		"id":"bamreset_prealn_to_bamadapterclip",
+		"from":"bamreset_pre_alignment",
+		"to":"bamadapterclip"
+	}
+]
+}
