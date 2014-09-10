@@ -59,7 +59,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"refname","required":"yes"}
+					{"subst_param_name":"alignment_reference_genome_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -92,7 +92,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"picardrefdictname","required":"yes"}
+					{"subst_param_name":"picard_reference_dict_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -230,7 +230,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"refname_fasta","required":"yes"}
+					{"subst_param_name":"reference_genome_fasta_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -264,7 +264,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"phix_refname_fasta","required":"yes"}
+					{"subst_param_name":"phix_reference_genome_fasta_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -465,7 +465,7 @@
 	{
 		"id":"bamreset_pre_aln_flt_to_",
 		"from":"pre_auxmerge",
-		"to":"post_alignment_target:phix_aligned_bam"
+		"to":"post_alignment_target:no_align_bam"
 	},
 	{
 		"id":"t0_to_bamcollate2_ranking",
