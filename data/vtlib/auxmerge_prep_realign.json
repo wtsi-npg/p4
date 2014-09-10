@@ -24,7 +24,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamadapterclip verbose=0 level=0"
+		"cmd":"bamadapterfind clip=1 verbose=0 level=0"
 	}
 ],
 "edges":[
