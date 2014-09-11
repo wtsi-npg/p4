@@ -247,7 +247,7 @@
                                 "vals":[
                                         {"subst_param_name":"cfgdatadir","required":"no","default":"."},
                                         "/",
-                                        {"subst_param_name":"final_output_prep","required":"no","default":"final_output_prep"},
+                                        {"subst_param_name":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
                                         ".json"
                                 ],
                                 "postproc":{"op":"concat", "pad":""}
@@ -281,7 +281,7 @@
                                 "vals":[
                                         {"subst_param_name":"cfgdatadir","required":"no","default":"."},
                                         "/",
-                                        {"subst_param_name":"final_output_prep","required":"no","default":"final_output_prep"},
+                                        {"subst_param_name":"final_output_prep_phix_name","required":"no","default":"final_output_prep"},
                                         ".json"
                                 ],
                                 "postproc":{"op":"concat", "pad":""}
