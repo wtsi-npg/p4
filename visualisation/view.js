@@ -48,8 +48,8 @@ graph.nodes.forEach(function(node) {
   }
 });
 
-var width = 1000,
-    height = 900;
+var width = window.innerWidth * .8;
+var height = window.innerHeight * .8;
 
 var force = d3.layout.force()
     .nodes(d3.values(nodes))
@@ -223,6 +223,11 @@ function refresh_progress() {
 					intervalArray.push(i);
 				}
 
+			} else {
+				// job has not yet started
+				d3.select('#x'+c.name).transition().style('stroke','black').each('end',function() {
+					d3.select(this).transition().style('stroke-width','1px')
+				});
 			}
 		});
 	});
