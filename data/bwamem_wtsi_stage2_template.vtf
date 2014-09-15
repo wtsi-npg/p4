@@ -5,43 +5,43 @@
 		"id":"bmd_phix_tee0",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __pFIFO0__"
+		"use_STDOUT": false,
+		"cmd":"tee __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_tee1",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO1__"
+		"use_STDOUT": false,
+		"cmd":"tee __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_tee2",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO2__"
+		"use_STDOUT": false,
+		"cmd":"tee __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_tee3",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO3__"
+		"use_STDOUT": false,
+		"cmd":"tee __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_phix_tee1",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __pFIFO1__"
+		"use_STDOUT": false,
+		"cmd":"tee __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_phix_tee2",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __pFIFO2__"
+		"use_STDOUT": false,
+		"cmd":"tee __OUT1__ __OUT2__"
 	},
 	{
 		"id":"scramble",
@@ -383,8 +383,8 @@
 		"id":"tee_headerSQfix",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
+		"use_STDOUT": false,
+		"cmd":"mbuffer -f -q -m 5M -o __OUT2__ -o __OUT1__",
 		"comment":"get deadlock when tee used here"
 	},
 	{
@@ -707,7 +707,7 @@
 	},
 	{   
 		"id":"bmd_phix_tee0_to_bmd_phix_tee0",
-		"from":"bmd_phix_tee0:__pFIFO0__",
+		"from":"bmd_phix_tee0:__OUT2__",
 		"to":"bmd_phix_tee1"
 	},
 	{   
@@ -717,47 +717,47 @@
 	},
 	{   
 		"id":"tee_to_scramble_phix",
-		"from":"bmd_phix_tee1:__pFIFO1__",
+		"from":"bmd_phix_tee1:__OUT2__",
 		"to":"scramble_phix"
 	},
 	{   
 		"id":"tee_to_scramble",
-		"from":"bmd_tee1:__FIFO1__",
+		"from":"bmd_tee1:__OUT2__",
 		"to":"scramble"
 	},
 	{   
 		"id":"bmd_phix_tee1_to_bmd_phix_tee2",
-		"from":"bmd_phix_tee1",
+		"from":"bmd_phix_tee1:__OUT1__",
 		"to":"bmd_phix_tee2"
 	},
 	{   
 		"id":"bmd_tee1_to_bmd_tee2",
-		"from":"bmd_tee1",
+		"from":"bmd_tee1:__OUT1__",
 		"to":"bmd_tee2"
 	},
 	{
 		"id":"tee_phix_to_bamcheck_phix",
-		"from":"bmd_phix_tee2",
+		"from":"bmd_phix_tee2:__OUT1__",
 		"to":"bamcheck_phix"
 	},
 	{
 		"id":"tee_to_bamcheck",
-		"from":"bmd_tee2:__FIFO2__",
+		"from":"bmd_tee2:__OUT2__",
 		"to":"bamcheck"
 	},
 	{
 		"id":"bmd_tee2_to_bmd_tee3",
-		"from":"bmd_tee2",
+		"from":"bmd_tee2:__OUT1__",
 		"to":"bmd_tee3"
 	},
 	{
 		"id":"bmd_tee2_phix_to_flagstat",
-		"from":"bmd_phix_tee2:__pFIFO2__",
+		"from":"bmd_phix_tee2:__OUT2__",
 		"to":"flagstat_phix"
 	},
 	{
 		"id":"bmd_tee3_to_flagstat_filter",
-		"from":"bmd_tee3:__FIFO3__",
+		"from":"bmd_tee3:__OUT2__",
 		"to":"flagstat_filter"
 	},
 	{
@@ -877,7 +877,7 @@
 	},
 	{
 		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"tee_headerSQfix",
+		"from":"tee_headerSQfix:__OUT2__",
 		"to":"mbuffer_headerSQfix"
 	},
 	{
@@ -948,7 +948,7 @@
 	},
 	{
 		"id":"bmd_phix_tee0_to_bamrecompress_phix",
-		"from":"bmd_phix_tee0",
+		"from":"bmd_phix_tee0:__OUT1__",
 		"to":"bamrecompress_phix"
 	},
 	{
@@ -971,7 +971,7 @@
 	},
 	{
 		"id":"bmd_to_bamrecompress",
-		"from":"bmd_tee3",
+		"from":"bmd_tee3:__OUT1__",
 		"to":"bamrecompress_target"
 	},
 	{
