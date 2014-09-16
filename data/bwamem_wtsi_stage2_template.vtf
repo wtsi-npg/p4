@@ -6,42 +6,42 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"tee __OUT1__ __OUT2__"
+		"cmd":"teepot -w 300 __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_tee1",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"tee __OUT1__ __OUT2__"
+		"cmd":"teepot -w 300 __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_tee2",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"tee __OUT1__ __OUT2__"
+		"cmd":"teepot -w 300 __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_tee3",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"tee __OUT1__ __OUT2__"
+		"cmd":"teepot -w 300 __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_phix_tee1",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"tee __OUT1__ __OUT2__"
+		"cmd":"teepot -w 300 __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bmd_phix_tee2",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"tee __OUT1__ __OUT2__"
+		"cmd":"teepot -w 300 __OUT1__ __OUT2__"
 	},
 	{
 		"id":"scramble",
@@ -284,7 +284,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"mbuffer -f -q -m 1G -o __OUT1__ -o __OUT2__"
+		"cmd":"teepot -w 300 -m 1G __OUT1__ __OUT2__"
 	},
 	{
 		"id":"bamrecompress_input",
@@ -384,7 +384,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"mbuffer -f -q -m 5M -o __OUT2__ -o __OUT1__",
+		"cmd":"teepot -w 300 -m 5M __OUT2__ __OUT1__",
 		"comment":"get deadlock when tee used here"
 	},
 	{
@@ -408,7 +408,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"mbuffer -f -q -m 5M"
+		"cmd":"teepot -w 300 -m 5M /dev/stdout"
 	},
 	{
 		"id":"reheader_headerSQfix",
