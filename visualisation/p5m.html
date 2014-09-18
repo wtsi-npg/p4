@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>p4 Process Monitor</title>
+    <link rel="stylesheet" href="/css/p4.css">
+  </head>
+  
+  <body>
+  <h2>P4 Process Monitor</h2>
+  <p class='error' id="errms"></p>
+
+  <fieldset><legend>P4 Processes</legend>
+  <div id=pm><div id=table>Loading processes...</div></div>
+  </fieldset>
+  </body>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script>
+    function reload() {
+    d3.html('/cgi-bin/p5m', function(error, data) {
+      if (error) return console.warn(error);
+      var pm = d3.select("#pm").node();
+      var n = d3.select("#table").node();
+      data.firstChild.setAttribute('id','table');
+      pm.replaceChild(data.firstChild,n);
+      setTimeout(reload,30000);
+    });
+    }
+    reload();
+  </script>
+</html>
+

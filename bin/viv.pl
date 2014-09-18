@@ -14,8 +14,6 @@ use Carp;
 
 use Data::Dumper;
 
-our $VERSION = '0';
-
 Readonly::Scalar my $FROM => 0;
 Readonly::Scalar my $TO => 1;
 Readonly::Scalar my $VLALWAYSLOG => 0;
@@ -24,7 +22,8 @@ Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
-getopts('xshv:o:r:t:', \%opts);
+getopts('xshv:o:', \%opts);
+my $LOGDIR = '/nfs/users/nfs_j/js10/npg/p4/visualisation/logs';
 
 if($opts{h}) {
 	die qq{viv.pl [-s] [-x] [-v <verbose_level>] [-o <logname>] <config.json>\n};
@@ -36,11 +35,8 @@ my $logfile = $opts{o};
 my $verbosity_level = $opts{v};
 $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[viv]);
-$logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
-my $raf_list = process_raf_list($opts{r});    # insert inline RAFILE nodes
-my $tee_list = process_raf_list($opts{t});    # insert tee with branch to RAFILE
 
 my $s = read_file($cfg_file_name);
 
@@ -94,8 +90,16 @@ $logger->($VLMAX, "\n==================================\nEXEC nodes(post RAFILE 
 #  otherwise via file whose name is determined by the non-EXEC node's name attribute (communication
 #  between two non-EXEC nodes is of questionable value and is currently considered an error).
 for my $edge (@{$edges}) {
-	my ($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
-	my ($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
+	my $from_node = $all_nodes{$edge->{from}};
+	my $to_node = $all_nodes{$edge->{to}};
+
+	my $from_node;
+	my ($from_id, $from_port);
+	($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
+
+	my $to_node;
+	my ($to_id, $to_port);
+	($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
 	my $data_xfer_name;
 
 	if($from_node->{type} eq q[EXEC]) {
@@ -128,6 +132,13 @@ $logger->($VLMAX, "EXEC nodes(post EXEC nodes preprocessing): ", Dumper(%exec_no
 setpgrp; # create new processgroup so signals can be fired easily in suitable way later
 # kick off any unblocked EXEC nodes, noting their details for later release of any dependants
 my %pid2id = ();
+
+my $pm_pid = fork;
+if (!$pm_pid) {
+	setpgrp(0,0);
+	exec "/nfs/users/nfs_j/js10/npg/p4/bin/p5m.py $cfg_file_name $LOGDIR" or die "Can't exec p5m.py: $?";
+}
+
 for my $node_id (keys %exec_nodes) {
 	if($exec_nodes{$node_id}->{wait_counter} == 0 and not $exec_nodes{$node_id}->{pid}) { # green light - execute
 
@@ -141,7 +152,7 @@ for my $node_id (keys %exec_nodes) {
 
 # now wait for the children
 $logger->($VLMIN, "\n=========\nWaiting for the children\n=========\n");
-while((my $pid=wait) > 0) {
+while((my $pid=waitpid(-1*getpid(),0)) > 0) {
 	my $status = $?;
 	my $wifexited = WIFEXITED($status);
 	my $wexitstatus = $wifexited ? WEXITSTATUS($status) : undef;
@@ -168,6 +179,7 @@ while((my $pid=wait) > 0) {
 			######################################################################
 			local $SIG{'TERM'} = 'IGNORE';
 			kill TERM => 0;
+			kill TERM => $pm_pid;	# Kill the process monitor
 
 			$logger->($VLMIN, sprintf(qq[\n**********************************************\nExiting due to abnormal return from child %s (pid: %d), return_status: %#04X, wifexited: %#04X, wexitstatus: %d (%#04X)\n**********************************************\n], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
 			$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, ($wifsignaled? $wtermsig: q{NA})), "\n");
@@ -200,6 +212,8 @@ while((my $pid=wait) > 0) {
 	}
 }
 &{$SIG{'ALRM'}||sub{}}(); # fire off bad exit if set
+
+kill 'TERM', $pm_pid;	# kill the process monitor
 
 $logger->($VLMIN, "Done\n");
 
@@ -247,9 +261,6 @@ sub _update_node_data_xfer {
 				croak "Cannot use $node_edge_std for node ".($node->{'id'}).' more than once';
 				#TODO: allow multiple STDOUT with dup?
 			}
-			if(exists $node->{"use_$node_edge_std"}){
-				croak 'Node '.($node->{'id'})." configured not to use $node_edge_std" unless $node->{"use_$node_edge_std"};
-			}
 			$node->{$node_edge_std} = $data_xfer_name;
 		}
 	}
@@ -279,34 +290,41 @@ sub _get_to_edges {
 sub _fork_off {
 	my ($node, $do_exec) = @_;
 	my $cmd = $node->{'cmd'};
+	my $cmd_string = $cmd;
+	my $id = $node->{id};
 	my @cmd = ($cmd);
 	if ( ref $cmd eq 'ARRAY' ){
 		@cmd = @{$cmd};
 		$cmd = '[' . (join ',',@cmd)  . ']';
-	}
+		$cmd_string = (join ' ',@cmd);
+	} 
 
 	if(my $pid=fork) {     # parent - record the child's departure
-		$logger->($VLMED, qq[*** Forked off pid $pid with cmd: $cmd\n]);
-
+		$logger->($VLMED, qq[*** Forked off pid $pid with id $id  STDIN $node->{STDIN}  STDOUT $node->{STDOUT}  cmd: $cmd\n]);
 		return $pid;
 	}
 	elsif(defined $pid) { # child - note: one way or the other, we're not returning from here
-		$logger->($VLMED, qq[Child $$ ; cmd: $cmd\n]);
+		my $ppid = getppid();
+		$logger->($VLMED, qq[Child $$ ; parent $ppid ; cmd: $cmd\n]);
 
 		if($do_exec) {
-			$0 .= q{ (pending }.$node->{'id'}.qq{: $cmd)}; #rename process so fork can be easily identified whilst open waits on fifo
-			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
+			#### $SIG{'PIPE'} = 'IGNORE';
+			my $logfile = $node->{'id'}.q(.).$$.q(.err);
+			open STDERR, q(>), $LOGDIR.'/'.$node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
 			select(STDERR);$|=1;
 			$node->{'STDIN'} ||= '/dev/null';
-			open STDIN,  q(<), $node->{'STDIN'} or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
 			$node->{'STDOUT'} ||= '/dev/null';
-			open STDOUT, q(>), $node->{'STDOUT'} or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
 			print STDERR "Process $$ for cmd $cmd:\n";
 			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.$node->{'STDIN'} ."\n";
 			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.$node->{'STDOUT'}."\n";
 			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
+			$0 .= ' [' . $node->{'id'} . '] ';
+			$0 .= '(STDIN: ' . $node->{'STDIN'} . ')';
+			open STDIN,  q(<), $node->{'STDIN'} or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
+			$0 .= ' (STDOUT: ' . $node->{'STDOUT'} . ')';
+			open STDOUT, q(>), $node->{'STDOUT'} or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
 			print STDERR " execing....\n";
-			exec @cmd;
+			exec @cmd or die "Could not exec $cmd[0]";
 		}
 		else {
 			$logger->($VLMED, q[child exec not switched on], "\n");
@@ -354,16 +372,5 @@ sub mklogger {
 
 		return;
 	}
-}
-
-sub process_raf_list {
-	my ($rafs) = @_;
-	my $raf_map;
-
-	if($rafs) {
-		$raf_map = { (map {  (split '=', $_); } (split /;/, $rafs)) };
-	}
-
-	return $raf_map;
 }
 
