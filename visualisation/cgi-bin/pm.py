@@ -10,6 +10,7 @@
 import socket
 import sys
 import struct
+import json
 
 def getAll():
     message = 'ping'
@@ -45,6 +46,8 @@ def getAll():
     finally:
         sock.close()
 
+    # sort data by elapsed time before returning it
+    data.sort(key = lambda d: json.loads(d)['etime'])
     return data
 
 if __name__ == '__main__':
