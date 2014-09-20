@@ -6,7 +6,7 @@
 #
 
 {
-"description":"The Classic Pipeline",
+"description":"This pipeline starts with Illumina2Bam, and ends by running SplitBamByReadGroup to create separate BAM files for each sample.",
 "nodes":[
 	{
 		"id":"illumina2bam",
@@ -250,14 +250,14 @@
 	{
 		"id":"create_filter",
 		"type":"EXEC",
-		"cmd":"/nfs/users/nfs_s/srl/src/github/pb_calibration/bin/spatial_filter -c -q -F __FILTER__ /dev/stdin",
+		"cmd":"spatial_filter -c -q -F __FILTER__ /dev/stdin",
 		"description":"Create a spatial filter"
 	},
 
 	{
 		"id":"apply_filter",
 		"type":"EXEC",
-		"cmd":"/nfs/users/nfs_s/srl/src/github/pb_calibration/bin/spatial_filter -a -f -q -F __FILTER__ /dev/stdin",
+		"cmd":"spatial_filter -a -f -q -F __FILTER__ /dev/stdin",
 		"description":"Apply a spatial filter"
 	},
 
