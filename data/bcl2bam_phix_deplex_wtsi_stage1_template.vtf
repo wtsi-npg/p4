@@ -1,9 +1,3 @@
-#
-# Classic.vtf
-#
-# This pipeline starts with Illumina2Bam, and ends by running SplitBamByReadGroup to create separate BAM files for each sample.
-#
-#
 
 {
 "description":"This pipeline starts with Illumina2Bam, and ends by running SplitBamByReadGroup to create separate BAM files for each sample.",
