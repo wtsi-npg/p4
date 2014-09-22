@@ -9,6 +9,7 @@
 
 var intervalArray = [];
 
+var log_dir = getUrlQueryStringValue('logdir');
 var cfg_name = getUrlQueryStringValue('cfg_name');
 if(!cfg_name) {
 	cfg_name = 'unspecified';
@@ -193,14 +194,16 @@ function refresh_progress() {
 	// this is apparently the quickest and surest way to empty an array
 	while (intervalArray.length > 0) { intervalArray.pop(); }
 
-	d3.json("cgi-bin/getProgress", function(error, json) {
+	d3.json("/cgi-bin/getProgress")
+		.header("Content-Type", "application/x-www-form-urlencoded")
+		.post("logdir="+log_dir, function(error, json) {
 		if (error) return console.warn(error);
 //		console.warn(json);
 		var circles = force.nodes();
 		circles.forEach(function(c) { 
 //			console.warn(c.name);
-			if (typeof(json[c.name]) != 'undefined') {
-				var job_status = json[c.name];
+			if (typeof(json.nodes[c.name]) != 'undefined') {
+				var job_status = json.nodes[c.name];
 				if (job_status == 2) {
 					// job currently running
 					i = setInterval( function() {
@@ -245,22 +248,22 @@ function refresh_progress() {
 });
 
 function getUrlQueryStringValue(name) {
-	var cfg_name = '';
+	var value = '';
 	var query = location.search.substring(1);
 
 	var pairs = query.split('&');
 
 	for(var i = 0; i < pairs.length; i++) {
 		var pos = pairs[i].indexOf('=');
-		if((pos == -1) || (pairs[i].substring(0,pos) !== 'cfg_name')) {
+		if((pos == -1) || (pairs[i].substring(0,pos) !== name)) {
 			continue;
 		}
 
-		cfg_name = pairs[i].substring(pos+1);
+		value = pairs[i].substring(pos+1);
 		break;
 	}
 
-	return cfg_name;
+	return value;
 }
 
 function dblclick(d) {

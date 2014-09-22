@@ -9,9 +9,9 @@ use POSIX;
 use File::Temp qw/ tempdir /;
 use Getopt::Std;
 use Readonly;
-
+use Sys::Hostname;
 use Carp;
-
+use File::Path qw(make_path);
 use Data::Dumper;
 
 Readonly::Scalar my $FROM => 0;
@@ -23,7 +23,8 @@ Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
 getopts('xshv:o:', \%opts);
-my $LOGDIR = '/nfs/users/nfs_j/js10/npg/p4/visualisation/logs';
+my $LOGDIR = '/tmp/vivlogs/' . hostname . '.' . getpid();
+make_path($LOGDIR);
 
 if($opts{h}) {
 	die qq{viv.pl [-s] [-x] [-v <verbose_level>] [-o <logname>] <config.json>\n};
@@ -133,12 +134,14 @@ setpgrp; # create new processgroup so signals can be fired easily in suitable wa
 # kick off any unblocked EXEC nodes, noting their details for later release of any dependants
 my %pid2id = ();
 
+# Fire off the process monitor
 my $pm_pid = fork;
 if (!$pm_pid) {
-	setpgrp(0,0);
-	exec "/nfs/users/nfs_j/js10/npg/p4/bin/p5m.py $cfg_file_name $LOGDIR" or die "Can't exec p5m.py: $?";
+	setpgrp(0,0);	# ensure program group ID is different to all other children
+	exec "p5m.py $cfg_file_name $LOGDIR" or die "Can't exec p5m.py: $?";
 }
 
+# Now fire off the exec nodes
 for my $node_id (keys %exec_nodes) {
 	if($exec_nodes{$node_id}->{wait_counter} == 0 and not $exec_nodes{$node_id}->{pid}) { # green light - execute
 

@@ -5,51 +5,24 @@
 # of a running p4 (viv) program, and collects the status information from each.
 #
 
+import pm
 import json
-import socket
-import struct
+import cgi
 import sys
 
-message = 'ping'
-multicast_group = ('224.3.28.70', 10000)
+json_data = json.dumps('')
+form = cgi.FieldStorage()
+logdir = form.getvalue('logdir')
+if not logdir:
+  logdir = ''
 
-data = []
+data = pm.getAll()
 
-# Create the datagram socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-# Set a timeout so the socket does not block indefinitely when trying
-# to receive data.
-sock.settimeout(1)
-
-# Set the time-to-live for messages so they do not go past the
-# local network segment.
-sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-
-try:
-
-    # Send data to the multicast group
-    print >>sys.stderr, 'sending "%s"' % message
-    sent = sock.sendto(message, multicast_group)
-
-    # Look for responses from all recipients
-    while True:
-        print >>sys.stderr, 'waiting to receive'
-        try:
-            recdata, server = sock.recvfrom(1024 * 16)
-            data.append(recdata);
-        except socket.timeout:
-            print >>sys.stderr, 'timed out, no more responses'
-            break
-        else:
-            print >>sys.stderr, 'received "%s" from %s' % (recdata, server)
-
-finally:
-    print >>sys.stderr, 'closing socket'
-    sock.close()
-
-
-json_data = json.dumps(data)
+for d in data:
+  j = json.loads(d)
+  if (j['log_dir'] == logdir):
+    json_data = json.dumps(j)
+    break
 
 print "Content-Type: application/json"
 print ""
