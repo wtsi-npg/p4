@@ -14,6 +14,8 @@ use Carp;
 use File::Path qw(make_path);
 use Data::Dumper;
 
+our $VERSION = '0';
+
 Readonly::Scalar my $FROM => 0;
 Readonly::Scalar my $TO => 1;
 Readonly::Scalar my $VLALWAYSLOG => 0;
@@ -22,7 +24,7 @@ Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
-getopts('xshv:o:', \%opts);
+getopts('xshv:o:r:t:', \%opts);
 my $LOGDIR = '/tmp/vivlogs/' . hostname . '.' . getpid();
 make_path($LOGDIR);
 
@@ -36,8 +38,11 @@ my $logfile = $opts{o};
 my $verbosity_level = $opts{v};
 $verbosity_level = 1 unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[viv]);
+$logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
+my $raf_list = process_raf_list($opts{r});    # insert inline RAFILE nodes
+my $tee_list = process_raf_list($opts{t});    # insert tee with branch to RAFILE
 
 my $s = read_file($cfg_file_name);
 
@@ -91,16 +96,9 @@ $logger->($VLMAX, "\n==================================\nEXEC nodes(post RAFILE 
 #  otherwise via file whose name is determined by the non-EXEC node's name attribute (communication
 #  between two non-EXEC nodes is of questionable value and is currently considered an error).
 for my $edge (@{$edges}) {
-	my $from_node = $all_nodes{$edge->{from}};
-	my $to_node = $all_nodes{$edge->{to}};
+	my ($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
+	my ($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
 
-	my $from_node;
-	my ($from_id, $from_port);
-	($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
-
-	my $to_node;
-	my ($to_id, $to_port);
-	($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
 	my $data_xfer_name;
 
 	if($from_node->{type} eq q[EXEC]) {
@@ -264,6 +262,9 @@ sub _update_node_data_xfer {
 				croak "Cannot use $node_edge_std for node ".($node->{'id'}).' more than once';
 				#TODO: allow multiple STDOUT with dup?
 			}
+			if(exists $node->{"use_$node_edge_std"}){
+				croak 'Node '.($node->{'id'})." configured not to use $node_edge_std" unless $node->{"use_$node_edge_std"};
+			}
 			$node->{$node_edge_std} = $data_xfer_name;
 		}
 	}
@@ -293,13 +294,11 @@ sub _get_to_edges {
 sub _fork_off {
 	my ($node, $do_exec) = @_;
 	my $cmd = $node->{'cmd'};
-	my $cmd_string = $cmd;
 	my $id = $node->{id};
 	my @cmd = ($cmd);
 	if ( ref $cmd eq 'ARRAY' ){
 		@cmd = @{$cmd};
 		$cmd = '[' . (join ',',@cmd)  . ']';
-		$cmd_string = (join ' ',@cmd);
 	} 
 
 	if(my $pid=fork) {     # parent - record the child's departure
@@ -375,5 +374,16 @@ sub mklogger {
 
 		return;
 	}
+}
+
+sub process_raf_list {
+	my ($rafs) = @_;
+	my $raf_map;
+ 
+	if($rafs) {
+		$raf_map = { (map {  (split '=', $_); } (split /;/, $rafs)) };
+ 	}
+ 
+ 	return $raf_map;
 }
 
