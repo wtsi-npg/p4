@@ -1,0 +1,30 @@
+#!/software/bin/python
+
+#
+# Send a UDP Multicast message to each process monitor associated with an instance
+# of a running p4 (viv) program, and collects the status information from each.
+#
+
+import pm
+import json
+import cgi
+import sys
+
+json_data = json.dumps('')
+form = cgi.FieldStorage()
+logdir = form.getvalue('logdir')
+if not logdir:
+  logdir = ''
+
+data = pm.getAll()
+
+for d in data:
+  j = json.loads(d)
+  if (j['log_dir'] == logdir):
+    json_data = json.dumps(j)
+    break
+
+print "Content-Type: application/json"
+print ""
+print json_data
+

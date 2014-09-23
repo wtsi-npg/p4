@@ -1,0 +1,31 @@
+#!/software/bin/python
+
+#
+# P4 Process Monitor
+#
+#
+# Called from p5m.html via an AJAX call to fill in a table of viv instances
+#
+import json
+import pm
+
+data = pm.getAll()
+
+print "Content-Type: text/html"
+print ""
+
+print "<table>"
+print "<tr><th>Pipeline</th><th>Host</th><th>PID</th><th>Time</th></tr>"
+
+for d in data:
+  j = json.loads(d)
+  print "<tr>"
+  cmd = "cfg_name=" + j['vtf_name'] + '&logdir=' + j['log_dir']
+  print "<td><a href=edit.html?" + cmd + ">" + j['vtf_name'] + "</a></td>"
+  print "<td>", j['hostname'], "</td>"
+  print "<td>", j['pid'], "</td>"
+  print "<td>", j['etime'], "</td>"
+  print "</tr>"
+
+print "</table>"
+
