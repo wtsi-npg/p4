@@ -70,8 +70,8 @@ while True:
             cmd = ("ps", "--no-heading", "-o", "command", "-p", pid)
             try:
                 output = subprocess.check_output(cmd)
-                m1 = re.search("STDIN",output)
-                m2 = re.search("STDOUT",output)
+                m1 = re.search("STDIN:",output)
+                m2 = re.search("STDOUT:",output)
 				# Job is currently running
                 status = 2
                 if (m1 or m2):

@@ -24,14 +24,15 @@ Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
-getopts('xshv:o:r:t:', \%opts);
+getopts('xshnv:o:r:t:', \%opts);
 my $LOGDIR = '/tmp/vivlogs/' . hostname . '.' . getpid();
 make_path($LOGDIR);
 
 if($opts{h}) {
-	die qq{viv.pl [-s] [-x] [-v <verbose_level>] [-o <logname>] <config.json>\n};
+	die qq{viv.pl [-s] [-x] [-n] [-v <verbose_level>] [-o <logname>] <config.json>\n};
 }
 
+my $no_process_monitor = $opts{n};
 my $do_exec = $opts{x};
 my $strict_status_checks = $opts{s};
 my $logfile = $opts{o};
@@ -133,10 +134,14 @@ setpgrp; # create new processgroup so signals can be fired easily in suitable wa
 my %pid2id = ();
 
 # Fire off the process monitor
-my $pm_pid = fork;
-if (!$pm_pid) {
-	setpgrp(0,0);	# ensure program group ID is different to all other children
-	exec "p5m.py $cfg_file_name $LOGDIR" or die "Can't exec p5m.py: $?";
+my $pm_pid = 0;
+
+if (!$no_process_monitor) {
+	$pm_pid = fork;
+	if (!$pm_pid) {
+		setpgrp(0,0);	# ensure program group ID is different to all other children
+		exec "p5m.py $cfg_file_name $LOGDIR" or die "Can't exec p5m.py: $?";
+	}
 }
 
 # Now fire off the exec nodes
@@ -180,7 +185,7 @@ while((my $pid=waitpid(-1*getpid(),0)) > 0) {
 			######################################################################
 			local $SIG{'TERM'} = 'IGNORE';
 			kill TERM => 0;
-			kill TERM => $pm_pid;	# Kill the process monitor
+			kill TERM => $pm_pid if ($pm_pid);	# Kill the process monitor
 
 			$logger->($VLMIN, sprintf(qq[\n**********************************************\nExiting due to abnormal return from child %s (pid: %d), return_status: %#04X, wifexited: %#04X, wexitstatus: %d (%#04X)\n**********************************************\n], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
 			$logger->($VLMIN, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, ($wifsignaled? $wtermsig: q{NA})), "\n");
@@ -214,7 +219,7 @@ while((my $pid=waitpid(-1*getpid(),0)) > 0) {
 }
 &{$SIG{'ALRM'}||sub{}}(); # fire off bad exit if set
 
-kill 'TERM', $pm_pid;	# kill the process monitor
+kill 'TERM', $pm_pid if ($pm_pid);	# kill the process monitor
 
 $logger->($VLMIN, "Done\n");
 

@@ -20,7 +20,14 @@ if (!json_url.match(/.json/) && !json_url.match(/.vtf/) && !json_url.match(/.cfg
 }
 
 // Load and display JSON
-d3.xhr(json_url, 'application/json', function(error, data) {
+d3.xhr(json_url, 'application/json', function(error, data) { 
+	if (error) { console.warn(error); }
+	displayGraph(data);
+});
+
+
+function displayGraph(data)
+{
 var nodes = {};
 var linx = [];
 
@@ -61,6 +68,10 @@ graph.nodes.forEach(function(node) {
 var width = window.innerWidth * .8;
 var height = window.innerHeight * .8;
 
+var svg = d3.select("#graph").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
 var force = d3.layout.force()
     .nodes(d3.values(nodes))
     .links(linx)
@@ -72,10 +83,6 @@ var force = d3.layout.force()
 
 var drag = force.drag()
     .on("dragstart", dragstart);
-
-var svg = d3.select("#graph").append("svg")
-    .attr("width", width)
-    .attr("height", height);
 
 // Per-type markers, as they don't inherit styles.
 svg.append("defs").selectAll("marker")
@@ -198,7 +205,7 @@ function refresh_progress() {
 		.header("Content-Type", "application/x-www-form-urlencoded")
 		.post("logdir="+log_dir, function(error, json) {
 		if (error) return console.warn(error);
-//		console.warn(json);
+		if (json == "") return 0;
 		var circles = force.nodes();
 		circles.forEach(function(c) { 
 //			console.warn(c.name);
@@ -244,8 +251,7 @@ function refresh_progress() {
 		});
 	});
 }
-
-});
+}
 
 function getUrlQueryStringValue(name) {
 	var value = '';
