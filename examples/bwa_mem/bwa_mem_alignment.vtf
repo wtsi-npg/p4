@@ -24,7 +24,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bwa",
+					"bwa0_6",
 					"mem",
 					"-t",
 					{"subst_param_name":"aligner_numthreads","required":"no","default":"2"},
