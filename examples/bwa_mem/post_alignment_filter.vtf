@@ -81,9 +81,10 @@
 		}
 	},
 	{
-		"id":"paf_tee",
+		"id":"paf_teepot",
 		"type":"EXEC",
-		"cmd":"tee -i __FIFO1__ __FIFO2__ __FIFO3__ __FIFO4__"
+		"cmd":"teepot __FIFO1__ __FIFO2__ __FIFO3__ __FIFO4__ -",
+		"comment":"replaced tee -i __FIFO1__"
 	},
 	{
 		"id":"scramble",
@@ -159,26 +160,26 @@
 	{
 		"id":"bammarkduplicates_to_tee",
 		"from":"bammarkduplicates",
-		"to":"paf_tee"
+		"to":"paf_teepot"
 	},
 	{
 		"id":"tee_to_scramble",
-		"from":"paf_tee:__FIFO1__",
+		"from":"paf_teepot:__FIFO1__",
 		"to":"scramble"
 	},
 	{
 		"id":"tee_to_scramble",
-		"from":"paf_tee:__FIFO2__",
+		"from":"paf_teepot:__FIFO2__",
 		"to":"bamcheck"
 	},
 	{
 		"id":"tee_to_scramble",
-		"from":"paf_tee:__FIFO3__",
+		"from":"paf_teepot:__FIFO3__",
 		"to":"bamrecompress"
 	},
 	{
 		"id":"tee_to_scramble",
-		"from":"paf_tee:__FIFO4__",
+		"from":"paf_teepot:__FIFO4__",
 		"to":"flagstat_filter"
 	},
 	{

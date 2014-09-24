@@ -1,13 +1,13 @@
 {
 "description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
 "subgraph_io":{
-	"ports":{
-		"inputs":{
-				"_stdin_":"seqchksum_input",
-				"target_bam":"bamcat_output:__TARGETBAM__",
-				"phix_bam":"bamcat_output:__PHIXBAM__"
-		}
-	}
+        "ports":{
+                "inputs":{
+                                "_stdin_":"seqchksum_input",
+                                "target_bam":"bamcat_output:__TARGETBAM__",
+                                "phix_bam":"bamcat_output:__PHIXBAM__"
+                }
+        }
 },
 "nodes":[
         {
@@ -25,18 +25,15 @@
                 "type":"EXEC",
                 "cmd":"bamseqchksum"
         },
-#######################
-# DEBUG - two tee nodes
-#######################
         {
-                "id":"tee_input_seqchksum",
+                "id":"teepot_input_seqchksum",
                 "type":"EXEC",
-                "cmd":"tee __CHKSUMOUT__"
+                "cmd":"teepot __CHKSUMOUT__"
         },
         {
-                "id":"tee_output_seqchksum",
+                "id":"teepot_output_seqchksum",
                 "type":"EXEC",
-                "cmd":"tee __CHKSUMOUT__"
+                "cmd":"teepot __CHKSUMOUT__"
         },
         {
                 "id":"cmp_seqchksum",
@@ -54,21 +51,21 @@
         {
                 "id":"seqchksum_output_to_cmp",
                 "from":"seqchksum_output",
-                "to":"tee_output_seqchksum"
+                "to":"teepot_output_seqchksum"
         },
         {
                 "id":"seqchksum_output_to_cmp",
-                "from":"tee_output_seqchksum:__CHKSUMOUT__",
+                "from":"teepot_output_seqchksum:__CHKSUMOUT__",
                 "to":"cmp_seqchksum:__OUTPUTCHK__"
         },
         {
                 "id":"seqchksum_input_to_cmp",
                 "from":"seqchksum_input",
-                "to":"tee_input_seqchksum"
+                "to":"teepot_input_seqchksum"
         },
         {
                 "id":"seqchksum_input_to_cmp",
-                "from":"tee_input_seqchksum:__CHKSUMOUT__",
+                "from":"teepot_input_seqchksum:__CHKSUMOUT__",
                 "to":"cmp_seqchksum:__INPUTCHK__"
         }
 ]

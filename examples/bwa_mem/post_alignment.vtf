@@ -3,7 +3,7 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-			"_stdin_":"tee_headerSQfix",
+			"_stdin_":"teepot_headerSQfix",
 			"reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__",
 			"unaligned_bam":"bam12auxmerge:__PREALN_BAM__"
 		},
@@ -14,10 +14,10 @@
 },
 "nodes":[
 	{
-		"id":"tee_headerSQfix",
+		"id":"teepot_headerSQfix",
 		"type":"EXEC",
-		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
-		"comment":"get deadlock when tee used here"
+		"cmd":"teepot __OUT1__ -",
+		"comment":"replaced mbuffer -f -q -m 5M -o - -o __OUT1__ to avoid deadlock"
 	},
 	{
 		"id":"sam_headerSQfix",
@@ -34,7 +34,8 @@
 	{
 		"id":"mbuffer_headerSQfix",
 		"type":"EXEC",
-		"cmd":"mbuffer -f -q -m 5M"
+		"cmd":"teepot -",
+		"comment":"replaced mbuffer -f -q -m 5M to remove deadlock"
 	},
 	{
 		"id":"reheader_headerSQfix",
@@ -45,11 +46,6 @@
 		"id":"bam12split",
 		"type":"EXEC",
 		"cmd":"bam12split verbose=1 level=0"
-	},
-	{
-		"id":"bamsort_qname",
-		"type":"EXEC",
-		"cmd":"bamsort SO=queryname level=0"
 	},
 	{
 		"id":"bam12auxmerge",
@@ -75,7 +71,7 @@
 	},
 	{
 		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"tee_headerSQfix",
+		"from":"teepot_headerSQfix",
 		"to":"mbuffer_headerSQfix"
 	},
 	{
@@ -91,11 +87,6 @@
 	{
 		"id":"bam12split_to_bamsort_qname",
 		"from":"bam12split",
-		"to":"bamsort_qname"
-	},
-	{
-		"id":"bamsort_qname_to_bam12auxmerge",
-		"from":"bamsort_qname",
 		"to":"bam12auxmerge"
 	}
 ]
