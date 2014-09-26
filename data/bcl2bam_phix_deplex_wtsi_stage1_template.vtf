@@ -141,12 +141,21 @@
 			"required":"yes",
 			"subst_constructor":{
 			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
-					"-Xmx1024m",
-					"-jar",{"subst_param_name":"splitter_jar","required":"no","default":"/software/npg/java_jars/SplitBamByReadGroup.jar"},
-					"I=/dev/stdin",
-					"O=",
-					{"subst_param_name":"split_prefix","required":"yes"}
+					{"subst_param_name":"splitter_cmd","required":"no","default":"/software/solexa/pkg/samtools/samtools-1.1/samtools"},
+					"split",
+					"-f",
+					{"subst_param_name":"split_format", "required":"no",
+						"subst_constructor":{
+							"vals":[
+								{"subst_param_name":"split_prefix","required":"yes"},
+								"/",
+                    			{"subst_param_name":"rpt","required":"yes"},
+								"_%#.bam"
+							],
+							"postproc":{"op":"concat","pad":""}
+						}
+					},
+					"-"
 				],
 				"postproc":{"op":"pack","pad":" "}
 			}
@@ -303,18 +312,6 @@
 	},
 
 	{
-		"id":"bamsort",
-		"type":"EXEC",
-		"cmd":"/software/npg/bin/bamsort SO=queryname level=0"
-	},
-
-	{
-		"id":"bamsort2",
-		"type":"EXEC",
-		"cmd":"/software/npg/bin/bamsort SO=coordinate level=0"
-	},
-
-	{
 		"id":"bwa_mem",
 		"type":"EXEC",
 		"cmd":{"subst_param_name":"bwa_mem_cmd_phix",
@@ -386,12 +383,6 @@
 	{
 		"id":"scramble_to_tee",
 		"from":"scramble",
-		"to":"bamsort"
-	},
-
-	{
-		"id":"sort_to_merge",
-		"from":"bamsort",
 		"to":"bammerge"
 	},
 
@@ -446,12 +437,6 @@
 	{
 		"id":"tee_to_sort",
 		"from":"tee_split:__PIPE2__",
-		"to":"bamsort2"
-	},
-
-	{
-		"id":"sort_to_split",
-		"from":"bamsort2",
 		"to":"splitter"
 	}
 
