@@ -1,0 +1,94 @@
+.link {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5px;
+}
+    
+#licensing {
+  fill: green;
+}   
+
+.link.intermediate {
+  stroke: red;
+} 
+    
+.link.phix {
+  stroke: red;
+} 
+    
+.link.std {
+  stroke: blue;
+} 
+    
+.link.final {
+  stroke: green;
+}
+
+.link.dummy {
+  stroke-dasharray: 0,2 1;
+}
+
+circle {
+  fill: #ccc;
+  stroke: #333;
+  stroke-width: 1.5px;
+}   
+    
+.node.INFILE {
+  fill: lightgreen;
+}
+
+.node.OUTFILE {
+  fill: darkgreen;
+} 
+
+.node.RAFILE {
+  fill: lightblue;
+} 
+
+.node.VTFILE {
+  fill: yellow;
+}
+
+.node {
+  stroke-width: 1.5px;
+  cursor: pointer;
+}
+
+.node.reflexive {
+  stroke: #000 !important;
+  stroke-width: 2.5px;
+}
+
+.node.fixed {
+  stroke: #f00;
+}
+
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+
+.error {
+  color: red;
+}
+
+.right_box {
+  font: 12px sans-serif;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+
+legend {
+  font-weight: bold;
+}
+
+input {
+  width: 100%;
+}
+
+textarea {
+  width: 100%;
+  height: 100px;
+}
+
