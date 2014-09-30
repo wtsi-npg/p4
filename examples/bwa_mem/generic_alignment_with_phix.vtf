@@ -115,7 +115,7 @@
 	{
 		"id":"tee0",
 		"type":"EXEC",
-		"cmd":"tee __CHKSUMOUT__"
+		"cmd":"teepot __CHKSUMOUT__"
 	},
 	{
 		"id":"bamcollate2",
@@ -124,10 +124,10 @@
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
 	{
-		"id":"multiway_aln_unaln",
-#		"type":"EXEC",
-#		"cmd":"mbuffer -o __ALN__ -o __UNALN_TARGET__ -o __UNALN_PHIX__"
-		"type":"RAFILE",
+		"id":"multiway_aln_unaln_teepot",
+		"type":"EXEC",
+		"cmd":"teepot __ALN__ __UNALN_TARGET__ __UNALN_PHIX__ -",
+		"comment":"replaced mbuffer",
 		"name":{"subst_param_name":"prealn_bam",
 			"required":"yes",
 			"subst_constructor":{
@@ -164,9 +164,10 @@
 		"description":"Hard clip adapter sequence from reads before feeding to aligner"
 	},
 	{
-		"id":"tee_aln",
+		"id":"teepot_aln",
 		"type":"EXEC",
-		"cmd":"mbuffer -f -o __TARGET__ -o __PHIX__"
+		"cmd":"teepot __TARGET__ __PHIX__",
+		"comment":" replaced mbuffer -f"
 	},
 ######################
 # the actual alignment
@@ -641,7 +642,7 @@
 	{
 		"id":"bc2_to_tau",
 		"from":"bamadapterclip",
-		"to":"multiway_aln_unaln"
+		"to":"multiway_aln_unaln_teepot"
 	},
 #######################
 # unaln three-way split
@@ -651,20 +652,17 @@
 #############################################################################################
 	{
 		"id":"mway_aln_unaln_to_bc2r",
-#		"from":"multiway_aln_unaln:__ALN__",
-		"from":"multiway_aln_unaln",
+		"from":"multiway_aln_unaln_teepot:__ALN__",
 		"to":"bamcollate2_ranking"
 	},
 	{
 		"id":"mway_aln_unaln_to_post_alignment_target",
-#		"from":"multiway_aln_unaln:__UNALN_TARGET__",
-		"from":"multiway_aln_unaln",
+		"from":"multiway_aln_unaln_teepot:__UNALN_TARGET__",
 		"to":"post_alignment_target:unaligned_bam"
 	},
 	{
 		"id":"mway_aln_unaln_to_post_alignment_phix",
-#		"from":"multiway_aln_unaln:__UNALN_PHIX__",
-		"from":"multiway_aln_unaln",
+		"from":"multiway_aln_unaln_teepot:__UNALN_PHIX__",
 		"to":"post_alignment_phix:unaligned_bam"
 	},
 ############
@@ -673,7 +671,7 @@
 	{
 		"id":"bamcollate2_ranking_to_bamadapterclip",
 		"from":"bamcollate2_ranking",
-		"to":"tee_aln"
+		"to":"teepot_aln"
 	},
 ####################
 # alignment (target)
@@ -685,7 +683,7 @@
         },
 	{
 		"id":"ta_to_alignment_target",
-		"from":"tee_aln:__TARGET__",
+		"from":"teepot_aln:__TARGET__",
 		"to":"alignment_target"
 	},
 ####################
@@ -698,7 +696,7 @@
         },
 	{
 		"id":"ta_to_alignment_target",
-		"from":"tee_aln:__PHIX__",
+		"from":"teepot_aln:__PHIX__",
 		"to":"alignment_phix"
 	},
 #########################
