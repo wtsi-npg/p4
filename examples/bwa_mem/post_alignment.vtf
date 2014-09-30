@@ -56,7 +56,7 @@
 "edges":[
 	{
 		"id":"tee_headerSQfix_to_sam",
-		"from":"tee_headerSQfix:__OUT1__",
+		"from":"teepot_headerSQfix:__OUT1__",
 		"to":"sam_headerSQfix"
 	},
 	{

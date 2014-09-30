@@ -36,11 +36,11 @@
 			}
 		}
 	},
-        {
-                "id":"samtobam",
-                "type":"EXEC",
-                "cmd":"scramble -I sam -O bam"
-        }
+	{
+		"id":"samtobam",
+		"type":"EXEC",
+		"cmd":"scramble -I sam -O bam"
+	}
 ],
 "edges":[
 	{

@@ -115,7 +115,7 @@
 	{
 		"id":"tee0",
 		"type":"EXEC",
-		"cmd":"tee __CHKSUMOUT__"
+		"cmd":"teepot __CHKSUMOUT__"
 	},
 	{
 		"id":"bamcollate2",
