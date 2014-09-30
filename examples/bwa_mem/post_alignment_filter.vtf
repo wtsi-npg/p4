@@ -35,13 +35,13 @@
 		}
 	},
 	{
-		"id":"bammarkduplicates",
+		"id":"bamstreamingmarkduplicates",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bammarkduplicates",
+		"cmd":{"subst_param_name":"bamstreamingmarkduplicates",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates",
+					"bamstreamingmarkduplicates",
 					"level=0",
 					{"subst_param_name":"bmd_tmpfile_flag",
 						"required":"no",
@@ -56,21 +56,6 @@
 								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".tmp"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					},
-					{"subst_param_name":"bmd_metrics_file_flag",
-						"required":"no",
-						"subst_constructor":{
-							"vals":[
-								"M=",
-								{"subst_param_name":"outdatadir","required":"no","default":"."},
-								"/",
-								{"subst_param_name":"rpt","required":"yes"},
-								"_",
-								{"subst_param_name":"phix_or_target","required":"yes"},
-								".markdups_metrics.txt"
 							],
 							"postproc":{"op":"concat", "pad":""}
 						}
@@ -153,13 +138,13 @@
 ],
 "edges":[
 	{
-		"id":"bamsort_to_bammarkduplicates",
+		"id":"bamsort_to_bamstreamingmarkduplicates",
 		"from":"bamsort_coord",
-		"to":"bammarkduplicates"
+		"to":"bamstreamingmarkduplicates"
 	},
 	{
-		"id":"bammarkduplicates_to_tee",
-		"from":"bammarkduplicates",
+		"id":"bamstreamingmarkduplicates_to_tee",
+		"from":"bamstreamingmarkduplicates",
 		"to":"paf_teepot"
 	},
 	{
