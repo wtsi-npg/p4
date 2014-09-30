@@ -59,6 +59,21 @@
 							],
 							"postproc":{"op":"concat", "pad":""}
 						}
+					},
+					{"subst_param_name":"bmd_metrics_file_flag",
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								"M=",
+								{"subst_param_name":"outdatadir","required":"no","default":"."},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"},
+								"_",
+								{"subst_param_name":"phix_or_target","required":"yes"},
+								".markdups_metrics.txt"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
 					}
 				],
 				"postproc":{"op":"pack", "pad":" "}
