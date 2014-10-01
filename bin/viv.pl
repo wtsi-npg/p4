@@ -24,12 +24,16 @@ Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
 my %opts;
-getopts('xshnv:o:r:t:', \%opts);
-my $LOGDIR = '/tmp/vivlogs/' . hostname . '.' . getpid();
+getopts('xshnv:o:r:t:l:', \%opts);
+
+# create log file directory
+my $logdir_prefix = $opts{l} || '/nfs/srpipe_data/vivlogs';
+$logdir_prefix .= '/' if ((substr $logdir_prefix, -1) ne '/');
+my $LOGDIR = $logdir_prefix . hostname . '.' . getpid();
 make_path($LOGDIR);
 
 if($opts{h}) {
-	die qq{viv.pl [-s] [-x] [-n] [-v <verbose_level>] [-o <logname>] <config.json>\n};
+	die qq{viv.pl [-s] [-x] [-n] [-l <logfile directory>] [-v <verbose_level>] [-o <logname>] <config.json>\n};
 }
 
 my $no_process_monitor = $opts{n};
