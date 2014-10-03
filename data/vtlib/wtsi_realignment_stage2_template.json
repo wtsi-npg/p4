@@ -42,7 +42,7 @@
 				"vals":[
 					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"pre_alignment_name","required":"no","default":"pre_alignment"},
+					{"subst_param_name":"pre_alignment_name","required":"no","default":"pre_alignment_realign"},
 					".json"
 				],
 				"postproc":{"op":"concat", "pad":""}

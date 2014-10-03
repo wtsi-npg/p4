@@ -119,6 +119,48 @@
 					"bamrecompress",
 					"SO=coordinate",
 					"level=0",
+					{"subst_param_name":"br_index_flags",
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								"index=1",
+								{"subst_param_name":"br_indexfile_flag",
+									"required":"no",
+									"subst_constructor":{
+										"vals":[
+											"indexfilename=",
+											{"subst_param_name":"outdatadir","required":"no","default":"."},
+											"/",
+											{"subst_param_name":"rpt","required":"yes"}, ".bai"
+										],
+										"postproc":{"op":"concat", "pad":""}
+									}
+								}
+							],
+							"postproc":{"op":"concat", "pad":" "}
+						}
+					},
+					{"subst_param_name":"br_md5_flags",
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								"md5=1",
+								{"subst_param_name":"br_md5file_flag",
+									"required":"no",
+									"subst_constructor":{
+										"vals":[
+											"md5filename=",
+											{"subst_param_name":"outdatadir","required":"no","default":"."},
+											"/",
+											{"subst_param_name":"rpt","required":"yes"}, ".bam.md5"
+										],
+										"postproc":{"op":"concat", "pad":""}
+									}
+								}
+							],
+							"postproc":{"op":"concat", "pad":" "}
+						}
+					},
 					{"subst_param_name":"br_numthreads_flag",
 						"required":"no",
 						"subst_constructor":{
