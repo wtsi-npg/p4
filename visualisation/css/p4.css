@@ -97,3 +97,11 @@ textarea {
   height: 100px;
 }
 
+.footer{
+    position:fixed;
+    width:100%;
+    bottom:0;
+    height:20px;
+    background-color:#bbb;
+}
+

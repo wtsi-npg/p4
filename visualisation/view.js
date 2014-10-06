@@ -224,6 +224,16 @@ function refresh_progress() {
 			}
 		});
 	});
+
+	var lu = d3.select('#last_updated').node();
+	var currentdate = new Date();
+	lu.innerHTML = '&nbsp;&nbsp;Last Updated: ' + currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " "  
+                + ((currentdate.getHours()<10)?'0':'') + currentdate.getHours() + ":"  
+                + ((currentdate.getMinutes()<10)?'0':'') + currentdate.getMinutes() + ":" 
+                + ((currentdate.getSeconds()<10)?'0':'') + currentdate.getSeconds();
+
 }
 
 function linkArc(d) {

@@ -13,6 +13,10 @@
   <fieldset style="overflow: hidden; float:left;"><legend>P4 Processes</legend>
   <div id=pm><div id=table>Loading processes...</div></div>
   </fieldset>
+
+  <footer class=footer>
+  <div id=last_updated></div>
+  </footer>
   </body>
 
   <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -24,6 +28,14 @@
       var n = d3.select("#table").node();
       data.firstChild.setAttribute('id','table');
       pm.replaceChild(data.firstChild,n);
+      var lu = d3.select('#last_updated').node();
+      var currentdate = new Date();
+      lu.innerHTML = '&nbsp;&nbsp;Last Updated: ' + currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " "  
+                + ((currentdate.getHours()<10)?'0':'') + currentdate.getHours() + ":"  
+                + ((currentdate.getMinutes()<10)?'0':'') + currentdate.getMinutes() + ":" 
+                + ((currentdate.getSeconds()<10)?'0':'') + currentdate.getSeconds();
       setTimeout(reload,30000);
     });
     }
