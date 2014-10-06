@@ -20,7 +20,7 @@ print "<tr><th>Pipeline</th><th>Host</th><th>PID</th><th>Time</th></tr>"
 for d in data:
   j = json.loads(d)
   print "<tr>"
-  cmd = "cfg_name=" + j['vtf_name'] + '&logdir=' + j['log_dir']
+  cmd = 'logdir=' + j['log_dir']
   print "<td><a href=edit.html?" + cmd + ">" + j['vtf_name'] + "</a></td>"
   print "<td>", j['hostname'], "</td>"
   print "<td>", j['pid'], "</td>"
