@@ -40,6 +40,12 @@ data['log_dir'] = log_dir
 data['hostname'] = socket.gethostname()
 data['pid'] = os.getppid()
 
+# Read the VTF (or json) file
+vtf_file=open(vtf_name)
+vtf_data = json.load(vtf_file)
+vtf_file.close()
+data['vtf_data'] = json.dumps(vtf_data)
+
 # Create the socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

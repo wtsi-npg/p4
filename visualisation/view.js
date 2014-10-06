@@ -16,27 +16,43 @@ var force;
 
 var log_dir = getUrlQueryStringValue('logdir');
 var cfg_name = getUrlQueryStringValue('cfg_name');
-if(!cfg_name) {
-	cfg_name = 'unspecified';
-}
+//if(!cfg_name) { cfg_name = 'unspecified'; }
 var json_url=cfg_name;
 if (!json_url.match(/.json/) && !json_url.match(/.vtf/) && !json_url.match(/.cfg/)) {
 	json_url += ".json";
 }
 
 // Load and display JSON
-d3.xhr(json_url, 'application/json', function(error, data) { 
-	if (error) { 
-		var e=document.getElementById('errms');
-		if (error.status == 404) {
-			e.innerHTML = 'Failed to find cfg named: ' + json_url;
+// load json from cgi program if cfg file not specified and log_dir *is* specified
+if (cfg_name) {
+	loadFromFile(json_url);
+} else {
+	loadFromMonitor()
+}
+
+function loadFromFile(json_url) {
+	d3.xhr(json_url, 'application/json', function(error, data) { 
+		if (error) { 
+			var e=document.getElementById('errms');
+			if (error.status == 404) {
+				e.innerHTML = 'Failed to find cfg named: ' + json_url;
+			} else {
+				e.innerHTML = error.responseText;
+			}
 		} else {
-			e.innerHTML = error.responseText;
+			displayGraph(data.response);
 		}
-	} else {
-		displayGraph(data);
-	}
-});
+	});
+}
+
+function loadFromMonitor() {
+	d3.json("/cgi-bin/getProgress")
+		.header("Content-Type", "application/x-www-form-urlencoded")
+		.post("logdir="+log_dir, function(error, data) {
+		if (error) return console.warn(error);
+		displayGraph(data['vtf_data']);
+	});
+}
 
 function displayGraph(data)
 {
@@ -44,7 +60,7 @@ function displayGraph(data)
 	var linx = [];
 
 	// Strip comments (or else JSON.parse() will fail)
-	var stripped_data = data.response.replace(/^#.*$/gm, "");
+	var stripped_data = data.replace(/^#.*$/gm, "");
 	var graph = JSON.parse(stripped_data);
 
 	if(!graph) {
