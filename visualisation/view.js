@@ -50,6 +50,7 @@ function loadFromMonitor() {
 		.header("Content-Type", "application/x-www-form-urlencoded")
 		.post("logdir="+log_dir, function(error, data) {
 		if (error) return console.warn(error);
+		json_url = data['vtf_name'];
 		displayGraph(data['vtf_data']);
 	});
 }
