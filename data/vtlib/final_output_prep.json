@@ -243,7 +243,7 @@
 	},
 	{
 		"id":"bmd_to_calibration_pu",
-		"from":"bmd_multiway:__BAMCHECK_OUT__",
+		"from":"bmd_multiway:__CALIBRATION_PU_OUT__",
 		"to":"calibration_pu"
 	},
 	{
