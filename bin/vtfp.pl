@@ -16,6 +16,7 @@ use Cwd qw(abs_path);
 use File::Slurp;
 use JSON;
 
+use Storable 'dclone';
 use Carp;
 use Readonly;
 
@@ -124,13 +125,32 @@ for my $vtnode (@$vtf_nodes) {
 			my $portkey = $1;
 			$portkey ||= q[_stdin_];
 
-			my $port;
-			unless(($port = $subgraph_nodes_in->{$portkey})) {
+			my $ports = $subgraph_nodes_in->{$portkey};
+			unless($ports) {
 				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode->{id}, q[:], $portkey);
+			}
+			my $pt = ref $ports;
+			if($pt) {
+				if($pt ne q[ARRAY]) {
+					$logger->($VLFATAL, q[Input ports specification values in subgraphs must be string or array ref. Type ], $pt, q[ not allowed]);
+				}
+			}
+			else {
+				$ports = [ $ports ];
 			}
 
 			# do check for existence of port in 
-			$edge->{to} = sprintf "%03d_%s", $arbitrary_prefix, $port;
+			for my $i (0..$#$ports) {
+				my $mod_edge;
+				if($i > 0) {
+					$mod_edge = dclone $edge;
+					push @{$cfg->{edges}}, $mod_edge;
+				}
+				else {
+					$mod_edge = $edge;
+				}
+				$mod_edge->{to} = sprintf "%03d_%s", $arbitrary_prefix, $ports->[$i];
+			}
 		}
 		else {
 			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});

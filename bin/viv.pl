@@ -114,7 +114,7 @@ for my $edge (@{$edges}) {
 			$data_xfer_name = $from_node->{name};
 		}
 		else {
-			croak q[Edges must start or terminate in an EXEC node];
+			croak q[Edges must start or terminate in an EXEC node; from: ], $from_node->{id}, q[, to: ], $to_node->{id};
 		}
 	}
 

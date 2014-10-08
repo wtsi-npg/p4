@@ -1,0 +1,156 @@
+{
+"description":"run bwa mem to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bwa_aln_start_bam",
+			"reference":["bwa_aln_1:__REFERENCE_GENOME_FASTA__", "bwa_aln_2:__REFERENCE_GENOME_FASTA__", "bwa_sampe:__REFERENCE_GENOME_FASTA__"]
+		},
+		"outputs":{
+			"_stdout_":"samtobam"
+		}
+	}
+},
+"nodes":[
+	{
+             "id":"bwa_aln_start_bam",
+             "type":"RAFILE",
+             "name":{"subst_param_name":"bwa_aln_start_bam",
+                     "required":"yes",
+                     "subst_constructor":{
+                             "vals":[
+                                     {"subst_param_name":"tmpdir","required":"no","default":"."},
+                                     "/",
+                                     {"subst_param_name":"bwa_aln_start_bam_name",
+                                             "required":"no",
+                                             "default":"bwa_aln_start.bam",
+                                             "subst_constructor":{
+                                                     "vals":[
+                                                             "bwa_aln_start_",
+                                                             {"subst_param_name":"rpt","required":"yes"},
+                                                             ".bam"
+                                                     ],
+                                                     "postproc":{"op":"concat", "pad":""}
+                                             }
+                                     }
+                             ],
+                             "postproc":{"op":"concat", "pad":""}
+                     }
+             }
+        },
+	{
+		"id":"bwa_aln_1",
+		"type":"EXEC",
+		"cmd":{"subst_param_name":"bwa_aln_1_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					"bwa",
+					"aln",
+					"-t",
+					{"subst_param_name":"aligner_numthreads","required":"no","default":"2"},
+					"-b1",
+					"__REFERENCE_GENOME_FASTA__",
+					"__BAM_IN__"
+				],
+				"postproc":{"op":"noconcat","pad":" "}
+			}
+		}
+	},
+	{
+		"id":"bwa_aln_2",
+		"type":"EXEC",
+		"cmd":{"subst_param_name":"bwa_aln_2_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					"bwa",
+					"aln",
+					"-t",
+					{"subst_param_name":"aligner_numthreads","required":"no","default":"2"},
+					"-b2",
+					"__REFERENCE_GENOME_FASTA__",
+					"__BAM_IN__"
+				],
+				"postproc":{"op":"noconcat","pad":" "}
+			}
+		}
+	},
+        {
+                "id":"bwa_sampe",
+                "type":"EXEC",
+		"cmd":{"subst_param_name":"bwa_sampe_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					"bwa",
+					"sampe",
+					"__REFERENCE_GENOME_FASTA__",
+					"__SAI_1__",
+					"__SAI_2__",
+					"__BAM_1__",
+					"__BAM_2__"
+				],
+				"postproc":{"op":"noconcat","pad":" "}
+			}
+		}
+        },
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+                "cmd":"scramble -I sam -O bam"
+        }
+],
+"edges":[
+	{
+		"id":"bwa_aln_bam1",
+		"from":"bwa_aln_start_bam",
+		"to":"bwa_aln_1:__BAM_IN__"
+	},
+	{
+		"id":"bwa_aln_bam2",
+		"from":"bwa_aln_start_bam",
+		"to":"bwa_aln_2:__BAM_IN__"
+	},
+	{
+		"id":"ref_to_bwa_aln_1",
+		"from":"reference_fasta:__ALN1_REF__",
+		"to":"bwa_aln_1:__REFERENCE_GENOME_FASTA__"
+	},
+	{
+		"id":"ref_to_bwa_aln2",
+		"from":"reference_fasta:__ALN2_REF__",
+		"to":"bwa_aln_2:__REFERENCE_GENOME_FASTA__"
+	},
+	{
+		"id":"bwa_sampe_bam1",
+		"from":"bwa_aln_start_bam",
+		"to":"bwa_sampe:__BAM_1__"
+	},
+	{
+		"id":"bwa_sampe_bam2",
+		"from":"bwa_aln_start_bam",
+		"to":"bwa_sampe:__BAM_2__"
+	},
+	{
+		"id":"aln1_sai_to_sampe",
+		"from":"bwa_aln_1",
+		"to":"bwa_sampe:__SAI_1__"
+	},
+	{
+		"id":"aln2_sai_to_sampe",
+		"from":"bwa_aln_2",
+		"to":"bwa_sampe:__SAI_2__"
+	},
+	{
+		"id":"ref_to_sampe",
+		"from":"reference_fasta:__SAMPE_REF__",
+		"to":"bwa_sampe:__REFERENCE_GENOME_FASTA__"
+	},
+	{
+		"id":"bwa_sampe_to_scramble",
+		"from":"bwa_sampe",
+		"to":"samtobam"
+	}
+]
+}

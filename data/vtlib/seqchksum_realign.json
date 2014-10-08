@@ -1,0 +1,41 @@
+{
+"description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+				"_stdin_":"seqchksum_input",
+				"target_bam":"seqchksum_output"
+		}
+	}
+},
+"nodes":[
+        {
+                "id":"seqchksum_input",
+                "type":"EXEC",
+                "cmd":"bamseqchksum"
+        },
+        {
+                "id":"seqchksum_output",
+                "type":"EXEC",
+                "cmd":"bamseqchksum"
+        },
+        {
+                "id":"cmp_seqchksum",
+                "type":"EXEC",
+                "cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
+                "description":"check input primary/sequence data matches output"
+        }
+],
+"edges":[
+        {
+                "id":"input_chksum_to_cmp",
+                "from":"seqchksum_input",
+                "to":"cmp_seqchksum:__INPUTCHK__"
+        },
+        {
+                "id":"output_chksum_to_cmp",
+                "from":"seqchksum_output",
+                "to":"cmp_seqchksum:__OUTPUTCHK__"
+        }
+]
+}
