@@ -81,6 +81,7 @@
 			"subst_constructor":{
 				"vals":[
 					"tophat2",
+					"--keep-fasta-order",
 					"--no-sort-bam",
 					"--output-dir",
 					{"subst_param_name":"tophat_out",
