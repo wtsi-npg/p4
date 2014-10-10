@@ -243,8 +243,9 @@ sub _update_node_data_xfer {
 			}
 			my $cmd = $node->{'cmd'};
 			for my$cmd_part ( ref $cmd eq 'ARRAY' ? @{$cmd}[1..$#{$cmd}] : ($node->{'cmd'}) ){
-				$cmd_part =~ s/\Q$port\E/$data_xfer_name/;
+				return if ($cmd_part =~ s/\Q$port\E/$data_xfer_name/smx);
 			}
+			croak 'Node '.($node->{'id'})." has no port $port";
 		}
 		else {
 			my $node_edge_std = $edge_side == $FROM? q[STDOUT]: q[STDIN];
