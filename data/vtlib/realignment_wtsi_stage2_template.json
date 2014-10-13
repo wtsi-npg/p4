@@ -59,7 +59,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"alignment_refname","required":"yes"}
+					{"subst_param_name":"alignment_reference_genome_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -92,7 +92,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"picardrefdictname","required":"yes"}
+					{"subst_param_name":"picard_reference_dict_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -109,8 +109,7 @@
 					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"post_alignment","required":"no","default":"post_alignment"},
-					".json"
-				],
+					".json" ],
 				"postproc":{"op":"concat", "pad":""}
 			}
 		},
@@ -124,15 +123,15 @@
 		"cmd":"bamrecompress verbose=0 numthreads=2"
 	},
 	{
-		"id":"no_aln_bam",
+		"id":"initial_phix_aln_bam",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"no_aln_bam",
+		"name":{"subst_param_name":"initial_phix_aln_bam",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
 					{"subst_param_name":"tmpdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"no_aln_bam_name",
+					{"subst_param_name":"initial_phix_aln_bam_name",
 						"required":"no",
 						"default":"no_aln.bam",
 						"subst_constructor":{
@@ -175,7 +174,7 @@
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"refname_fasta","required":"yes"}
+					{"subst_param_name":"reference_genome_fasta_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -192,7 +191,7 @@
                                 "vals":[
                                         {"subst_param_name":"cfgdatadir","required":"no","default":"."},
                                         "/",
-                                        {"subst_param_name":"final_output_prep","required":"no","default":"final_output_prep"},
+                                        {"subst_param_name":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
                                         ".json"
                                 ],
                                 "postproc":{"op":"concat", "pad":""}
@@ -301,11 +300,11 @@
 	{
 		"id":"brci_to_ipab",
 		"from":"bamrecompress_input",
-		"to":"no_aln_bam"
+		"to":"initial_phix_aln_bam"
 	},
 	{
 		"id":"ipab_to_bamreset_pre_aln_flt",
-		"from":"no_aln_bam",
+		"from":"initial_phix_aln_bam",
 		"to":"auxmerge_prep"
 	},
 	{
