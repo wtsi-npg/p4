@@ -25,6 +25,9 @@
 					"bamsort",
 					"SO=coordinate",
 					"level=0",
+					"verbose=0",
+					"fixmate=1",
+					"adddupmarksupport=1",
 					{"subst_param_name":"bs_tmpfile_flag",
 						"required":"no",
 						"subst_constructor":{
