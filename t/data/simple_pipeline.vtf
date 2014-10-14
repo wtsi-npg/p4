@@ -21,7 +21,7 @@
 	},
 	{	"id": "d",
 		"type": "EXEC",
-		"cmd": "diff __IN1__ __IN2__",
+		"cmd": "diff __IN_1__ __IN_2__",
 		"use_STDIN": 0,
 		"use_STDOUT": 0
 	}
@@ -31,10 +31,10 @@
 		"to": "n2"
 	},
 	{	"from": "n2",
-		"to": "d:__IN1__"
+		"to": "d:__IN_1__"
 	},
 	{	"from": "m",
-		"to": "d:__IN2__"
+		"to": "d:__IN_2__"
 	}
 	]
 }

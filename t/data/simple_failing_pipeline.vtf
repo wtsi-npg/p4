@@ -1,5 +1,5 @@
 {
-	"description":	"minimal failing test pipeline",
+	"description":	"minimal failing test pipeline. Fails because of false in cmd. Also carps about poorly named __IN1__ and __IN2__ ports",
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",
