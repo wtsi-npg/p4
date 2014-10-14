@@ -35,13 +35,13 @@
 		}
 	},
 	{
-		"id":"bammarkduplicates",
+		"id":"bamstreamingmarkduplicates",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bammarkduplicates",
+		"cmd":{"subst_param_name":"bamstreamingmarkduplicates",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates",
+					"bamstreamingmarkduplicates",
 					"level=0",
 					{"subst_param_name":"bmd_tmpfile_flag",
 						"required":"no",
@@ -153,13 +153,13 @@
 ],
 "edges":[
 	{
-		"id":"bamsort_to_bammarkduplicates",
+		"id":"bamsort_to_bamstreamingmarkduplicates",
 		"from":"bamsort_coord",
-		"to":"bammarkduplicates"
+		"to":"bamstreamingmarkduplicates"
 	},
 	{
-		"id":"bammarkduplicates_to_tee",
-		"from":"bammarkduplicates",
+		"id":"bamstreamingmarkduplicates_to_tee",
+		"from":"bamstreamingmarkduplicates",
 		"to":"paf_teepot"
 	},
 	{

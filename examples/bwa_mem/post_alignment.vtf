@@ -48,6 +48,11 @@
 		"cmd":"bam12split verbose=1 level=0"
 	},
 	{
+		"id":"bamsort_qname",
+		"type":"EXEC",
+		"cmd":"bamsort level=0 SO=queryname fixmates=1 adddupmarksupport=1"
+	},
+	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
@@ -87,6 +92,11 @@
 	{
 		"id":"bam12split_to_bamsort_qname",
 		"from":"bam12split",
+		"to":"bamsort_qname"
+	},
+	{
+		"id":"bamsort_qname_to_bam12auxmerge",
+		"from":"bamsort_qname",
 		"to":"bam12auxmerge"
 	}
 ]
