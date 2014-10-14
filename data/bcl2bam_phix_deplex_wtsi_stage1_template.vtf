@@ -141,7 +141,7 @@
 			"required":"yes",
 			"subst_constructor":{
 			"vals":[
-					{"subst_param_name":"splitter_cmd","required":"no","default":"/software/solexa/pkg/samtools/samtools-1.1/samtools"},
+					{"subst_param_name":"samtools_cmd","required":"no","default":"samtools"},
 					"split",
 					"-f",
 					{"subst_param_name":"split_format", "required":"no",
