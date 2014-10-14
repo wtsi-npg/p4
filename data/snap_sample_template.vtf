@@ -472,7 +472,7 @@
 			"required":"yes",
 			"subst_constructor":{
 			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
+					{"subst_param_name":"java_cmd","required":"no","default":"java"},
 					"-Xmx1000m",
 					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/nfs/users/nfs_d/dj3/repos/illumina2bam/dist/AlignmentFilter.jar"},
 					"IN=__PHIX_INBAM__",

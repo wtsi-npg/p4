@@ -8,7 +8,7 @@
 			"required":"yes",
 			"subst_constructor":{
 			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
+					{"subst_param_name":"java_cmd","required":"no","default":"java"},
 					"-Xmx1024m",
 					"-jar",{"subst_param_name":"illumina2bam_jar","required":"no","default":"/software/npg/java_jars/Illumina2bam.jar"},
 					{"subst_param_name":"i2b_intensity_flag",
@@ -602,7 +602,7 @@
 			"required":"yes",
 			"subst_constructor":{
 			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"/software/jdk1.7.0_25/bin/java"},
+					{"subst_param_name":"java_cmd","required":"no","default":"java"},
 					"-Xmx1000m",
 					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/software/npg/java_jars/AlignmentFilter.jar"},
 					"IN=__PHIX_INBAM__",
