@@ -19,16 +19,18 @@
 	},
 	{
 		"id":"bwa_mem",
+		"comment":"presuming interleaved FR fastq records (-p flag), output all records (-T 0)",
 		"type":"EXEC",
 		"cmd":{"subst_param_name":"bwa_mem_cmd",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bwa0_6",
+					{"subst_param_name":"bwa_executable","required":"no","default":"bwa0_6"},
 					"mem",
 					"-t",
 					{"subst_param_name":"aligner_numthreads","required":"no","default":"2"},
 					"-p",
+					"-T","0",
 					"__DB_PREFIX_REFERENCE_GENOME__",
 					"__FQ_IN__"
 				],
@@ -36,11 +38,11 @@
 			}
 		}
 	},
-	{
-		"id":"samtobam",
-		"type":"EXEC",
-		"cmd":"scramble -I sam -O bam"
-	}
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+                "cmd":"scramble -I sam -O bam"
+        }
 ],
 "edges":[
 	{

@@ -2,46 +2,18 @@
 "description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
 "nodes":[
 	{
-		"id":"bmd_phix_tee0",
+		"id":"bmd_phix_multiway",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __pFIFO0__"
+		"use_STDOUT": false,
+		"cmd":"teepot -w 300 __SCRAMBLE_OUT__ __BAMCHECK_OUT__ __FLAGSTAT_OUT__ __CALIBRATION_PU_OUT__ __BAM_OUT__"
 	},
 	{
-		"id":"bmd_tee1",
+		"id":"bmd_target_multiway",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO1__"
-	},
-	{
-		"id":"bmd_tee2",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO2__"
-	},
-	{
-		"id":"bmd_tee3",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO3__"
-	},
-	{
-		"id":"bmd_phix_tee1",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __pFIFO1__"
-	},
-	{
-		"id":"bmd_phix_tee2",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __pFIFO2__"
+		"use_STDOUT": false,
+		"cmd":"teepot -w 300 __SCRAMBLE_OUT__ __BAMCHECK_OUT__ __FLAGSTAT_OUT__ __CALIBRATION_PU_OUT__ __BAM_OUT__"
 	},
 	{
 		"id":"scramble",
@@ -78,6 +50,66 @@
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME__"
+	},
+	{
+		"id":"calibration_pu_target",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":{"subst_param_name":"calibration_pu_target_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"calibration_pu_executable","required":"no","default":"calibration_pu"},
+					"-p",
+					{"subst_param_name":"calibration_pu_target_prefix",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":[
+								{"subst_param_name":"outdatadir","required":"no","default":"."},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"},
+								{"subst_param_name":"bam_ext","required":"no","default":".bam"}
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					},
+					"-filter-bad-tiles",{"subst_param_name":"calibration_pu_bad_tiles_count","required":"no","default":"2"},
+					"-"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
+	},
+	{
+		"id":"calibration_pu_phix",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":{"subst_param_name":"calibration_pu_phix_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"calibration_pu_executable","required":"no","default":"calibration_pu"},
+					"-p",
+					{"subst_param_name":"calibration_pu_phix_prefix",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":[
+								{"subst_param_name":"outdatadir","required":"no","default":"."},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"},
+								{"subst_param_name":"phix_bam_ext","required":"no","default":"_phix.bam"}
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					},
+					"-filter-bad-tiles",{"subst_param_name":"calibration_pu_bad_tiles_count","required":"no","default":"2"},
+					"-"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
 	},
 	{
 		"id":"bamcheck_phix",
@@ -665,7 +697,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamsort SO=queryname level=0"
+		"cmd":"bamsort level=0 verbose=0 SO=queryname"
 	},
 	{
 		"id":"bamreset_prealn",
@@ -689,9 +721,6 @@
 		"use_STDOUT": true,
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
 	},
-#####################################
-# alignment filter and metrics output
-#####################################
 	{
 		"id":"alignment_filter",
 		"type":"EXEC",
@@ -747,15 +776,12 @@
 			}
 		}
 	},
-#######################
-# phiX final processing
-#######################
 	{
 		"id":"bamsort_coord_phix",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamsort SO=coordinate level=0"
+		"cmd":"bamsort level=0 verbose=0 SO=coordinate fixmates=1 adddupmarksupport=1"
 	},
 	{
 		"id":"bammarkduplicates_phix",
@@ -766,7 +792,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates ",
+					"bamstreamingmarkduplicates ",
 					"level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
@@ -820,15 +846,12 @@
 			}
 		}
 	},
-#############################
-# target BAM final processing
-#############################
 	{
 		"id":"bamsort_coord_target",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamsort SO=coordinate level=0"
+		"cmd":"bamsort level=0 verbose=0 SO=coordinate fixmates=1 adddupmarksupport=1"
 	},
 	{
 		"id":"bammarkduplicates_target",
@@ -839,7 +862,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates ",
+					"bamstreamingmarkduplicates ",
 					"level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
@@ -892,9 +915,6 @@
 			}
 		}
 	},
-##################################################
-# check input primary/sequence data matches output
-##################################################
 	{
 		"id":"bamcat_output",
 		"type":"EXEC",
@@ -939,61 +959,41 @@
 	{   
 		"id":"bammarkduplicates_phix_to_tee",
 		"from":"bammarkduplicates_phix",
-		"to":"bmd_phix_tee0"
-	},
-	{   
-		"id":"bmd_phix_tee0_to_bmd_phix_tee0",
-		"from":"bmd_phix_tee0:__pFIFO0__",
-		"to":"bmd_phix_tee1"
+		"to":"bmd_phix_multiway"
 	},
 	{   
 		"id":"bammarkduplicates_to_tee",
 		"from":"bammarkduplicates_target",
-		"to":"bmd_tee1"
+		"to":"bmd_target_multiway"
 	},
 	{   
 		"id":"tee_to_scramble_phix",
-		"from":"bmd_phix_tee1:__pFIFO1__",
+		"from":"bmd_phix_multiway:__SCRAMBLE_OUT__",
 		"to":"scramble_phix"
 	},
 	{   
 		"id":"tee_to_scramble",
-		"from":"bmd_tee1:__FIFO1__",
+		"from":"bmd_target_multiway:__SCRAMBLE_OUT__",
 		"to":"scramble"
-	},
-	{   
-		"id":"bmd_phix_tee1_to_bmd_phix_tee2",
-		"from":"bmd_phix_tee1",
-		"to":"bmd_phix_tee2"
-	},
-	{   
-		"id":"bmd_tee1_to_bmd_tee2",
-		"from":"bmd_tee1",
-		"to":"bmd_tee2"
 	},
 	{
 		"id":"tee_phix_to_bamcheck_phix",
-		"from":"bmd_phix_tee2",
+		"from":"bmd_phix_multiway:__BAMCHECK_OUT__",
 		"to":"bamcheck_phix"
 	},
 	{
 		"id":"tee_to_bamcheck",
-		"from":"bmd_tee2:__FIFO2__",
+		"from":"bmd_target_multiway:__BAMCHECK_OUT__",
 		"to":"bamcheck"
 	},
 	{
-		"id":"bmd_tee2_to_bmd_tee3",
-		"from":"bmd_tee2",
-		"to":"bmd_tee3"
-	},
-	{
 		"id":"bmd_tee2_phix_to_flagstat",
-		"from":"bmd_phix_tee2:__pFIFO2__",
+		"from":"bmd_phix_multiway:__FLAGSTAT_OUT__",
 		"to":"flagstat_phix"
 	},
 	{
 		"id":"bmd_tee3_to_flagstat_filter",
-		"from":"bmd_tee3:__FIFO3__",
+		"from":"bmd_target_multiway:__FLAGSTAT_OUT__",
 		"to":"flagstat_filter"
 	},
 	{
@@ -1001,6 +1001,16 @@
 		"from":"flagstat_filter",
 		"to":"flagstat"
 	},
+        {
+                "id":"bmd_mw_phix_to_calibration_pu",
+                "from":"bmd_phix_multiway:__CALIBRATION_PU_OUT__",
+                "to":"calibration_pu_phix"
+        },
+        {
+                "id":"bmd_mw_to_calibration_pu",
+                "from":"bmd_target_multiway:__CALIBRATION_PU_OUT__",
+                "to":"calibration_pu_target"
+        },
 	{
 		"id":"scramble_to_phix_cram",
 		"from":"scramble_phix",
@@ -1056,9 +1066,6 @@
 		"from":"bamrecompress_input",
 		"to":"int_adp_bam"
 	},
-############################################################
-# tophat alignment
-############################################################
 	{
 		"id":"ti_to_bamcollate2_ranking",
 		"from":"tee_input:__FIFO__",
@@ -1187,9 +1194,6 @@
 	{
 		"id":"bam12auxmerge_to_alignment_filter",
 		"from":"bam12auxmerge",
-#################
-# AlignmentFilter
-#################
 		"to":"alignment_filter:__TARGET_INBAM__"
 	},
 	{
@@ -1202,9 +1206,6 @@
 		"from":"alignment_filter:__AF_METRICS__",
 		"to":"af_metrics"
 	},
-#####################
-# phiX BAM production
-#####################
 	{
 		"id":"alignmentfilter_to_bamsort_coord_phix",
 		"from":"alignment_filter:__PHIX_OUTBAM__",
@@ -1217,7 +1218,7 @@
 	},
 	{
 		"id":"bmd_phix_tee0_to_bamrecompress_phix",
-		"from":"bmd_phix_tee0",
+		"from":"bmd_phix_multiway:__BAM_OUT__",
 		"to":"bamrecompress_phix"
 	},
 	{
@@ -1225,9 +1226,6 @@
 		"from":"bamrecompress_phix",
 		"to":"phix_bam"
 	},
-#######################
-# Target BAM production
-#######################
 	{
 		"id":"alignmentfilter_to_bamsort_coord_target",
 		"from":"alignment_filter",
@@ -1240,7 +1238,7 @@
 	},
 	{
 		"id":"bmd_to_bamrecompress",
-		"from":"bmd_tee3",
+		"from":"bmd_target_multiway:__BAM_OUT__",
 		"to":"bamrecompress_target"
 	},
 	{
@@ -1248,9 +1246,6 @@
 		"from":"bamrecompress_target",
 		"to":"target_bam"
 	},
-##################################################
-# check input primary/sequence data matches output
-##################################################
 	{
 		"id":"phix_bam_to_bamcat",
 		"from":"phix_bam",

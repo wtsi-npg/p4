@@ -114,7 +114,7 @@ for my $edge (@{$edges}) {
 			$data_xfer_name = $from_node->{name};
 		}
 		else {
-			croak q[Edges must start or terminate in an EXEC node];
+			croak q[Edges must start or terminate in an EXEC node; from: ], $from_node->{id}, q[, to: ], $to_node->{id};
 		}
 	}
 
@@ -236,10 +236,17 @@ sub _update_node_data_xfer {
 
 	if($node->{type} eq q[EXEC] and $data_xfer_name ne q[]) {
 		if(defined $port) {
+			if(my($inout) = grep {$_} $port=~/_(IN|OUT)__\z/smx , $port=~/\A__(IN|OUT)_/smx ){ # if port has _{IN,OUT}_ {suf,pre}fix convention
+				#ensure port is connected to in manner suggested by naming convention
+				croak 'Node '.($node->{'id'})." port $port connected as ".($edge_side == $FROM?q("from"):q("to")) if (($inout eq q(OUT))^($edge_side == $FROM));
+			} else {
+				$logger->($VLMED, 'Node '.($node->{'id'})." has poorly described port $port (no _{IN,OUT}__ {suf,pre}fix)\n");
+			}
 			my $cmd = $node->{'cmd'};
 			for my$cmd_part ( ref $cmd eq 'ARRAY' ? @{$cmd}[1..$#{$cmd}] : ($node->{'cmd'}) ){
-				$cmd_part =~ s/\Q$port\E/$data_xfer_name/;
-			}
+				return if ($cmd_part =~ s/\Q$port\E/$data_xfer_name/smx);
+			} #if link for port has not been made (port never defined, or already substituted, in node cmd) bail out
+			croak 'Node '.($node->{'id'})." has no port $port";
 		}
 		else {
 			my $node_edge_std = $edge_side == $FROM? q[STDOUT]: q[STDIN];

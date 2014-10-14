@@ -1,6 +1,19 @@
 {
 "description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
-"subgraph_io":{"ports":{"inputs":{"_stdin_":"bamsort_coord","reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"},"outputs":{"_stdout_":"bamrecompress","out_cram":"scramble","out_bamcheck":"bamcheck","out_flagstat":"flagstat"}}},
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamsort_coord",
+			"reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"
+		},
+		"outputs":{
+			"_stdout_":"bamrecompress",
+			"out_cram":"scramble",
+			"out_bamcheck":"bamcheck",
+			"out_flagstat":"flagstat"
+		}
+	}
+},
 "nodes":[
 	{
 		"id":"bamsort_coord",
@@ -12,6 +25,9 @@
 					"bamsort",
 					"SO=coordinate",
 					"level=0",
+					"verbose=0",
+					"fixmate=1",
+					"adddupmarksupport=1",
 					{"subst_param_name":"bs_tmpfile_flag",
 						"required":"no",
 						"subst_constructor":{
@@ -41,8 +57,9 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bammarkduplicates",
+					"bamstreamingmarkduplicates",
 					"level=0",
+					"verbose=0",
 					{"subst_param_name":"bmd_tmpfile_flag",
 						"required":"no",
 						"subst_constructor":{
@@ -81,10 +98,9 @@
 		}
 	},
 	{
-		"id":"paf_teepot",
+		"id":"bmd_multiway",
 		"type":"EXEC",
-		"cmd":"teepot __FIFO1__ __FIFO2__ __FIFO3__ __FIFO4__ -",
-		"comment":"replaced tee -i __FIFO1__"
+		"cmd":"teepot -w 300 __SCRAMBLE_OUT__ __BAMCHECK_OUT__ __FLAGSTAT_OUT__ __CALIBRATION_PU_OUT__ __BAM_OUT__"
 	},
 	{
 		"id":"scramble",
@@ -98,6 +114,36 @@
 		"cmd":"bamcheck"
 	},
 	{
+		"id":"calibration_pu",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":{"subst_param_name":"calibration_pu_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"calibration_pu_executable","required":"no","default":"calibration_pu"},
+					"-p",
+					{"subst_param_name":"calibration_pu_prefix",
+						"required":"yes",
+						"subst_constructor":{
+							"vals":[
+								{"subst_param_name":"outdatadir","required":"no","default":"."},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"},
+								{"subst_param_name":"bam_ext","required":"no","default":".bam"}
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					},
+					"-filter-bad-tiles",{"subst_param_name":"calibration_pu_bad_tiles_count","required":"no","default":"2"},
+					"-"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
+	},
+	{
 		"id":"bamrecompress",
 		"type":"EXEC",
 		"cmd":{"subst_param_name":"bamrecompress",
@@ -107,6 +153,33 @@
 					"bamrecompress",
 					"SO=coordinate",
 					"level=0",
+					"index=1",
+					{"subst_param_name":"br_indexfile_flag",
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								"indexfilename=",
+								{"subst_param_name":"outdatadir","required":"no","default":"."},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"}, ".bai"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					},
+					"md5=1",
+					{"subst_param_name":"br_md5file_flag",
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								"md5filename=",
+								{"subst_param_name":"outdatadir","required":"no","default":"."},
+								"/",
+								{"subst_param_name":"rpt","required":"yes"}, ".bam.md5"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+
+					},
 					{"subst_param_name":"br_numthreads_flag",
 						"required":"no",
 						"subst_constructor":{
@@ -158,28 +231,33 @@
 		"to":"bammarkduplicates"
 	},
 	{
-		"id":"bammarkduplicates_to_tee",
+		"id":"bammarkduplicates_to_multiway",
 		"from":"bammarkduplicates",
-		"to":"paf_teepot"
+		"to":"bmd_multiway"
 	},
 	{
-		"id":"tee_to_scramble",
-		"from":"paf_teepot:__FIFO1__",
+		"id":"bmd_to_scramble",
+		"from":"bmd_multiway:__SCRAMBLE_OUT__",
 		"to":"scramble"
 	},
 	{
-		"id":"tee_to_scramble",
-		"from":"paf_teepot:__FIFO2__",
+		"id":"bmd_to_bamcheck",
+		"from":"bmd_multiway:__BAMCHECK_OUT__",
 		"to":"bamcheck"
 	},
 	{
-		"id":"tee_to_scramble",
-		"from":"paf_teepot:__FIFO3__",
+		"id":"bmd_to_calibration_pu",
+		"from":"bmd_multiway:__CALIBRATION_PU_OUT__",
+		"to":"calibration_pu"
+	},
+	{
+		"id":"bmd_to_bam",
+		"from":"bmd_multiway:__BAM_OUT__",
 		"to":"bamrecompress"
 	},
 	{
-		"id":"tee_to_scramble",
-		"from":"paf_teepot:__FIFO4__",
+		"id":"bmd_to_flagstat",
+		"from":"bmd_multiway:__FLAGSTAT_OUT__",
 		"to":"flagstat_filter"
 	},
 	{

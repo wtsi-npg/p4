@@ -1,5 +1,5 @@
 {
-	"description":	"minimal test pipeline",
+	"description":	"minimal failing test pipeline. Port name in edge does not match one in node definition. Also carps about poorly named __IN1__ and __INN2__ ports",
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",
@@ -21,7 +21,7 @@
 	},
 	{	"id": "d",
 		"type": "EXEC",
-		"cmd": "diff __IN_1__ __IN_2__",
+		"cmd": "diff __IN1__ __IN2__",
 		"use_STDIN": 0,
 		"use_STDOUT": 0
 	}
@@ -31,10 +31,10 @@
 		"to": "n2"
 	},
 	{	"from": "n2",
-		"to": "d:__IN_1__"
+		"to": "d:__IN1__"
 	},
 	{	"from": "m",
-		"to": "d:__IN_2__"
+		"to": "d:__INN2__"
 	}
 	]
 }

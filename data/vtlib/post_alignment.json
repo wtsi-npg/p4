@@ -1,32 +1,38 @@
 {
-"description":"A HiSeqX processing pipeline",
+"description":"any post-alignment processing required before passing through AlignmentFilter",
 "subgraph_io":{
-	"ports":{
-		"inputs":{
-			"_stdin_":"teepot_headerSQfix",
-			"reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__",
-			"unaligned_bam":"bam12auxmerge:__PREALN_BAM__"
-		},
-		"outputs":{
-			"_stdout_":"bam12auxmerge"
-		}
-	}
+        "ports":{
+                "inputs":{
+                        "_stdin_":"tee_headerSQfix",
+                        "reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__",
+                        "no_align_bam":"bam12auxmerge:__NO_ALN_BAM__"
+                },
+                "outputs":{
+                        "_stdout_":"bam12auxmerge"
+                }
+        }
 },
 "nodes":[
 	{
-		"id":"teepot_headerSQfix",
+		"id":"tee_headerSQfix",
 		"type":"EXEC",
-		"cmd":"teepot __OUT1__ -",
-		"comment":"replaced mbuffer -f -q -m 5M -o - -o __OUT1__ to avoid deadlock"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
+		"comment":"get deadlock when tee used here"
 	},
 	{
 		"id":"sam_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"samtools view -h -"
 	},
 	{
 		"id":"alterSQ_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_PICARD_DICT__",
 		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
 		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
@@ -34,29 +40,43 @@
 	{
 		"id":"mbuffer_headerSQfix",
 		"type":"EXEC",
-		"cmd":"teepot -",
-		"comment":"replaced mbuffer -f -q -m 5M to remove deadlock"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"mbuffer -f -q -m 5M"
 	},
 	{
 		"id":"reheader_headerSQfix",
 		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
 		"cmd":"samtools reheader __IN_SAMHEADER__ __IN_BAM__"
 	},
 	{
 		"id":"bam12split",
 		"type":"EXEC",
-		"cmd":"bam12split verbose=1 level=0"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bam12split verbose=0 level=0"
+	},
+	{
+		"id":"bamsort_qname",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bamsort SO=queryname level=0"
 	},
 	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
-		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __NO_ALN_BAM__"
 	}
 ],
 "edges":[
 	{
 		"id":"tee_headerSQfix_to_sam",
-		"from":"teepot_headerSQfix:__OUT1__",
+		"from":"tee_headerSQfix:__OUT1__",
 		"to":"sam_headerSQfix"
 	},
 	{
@@ -71,7 +91,7 @@
 	},
 	{
 		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"teepot_headerSQfix",
+		"from":"tee_headerSQfix",
 		"to":"mbuffer_headerSQfix"
 	},
 	{
@@ -87,6 +107,11 @@
 	{
 		"id":"bam12split_to_bamsort_qname",
 		"from":"bam12split",
+		"to":"bamsort_qname"
+	},
+	{
+		"id":"bsqn_to_bam12auxmerge",
+		"from":"bamsort_qname",
 		"to":"bam12auxmerge"
 	}
 ]
