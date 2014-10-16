@@ -151,7 +151,6 @@
 			"subst_constructor":{
 				"vals":[
 					"bamrecompress",
-					"SO=coordinate",
 					"verbose=0",
 					"index=1",
 					{"subst_param_name":"br_indexfile_flag",
