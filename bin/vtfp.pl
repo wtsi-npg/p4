@@ -7,18 +7,17 @@
 ########################################################################################################
 
 use strict;
-
+use warnings;
+use Carp;
+use Readonly;
 use Getopt::Long;
-use Data::Dumper;
 use File::Which qw(which);
 use List::MoreUtils qw(any);
 use Cwd qw(abs_path);
 use File::Slurp;
 use JSON;
-
 use Storable 'dclone';
-use Carp;
-use Readonly;
+
 
 our $VERSION = '0';
 
@@ -385,7 +384,6 @@ sub resolve_subst_to_string {
 		my $elem_index = $subst_param->{elem_index};
 		$attrib_name ||= "element $elem_index";
 		my $subst_param_name = $subst_param->{param_name};
-		my $parent_id = $subst_param->{parent_id};
 		my $parent_id = $subst_param->{parent_id};
 		$parent_id ||= q[NO_PARENT_ID];   # should be ARRAY?
 

@@ -1,17 +1,14 @@
 #!/usr/bin/env perl
 
 use strict;
-
+use warnings;
+use Carp;
 use File::Slurp;
 use JSON;
-
 use POSIX;
 use File::Temp qw/ tempdir /;
 use Getopt::Std;
 use Readonly;
-
-use Carp;
-
 use Data::Dumper;
 
 our $VERSION = '0';
