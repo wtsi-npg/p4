@@ -57,8 +57,8 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bamstreamingmarkduplicates",
-					"level=0",
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					" level=0",
 					"verbose=0",
 					{"subst_param_name":"bmd_tmpfile_flag",
 						"required":"no",
@@ -151,8 +151,7 @@
 			"subst_constructor":{
 				"vals":[
 					"bamrecompress",
-					"SO=coordinate",
-					"level=0",
+					"verbose=0",
 					"index=1",
 					{"subst_param_name":"br_indexfile_flag",
 						"required":"no",

@@ -1,9 +1,9 @@
 bin/viv.pl
 bin/vtfp.pl
 Build.PL
+Changes
 data/bwamem_wtsi_stage2_template.vtf
 data/snap_sample_template.vtf
-data/tophat2_wtsi_realign_template.vtf
 data/tophat2_wtsi_stage2_template.vtf
 examples/bwa_aln_cfg.png
 examples/bwa_mem/bwa_mem_alignment.vtf
@@ -23,6 +23,7 @@ README
 README.vtfp
 t/data/simple_failing_pipeline.vtf
 t/data/simple_pipeline.vtf
+t/00-scripts_compile.t
 visualisation/bwa_aln.cfg
 visualisation/bwa_aln.json
 visualisation/config_view.html

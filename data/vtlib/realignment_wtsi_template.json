@@ -1,5 +1,5 @@
 {
-"description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
+"description":"Realign data in BAM files producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
 "nodes":[
 	{
 		"id":"src_bam",

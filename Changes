@@ -1,0 +1,5 @@
+CHANGES LOG
+-----------
+
+release 0.09
+  -install action should not remove lib directory at target

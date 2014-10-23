@@ -15,17 +15,7 @@ my $class = Module::Build->subclass(code => <<'EOF');
 
   sub process_data_files {
    `cp -av data blib`;
-
     return;
-  }
-
-  sub ACTION_install {
-    my $self = shift;
-    $self->SUPER::ACTION_install;
-    my $lib = $self->install_base() .'/lib';
-    if (-d $lib) {
-      `rm -frv $lib`;
-    }
   }
 
   sub ACTION_code {
@@ -68,6 +58,12 @@ my $builder = $class->new(
     'ExtUtils::CBuilder'    => 0
   },
 
+  'build_requires' => {
+    'English'               => 0,
+    'Test::More'            => 0,
+    'Test::Compile'         => 0,
+  },
+
   'requires' => {
     'Carp'                  => 0,
     'Cwd'                   => 0,
@@ -80,11 +76,10 @@ my $builder = $class->new(
     'JSON'                  => 0,
     'List::MoreUtils'       => 0,
     'POSIX'                 => 0,
-    'Readonly'              => 0
-  },
-
-  'build_requires' => {
-    'ExtUtils::CBuilder'    => 0
+    'Readonly'              => 0,
+    'strict'                => 0,
+    'Storable'              => 0,
+    'warnings'              => 0,
   },
 
   'dist' => { COMPRESS => 'gzip', SUFFIX => 'gz', }
