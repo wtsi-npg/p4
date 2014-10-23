@@ -57,8 +57,8 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bamstreamingmarkduplicates",
-					"level=0",
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					" level=0",
 					"verbose=0",
 					{"subst_param_name":"bmd_tmpfile_flag",
 						"required":"no",
