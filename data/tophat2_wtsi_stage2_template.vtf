@@ -792,8 +792,8 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bamstreamingmarkduplicates ",
-					"level=0 ",
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					" level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
@@ -862,8 +862,8 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					"bamstreamingmarkduplicates ",
-					"level=0 ",
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					" level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
