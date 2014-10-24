@@ -1,72 +1,72 @@
 {
 "description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
 "subgraph_io":{
-        "ports":{
-                "inputs":{
-                                "_stdin_":"seqchksum_input",
-                                "target_bam":"bamcat_output:__TARGETBAM__",
-                                "phix_bam":"bamcat_output:__PHIXBAM__"
-                }
-        }
+	"ports":{
+		"inputs":{
+			"_stdin_":"seqchksum_input",
+			"target_bam":"bamcat_output:__TARGETBAM__",
+			"phix_bam":"bamcat_output:__PHIXBAM__"
+		}
+	}
 },
 "nodes":[
-        {
-                "id":"bamcat_output",
-                "type":"EXEC",
-                "cmd":"bamcat verbose=0 level=0 __PHIXBAM__ __TARGETBAM__"
-        },
-        {
-                "id":"seqchksum_output",
-                "type":"EXEC",
-                "cmd":"bamseqchksum"
-        },
-        {
-                "id":"seqchksum_input",
-                "type":"EXEC",
-                "cmd":"bamseqchksum"
-        },
-        {
-                "id":"teepot_input_seqchksum",
-                "type":"EXEC",
-                "cmd":"teepot __CHKSUMOUT__"
-        },
-        {
-                "id":"teepot_output_seqchksum",
-                "type":"EXEC",
-                "cmd":"teepot __CHKSUMOUT__"
-        },
-        {
-                "id":"cmp_seqchksum",
-                "type":"EXEC",
-                "cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
-                "description":"check input primary/sequence data matches output"
-        }
+	{
+		"id":"bamcat_output",
+		"type":"EXEC",
+		"cmd":"bamcat verbose=0 level=0 __PHIXBAM__ __TARGETBAM__"
+	},
+	{
+		"id":"seqchksum_output",
+		"type":"EXEC",
+		"cmd":"bamseqchksum"
+	},
+	{
+		"id":"seqchksum_input",
+		"type":"EXEC",
+		"cmd":"bamseqchksum"
+	},
+	{
+		"id":"teepot_input_seqchksum",
+		"type":"EXEC",
+		"cmd":"teepot __CHKSUMOUT__"
+	},
+	{
+		"id":"teepot_output_seqchksum",
+		"type":"EXEC",
+		"cmd":"teepot __CHKSUMOUT__"
+	},
+	{
+		"id":"cmp_seqchksum",
+		"type":"EXEC",
+		"cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
+		"description":"check input primary/sequence data matches output"
+	}
 ],
 "edges":[
-        {
-                "id":"bamcat_to_chk_output",
-                "from":"bamcat_output",
-                "to":"seqchksum_output"
-        },
-        {
-                "id":"seqchksum_output_to_cmp",
-                "from":"seqchksum_output",
-                "to":"teepot_output_seqchksum"
-        },
-        {
-                "id":"seqchksum_output_to_cmp",
-                "from":"teepot_output_seqchksum:__CHKSUMOUT__",
-                "to":"cmp_seqchksum:__OUTPUTCHK__"
-        },
-        {
-                "id":"seqchksum_input_to_cmp",
-                "from":"seqchksum_input",
-                "to":"teepot_input_seqchksum"
-        },
-        {
-                "id":"seqchksum_input_to_cmp",
-                "from":"teepot_input_seqchksum:__CHKSUMOUT__",
-                "to":"cmp_seqchksum:__INPUTCHK__"
-        }
+	{
+		"id":"bamcat_to_chk_output",
+		"from":"bamcat_output",
+		"to":"seqchksum_output"
+	},
+	{
+		"id":"seqchksum_output_to_cmp",
+		"from":"seqchksum_output",
+		"to":"teepot_output_seqchksum"
+	},
+	{
+		"id":"seqchksum_output_to_cmp",
+		"from":"teepot_output_seqchksum:__CHKSUMOUT__",
+		"to":"cmp_seqchksum:__OUTPUTCHK__"
+	},
+	{
+		"id":"seqchksum_input_to_cmp",
+		"from":"seqchksum_input",
+		"to":"teepot_input_seqchksum"
+	},
+	{
+		"id":"seqchksum_input_to_cmp",
+		"from":"teepot_input_seqchksum:__CHKSUMOUT__",
+		"to":"cmp_seqchksum:__INPUTCHK__"
+	}
 ]
 }
