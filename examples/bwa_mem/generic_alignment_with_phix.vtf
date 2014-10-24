@@ -264,7 +264,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"bamcheck_name","required":"no","default":".bamcheck"}
+					{"subst_param_name":"bamcheck_name","required":"no","default":".bamstats"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -348,7 +348,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"phix_bamcheck_name","required":"no","default":"_phix.bamcheck"}
+					{"subst_param_name":"phix_bamcheck_name","required":"no","default":"_phix.bamstats"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
