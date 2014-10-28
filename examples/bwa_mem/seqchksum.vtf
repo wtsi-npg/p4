@@ -6,6 +6,9 @@
 			"_stdin_":"seqchksum_input",
 			"target_bam":"bamcat_output:__TARGETBAM__",
 			"phix_bam":"bamcat_output:__PHIXBAM__"
+		},
+		"outputs":{"output_checksum":"teepot_output_seqchksum",
+							 "input_checksum":"teepot_input_seqchksum"
 		}
 	}
 },
@@ -28,12 +31,12 @@
 	{
 		"id":"teepot_input_seqchksum",
 		"type":"EXEC",
-		"cmd":"teepot __CHKSUMOUT__"
+		"cmd":"teepot __CHKSUMOUT__ -"
 	},
 	{
 		"id":"teepot_output_seqchksum",
 		"type":"EXEC",
-		"cmd":"teepot __CHKSUMOUT__"
+		"cmd":"teepot __CHKSUMOUT__ -"
 	},
 	{
 		"id":"cmp_seqchksum",

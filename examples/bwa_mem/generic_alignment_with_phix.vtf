@@ -104,6 +104,8 @@
 			"subst_constructor":{
 				"vals":[
 					"bamadapterfind level=0 md5=1 md5filename=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
 					{"subst_param_name":"rpt","required":"yes"},
 					".bam.md5"
 				],
@@ -616,6 +618,41 @@
 			}
 		},
 		"description":"subgraph containing seqchksum validation of outputs"
+	},
+	{
+		"id":"target_output_checksum",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"target_output_checksum",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					{"subst_param_name":"checksum_output_name",
+					 "required":"no",
+					 "default":"_out.bamseqchecksum"
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"target_input_checksum",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"target_input_checksum",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					{"subst_param_name":"checksum_input_name","required":"no","default":"_in.bamseqchecksum"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
 	}
 ],
 "edges":[
@@ -856,6 +893,16 @@
 		"id":"phix_bam_to_seqchksum",
 		"from":"phix_bam",
 		"to":"seqchksum:phix_bam"
+	},
+	{
+		"id":"seqchksum_output_to_target_checksum",
+		"from":"seqchksum:output_checksum",
+		"to":"target_output_checksum"
+	},
+	{
+		"id":"seqchksum_input_to_target_checksum",
+		"from":"seqchksum:input_checksum",
+		"to":"target_input_checksum"
 	}
 ]
 }
