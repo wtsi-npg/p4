@@ -1,5 +1,5 @@
 {
-"description":"Process DNA seq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
+"description":"Process DNA seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
 "nodes":[
 	{
 		"id":"bmd_phix_multiway",
