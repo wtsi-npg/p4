@@ -38,7 +38,6 @@
 								{"subst_param_name":"bstmp","required":"yes"},
 								"_",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".tmp"
 							],
@@ -70,7 +69,6 @@
 								{"subst_param_name":"bmdtmp","required":"yes"},
 								"_",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".tmp"
 							],
@@ -85,7 +83,6 @@
 								{"subst_param_name":"outdatadir","required":"no","default":"."},
 								"/",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".markdups_metrics.txt"
 							],
@@ -199,7 +196,6 @@
 								{"subst_param_name":"brtmp","required":"yes"},
 								"_",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".tmp"
 							],

@@ -240,7 +240,7 @@
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
-                "subst_map":{"phix_or_target":"target","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "subst_map":{"phix_or_target":"","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst_param_name":"final_output_prep_target",
                         "required":"yes",
                         "subst_constructor":{
@@ -274,7 +274,7 @@
         {
                 "id":"final_output_prep_phix",
                 "type":"VTFILE",
-                "subst_map":{"phix_or_target":"phix","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "subst_map":{"phix_or_target":"_phix","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst_param_name":"final_output_prep_phix",
                         "required":"yes",
                         "subst_constructor":{
