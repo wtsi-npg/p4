@@ -549,6 +549,7 @@
 	},
 	{
 		"id":"bammarkduplicates_phix",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -556,7 +557,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 					" level=0 ",
 					"verbose=0 ",
 					"M=",
@@ -620,6 +621,7 @@
 	},
 	{
 		"id":"bammarkduplicates_target",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -627,7 +629,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 					" level=0 ",
 					"verbose=0 ",
 					"M=",
