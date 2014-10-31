@@ -84,15 +84,15 @@
 		"description":"subgraph containing alignment process"
 	},
 	{
-		"id":"picard_reference_dict",
+		"id":"reference_dict",
 		"type":"INFILE",
-		"name":{"subst_param_name":"picard_reference_dict",
+		"name":{"subst_param_name":"reference_dict",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
 					{"subst_param_name":"reposdir","required":"no","default":"."},
 					"/",
-					{"subst_param_name":"picard_reference_dict_name","required":"yes"}
+					{"subst_param_name":"reference_dict_name","required":"yes"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -333,9 +333,9 @@
 		"to":"post_alignment_target"
 	},
         {
-                "id":"picard_reference_dict_to_post_alignment",
-                "from":"picard_reference_dict",
-                "to":"post_alignment_target:reference_picard_dict"
+                "id":"reference_dict_to_post_alignment",
+                "from":"reference_dict",
+                "to":"post_alignment_target:reference_dict"
         },
 	{
 		"id":"post_alignment_to_alignment_filter",
