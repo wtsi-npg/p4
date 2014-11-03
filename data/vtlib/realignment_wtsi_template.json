@@ -31,7 +31,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"mbuffer -f -o __PHIX_ALN__ -o __TGT_ALN__ "
+		"cmd":"teepot __PHIX_ALN_OUT__ __TGT_ALN_OUT__ "
 	},
 	{
 		"id":"pre_alignment_target",
@@ -294,7 +294,7 @@
 	},
 	{
 		"id":"t0_to_bamcollate2_ranking",
-		"from":"tee0:__PHIX_ALN__",
+		"from":"tee0:__PHIX_ALN_OUT__",
 		"to":"bamrecompress_input"
 	},
 	{
@@ -314,7 +314,7 @@
 	},
 	{
 		"id":"t0_to_bamcollate2_ranking",
-		"from":"tee0:__TGT_ALN__",
+		"from":"tee0:__TGT_ALN_OUT__",
 		"to":"pre_alignment_target"
 	},
 	{
