@@ -4,7 +4,7 @@
         "ports":{
                 "inputs":{
                         "_stdin_":"tee_headerSQfix",
-                        "reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__",
+                        "reference_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__",
                         "no_align_bam":"bam12auxmerge:__NO_ALN_BAM__"
                 },
                 "outputs":{

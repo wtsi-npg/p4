@@ -38,7 +38,6 @@
 								{"subst_param_name":"bstmp","required":"yes"},
 								"_",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".tmp"
 							],
@@ -52,12 +51,13 @@
 	},
 	{
 		"id":"bammarkduplicates",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
 		"type":"EXEC",
 		"cmd":{"subst_param_name":"bammarkduplicates",
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 					" level=0",
 					"verbose=0",
 					{"subst_param_name":"bmd_tmpfile_flag",
@@ -70,7 +70,6 @@
 								{"subst_param_name":"bmdtmp","required":"yes"},
 								"_",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".tmp"
 							],
@@ -85,7 +84,6 @@
 								{"subst_param_name":"outdatadir","required":"no","default":"."},
 								"/",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".markdups_metrics.txt"
 							],
@@ -199,7 +197,6 @@
 								{"subst_param_name":"brtmp","required":"yes"},
 								"_",
 								{"subst_param_name":"rpt","required":"yes"},
-								"_",
 								{"subst_param_name":"phix_or_target","required":"yes"},
 								".tmp"
 							],
