@@ -429,7 +429,7 @@
 	{
 		"id":"mbuffer_headerSQfix",
 		"type":"EXEC",
-		"cmd":"teepot -m 5M"
+		"cmd":"teepot -m 5M -"
 	},
 	{
 		"id":"reheader_headerSQfix",
