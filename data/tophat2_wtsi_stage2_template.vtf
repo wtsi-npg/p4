@@ -314,7 +314,7 @@
 		"id":"tee_input",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
+		"use_STDOUT": false,
 		"cmd":"teepot -w 300 -m 1G __PHIX_ALN_OUT__ __TGT_ALN_OUT__"
 	},
 	{
@@ -651,7 +651,7 @@
 		"id":"tee_headerSQfix",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
+		"use_STDOUT": false,
 		"cmd":"teepot -m 5M __HEADER_FIX_OUT__ __FULL_BAM_OUT__",
 		"comment":"get deadlock when tee used here"
 	},
@@ -676,7 +676,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"teepot -m 5M"
+		"cmd":"teepot -m 5M -"
 	},
 	{
 		"id":"reheader_headerSQfix",

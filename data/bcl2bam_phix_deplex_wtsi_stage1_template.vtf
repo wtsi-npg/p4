@@ -218,7 +218,7 @@
 	{
 		"id":"prefilter",
 		"type":"EXEC",
-		"cmd":"/nfs/users/nfs_j/js10/teepot-1.0.1/teepot -m2M __PF1__ __PF2__"
+		"cmd":"teepot -m2M __PF1__ __PF2__"
 	},
 
 	{
@@ -256,7 +256,7 @@
 	{
 		"id":"tee_decode",
 		"type":"EXEC",
-		"cmd":"/nfs/users/nfs_j/js10/teepot-1.0.1/teepot -m2M __TD1__ __TD2__"
+		"cmd":"teepot -m2M __TD1__ __TD2__"
 	},
 
 	{
