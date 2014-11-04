@@ -171,7 +171,9 @@
 								"md5filename=",
 								{"subst_param_name":"outdatadir","required":"no","default":"."},
 								"/",
-								{"subst_param_name":"rpt","required":"yes"}, ".bam.md5"
+								{"subst_param_name":"rpt","required":"yes"},
+								{"subst_param_name":"phix_or_target","required":"no","default":""},
+								".bam.md5"
 							],
 							"postproc":{"op":"concat", "pad":""}
 						}
