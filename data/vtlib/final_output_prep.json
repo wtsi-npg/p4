@@ -129,6 +129,7 @@
 								{"subst_param_name":"outdatadir","required":"no","default":"."},
 								"/",
 								{"subst_param_name":"rpt","required":"yes"},
+								{"subst_param_name":"phix_or_target","required":"yes"},
 								{"subst_param_name":"bam_ext","required":"no","default":".bam"}
 							],
 							"postproc":{"op":"concat", "pad":""}
@@ -158,7 +159,9 @@
 								"indexfilename=",
 								{"subst_param_name":"outdatadir","required":"no","default":"."},
 								"/",
-								{"subst_param_name":"rpt","required":"yes"}, ".bai"
+								{"subst_param_name":"rpt","required":"yes"},
+								{"subst_param_name":"phix_or_target","required":"no","default":""},
+								".bai"
 							],
 							"postproc":{"op":"concat", "pad":""}
 						}
