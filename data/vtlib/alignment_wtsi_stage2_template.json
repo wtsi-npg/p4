@@ -371,6 +371,38 @@
 		}
 	},
 	{
+		"id":"out_stats_F0x900",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_stats_F0x900",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_F0x900.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_stats_F0xB00",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_stats_F0xB00",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_F0xB00.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
 		"id":"out_phix_bamcheck",
 		"type":"OUTFILE",
 		"name":{"subst_param_name":"out_phix_bamcheck",
@@ -386,6 +418,39 @@
 			}
 		}
 	},
+	{
+		"id":"out_phix_stats_F0x900",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_stats_F0x900",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix_F0x900.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_phix_stats_F0xB00",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_stats_F0xB00",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix_F0xB00.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+
 	{
 		"id":"out_flagstat",
 		"type":"OUTFILE",
@@ -579,16 +644,39 @@
 		"from":"final_output_prep_phix:out_cram",
 		"to":"phix_cram"
 	},
+
 	{
-		"id":"bamcheck_to_out",
+		"id":"bamcheck_out_target",
 		"from":"final_output_prep_target:out_bamcheck",
 		"to":"out_bamcheck"
 	},
 	{
-		"id":"bamcheck_to_phix",
+		"id":"samtools_stats_F0x900_out_target",
+		"from":"final_output_prep_target:out_stats_F0x900",
+		"to":"out_stats_F0x900"
+	},
+	{
+		"id":"samtools_stats_F0xB00_out_target",
+		"from":"final_output_prep_target:out_stats_F0xB00",
+		"to":"out_stats_F0xB00"
+	},
+
+	{
+		"id":"bamcheck_out_phix",
 		"from":"final_output_prep_phix:out_bamcheck",
 		"to":"out_phix_bamcheck"
 	},
+	{
+		"id":"samtools_stats_F0x900_out_phix",
+		"from":"final_output_prep_phix:out_stats_F0x900",
+		"to":"out_phix_stats_F0x900"
+	},
+	{
+		"id":"samtools_stats_F0xB00_out_phix",
+		"from":"final_output_prep_phix:out_stats_F0xB00",
+		"to":"out_phix_stats_F0xB00"
+	},
+
 	{
 		"id":"flagstat_to_out",
 		"from":"final_output_prep_target:out_flagstat",

@@ -10,6 +10,8 @@
 			"_stdout_":"bamrecompress",
 			"out_cram":"scramble",
 			"out_bamcheck":"bamcheck",
+			"out_stats_F0x900":"samtools_stats_F0x900",
+			"out_stats_F0xB00":"samtools_stats_F0xB00",
 			"out_flagstat":"flagstat"
 		}
 	}
@@ -18,6 +20,8 @@
 	{
 		"id":"bamsort_coord",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":{"subst_param_name":"bamsort_coord",
 			"required":"yes",
 			"subst_constructor":{
@@ -53,6 +57,8 @@
 		"id":"bammarkduplicates",
 		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":{"subst_param_name":"bammarkduplicates",
 			"required":"yes",
 			"subst_constructor":{
@@ -98,19 +104,64 @@
 	{
 		"id":"bmd_multiway",
 		"type":"EXEC",
-		"cmd":"teepot -w 300 __SCRAMBLE_OUT__ __BAMCHECK_OUT__ __FLAGSTAT_OUT__ __CALIBRATION_PU_OUT__ __BAM_OUT__"
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":"teepot -w 300 __SCRAMBLE_OUT__ __BAMCHECK_OUT__ __FLAGSTAT_OUT__ __CALIBRATION_PU_OUT__ __BAM_OUT__ __SAMTOOLS_STATS_F0x900__ __SAMTOOLS_STATS_F0xB00__"
 	},
 	{
 		"id":"scramble",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME_FASTA__"
 	},
 
 	{
 		"id":"bamcheck",
 		"type":"EXEC",
-		"cmd":"bamcheck"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bamcheck -F 0x900"
 	},
+	{
+		"id":"samtools_stats_F0x900",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"subst_param_name":"samtools_stats_F0x900",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"samtools_executable","required":"no","default":"samtools"},
+					"stats",
+					"-F",
+					{"subst_param_name":"stats_filter__F0x900","required":"no","default":"0x900"},
+					"-"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
+	},
+	{
+		"id":"samtools_stats_F0xB00",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"subst_param_name":"samtools_stats_F0xB00",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"samtools_executable","required":"no","default":"samtools"},
+					"stats",
+					"-F",
+					{"subst_param_name":"stats_filter__F0xB00","required":"no","default":"0xB00"},
+					"-"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
+	},
+
 	{
 		"id":"calibration_pu",
 		"type":"EXEC",
@@ -145,6 +196,8 @@
 	{
 		"id":"bamrecompress",
 		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
 		"cmd":{"subst_param_name":"bamrecompress",
 			"required":"yes",
 			"subst_constructor":{
@@ -216,13 +269,40 @@
 	{
 		"id":"flagstat_filter",
 		"type":"EXEC",
-		"cmd":"samtools view -u -F 0x900 -",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"subst_param_name":"samtools_flagstat_filter",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"samtools_executable","required":"no","default":"samtools"},
+					"view",
+					"-u",
+					"-F",
+					{"subst_param_name":"flagstats_filter_flag","required":"no","default":"0x900"},
+					"-"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		},
 		"description":"Filter out secondary and supplementary alignment records"
 	},
 	{
 		"id":"flagstat",
 		"type":"EXEC",
-		"cmd":"samtools flagstat -"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"subst_param_name":"samtools_flagstat_cmd",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"samtools_executable","required":"no","default":"samtools"},
+					"flagstat",
+					"-"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
 	}
 ],
 "edges":[
@@ -245,6 +325,16 @@
 		"id":"bmd_to_bamcheck",
 		"from":"bmd_multiway:__BAMCHECK_OUT__",
 		"to":"bamcheck"
+	},
+	{
+		"id":"bmd_to_sts_F0x900",
+		"from":"bmd_multiway:__SAMTOOLS_STATS_F0x900__",
+		"to":"samtools_stats_F0x900"
+	},
+	{
+		"id":"bmd_to_sts_F0xB00",
+		"from":"bmd_multiway:__SAMTOOLS_STATS_F0xB00__",
+		"to":"samtools_stats_F0xB00"
 	},
 	{
 		"id":"bmd_to_calibration_pu",
