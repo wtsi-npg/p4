@@ -99,7 +99,7 @@ for my $edge (@{$edges}) {
 		if($to_node->{type} eq q[EXEC]) {
 			$data_xfer_name = _create_fifo($edge->{from});
 		}
-		elsif($to_node->{subtype} eq q[DUMMY]) {
+		elsif(defined $to_node->{subtype} and $to_node->{subtype} eq q[DUMMY]) {
 			$data_xfer_name = q[];
 		}
 		else {
@@ -126,7 +126,9 @@ setpgrp; # create new processgroup so signals can be fired easily in suitable wa
 # kick off any unblocked EXEC nodes, noting their details for later release of any dependants
 my %pid2id = ();
 for my $node_id (keys %exec_nodes) {
-	if($exec_nodes{$node_id}->{wait_counter} == 0 and not $exec_nodes{$node_id}->{pid}) { # green light - execute
+	my $wait_counter = $exec_nodes{$node_id}->{wait_counter};
+	$wait_counter ||= 0;
+	if($wait_counter == 0 and not $exec_nodes{$node_id}->{pid}) { # green light - execute
 
 		my $node = $exec_nodes{$node_id};
 		if((my $pid=_fork_off($node, $do_exec))) {
@@ -176,7 +178,7 @@ while((my $pid=wait) > 0) {
 	}else{
 
 		$logger->($VLMED, sprintf(q[Child %s (pid: %d), return_status: %#04X, wifexited: %d (%#04X), wexitstatus: %s], $completed_node->{id}, $pid, $status, $wifexited, $wexitstatus, $wexitstatus), "\n");
-		$logger->($VLMED, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, $wtermsig), "\n");
+		$logger->($VLMED, sprintf(q[Child %s (pid: %d), wifsignaled: %#04X, wtermsig: %s], $completed_node->{id}, $pid, $wifsignaled, ($wifsignaled? $wtermsig: q{NA})), "\n");
 		$logger->($VLMED, sprintf(q[Child %s (pid: %d), wifexited: %#04X, wexitstatus: %s], $completed_node->{id}, $pid, $wifexited, $wexitstatus), "\n");
 
 		if($dependants_list and @$dependants_list) {
