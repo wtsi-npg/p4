@@ -4,35 +4,111 @@
 	"ports":{
 		"inputs":{
 				"_stdin_":"seqchksum_input",
-				"target_bam":"bamcat_output:__TARGETBAM__",
-				"phix_bam":"bamcat_output:__PHIXBAM__"
+				"target_bam":"target_tee",
+				"phix_bam":"phix_tee"
+		},
+		"outputs":{
+				"target_chksum":"seqchksum_target",
+				"phix_chksum":"seqchksum_phix"
 		}
 	}
 },
 "nodes":[
+	{
+		"id":"target_tee",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
+	},
+	{
+		"id":"phix_tee",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
+	},
+	{
+                "id":"seqchksum_target",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":"bamseqchksum"
+	},
+	{
+                "id":"seqchksum_phix",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":"bamseqchksum"
+	},
         {
                 "id":"bamcat_output",
+		"comment":"changed from bamcat when deadlock occurred when using new approach of saving chksum files",
                 "type":"EXEC",
-                "cmd":"bamcat verbose=0 level=0 __PHIXBAM__ __TARGETBAM__"
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":{"subst_param_name":"samtools_merge",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"samtools_executable","required":"no","default":"samtools"},
+					"merge",
+					"-c",
+					"--",
+					"-",
+					"__TARGETBAM_IN__",
+					"__PHIXBAM_IN__"
+				],
+				"postproc":{"op":"pack","pad":" "}
+			}
+		}
         },
         {
                 "id":"seqchksum_output",
                 "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
                 "cmd":"bamseqchksum"
         },
         {
                 "id":"seqchksum_input",
                 "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
                 "cmd":"bamseqchksum"
         },
         {
                 "id":"cmp_seqchksum",
                 "type":"EXEC",
-                "cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+                "cmd":"cmp -s __INPUTCHK_IN__ __OUTPUTCHK_IN__",
                 "description":"check input primary/sequence data matches output"
         }
 ],
 "edges":[
+        {
+                "id":"phix_to_chksum",
+                "from":"phix_tee:__CHKSUM_OUT__",
+                "to":"seqchksum_phix"
+        },
+        {
+                "id":"phix_to_bamcat",
+                "from":"phix_tee:__BAMCAT_OUT__",
+                "to":"bamcat_output:__PHIXBAM_IN__"
+        },
+        {
+                "id":"target_to_chksum",
+                "from":"target_tee:__CHKSUM_OUT__",
+                "to":"seqchksum_target"
+        },
+        {
+                "id":"target_to_bamcat",
+                "from":"target_tee:__BAMCAT_OUT__",
+                "to":"bamcat_output:__TARGETBAM_IN__"
+        },
+
         {
                 "id":"bamcat_to_chk_output",
                 "from":"bamcat_output",
@@ -41,12 +117,12 @@
         {
                 "id":"seqchksum_output_to_cmp",
                 "from":"seqchksum_output",
-                "to":"cmp_seqchksum:__OUTPUTCHK__"
+                "to":"cmp_seqchksum:__OUTPUTCHK_IN__"
         },
         {
                 "id":"seqchksum_input_to_cmp",
                 "from":"seqchksum_input",
-                "to":"cmp_seqchksum:__INPUTCHK__"
+                "to":"cmp_seqchksum:__INPUTCHK_IN__"
         }
 ]
 }

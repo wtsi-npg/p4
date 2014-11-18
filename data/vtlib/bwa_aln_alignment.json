@@ -113,16 +113,6 @@
 		"to":"bwa_aln_2:__BAM_IN__"
 	},
 	{
-		"id":"ref_to_bwa_aln_1",
-		"from":"reference_fasta:__ALN1_REF__",
-		"to":"bwa_aln_1:__REFERENCE_GENOME_FASTA__"
-	},
-	{
-		"id":"ref_to_bwa_aln2",
-		"from":"reference_fasta:__ALN2_REF__",
-		"to":"bwa_aln_2:__REFERENCE_GENOME_FASTA__"
-	},
-	{
 		"id":"bwa_sampe_bam1",
 		"from":"bwa_aln_start_bam",
 		"to":"bwa_sampe:__BAM_1__"
@@ -141,11 +131,6 @@
 		"id":"aln2_sai_to_sampe",
 		"from":"bwa_aln_2",
 		"to":"bwa_sampe:__SAI_2__"
-	},
-	{
-		"id":"ref_to_sampe",
-		"from":"reference_fasta:__SAMPE_REF__",
-		"to":"bwa_sampe:__REFERENCE_GENOME_FASTA__"
 	},
 	{
 		"id":"bwa_sampe_to_scramble",

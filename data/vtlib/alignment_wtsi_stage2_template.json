@@ -30,8 +30,9 @@
 		"id":"tee0",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"mbuffer -f -o __PHIX_ALN__ -o __TGT_ALN__ "
+		"use_STDOUT": false,
+		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk",
+		"cmd":"teepot -w 30000 -m 1G __PHIX_ALN_OUT__ __TGT_ALN_OUT__"
 	},
 	{
 		"id":"pre_alignment_target",
@@ -371,6 +372,38 @@
 		}
 	},
 	{
+		"id":"out_stats_F0x900",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_stats_F0x900",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_F0x900.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_stats_F0xB00",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_stats_F0xB00",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_F0xB00.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
 		"id":"out_phix_bamcheck",
 		"type":"OUTFILE",
 		"name":{"subst_param_name":"out_phix_bamcheck",
@@ -386,6 +419,39 @@
 			}
 		}
 	},
+	{
+		"id":"out_phix_stats_F0x900",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_stats_F0x900",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix_F0x900.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"out_phix_stats_F0xB00",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"out_phix_stats_F0xB00",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix_F0xB00.stats"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+
 	{
 		"id":"out_flagstat",
 		"type":"OUTFILE",
@@ -434,7 +500,39 @@
                         }
                 },
                 "description":"subgraph containing seqchksum validation of outputs"
-        }
+        },
+	{
+		"id":"phix_chksum",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"phix_chksum",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.seqchksum"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"target_chksum",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"target_chksum",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".seqchksum"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	}
 ],
 "edges":[
 	{
@@ -449,7 +547,7 @@
 	},
 	{
 		"id":"t0_to_bamcollate2_ranking",
-		"from":"tee0:__PHIX_ALN__",
+		"from":"tee0:__PHIX_ALN_OUT__",
 		"to":"bamrecompress_input"
 	},
 	{
@@ -469,7 +567,7 @@
 	},
 	{
 		"id":"t0_to_bamcollate2_ranking",
-		"from":"tee0:__TGT_ALN__",
+		"from":"tee0:__TGT_ALN_OUT__",
 		"to":"pre_alignment_target"
 	},
 	{
@@ -547,16 +645,39 @@
 		"from":"final_output_prep_phix:out_cram",
 		"to":"phix_cram"
 	},
+
 	{
-		"id":"bamcheck_to_out",
+		"id":"bamcheck_out_target",
 		"from":"final_output_prep_target:out_bamcheck",
 		"to":"out_bamcheck"
 	},
 	{
-		"id":"bamcheck_to_phix",
+		"id":"samtools_stats_F0x900_out_target",
+		"from":"final_output_prep_target:out_stats_F0x900",
+		"to":"out_stats_F0x900"
+	},
+	{
+		"id":"samtools_stats_F0xB00_out_target",
+		"from":"final_output_prep_target:out_stats_F0xB00",
+		"to":"out_stats_F0xB00"
+	},
+
+	{
+		"id":"bamcheck_out_phix",
 		"from":"final_output_prep_phix:out_bamcheck",
 		"to":"out_phix_bamcheck"
 	},
+	{
+		"id":"samtools_stats_F0x900_out_phix",
+		"from":"final_output_prep_phix:out_stats_F0x900",
+		"to":"out_phix_stats_F0x900"
+	},
+	{
+		"id":"samtools_stats_F0xB00_out_phix",
+		"from":"final_output_prep_phix:out_stats_F0xB00",
+		"to":"out_phix_stats_F0xB00"
+	},
+
 	{
 		"id":"flagstat_to_out",
 		"from":"final_output_prep_target:out_flagstat",
@@ -581,6 +702,16 @@
                 "id":"phix_bam_to_seqchksum",
                 "from":"phix_bam",
                 "to":"seqchksum:phix_bam"
-        }
+        },
+	{
+		"id":"target_chksum_to_file",
+		"from":"seqchksum:target_chksum",
+		"to":"target_chksum"
+	},
+	{
+		"id":"phix_chksum_to_file",
+		"from":"seqchksum:phix_chksum",
+		"to":"phix_chksum"
+	}
 ]
 }

@@ -218,7 +218,7 @@
 	{
 		"id":"prefilter",
 		"type":"EXEC",
-		"cmd":"/nfs/users/nfs_j/js10/teepot-1.0.1/teepot -m2M __PF1__ __PF2__"
+		"cmd":"teepot -m2M __PF1__ __PF2__"
 	},
 
 	{
@@ -250,13 +250,13 @@
 	{
 		"id":"tee_split",
 		"type":"EXEC",
-		"cmd":"mbuffer -f -q -m 5M -o __PIPE1__ -o __PIPE2__"
+		"cmd":"teepot -m 5M __FILTERED_BAM_OUT__ __SPLIT_BAM_OUT__"
 	},
 
 	{
 		"id":"tee_decode",
 		"type":"EXEC",
-		"cmd":"/nfs/users/nfs_j/js10/teepot-1.0.1/teepot -m2M __TD1__ __TD2__"
+		"cmd":"teepot -m2M __TD1__ __TD2__"
 	},
 
 	{
@@ -401,13 +401,13 @@
 
 	{
 		"id":"tee_to_filtered_bam",
-		"from":"tee_split:__PIPE1__",
+		"from":"tee_split:__FILTERED_BAM_OUT__",
 		"to":"filtered_bam"
 	},
 
 	{
 		"id":"tee_to_sort",
-		"from":"tee_split:__PIPE2__",
+		"from":"tee_split:__SPLIT_BAM_OUT__",
 		"to":"splitter"
 	}
 
