@@ -339,6 +339,22 @@
 		}
 	},
 	{
+		"id":"cram_md5",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"cram_md5",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					".cram.md5"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
 		"id":"phix_cram",
 		"type":"OUTFILE",
 		"name":{"subst_param_name":"phix_cram",
@@ -349,6 +365,22 @@
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
 					"_phix.cram"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"phix_cram_md5",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"phix_cram_md5",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					"_phix.cram.md5"
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -640,11 +672,20 @@
 		"to":"cram"
 	},
 	{
+		"id":"scramble_to_cram_md5",
+		"from":"final_output_prep_target:out_cram_md5",
+		"to":"cram_md5"
+	},
+	{
 		"id":"scramble_to_phix_cram",
 		"from":"final_output_prep_phix:out_cram",
 		"to":"phix_cram"
 	},
-
+	{
+		"id":"scramble_to_phix_cram_md5",
+		"from":"final_output_prep_phix:out_cram_md5",
+		"to":"phix_cram_md5"
+	},
 	{
 		"id":"bamcheck_out_target",
 		"from":"final_output_prep_target:out_bamcheck",
