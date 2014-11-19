@@ -8,7 +8,8 @@
 		},
 		"outputs":{
 			"_stdout_":"bamrecompress",
-			"out_cram":"scramble",
+			"out_cram":"scramble_tee:__CRAM_OUT__",
+			"out_cram_md5":"scramble_md5",
 			"out_bamcheck":"bamcheck",
 			"out_stats_F0x900":"samtools_stats_F0x900",
 			"out_stats_F0xB00":"samtools_stats_F0xB00",
@@ -115,7 +116,21 @@
 		"use_STDOUT": true,
 		"cmd":"scramble -I bam -O cram -r __REFERENCE_GENOME_FASTA__"
 	},
-
+	{
+		"id":"scramble_tee",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":"teepot -w 30000 __CRAM_OUT__ __MD5_OUT__",
+		"comment":"allow a generous 500 minutes for the teepot timeout"
+	},
+	{
+		"id":"scramble_md5",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"md5sum"
+	},
 	{
 		"id":"bamcheck",
 		"type":"EXEC",
@@ -317,9 +332,19 @@
 		"to":"bmd_multiway"
 	},
 	{
-		"id":"bmd_to_scramble",
+		"id":"bmdmw_to_scramble",
 		"from":"bmd_multiway:__SCRAMBLE_OUT__",
 		"to":"scramble"
+	},
+	{
+		"id":"scramble_to_scramble_tee",
+		"from":"scramble",
+		"to":"scramble_tee"
+	},
+	{
+		"id":"scramble_tee_to_md5",
+		"from":"scramble_tee:__MD5_OUT__",
+		"to":"scramble_md5"
 	},
 	{
 		"id":"bmd_to_bamcheck",
