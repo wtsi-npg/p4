@@ -18,7 +18,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot -w 300 -m 5M __HEADER_FIX_OUT__ __FULL_BAM_OUT__",
+		"cmd":"teepot -v -w 300 -m 5M __HEADER_FIX_OUT__ __FULL_BAM_OUT__",
 		"comment":"get deadlock when tee used here"
 	},
 	{
@@ -53,7 +53,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"teepot -m 5M -"
+		"cmd":"teepot -v -m 5M -"
 	},
 	{
 		"id":"reheader_headerSQfix",
