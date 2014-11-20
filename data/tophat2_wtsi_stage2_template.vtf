@@ -1,5 +1,5 @@
 {
-"description":"Process RNASeq data in BAM files within NPG Pipeline producing WTSI DNAP Sequencing Informatics BAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc",
+"description":"Process RNASeq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
 "nodes":[
 	{
 		"id":"bmd_phix_multiway",
@@ -314,8 +314,8 @@
 		"id":"tee_input",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"tee __FIFO__"
+		"use_STDOUT": false,
+		"cmd":"teepot -w 300 -m 1G __PHIX_ALN_OUT__ __TGT_ALN_OUT__"
 	},
 	{
 		"id":"bamrecompress_input",
@@ -651,8 +651,8 @@
 		"id":"tee_headerSQfix",
 		"type":"EXEC",
 		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":"mbuffer -f -q -m 5M -o - -o __OUT1__",
+		"use_STDOUT": false,
+		"cmd":"teepot -m 5M __HEADER_FIX_OUT__ __FULL_BAM_OUT__",
 		"comment":"get deadlock when tee used here"
 	},
 	{
@@ -676,7 +676,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"mbuffer -f -q -m 5M"
+		"cmd":"teepot -m 5M -"
 	},
 	{
 		"id":"reheader_headerSQfix",
@@ -785,6 +785,7 @@
 	},
 	{
 		"id":"bammarkduplicates_phix",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -792,7 +793,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 					" level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
@@ -855,6 +856,7 @@
 	},
 	{
 		"id":"bammarkduplicates_target",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -862,7 +864,7 @@
 			"required":"yes",
 			"subst_constructor":{
 				"vals":[
-					{"subst_param_name":"bmd_cmd","required":"no","default":"bammarkduplicates2"},
+					{"subst_param_name":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 					" level=0 ",
 					"M=",
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
@@ -1058,7 +1060,7 @@
 	},
 	{
 		"id":"ti_to_brc",
-		"from":"tee_input",
+		"from":"tee_input:__PHIX_ALN_OUT__",
 		"to":"bamrecompress_input"
 	},
 	{
@@ -1068,7 +1070,7 @@
 	},
 	{
 		"id":"ti_to_bamcollate2_ranking",
-		"from":"tee_input:__FIFO__",
+		"from":"tee_input:__TGT_ALN_OUT__",
 		"to":"bamcollate2_ranking"
 	},
 	{
@@ -1133,7 +1135,7 @@
 	},
 	{
 		"id":"tee_headerSQfix_to_sam",
-		"from":"tee_headerSQfix:__OUT1__",
+		"from":"tee_headerSQfix:__HEADER_FIX_OUT__",
 		"to":"sam_headerSQfix"
 	},
 	{
@@ -1153,7 +1155,7 @@
 	},
 	{
 		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"tee_headerSQfix",
+		"from":"tee_headerSQfix:__FULL_BAM_OUT__",
 		"to":"mbuffer_headerSQfix"
 	},
 	{

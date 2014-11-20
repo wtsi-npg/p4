@@ -281,7 +281,7 @@ sub do_substitutions {
 		my $subst_value = make_substitutions($subst_param_name, $substitutable_params, \%subst_requests, $query_mode);
 
 		if($query_mode) {
-			print $out join(qq[\t], ($subst_param_name, ($substitutable_params->{$subst_param_name}->{required}? q[required]: q[not_required]), $substitutable_params->{$subst_param_name}->{parent_id}, $substitutable_params->{$subst_param_name,}->{attrib_name}, )), "\n";
+			print $out join(qq[\t], ($subst_param_name, ($substitutable_params->{$subst_param_name}->{required}? q[required]: q[not_required]), $substitutable_params->{$subst_param_name}->{parent_id}, $substitutable_params->{$subst_param_name}->{attrib_name}, )), "\n";
 		}
 	}
 
@@ -380,9 +380,6 @@ sub resolve_subst_to_string {
 
 	if(not defined $subst_value) {
 		# do a little unpacking for readability
-		my $attrib_name = $subst_param->{attrib_name};
-		my $elem_index = $subst_param->{elem_index};
-		$attrib_name ||= "element $elem_index";
 		my $subst_param_name = $subst_param->{param_name};
 		my $parent_id = $subst_param->{parent_id};
 		$parent_id ||= q[NO_PARENT_ID];   # should be ARRAY?
@@ -390,13 +387,13 @@ sub resolve_subst_to_string {
 		if($subst_param->{required} and not $query_mode) { # required means "must be specified by the caller", so default value is disregarded
 #			$logger->($VLFATAL, q[No substitution specified for required substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
 			# NOTE: the decision to fail can only be decided at the top level of the subst_param structure
-			$logger->($VLMIN, q[No substitution specified for required substitutable param ], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id);
+			$logger->($VLMIN, q[No substitution specified for required substitutable param ], $subst_param_name);
 			return;
 		}
 
 		$subst_value = $subst_param->{default_value};
 		if(not defined $subst_value) {
-			$logger->($VLMIN, q[No default value specified for apparent substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[)]);
+			$logger->($VLMIN, q[No default value specified for apparent substitutable param ], $subst_param_name);
 		}
 	}
 
@@ -422,10 +419,8 @@ sub resolve_subst_array {
 	my ($subst_param, $subst_value, $query_mode) = @_;
 
 	if(ref $subst_value ne q[ARRAY]) {
-		$logger->($VLMIN, q[Attempt to substitute array for non-array in substitutable param (],
-				$subst_param->{param_name},
-				q[ for ], $subst_param->{attrib_name},
-				q[ in ], ($subst_param->{parent_id}? $subst_param->{parent_id}: q[UNNAMED_PARENT]), q[)]);
+		$logger->($VLMIN, q[Attempt to substitute array for non-array in substitutable param ],
+				$subst_param->{param_name});
 		return;
 	}
 
@@ -440,17 +435,12 @@ sub resolve_subst_array {
 		}
 		else {
 			if($subst_param->{required}) {
-				$logger->($VLFATAL, q[No substitution specified for required substitutable param (],
-						$subst_param->{param_name},
-						q[ for ], $subst_param->{attrib_name},
-						q[ in ], ($subst_param->{parent_id}? $subst_param->{parent_id}: q[UNNAMED_PARENT]),
-						q[) - use -q for full list of substitutable parameters]);
+				$logger->($VLFATAL, q[No substitution specified for required substitutable param ],
+						$subst_param->{param_name});
 			}
 			else {
-				$logger->($VLMIN, q[No default value specified for apparent substitutable param (],
-						$subst_param->{param_name},
-						q[ for ], $subst_param->{attrib_name},
-						q[ in ], ($subst_param->{parent_id}? $subst_param->{parent_id}: q[UNNAMED_PARENT]), q[)]);
+				$logger->($VLMIN, q[No default value specified for apparent substitutable param ],
+						$subst_param->{param_name});
 				return;
 			}
 		}

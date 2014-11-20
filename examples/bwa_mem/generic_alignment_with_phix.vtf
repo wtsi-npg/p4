@@ -41,25 +41,25 @@
 						}
 					},
 					{"subst_param_name":"i2b_first_tile_flag",
-                                                "required":"no",
-                                                "subst_constructor":{
-                                                        "vals":[
-                                                                "FIRST_TILE",
-                                                                {"subst_param_name":"i2b_first_tile","required":"no"}
-                                                        ],
-                                                        "postproc":{"op":"concat","pad":"="}
-                                                }
-                                        },
-                                        {"subst_param_name":"i2b_tile_limit_flag",
-                                                "required":"no",
-                                                "subst_constructor":{
-                                                        "vals":[
-                                                                "TILE_LIMIT",
-                                                                {"subst_param_name":"i2b_tile_limit","required":"no"}
-                                                        ],
-                                                        "postproc":{"op":"concat","pad":"="}
-                                                }
-                                        },
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								"FIRST_TILE",
+								{"subst_param_name":"i2b_first_tile","required":"no"}
+							],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
+					{"subst_param_name":"i2b_tile_limit_flag",
+						"required":"no",
+						"subst_constructor":{
+							"vals":[
+								"TILE_LIMIT",
+								{"subst_param_name":"i2b_tile_limit","required":"no"}
+							],
+							"postproc":{"op":"concat","pad":"="}
+						}
+					},
 					"OUTPUT=/dev/stdout",
 					{"subst_param_name":"i2b_lane_flag",
 						"required":"yes",
@@ -104,6 +104,8 @@
 			"subst_constructor":{
 				"vals":[
 					"bamadapterfind level=0 md5=1 md5filename=",
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
 					{"subst_param_name":"rpt","required":"yes"},
 					".bam.md5"
 				],
@@ -188,23 +190,23 @@
 		},
 		"description":"[path to] reference genome for alignment step in appropriate format"
 	},
-        {
-                "id":"alignment_target",
-                "type":"VTFILE",
-                "name":{"subst_param_name":"alignment_vtf",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"alignment_method","required":"yes"},
-                                        "_alignment.json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
-                "description":"subgraph containing alignment process"
-        },
+	{
+	"id":"alignment_target",
+	"type":"VTFILE",
+	"name":{"subst_param_name":"alignment_vtf",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+				"/",
+				{"subst_param_name":"alignment_method","required":"yes"},
+				"_alignment.json"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	"description":"subgraph containing alignment process"
+	},
 	{
 		"id":"alignment_reference_genome_phix",
 		"type":"INFILE",
@@ -221,23 +223,23 @@
 		},
 		"description":"[path to] phix reference genome for alignment step in appropriate format"
 	},
-        {
-                "id":"alignment_phix",
-                "type":"VTFILE",
-                "name":{"subst_param_name":"alignment_vtf",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"alignment_method","required":"yes"},
-                                        "_alignment.json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
-                "description":"subgraph containing alignment process"
-        },
+		{
+			"id":"alignment_phix",
+			"type":"VTFILE",
+			"name":{"subst_param_name":"alignment_vtf",
+				"required":"yes",
+				"subst_constructor":{
+					"vals":[
+						{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+						"/",
+						{"subst_param_name":"alignment_method","required":"yes"},
+						"_alignment.json"
+					],
+					"postproc":{"op":"concat", "pad":""}
+				}
+			},
+			"description":"subgraph containing alignment process"
+		},
 	{
 		"id":"target_cram",
 		"type":"OUTFILE",
@@ -264,7 +266,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"bamcheck_name","required":"no","default":".bamcheck"}
+					{"subst_param_name":"bamcheck_name","required":"no","default":".bamstats"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -348,7 +350,7 @@
 					{"subst_param_name":"outdatadir","required":"no","default":"."},
 					"/",
 					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"phix_bamcheck_name","required":"no","default":"_phix.bamcheck"}
+					{"subst_param_name":"phix_bamcheck_name","required":"no","default":"_phix.bamstats"}
 				],
 				"postproc":{"op":"concat", "pad":""}
 			}
@@ -504,24 +506,24 @@
 		},
 		"description":"reference fasta for scramble (target)"
 	},
-        {
-                "id":"post_alignment_filter_target",
-                "type":"VTFILE",
+	{
+		"id":"post_alignment_filter_target",
+		"type":"VTFILE",
 		"subst_map":{"phix_or_target":"target","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
-                "name":{"subst_param_name":"post_alignment_filter_target",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"post_alignment_filter","required":"no","default":"post_alignment_filter"},
-                                        ".json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
-                "description":"subgraph containing post alignment_filter process (target)"
-        },
+		"name":{"subst_param_name":"post_alignment_filter_target",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"post_alignment_filter","required":"no","default":"post_alignment_filter"},
+					".json"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"subgraph containing post alignment_filter process (target)"
+	},
 ##############################
 # post alignment_filter (phix)
 ##############################
@@ -541,24 +543,24 @@
 		},
 		"description":"reference fasta for scramble (phix)"
 	},
-        {
-                "id":"post_alignment_filter_phix",
-                "type":"VTFILE",
+	{
+		"id":"post_alignment_filter_phix",
+		"type":"VTFILE",
 		"subst_map":{"phix_or_target":"phix","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
-                "name":{"subst_param_name":"post_alignment_filter_phix",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"post_alignment_filter","required":"no","default":"post_alignment_filter"},
-                                        ".json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
-                "description":"subgraph containing post alignment_filter process (phix)"
-        },
+		"name":{"subst_param_name":"post_alignment_filter_phix",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"post_alignment_filter","required":"no","default":"post_alignment_filter"},
+					".json"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"subgraph containing post alignment_filter process (phix)"
+	},
 ########################
 # phiX final output bam
 ########################
@@ -600,23 +602,58 @@
 ###########
 # seqchksum
 ###########
-        {
-                "id":"seqchksum",
-                "type":"VTFILE",
-                "name":{"subst_param_name":"seqchksum",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"seqchksum_vtf","required":"no","default":"seqchksum"},
-                                        ".json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
-                "description":"subgraph containing seqchksum validation of outputs"
-        }
+	{
+		"id":"seqchksum",
+		"type":"VTFILE",
+		"name":{"subst_param_name":"seqchksum",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"seqchksum_vtf","required":"no","default":"seqchksum"},
+					".json"
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		},
+		"description":"subgraph containing seqchksum validation of outputs"
+	},
+	{
+		"id":"target_output_checksum",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"target_output_checksum",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					{"subst_param_name":"checksum_output_name",
+					 "required":"no",
+					 "default":"_out.bamseqchecksum"
+					}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
+	{
+		"id":"target_input_checksum",
+		"type":"OUTFILE",
+		"name":{"subst_param_name":"target_input_checksum",
+			"required":"yes",
+			"subst_constructor":{
+				"vals":[
+					{"subst_param_name":"outdatadir","required":"no","default":"."},
+					"/",
+					{"subst_param_name":"rpt","required":"yes"},
+					{"subst_param_name":"checksum_input_name","required":"no","default":"_in.bamseqchecksum"}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	}
 ],
 "edges":[
 	{
@@ -676,11 +713,11 @@
 ####################
 # alignment (target)
 ####################
-        {
-                "id":"reference_genome_to_alignment_target",
-                "from":"alignment_reference_genome_target",
-                "to":"alignment_target:reference"
-        },
+	{
+		"id":"reference_genome_to_alignment_target",
+		"from":"alignment_reference_genome_target",
+		"to":"alignment_target:reference"
+	},
 	{
 		"id":"ta_to_alignment_target",
 		"from":"teepot_aln:__TARGET__",
@@ -689,11 +726,11 @@
 ####################
 # alignment (phix)
 ####################
-        {
-                "id":"reference_genome_to_alignment_phix",
-                "from":"alignment_reference_genome_phix",
-                "to":"alignment_phix:reference"
-        },
+	{
+		"id":"reference_genome_to_alignment_phix",
+		"from":"alignment_reference_genome_phix",
+		"to":"alignment_phix:reference"
+	},
 	{
 		"id":"ta_to_alignment_target",
 		"from":"teepot_aln:__PHIX__",
@@ -702,33 +739,33 @@
 #########################
 # post_alignment (target)
 #########################
-        {
-                "id":"alignment_to_post_alignment_target",
-                "from":"alignment_target",
-                "to":"post_alignment_target",
+	{
+		"id":"alignment_to_post_alignment_target",
+		"from":"alignment_target",
+		"to":"post_alignment_target",
 		"comment":"freshly aligned data to post-alignment processing"
 	},
-        {
-                "id":"picard_ref_dict_to_post_alignment_target",
-                "from":"reference_picard_dict_target",
-                "to":"post_alignment_target:reference_picard_dict",
+	{
+		"id":"picard_ref_dict_to_post_alignment_target",
+		"from":"reference_picard_dict_target",
+		"to":"post_alignment_target:reference_picard_dict",
 		"comment":"used by headerSQfix in post_alignment"
-        },
+	},
 #######################
 # post_alignment (phix)
 #######################
-        {
-                "id":"alignment_to_post_alignment_phix",
-                "from":"alignment_phix",
-                "to":"post_alignment_phix",
+	{
+		"id":"alignment_to_post_alignment_phix",
+		"from":"alignment_phix",
+		"to":"post_alignment_phix",
 		"comment":"freshly aligned data to post-alignment processing"
 	},
-        {
-                "id":"picard_ref_dict_to_post_alignment_phix",
-                "from":"reference_picard_dict_phix",
-                "to":"post_alignment_phix:reference_picard_dict",
+	{
+		"id":"picard_ref_dict_to_post_alignment_phix",
+		"from":"reference_picard_dict_phix",
+		"to":"post_alignment_phix:reference_picard_dict",
 		"comment":"used by headerSQfix in post_alignment"
-        },
+	},
 ##########################
 # AlignmentFilter (inputs)
 ##########################
@@ -842,21 +879,30 @@
 #########################
 # validation by seqchksum
 #########################
-        {
-                "id":"src_bam_to_seqchksum",
-                "from":"tee0:__CHKSUMOUT__",
-                "to":"seqchksum"
-        },
-        {
-                "id":"target_bam_to_seqchksum",
-                "from":"target_bam",
-                "to":"seqchksum:target_bam"
-        },
-        {
-                "id":"phix_bam_to_seqchksum",
-                "from":"phix_bam",
-                "to":"seqchksum:phix_bam"
-        }
-
+	{
+		"id":"src_bam_to_seqchksum",
+		"from":"tee0:__CHKSUMOUT__",
+		"to":"seqchksum"
+	},
+	{
+		"id":"target_bam_to_seqchksum",
+		"from":"target_bam",
+		"to":"seqchksum:target_bam"
+	},
+	{
+		"id":"phix_bam_to_seqchksum",
+		"from":"phix_bam",
+		"to":"seqchksum:phix_bam"
+	},
+	{
+		"id":"seqchksum_output_to_target_checksum",
+		"from":"seqchksum:output_checksum",
+		"to":"target_output_checksum"
+	},
+	{
+		"id":"seqchksum_input_to_target_checksum",
+		"from":"seqchksum:input_checksum",
+		"to":"target_input_checksum"
+	}
 ]
 }

@@ -95,7 +95,7 @@
 	{
 		"id":"bamcheck",
 		"type":"EXEC",
-		"cmd":"bamcheck"
+		"cmd":"samtools stats"
 	},
 	{
 		"id":"bamrecompress",
