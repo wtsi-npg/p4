@@ -9,7 +9,7 @@
 		"outputs":{
 			"_stdout_":"bamrecompress",
 			"out_cram":"scramble_tee:__CRAM_OUT__",
-			"out_cram_md5":"scramble_md5",
+			"out_cram_md5":"postprocess_md5",
 			"out_bamcheck":"bamcheck",
 			"out_stats_F0x900":"samtools_stats_F0x900",
 			"out_stats_F0xB00":"samtools_stats_F0xB00",
@@ -130,6 +130,14 @@
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd":"md5sum"
+	},
+	{
+		"id":"postprocess_md5",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["tr", "-d", " \\-\n"],
+		"comment":"the double-backslash is required to get the correct character set to the tr command"
 	},
 	{
 		"id":"bamcheck",
@@ -345,6 +353,11 @@
 		"id":"scramble_tee_to_md5",
 		"from":"scramble_tee:__MD5_OUT__",
 		"to":"scramble_md5"
+	},
+	{
+		"id":"md5_to_postprocess",
+		"from":"scramble_md5",
+		"to":"postprocess_md5"
 	},
 	{
 		"id":"bmd_to_bamcheck",
