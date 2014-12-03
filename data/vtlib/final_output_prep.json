@@ -107,7 +107,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot -v -w 300 __SCRAMBLE_OUT__ __BAMCHECK_OUT__ __FLAGSTAT_OUT__ __CALIBRATION_PU_OUT__ __BAM_OUT__ __SAMTOOLS_STATS_F0x900__ __SAMTOOLS_STATS_F0xB00__"
+		"cmd":"teepot -vv -w 300 __SCRAMBLE_OUT__ __BAMCHECK_OUT__ __FLAGSTAT_OUT__ __CALIBRATION_PU_OUT__ __BAM_OUT__ __SAMTOOLS_STATS_F0x900__ __SAMTOOLS_STATS_F0xB00__"
 	},
 	{
 		"id":"scramble",
@@ -121,7 +121,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot -v -w 30000 __CRAM_OUT__ __MD5_OUT__",
+		"cmd":"teepot -vv -w 30000 __CRAM_OUT__ __MD5_OUT__",
 		"comment":"allow a generous 500 minutes for the teepot timeout"
 	},
 	{
