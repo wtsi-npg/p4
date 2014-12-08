@@ -19,14 +19,14 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
+		"cmd":"teepot -vv __BAMCAT_OUT__ __CHKSUM_OUT__"
 	},
 	{
 		"id":"phix_tee",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
+		"cmd":"teepot -vv __BAMCAT_OUT__ __CHKSUM_OUT__"
 	},
 	{
                 "id":"seqchksum_target",

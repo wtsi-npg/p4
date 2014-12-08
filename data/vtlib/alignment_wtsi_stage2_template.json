@@ -32,7 +32,7 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk",
-		"cmd":"teepot -w 30000 -m 1G __PHIX_ALN_OUT__ __TGT_ALN_OUT__"
+		"cmd":"teepot -vv -w 30000 -m 1G __PHIX_ALN_OUT__ __TGT_ALN_OUT__"
 	},
 	{
 		"id":"pre_alignment_target",

@@ -31,7 +31,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot __PHIX_ALN_OUT__ __TGT_ALN_OUT__ "
+		"cmd":"teepot -vv __PHIX_ALN_OUT__ __TGT_ALN_OUT__ "
 	},
 	{
 		"id":"pre_alignment_target",
