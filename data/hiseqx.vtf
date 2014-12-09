@@ -1,212 +1,592 @@
 {
 "description":"A HiSeqX processing pipeline",
+"version":"1.0",
+"subst_params":[
+	{"name":"java_cmd","required":"no","default":"java"},
+	{"name":"illumina2bam_jar","required":"no","default":"/software/npg/java_jars/Illumina2bam.jar"},
+	{"name":"i2b_intensity_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["I",{"subst":"i2b_intensity_dir"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{"name":"i2b_intensity_dir","required":"yes"},
+	{"name":"i2b_basecalls_dir_suffix","required":"no","default":"BaseCalls"},
+	{
+		"name":"i2b_basecalls_dir",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"i2b_intensity_dir"},
+				"/",
+				{"subst":"i2b_basecalls_dir_suffix"}
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"i2b_basecalls_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"B",
+				{"subst":"i2b_basecalls_dir"}
+			],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{"name":"i2b_first_tile_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":["FIRST_TILE",{"subst":"i2b_first_tile"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_tile_limit_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":["TILE_LIMIT",{"subst":"i2b_tile_limit"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_lane_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["L",{"subst":"i2b_lane"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_library_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["LIBRARY_NAME",{"subst":"i2b_library_name"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_sample_alias_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["SAMPLE_ALIAS",{"subst":"i2b_sample_alias"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_study_name_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["STUDY_NAME",{"subst":"i2b_study_name"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"illumina2bam",
+		"required":"yes",
+		"subst_constructor":{
+		"vals":[
+				{"subst":"java_cmd"},
+				"-Xmx1024m",
+				"-jar",{"subst":"illumina2bam_jar"},
+				{"subst":"i2b_intensity_flag"},
+				{"subst":"i2b_basecalls_flag"},
+				{"subst":"i2b_first_tile_flag"},
+				{"subst":"i2b_tile_limit_flag"},
+				"OUTPUT=/dev/stdout",
+				{"subst":"i2b_lane_flag"},
+				{"subst":"i2b_library_flag"},
+				{"subst":"i2b_sample_alias_flag"},
+				{"subst":"i2b_study_name_flag"},
+				"COMPRESSION_LEVEL=0"
+			],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	},
+	{"name":"rpt","required":"yes"},
+	{
+		"name":"bamadapterfind",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"bamadapterfind md5=1 md5filename=",
+				{"subst":"rpt"},
+				".bam.md5"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{"name":"outdatadir","required":"no","default":"."},
+	{
+		"name":"cram",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				".cram"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"cram_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				"_phix.cram"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"out_bamcheck",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				".bamcheck"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"out_bamcheck_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				"_phix.bamcheck"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"out_flagstat",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				".flagstat"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"out_flagstat_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				"_phix.flagstat"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"reposdir","required":"no","default":"."},
+	{"name":"refname","required":"yes"},
+	{
+		"name":"reference_genome",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"refname"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"refname_phix","required":"yes"},
+	{
+		"name":"reference_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"refname_phix"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"refname_fasta","required":"yes"},
+	{
+		"name":"reference_genome_fasta",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"refname_fasta"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"phix_refname_fasta","required":"yes"},
+	{
+		"name":"reference_genome_fasta_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"phix_refname_fasta"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"refdictname","required":"yes"},
+	{
+		"name":"reference_picard_dict",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"refdictname"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"refdictphixname","required":"yes"},
+	{
+		"name":"reference_dict_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"refdictphixname"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"tmpdir","required":"no","default":"."},
+	{
+		"name":"tee_input_file_name",
+		"required":"no",
+		"default":"tee_input.bam",
+		"subst_constructor":{
+			"vals":[
+				"tee_input_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"tee_input_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"tee_input_file_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"tee_bwa_file_name",
+		"required":"no",
+		"default":"tee_bwa.bam",
+		"subst_constructor":{
+			"vals":[
+				"tee_bwa_in",
+				{"subst":"rpt"},
+				".fq"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"tee_bwa_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"tee_bwa_file_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"tee_acp_file_name",
+		"required":"no",
+		"default":"tee_acp.bam",
+		"subst_constructor":{
+			"vals":[
+				"tee_acp_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"tee_acp_file_name",
+		"required":"no",
+		"default":"tee_acp.bam",
+		"subst_constructor":{
+			"vals":[
+				"tee_acp_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"tee_acp_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"tee_acp_file_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"int_clipped_adapters_bam_name",
+		"required":"no",
+		"default":"int_adp.bam",
+		"subst_constructor":{
+			"vals":[
+				"int_adp_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"int_clipped_adapters_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"int_clipped_adapters_bam_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"pp_out_name",
+		"required":"no",
+		"default":"pp.out",
+		"subst_constructor":{
+			"vals":[
+				"pp_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"pp_out",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"pp_out_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"pp_out_phix_name",
+		"required":"no",
+		"default":"pp_phix.out",
+		"subst_constructor":{
+			"vals":[
+				"pp_phix_",
+				{"subst":"rpt"},
+				".out"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"pp_out_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"pp_out_phix_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"bwa_mem_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_GENOME__", "__FQ_IN__" ],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	},
+	{
+		"name":"bwa_mem_cmd_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_PHIX__", "__FQ_IN__" ],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	},
+	{"name":"tophat_dir","required":"no","default":"tophat_out"},
+	{"name":"unmapped","required":"no","default":"unmapped.bam"},
+	{
+		"name":"unmapped_bam",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tophat_dir"},
+				"_",
+				{"subst":"rpt"},
+				"/",
+				{"subst":"unmapped"}
+			],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"tophat_out/unmapped.bam"
+	},
+	{"name":"alignment_filter_jar","required":"no","default":"/software/npg/java_jars/AlignmentFilter.jar"},
+	{
+		"name":"alignment_filter",
+		"required":"yes",
+		"subst_constructor":{
+		"vals":[
+				{"subst":"java_cmd"},
+				"-Xmx1000m",
+				"-jar", {"subst":"alignment_filter_jar"},
+				"IN=__PHIX_INBAM__",
+				"IN=__TARGET_INBAM__",
+				"OUT=__PHIX_OUTBAM__",
+				"OUT=/dev/stdout",
+				"METRICS_FILE=__AF_METRICS__",
+				"VALIDATION_STRINGENCY=SILENT",
+				"CREATE_MD5_FILE=false",
+				"VERBOSITY=INFO",
+				"QUIET=false",
+				"COMPRESSION_LEVEL=5",
+				"MAX_RECORDS_IN_RAM=500000",
+				"CREATE_INDEX=false"
+			],
+			"postproc":{"op":"noconcat", "pad":" "}
+		}
+	},
+	{"name":"logdir","required":"no","default":"."},
+	{"name":"af_metrics_name","required":"no","default":"af_metrics.log"},
+	{
+		"name":"af_metrics",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"logdir"},
+				"/",
+				{"subst":"rpt"},
+				"_",
+				{"subst":"af_metrics_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"phix_bam_name","required":"no","default":"phix.bam"},
+	{
+		"name":"phix_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				"_",
+				{"subst":"phix_bam_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"bam_name","required":"no","default":".bam"},
+	{
+		"name":"target_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				{"subst":"bam_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
 "nodes":[
 	{
 		"id":"illumina2bam",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"illumina2bam",
-			"required":"yes",
-			"subst_constructor":{
-			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"java"},
-					"-Xmx1024m",
-					"-jar",{"subst_param_name":"illumina2bam_jar","required":"no","default":"/software/npg/java_jars/Illumina2bam.jar"},
-					{"subst_param_name":"i2b_intensity_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["I",{"subst_param_name":"i2b_intensity_dir","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_basecalls_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":[
-								"B",
-								{"subst_param_name":"i2b_basecalls_dir",
-									"required":"no",
-									"subst_constructor":{
-										"vals":[
-											{"subst_param_name":"i2b_intensity_dir","required":"yes"},
-											"/",
-											{"subst_param_name":"i2b_basecalls_dir_suffix","required":"no","default":"BaseCalls"}
-										],
-										"postproc":{"op":"concat","pad":""}
-									}
-								}
-							],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_first_tile_flag",
-						"required":"no",
-						"subst_constructor":{
-							"vals":["FIRST_TILE",{"subst_param_name":"i2b_first_tile","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_tile_limit_flag",
-						"required":"no",
-						"subst_constructor":{
-							"vals":["TILE_LIMIT",{"subst_param_name":"i2b_tile_limit","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					"OUTPUT=/dev/stdout",
-					{"subst_param_name":"i2b_lane_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["L",{"subst_param_name":"i2b_lane","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_library_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["LIBRARY_NAME",{"subst_param_name":"i2b_library_name","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_sample_alias_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["SAMPLE_ALIAS",{"subst_param_name":"i2b_sample_alias","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_study_name_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["STUDY_NAME",{"subst_param_name":"i2b_study_name","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					"COMPRESSION_LEVEL=0"
-				],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		},
+		"cmd":{"subst":"illumina2bam"},
 		"description":"Create the initial BAM file from the Illumina machine"
 	},
 	{
 		"id":"bamadapterfind",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bamadapterfind",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bamadapterfind md5=1 md5filename=",
-					{"subst_param_name":"rpt","required":"yes"},
-					".bam.md5"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		},
+		"cmd":{"subst":"bamadapterfind"},
 		"description":"Find and mark the apaptors used by Illumina"
 	},
-
-    {
-        "id":"out_cram",
-        "type":"OUTFILE",
-        "name":{"subst_param_name":"cram",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"outdatadir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    ".cram"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
-    {   
-        "id":"out_cram_phix",
-        "type":"OUTFILE",
-        "name":{"subst_param_name":"cram_phix",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"outdatadir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    "_phix.cram"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
-    {
-        "id":"out_bamcheck",
-        "type":"OUTFILE",
-        "name":{"subst_param_name":"out_bamcheck",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"outdatadir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    ".bamcheck"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
-    {
-        "id":"out_bamcheck_phix",
-        "type":"OUTFILE",
-        "name":{"subst_param_name":"out_bamcheck_phix",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"outdatadir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    "_phix.bamcheck"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
-    {
-        "id":"out_flagstat",
-        "type":"OUTFILE",
-        "name":{"subst_param_name":"out_flagstat",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"outdatadir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    ".flagstat"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
-    {
-        "id":"out_flagstat_phix",
-        "type":"OUTFILE",
-        "name":{"subst_param_name":"out_flagstat_phix",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"outdatadir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    "_phix.flagstat"
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
+	{
+		"id":"out_cram",
+		"type":"OUTFILE",
+		"name":{"subst":"cram"}
+	},
+	{   
+		"id":"out_cram_phix",
+		"type":"OUTFILE",
+		"name":{"subst":"cram_phix"}
+	},
+	{
+		"id":"out_bamcheck",
+		"type":"OUTFILE",
+		"name":{"subst":"out_bamcheck"}
+	},
+	{
+		"id":"out_bamcheck_phix",
+		"type":"OUTFILE",
+		"name":{"subst":"out_bamcheck_phix"}
+	},
+	{
+		"id":"out_flagstat",
+		"type":"OUTFILE",
+		"name":{"subst":"out_flagstat"}
+	},
+	{
+		"id":"out_flagstat_phix",
+		"type":"OUTFILE",
+		"name":{"subst":"out_flagstat_phix"}
+	},
 	{
 		"id":"bwa_post_proc",
 		"type":"VTFILE",
@@ -229,116 +609,42 @@
 		"type":"VTFILE",
 		"name":"post_alignment.json"
 	},
-#	{
-#		"id":"bwa_tee",
-#		"type":"EXEC",
-#		"cmd":"mbuffer -f -q -m 5M -o __PIPE1__ -o __PIPE1_1__"
-#	},
-#	{
-#		"id":"tee_acp",
-#		"type":"EXEC",
-#		"cmd":"mbuffer -f -q -m 5M -o __PREALN_BAM__ -o __PREALN_BAM_1__"
-#	},
 	{
 		"id":"reference_genome",
 		"type":"INFILE",
-		"name":{"subst_param_name":"reference_genome",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"refname","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"reference_genome"},
 		"description":"Prefix for reference"
 	},
 	{
 		"id":"reference_phix",
 		"type":"INFILE",
-		"name":{"subst_param_name":"reference_phix",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"refname_phix","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"reference_phix"},
 		"description":"Prefix for Phix reference"
 	},
-    {
-        "id":"reference_genome_fasta",
-        "type":"INFILE",
-        "name":{"subst_param_name":"reference_genome_fasta",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"reposdir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"refname_fasta","required":"yes"}
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        },
-        "description":"Prefix for reference fasta and Bowtie2 index files"
-    },
-
-    {
-        "id":"reference_genome_fasta_phix",
-        "type":"INFILE",
-        "name":{"subst_param_name":"reference_genome_fasta_phix",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"reposdir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"phix_refname_fasta","required":"yes"}
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        },
-        "description":"Prefix for reference fasta and Bowtie2 index files"
-    },  
-
-        {
-                "id":"reference_picard_dict",
-                "type":"INFILE",
-                "name":{"subst_param_name":"reference_picard_dict",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"reposdir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"refdictname","required":"yes"}
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
-                "description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
-        },
-
-    {
-        "id":"reference_picard_dict_phix",
-        "type":"INFILE",
-        "name":{"subst_param_name":"reference_dict_phix",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"reposdir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"refdictphixname","required":"yes"}
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        },
-        "description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
-    },
-
+	{
+		"id":"reference_genome_fasta",
+		"type":"INFILE",
+		"name":{"subst":"reference_genome_fasta"},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
+		"id":"reference_genome_fasta_phix",
+		"type":"INFILE",
+		"name":{"subst":"reference_genome_fasta_phix"},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},  
+	{
+		"id":"reference_picard_dict",
+		"type":"INFILE",
+		"name":{"subst":"reference_picard_dict"},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
+	{
+		"id":"reference_picard_dict_phix",
+		"type":"INFILE",
+		"name":{"subst":"reference_dict_phix"},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
 	{
 		"id":"tee0",
 		"type":"EXEC",
@@ -350,11 +656,6 @@
 		"cmd":["bamcollate2", "collate=1", "level=0"],
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
-#	{
-#		"id":"tee_input",
-#		"type":"EXEC",
-#		"cmd":"mbuffer -f -q -m 5M -o __FIFO__ -o __FIFO_1__"
-#	},
 	{
 		"id":"bamrecompress_input",
 		"type":"EXEC",
@@ -373,158 +674,32 @@
 	{
 		"id":"tee_input_file",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"tee_input_file",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"tee_input_file_name",
-						"required":"no",
-						"default":"tee_input.bam",
-						"subst_constructor":{
-							"vals":[
-								"tee_input_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".bam"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"tee_input_file"}
 	},
 	{
 		"id":"tee_bwa_file",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"tee_bwa_file",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"tee_bwa_file_name",
-						"required":"no",
-						"default":"tee_bwa.bam",
-						"subst_constructor":{
-							"vals":[
-								"tee_bwa_in",
-								{"subst_param_name":"rpt","required":"yes"},
-								".fq"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"tee_bwa_file"}
 	},
 	{
 		"id":"tee_acp_file",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"tee_acp_file",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"tee_acp_file_name",
-						"required":"no",
-						"default":"tee_acp.bam",
-						"subst_constructor":{
-							"vals":[
-								"tee_acp_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".bam"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"tee_acp_file"}
 	},
 	{
 		"id":"int_adp_bam",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"int_clipped_adapters_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"int_clipped_adapters_bam_name",
-						"required":"no",
-						"default":"int_adp.bam",
-						"subst_constructor":{
-							"vals":[
-								"int_adp_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".bam"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"int_clipped_adapters_bam"}
 	},
 	{
 		"id":"pp_out",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"pp_out",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"pp_out_name",
-						"required":"no",
-						"default":"pp.out",
-						"subst_constructor":{
-							"vals":[
-								"pp_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".bam"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"pp_out"}
 	},
 	{
 		"id":"pp_out_phix",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"pp_out_phix",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"pp_out_phix_name",
-						"required":"no",
-						"default":"pp_phix.out",
-						"subst_constructor":{
-							"vals":[
-								"pp_phix_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".out"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"pp_out_phix"}
 	},
 	{
 		"id":"bamcollate2_ranking",
@@ -541,146 +716,50 @@
 	{
 		"id":"bamtofastq",
 		"type":"EXEC",
-#		"cmd":["bamtofastq", "gz=1", "F=__FQOUT1__", "F2=__FQOUT2__"]
 		"cmd":["bamtofastq", "gz=1", "collate=1"]
 	},
 	{
 		"id":"bwa_mem",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bwa_mem_cmd",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_GENOME__", "__FQ_IN__" ],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		}
+		"cmd":{"subst":"bwa_mem_cmd"}
 	},
-
 	{
 		"id":"bwa_mem_phix",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bwa_mem_cmd_phix",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_PHIX__", "__FQ_IN__" ],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		}
+		"cmd":{"subst":"bwa_mem_cmd_phix"}
 	},
 
 	{
 		"id":"unmapped_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		"name":{"subst_param_name":"unmapped_bam",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"unmapped","required":"no","default":"unmapped.bam"}
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/unmapped.bam"
-		}
+		"name":{"subst":"unmapped_bam"}
 	},
 	{
 		"id":"bamreset_prealn",
 		"type":"EXEC",
 		"cmd":"bamreset resetaux=0 level=0 verbose=0"
 	},
-#####################################
-# alignment filter and metrics output
-#####################################
 	{
 		"id":"alignment_filter",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"alignment_filter",
-			"required":"yes",
-			"subst_constructor":{
-			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"java"},
-					"-Xmx1000m",
-					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no","default":"/software/npg/java_jars/AlignmentFilter.jar"},
-					"IN=__PHIX_INBAM__",
-					"IN=__TARGET_INBAM__",
-					"OUT=__PHIX_OUTBAM__",
-					"OUT=/dev/stdout",
-					"METRICS_FILE=__AF_METRICS__",
-					"VALIDATION_STRINGENCY=SILENT",
-					"CREATE_MD5_FILE=false",
-					"VERBOSITY=INFO",
-					"QUIET=false",
-					"COMPRESSION_LEVEL=5",
-					"MAX_RECORDS_IN_RAM=500000",
-					"CREATE_INDEX=false"
-				],
-				"postproc":{"op":"noconcat", "pad":" "}
-			}
-		}
+		"cmd":{"subst":"alignment_filter"}
 	},
 	{
 		"id":"af_metrics",
 		"type":"OUTFILE",
-		"name":{"subst_param_name":"af_metrics",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"logdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_",
-					{"subst_param_name":"af_metrics_name","required":"no","default":"af_metrics.log"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"af_metrics"}
 	},
-#######################
-# phiX final processing
-#######################
 	{
 		"id":"phix_bam",
 		"type":"OUTFILE",
-		"name":{"subst_param_name":"phix_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_",
-					{"subst_param_name":"phix_bam_name","required":"no","default":"phix.bam"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"phix_bam"}
 	},
-#############################
-# target BAM final processing
-#############################
 	{
 		"id":"target_bam",
 		"type":"OUTFILE",
-		"name":{"subst_param_name":"target_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"bam_name","required":"no","default":".bam"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"target_bam"}
 	},
-##################################################
-# check input primary/sequence data matches output
-##################################################
 	{
 		"id":"bamcat_output",
 		"type":"EXEC",
@@ -747,12 +826,8 @@
 	{
 		"id":"brc_to_int_adp_bam",
 		"from":"bamrecompress_input",
-#		"to":"int_adp_bam"
 		"to":"bamreset_prealn"
 	},
-############################################################
-# tophat alignment
-############################################################
 	{
 		"id":"ti_to_bamcollate2_ranking",
 		"from":"tee_input_file",
@@ -799,11 +874,6 @@
 		"from":"reference_picard_dict_phix",
 		"to":"bwa_post_proc_phix:reference_picard_dict"
 	},
-#	{
-#		"id":"bam_to_bamreset_prealn",
-#		"from":"int_adp_bam",
-#		"to":"bamreset_prealn"
-#	},
 	{
 		"id":"bamreset_prealn_to_bamadapterclip_prealn",
 		"from":"bamreset_prealn",
@@ -844,12 +914,6 @@
 		"from":"alignment_filter:__AF_METRICS__",
 		"to":"af_metrics"
 	},
-#####################
-# phiX BAM production
-#####################
-#######################
-# Target BAM production
-#######################
 	{
 		"id":"af_to_post_align",
 		"from":"alignment_filter",
@@ -860,18 +924,16 @@
 		"from":"alignment_filter:__PHIX_OUTBAM__",
 		"to":"post_alignment_phix"
 	},
-
-    {
-        "id":"ref_genome_to_postproc_target_ref_genome",
-        "from":"reference_genome_fasta",
-        "to":"post_alignment:reference_genome_fasta"
-    },
-    {
-        "id":"ref_genome_to_postproc_target_ref_genome_phix",
-        "from":"reference_genome_fasta_phix",
-        "to":"post_alignment_phix:reference_genome_fasta"
-    },
-
+	{
+		"id":"ref_genome_to_postproc_target_ref_genome",
+		"from":"reference_genome_fasta",
+		"to":"post_alignment:reference_genome_fasta"
+	},
+	{
+		"id":"ref_genome_to_postproc_target_ref_genome_phix",
+		"from":"reference_genome_fasta_phix",
+		"to":"post_alignment_phix:reference_genome_fasta"
+	},
 	{
 		"id":"final_stretch",
 		"from":"post_alignment",
@@ -882,40 +944,36 @@
 		"from":"post_alignment_phix",
 		"to":"phix_bam"
 	},
-    {
-        "id":"post_alignment_to_out_cram",
-        "from":"post_alignment:out_cram",
-        "to":"out_cram"
-    },
-    {
-        "id":"post_alignment_to_out_cram_phix",
-        "from":"post_alignment_phix:out_cram",
-        "to":"out_cram_phix"
-    },
-    {
-        "id":"post_alignment_to_out_bamcheck",
-        "from":"post_alignment:out_bamcheck",
-        "to":"out_bamcheck"
-    },
-    {
-        "id":"post_alignment_to_out_bamcheck_phix",
-        "from":"post_alignment_phix:out_bamcheck",
-        "to":"out_bamcheck_phix"
-    },
-    {
-        "id":"post_alignment_to_out_flagstat",
-        "from":"post_alignment:out_flagstat",
-        "to":"out_flagstat"
-    },
-    {
-        "id":"post_alignment_to_out_flagstat_phix",
-        "from":"post_alignment_phix:out_flagstat",
-        "to":"out_flagstat_phix"
-    },
-
-##################################################
-# check input primary/sequence data matches output
-##################################################
+	{
+		"id":"post_alignment_to_out_cram",
+		"from":"post_alignment:out_cram",
+		"to":"out_cram"
+	},
+	{
+		"id":"post_alignment_to_out_cram_phix",
+		"from":"post_alignment_phix:out_cram",
+		"to":"out_cram_phix"
+	},
+	{
+		"id":"post_alignment_to_out_bamcheck",
+		"from":"post_alignment:out_bamcheck",
+		"to":"out_bamcheck"
+	},
+	{
+		"id":"post_alignment_to_out_bamcheck_phix",
+		"from":"post_alignment_phix:out_bamcheck",
+		"to":"out_bamcheck_phix"
+	},
+	{
+		"id":"post_alignment_to_out_flagstat",
+		"from":"post_alignment:out_flagstat",
+		"to":"out_flagstat"
+	},
+	{
+		"id":"post_alignment_to_out_flagstat_phix",
+		"from":"post_alignment_phix:out_flagstat",
+		"to":"out_flagstat_phix"
+	},
 	{
 		"id":"phix_bam_to_bamcat",
 		"from":"phix_bam",
@@ -949,13 +1007,11 @@
 	{
 		"id":"seqchksum_output_to_cmp",
 		"from":"seqchksum_output",
-#		"to":"cmp_seqchksum:__OUTPUTCHK__"
 		"to":"chksum_out"
 	},
 	{
 		"id":"seqchksum_input_to_cmp",
 		"from":"seqchksum_input",
-#		"to":"cmp_seqchksum:__INPUTCHK__"
 		"to":"chksum_in"
 	}
 ]

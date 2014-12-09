@@ -1,306 +1,347 @@
 
 {
 "description":"This pipeline starts with Illumina2Bam, and ends by running SplitBamByReadGroup to create separate BAM files for each sample.",
+"version":"1.0",
+"subst_params":[
+	{"name":"java_cmd","required":"no","default":"java"},
+	{"name":"illumina2bam_jar","required":"no","default":"/software/npg/java_jars/Illumina2bam.jar"},
+	{
+		"name":"i2b_intensity_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["I",{"subst":"i2b_intensity_dir"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{"name":"i2b_intensity_dir","required":"yes"},
+	{"name":"i2b_basecalls_dir_suffix","required":"no","default":"BaseCalls"},
+	{
+		"name":"i2b_basecalls_dir",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"i2b_intensity_dir","required":"yes"},
+				"/",
+				{"subst":"i2b_basecalls_dir_suffix"}
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"i2b_basecalls_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"B",
+				{"subst":"i2b_basecalls_dir"}
+			],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_first_tile_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":["FIRST_TILE",{"subst":"i2b_first_tile"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_tile_limit_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":["TILE_LIMIT",{"subst":"i2b_tile_limit"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_lane_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["L",{"subst":"i2b_lane"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_library_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["LIBRARY_NAME",{"subst":"i2b_library_name"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_sample_alias_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["SAMPLE_ALIAS",{"subst":"i2b_sample_alias"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"i2b_study_name_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":["STUDY_NAME",{"subst":"i2b_study_name"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"illumina2bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"java_cmd"},
+				"-Xmx1024m",
+				"-jar",{"subst":"illumina2bam_jar"},
+				{"subst":"i2b_intensity_flag"},
+				{"subst":"i2b_basecalls_flag"},
+				{"subst":"i2b_first_tile_flag"},
+				{"subst":"i2b_tile_limit_flag"},
+				"OUTPUT=/dev/stdout",
+				{"subst":"i2b_lane_flag"},
+				{"subst":"i2b_library_flag"},
+				{"subst":"i2b_sample_alias_flag"},
+				{"subst":"i2b_study_name_flag"},
+				"COMPRESSION_LEVEL=0"
+			],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	},
+	{"name":"output_dir","required":"no","default":"."},
+	{"name":"rpt","required":"yes"},
+	{"name":"decoder_metrics_name","required":"no","default":"decoder_metrics.log"},
+	{
+		"name":"decoder_metrics",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"output_dir"},
+				"/",
+				{"subst":"rpt"},
+				"_",
+				{"subst":"decoder_metrics_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"bamindexdecoder_jar","required":"no","default":"/software/npg/java_jars/BamIndexDecoder.jar"},
+	{"name":"barcode_file","required":"yes"},
+	{
+		"name":"barcode_file_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":["BARCODE_FILE",{"subst":"barcode_file"}],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"bamindexdecoder",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"java_cmd"},
+				"-Xmx1024m",
+				"-jar",{"subst":"bamindexdecoder_jar"},
+				"I=/dev/stdin",
+				"O=/dev/stdout",
+				"M=__METRICS_FILE__",
+				{"subst":"barcode_file_flag"}
+			],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	},
+	{"name":"samtools_cmd","required":"no","default":"samtools"},
+	{"name":"split_prefix","required":"yes"},
+	{
+		"name":"split_format",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"split_prefix"},
+				"/",
+				{"subst":"rpt"},
+				"_%#.bam"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"splitter",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"samtools_cmd"},
+				"split",
+				"-f",
+				{"subst":"split_format"},
+				"-"
+			],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	},
+	{
+		"name":"bamadapterfind",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"bamadapterfind md5=1 md5filename=",
+				{"subst":"rpt"},
+				".bam.md5"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"filtered_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"output_dir"},
+				"/",
+				{"subst":"rpt"},
+				"_filtered.bam"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{"name":"reposdir","required":"no","default":"."},
+	{"name":"refname_phix","required":"yes"},
+	{
+		"name":"reference_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"refname_phix"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"tmpdir","required":"yes"},
+	{
+		"name":"tee_decode",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"rpt"},
+				"_tee_decode.bam"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"bwa_mem_cmd_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_PHIX__", "__FQ_IN__" ],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	}
+],
 "nodes":[
 	{
 		"id":"illumina2bam",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"illumina2bam",
-			"required":"yes",
-			"subst_constructor":{
-			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"java"},
-					"-Xmx1024m",
-					"-jar",{"subst_param_name":"illumina2bam_jar","required":"no","default":"/software/npg/java_jars/Illumina2bam.jar"},
-					{"subst_param_name":"i2b_intensity_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["I",{"subst_param_name":"i2b_intensity_dir","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_basecalls_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":[
-								"B",
-								{"subst_param_name":"i2b_basecalls_dir",
-									"required":"no",
-									"subst_constructor":{
-										"vals":[
-											{"subst_param_name":"i2b_intensity_dir","required":"yes"},
-											"/",
-											{"subst_param_name":"i2b_basecalls_dir_suffix","required":"no","default":"BaseCalls"}
-										],
-										"postproc":{"op":"concat","pad":""}
-									}
-								}
-							],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_first_tile_flag",
-						"required":"no",
-						"subst_constructor":{
-							"vals":["FIRST_TILE",{"subst_param_name":"i2b_first_tile","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_tile_limit_flag",
-						"required":"no",
-						"subst_constructor":{
-							"vals":["TILE_LIMIT",{"subst_param_name":"i2b_tile_limit","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					"OUTPUT=/dev/stdout",
-					{"subst_param_name":"i2b_lane_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["L",{"subst_param_name":"i2b_lane","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_library_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["LIBRARY_NAME",{"subst_param_name":"i2b_library_name","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_sample_alias_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["SAMPLE_ALIAS",{"subst_param_name":"i2b_sample_alias","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					{"subst_param_name":"i2b_study_name_flag",
-						"required":"yes",
-						"subst_constructor":{
-							"vals":["STUDY_NAME",{"subst_param_name":"i2b_study_name","required":"no"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					"COMPRESSION_LEVEL=0"
-				],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		},
+		"cmd":{"subst":"illumina2bam"},
 		"description":"Create the initial BAM file from the Illumina machine"
 	},
 
-    {
-        "id":"decoder_metrics",
-        "type":"OUTFILE",
-        "name":{"subst_param_name":"decoder_metrics",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"output_dir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"rpt","required":"yes"},
-                    "_",
-                    {"subst_param_name":"decoder_metrics_name","required":"no","default":"decoder_metrics.log"}
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
+	{
+		"id":"decoder_metrics",
+		"type":"OUTFILE",
+		"name":{"subst":"decoder_metrics"}
+	},
 	{
 		"id":"bamindexdecoder",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bamindexdecoder",
-			"required":"yes",
-			"subst_constructor":{
-			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"java"},
-					"-Xmx1024m",
-					"-jar",{"subst_param_name":"bamindexdecoder_jar","required":"no","default":"/software/npg/java_jars/BamIndexDecoder.jar"},
-					"I=/dev/stdin",
-					"O=/dev/stdout",
-					"M=__METRICS_FILE__",
-					{"subst_param_name":"barcode_file_flag",
-						"required":"no",
-						"subst_constructor":{
-							"vals":["BARCODE_FILE",{"subst_param_name":"barcode_file","required":"yes"}],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					}
-				],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		}
+		"cmd":{"subst":"bamindexdecoder"}
 	},
-
 	{
 		"id":"splitter",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"splitter",
-			"required":"yes",
-			"subst_constructor":{
-			"vals":[
-					{"subst_param_name":"samtools_cmd","required":"no","default":"samtools"},
-					"split",
-					"-f",
-					{"subst_param_name":"split_format", "required":"no",
-						"subst_constructor":{
-							"vals":[
-								{"subst_param_name":"split_prefix","required":"yes"},
-								"/",
-                    			{"subst_param_name":"rpt","required":"yes"},
-								"_%#.bam"
-							],
-							"postproc":{"op":"concat","pad":""}
-						}
-					},
-					"-"
-				],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		},
+		"cmd":{"subst":"splitter"},
 		"description":"Split the BAM file into separate BAM files by Read Group"
 	},
-
 	{
 		"id":"bamadapterfind",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bamadapterfind",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bamadapterfind md5=1 md5filename=",
-					{"subst_param_name":"rpt","required":"yes"},
-					".bam.md5"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		},
+		"cmd":{"subst":"bamadapterfind"},
 		"description":"Find and mark the apaptors used by Illumina"
 	},
-
 	{
 		"id":"filtered_bam",
 		"type":"OUTFILE",
-		"name":{"subst_param_name":"filtered_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"output_dir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_filtered.bam"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		},
+		"name":{"subst":"filtered_bam"},
 		"description":"BAM file after PhiX alignment and spatial filtering"
 	},
-
 	{
 		"id":"reference_phix",
 		"type":"INFILE",
-		"name":{"subst_param_name":"reference_phix",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"refname_phix","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"reference_phix"},
 		"description":"Prefix for Phix reference"
 	},
-
 	{
 		"id":"prefilter",
 		"type":"EXEC",
-		"cmd":"teepot -vv -m2M __PF1__ __PF2__"
+		"cmd":"teepot -m2M __PF1__ __PF2__"
 	},
-
 	{
 		"id":"create_filter",
 		"type":"EXEC",
 		"cmd":"spatial_filter -c -q -F /dev/stdout /dev/stdin",
 		"description":"Create a spatial filter"
 	},
-
 	{
 		"id":"apply_filter",
 		"type":"EXEC",
 		"cmd":"spatial_filter -a -f -q -F __FILTER__ /dev/stdin",
 		"description":"Apply a spatial filter"
 	},
-
 	{
 		"id":"bam2fastq",
 		"type":"EXEC",
 		"cmd":["bamtofastq", "gz=1", "collate=1"]
 	},
-
 	{
 		"id":"scramble",
 		"type":"EXEC",
 		"cmd":"scramble -I sam -O bam"
 	},
-
 	{
 		"id":"tee_split",
 		"type":"EXEC",
-		"cmd":"teepot -vv -m 5M __FILTERED_BAM_OUT__ __SPLIT_BAM_OUT__"
+		"cmd":"teepot -m 5M __FILTERED_BAM_OUT__ __SPLIT_BAM_OUT__"
 	},
-
 	{
 		"id":"tee_decode",
 		"type":"EXEC",
-		"cmd":"teepot -vv -m2M __TD1__ __TD2__"
+		"cmd":"teepot -m2M __TD1__ __TD2__"
 	},
-
 	{
 		"id":"xyzzy_tee_decode",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"tee_decode",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"yes"},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_tee_decode.bam"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		}
+		"name":{"subst":"tee_decode"}
 	},
-
 	{
 		"id":"bamcollate",
 		"type":"EXEC",
 		"cmd":["bamcollate2", "collate=2", "level=0"]
 	},
-
 	{
 		"id":"bammerge",
 		"type":"EXEC",
 		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
 	},
-
 	{
 		"id":"bwa_mem",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bwa_mem_cmd_phix",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[ "bwa0_6", "mem", "-p", "__REFERENCE_PHIX__", "__FQ_IN__" ],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		},
+		"cmd":{"subst":"bwa_mem_cmd_phix"},
 		"description":"Align to PhiX before splitting"
 	}
-
 ],
 "edges":[
 	{
@@ -308,108 +349,90 @@
 		"from":"illumina2bam",
 		"to":"bamadapterfind"
 	},
-
 	{
 		"id":"bamadapterfind_to_decoder",
 		"from":"bamadapterfind",
 		"to":"bamindexdecoder"
 	},
-
 	{
 		"id":"bamindexdecoder_to_tee",
 		"from":"bamindexdecoder",
 		"to":"bamcollate"
 	},
-
 	{
 		"id":"decoder_to_metrics",
 		"from":"bamindexdecoder:__METRICS_FILE__",
 		"to":"decoder_metrics"
 	},
-
 	{
 		"id":"tee_decode_to_collate",
 		"from":"tee_decode:__TD1__",
 		"to":"bammerge:__PREALN_BAM__"
 	},
-
 	{
 		"id":"tee_decode_to_fastq",
 		"from":"tee_decode:__TD2__",
 		"to":"bam2fastq"
 	},
-
 	{
 		"id":"ref_to_bwa_mem",
 		"from":"reference_phix",
 		"to":"bwa_mem:__REFERENCE_PHIX__"
 	},
-
 	{
 		"id":"bam2fastq_to_bwa",
 		"from":"bam2fastq",
 		"to":"bwa_mem:__FQ_IN__"
 	},
-
 	{
 		"id":"bwa_to_scramble",
 		"from":"bwa_mem",
 		"to":"scramble"
 	},
-
 	{
 		"id":"scramble_to_tee",
 		"from":"scramble",
 		"to":"bammerge"
 	},
-
 	{
 		"id":"collate_to_tmp",
 		"from":"bamcollate",
 		"to":"tee_decode"
 	},
-
 	{
 		"id":"merge_to_prefilter",
 		"from":"bammerge",
 		"to":"prefilter"
 	},
-
 	{
 		"id":"prefilter_to_create_filter",
 		"from":"prefilter:__PF1__",
 		"to":"create_filter"
 	},
-
 	{
 		"id":"tee_sf_to_apply",
 		"from":"prefilter:__PF2__",
 		"to":"apply_filter"
 	},
-
 	{
 		"id":"filter_to_apply_filter",
 		"from":"create_filter",
 		"to":"apply_filter:__FILTER__"
 	},
-
 	{
 		"id":"apply_to_tee",
 		"from":"apply_filter",
 		"to":"tee_split"
 	},
-
 	{
 		"id":"tee_to_filtered_bam",
 		"from":"tee_split:__FILTERED_BAM_OUT__",
 		"to":"filtered_bam"
 	},
-
 	{
 		"id":"tee_to_sort",
 		"from":"tee_split:__SPLIT_BAM_OUT__",
 		"to":"splitter"
 	}
-
 ]
 }

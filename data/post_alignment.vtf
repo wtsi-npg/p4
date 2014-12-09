@@ -1,6 +1,27 @@
 {
 "description":"A HiSeqX processing pipeline",
+"version":"1.0",
 "subgraph_io":{"ports":{"inputs":{"_stdin_":"bamsort_coord_target","reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"},"outputs":{"_stdout_":"bamrecompress","out_cram":"scramble","out_bamcheck":"bamcheck","out_flagstat":"flagstat"}}},
+"subst_params":[
+	{"name":"outdatadir","required":"no","default":"."},
+	{"name":"rpt","required":"yes"},
+	{
+		"name":"bammarkduplicates_target",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"bammarkduplicates ",
+				"level=0 ",
+				"M=",
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				".markdups_metrics.txt"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
 "nodes":[
 	{
 		"id":"bamsort_coord_target",
@@ -47,21 +68,7 @@
 	{
 		"id":"bammarkduplicates_target",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bammarkduplicates_target",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bammarkduplicates ",
-					"level=0 ",
-					"M=",
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".markdups_metrics.txt"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"cmd":{"subst":"bammarkduplicates_target"}
 	}
 ],
 "edges":[
@@ -70,34 +77,31 @@
 		"from":"bammarkduplicates_target",
 		"to":"bmd_tee1"
 	},
-
-    {
-        "id":"tee_to_scramble",
-        "from":"bmd_tee1:__SCRAMBLE__",
-        "to":"scramble"
-    },
-
-    {
-        "id":"tee_to_bamcheck",
-        "from":"bmd_tee1:__BAMCHECK__",
-        "to":"bamcheck"
-    },
-    {
-        "id":"tee_to_flagstat_filter",
-        "from":"bmd_tee1:__FLAGSTAT_FILTER__",
-        "to":"flagstat_filter"
-    },
-    {
-        "id":"tee_to_bamrecompress",
-        "from":"bmd_tee1:__BAMRECOMPRESS__",
-        "to":"bamrecompress"
-    },
-    {
-        "id":"flagstat_filter_to_flagstat",
-        "from":"flagstat_filter",
-        "to":"flagstat"
-    },
-
+	{
+		"id":"tee_to_scramble",
+		"from":"bmd_tee1:__SCRAMBLE__",
+		"to":"scramble"
+	},
+	{
+		"id":"tee_to_bamcheck",
+		"from":"bmd_tee1:__BAMCHECK__",
+		"to":"bamcheck"
+	},
+	{
+		"id":"tee_to_flagstat_filter",
+		"from":"bmd_tee1:__FLAGSTAT_FILTER__",
+		"to":"flagstat_filter"
+	},
+	{
+		"id":"tee_to_bamrecompress",
+		"from":"bmd_tee1:__BAMRECOMPRESS__",
+		"to":"bamrecompress"
+	},
+	{
+		"id":"flagstat_filter_to_flagstat",
+		"from":"flagstat_filter",
+		"to":"flagstat"
+	},
 	{
 		"id":"bamsort_to_bammarkduplicates_target",
 		"from":"bamsort_coord_target",
