@@ -1,0 +1,61 @@
+{
+"description":"commonly used parameters used in a pipeline to process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
+"comment":"required attributes have been left as a guide, though a parameter is required if it is used and no longer needs a flag for this",
+"subst_params":[
+        {"name":"rpt","required":"yes"},
+        {"name":"indatadir","required":"no","default":"."},
+        {"name":"outdatadir","required":"no","default":"."},
+        {"name":"cfgdatadir","required":"no","default":"."},
+        {"name":"reference_dict_name","required":"yes"},
+        {"name":"tmpdir","required":"no","default":"."},
+        {"name":"logdir","required":"no","default":"."},
+        {"name":"reposdir","required":"no","default":"."},
+	{"name":"samtools_executable","required":"no","default":"samtools"},
+	{"name":"bwa_executable","required":"no","default":"bwa0_6"},
+	{"name":"aligner_numthreads","required":"no","default":"2"},
+	{"name":"bam_ext","required":"no","default":".bam"},
+	{"name":"cram_ext","required":"no","default":".cram"},
+        {"name":"alignment_method","required":"yes"},
+	{"name":"aligner_numthreads","required":"no","default":"2"},
+	{"name":"alignment_reference_genome_name","required":"yes"},
+	{
+		"name":"alignment_reference_genome",
+		"description":"full path to properly formatted reference genome data for the aligner",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"alignment_reference_genome_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"reference_genome_fasta_name","required":"yes"},
+	{
+		"name":"reference_genome_fasta",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"reference_genome_fasta_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"phix_reference_genome_fasta_name","required":"yes"},
+	{
+		"name":"phix_reference_genome_fasta",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"phix_reference_genome_fasta_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+]
+}
