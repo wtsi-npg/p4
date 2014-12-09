@@ -1,4 +1,5 @@
 {
+"version":"1.0",
 "description":"run bwa mem to to align input bam to supplied reference genome",
 "subgraph_io":{
 	"ports":{
@@ -11,89 +12,108 @@
 		}
 	}
 },
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+                "name": "alignment_common.spf",
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{
+		"name":"bwa_aln_start_bam_name",
+		"required":"no",
+		"default":"bwa_aln_start.bam",
+		"subst_constructor":{
+			"vals":[
+				"bwa_aln_start_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"bwa_aln_start_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"bwa_aln_start_bam_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"bwa_aln_1_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"bwa_executable"},
+				"aln",
+				"-t",
+				{"subst":"aligner_numthreads"},
+				"-b1",
+				"__REFERENCE_GENOME_FASTA__",
+				"__BAM_IN__"
+			],
+			"postproc":{"op":"noconcat","pad":" "}
+		}
+	},
+	{
+		"name":"bwa_aln_2_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"bwa_executable"},
+				"aln",
+				"-t",
+				{"subst":"aligner_numthreads"},
+				"-b2",
+				"__REFERENCE_GENOME_FASTA__",
+				"__BAM_IN__"
+			],
+			"postproc":{"op":"noconcat","pad":" "}
+		}
+	},
+	{
+		"name":"bwa_sampe_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"bwa_executable"},
+				"sampe",
+				"__REFERENCE_GENOME_FASTA__",
+				"__SAI_1__",
+				"__SAI_2__",
+				"__BAM_1__",
+				"__BAM_2__"
+			],
+			"postproc":{"op":"noconcat","pad":" "}
+		}
+	}
+],
 "nodes":[
 	{
              "id":"bwa_aln_start_bam",
              "type":"RAFILE",
-             "name":{"subst_param_name":"bwa_aln_start_bam",
-                     "required":"yes",
-                     "subst_constructor":{
-                             "vals":[
-                                     {"subst_param_name":"tmpdir","required":"no","default":"."},
-                                     "/",
-                                     {"subst_param_name":"bwa_aln_start_bam_name",
-                                             "required":"no",
-                                             "default":"bwa_aln_start.bam",
-                                             "subst_constructor":{
-                                                     "vals":[
-                                                             "bwa_aln_start_",
-                                                             {"subst_param_name":"rpt","required":"yes"},
-                                                             ".bam"
-                                                     ],
-                                                     "postproc":{"op":"concat", "pad":""}
-                                             }
-                                     }
-                             ],
-                             "postproc":{"op":"concat", "pad":""}
-                     }
-             }
+             "name":{"subst":"bwa_aln_start_bam"}
         },
 	{
 		"id":"bwa_aln_1",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bwa_aln_1_cmd",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bwa",
-					"aln",
-					"-t",
-					{"subst_param_name":"aligner_numthreads","required":"no","default":"2"},
-					"-b1",
-					"__REFERENCE_GENOME_FASTA__",
-					"__BAM_IN__"
-				],
-				"postproc":{"op":"noconcat","pad":" "}
-			}
-		}
+		"cmd":{"subst":"bwa_aln_1_cmd"}
 	},
 	{
 		"id":"bwa_aln_2",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bwa_aln_2_cmd",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bwa",
-					"aln",
-					"-t",
-					{"subst_param_name":"aligner_numthreads","required":"no","default":"2"},
-					"-b2",
-					"__REFERENCE_GENOME_FASTA__",
-					"__BAM_IN__"
-				],
-				"postproc":{"op":"noconcat","pad":" "}
-			}
-		}
+		"cmd":{"subst":"bwa_aln_2_cmd"}
 	},
         {
                 "id":"bwa_sampe",
                 "type":"EXEC",
-		"cmd":{"subst_param_name":"bwa_sampe_cmd",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"bwa",
-					"sampe",
-					"__REFERENCE_GENOME_FASTA__",
-					"__SAI_1__",
-					"__SAI_2__",
-					"__BAM_1__",
-					"__BAM_2__"
-				],
-				"postproc":{"op":"noconcat","pad":" "}
-			}
-		}
+		"cmd":{"subst":"bwa_sampe_cmd"}
         },
         {
                 "id":"samtobam",

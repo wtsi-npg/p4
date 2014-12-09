@@ -1,5 +1,6 @@
 {
 "description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
+"version":"1.0",
 "subgraph_io":{
 	"ports":{
 		"inputs":{

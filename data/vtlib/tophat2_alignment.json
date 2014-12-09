@@ -1,5 +1,6 @@
 {
 "description":"run tophat2 to to align input bam to supplied reference genome",
+"version":"1.0",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
@@ -11,6 +12,257 @@
 		}
 	}
 },
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+                "name": "alignment_common.spf",
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{
+		"name":"fastq1_name",
+		"required":"no",
+		"default":"intfile_1.fq.gz",
+		"subst_constructor":{
+			"vals":[
+				"intfile_1_",
+				{"subst":"rpt"},
+				".fq.gz"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"fastq1_name",
+		"required":"no",
+		"default":"intfile_1.fq.gz",
+		"subst_constructor":{
+			"vals":[
+				"intfile_1_",
+				{"subst":"rpt"},
+				".fq.gz"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"fastq1",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"fastq1_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"fastq2_name",
+		"required":"no",
+		"default":"intfile_2.fq.gz",
+		"subst_constructor":{
+			"vals":[
+				"intfile_2_",
+				{"subst":"rpt"},
+				".fq.gz"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"fastq2",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"fastq2_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"name":"tophat_dir","required":"no","default":"tophat_out"},
+	{
+		"name":"tophat_out",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tophat_dir"},
+				"_",
+				{"subst":"rpt"}
+			],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"tophat_out"
+	},
+	{"name":"transcriptome_subpath","required":"no"},
+	{
+		"name":"transcriptome_val",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/transcriptomes/",
+				{"subst":"transcriptome_subpath"}
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"transcriptome_flag_val",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"--transcriptome-index",
+				{"subst":"transcriptome_val"}
+			],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"tophat2_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"tophat2",
+				"--keep-fasta-order",
+				"--no-sort-bam",
+				"--output-dir",
+				{"subst":"tophat_out"},
+				"--mate-inner-dist","100",
+				"--num-threads",{"subst":"aligner_numthreads","required":"no","default":"12"},
+				"--library-type", {"subst":"library_type","required":"no","default":"fr-firststrand"},
+				"--no-coverage-search",
+				"--microexon-search",
+				{"subst":"transcriptome_flag_val"},
+				"__REFERENCE_GENOME__",
+				"__FQIN1__",
+				"__FQIN2__"
+			],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	},
+	{
+		"name":"junctions_bed",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tophat_dir"},
+				"_",
+				{"subst":"rpt"},
+				"/junctions.bed"
+			],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"tophat_out/junctions.bed"
+	},
+	{
+		"name":"insertions_bed",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tophat_dir"},
+				"_",
+				{"subst":"rpt"},
+				"/insertions.bed"
+			],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"tophat_out/insertions.bed"
+	},
+	{
+		"name":"deletions_bed",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tophat_dir"},
+				"_",
+				{"subst":"rpt"},
+				"/deletions.bed"
+			],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"tophat_out/deletions.bed"
+	},
+	{"name":"accepted_hits","required":"no","default":"accepted_hits.bam"},
+	{
+		"name":"accepted_hits_bam",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tophat_dir"},
+				"_",
+				{"subst":"rpt"},
+				"/",
+				{"subst":"accepted_hits"}
+			],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"tophat_out/accepted_hits.bam"
+	},
+	{"name":"unmapped","required":"no","default":"unmapped.bam"},
+	{
+		"name":"unmapped_bam",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tophat_dir"},
+				"_",
+				{"subst":"rpt"},
+				"/",
+				{"subst":"unmapped"}
+			],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"tophat_out/unmapped.bam"
+	},
+	{
+		"name":"cp_deletions_bed",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"cp ",
+				"__SRC_DELETIONS_BED__ ",
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				".deletions.bed"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"cp_insertions_bed",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"cp ",
+				"__SRC_INSERTIONS_BED__ ",
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				".insertions.bed"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"name":"cp_junctions_bed",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"cp ",
+				"__SRC_JUNCTIONS_BED__ ",
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"rpt"},
+				".junctions.bed"
+			],
+			"postproc":{"op":"concat","pad":""}
+		}
+	}
+],
 "nodes":[
 	{
 		"id":"bamtofastq",
@@ -22,203 +274,49 @@
 	{
 		"id":"fq1",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"fastq1",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"fastq1_name",
-						"required":"no",
-						"default":"intfile_1.fq.gz",
-						"subst_constructor":{
-							"vals":[
-								"intfile_1_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".fq.gz"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"fastq1"}
 	},
 	{
 		"id":"fq2",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"fastq2",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"fastq2_name",
-						"required":"no",
-						"default":"intfile_2.fq.gz",
-						"subst_constructor":{
-							"vals":[
-								"intfile_2_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".fq.gz"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"fastq2"}
 	},
 	{
 		"id":"tophat2",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{"subst_param_name":"tophat2_cmd",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					"tophat2",
-					"--keep-fasta-order",
-					"--no-sort-bam",
-					"--output-dir",
-					{"subst_param_name":"tophat_out",
-						"required":"no",
-						"subst_constructor":{
-							"vals":[
-								{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-								"_",
-								{"subst_param_name":"rpt","required":"yes"}
-							],
-							"postproc":{"op":"concat","pad":""}
-						},
-						"default":"tophat_out"
-					},
-					"--mate-inner-dist","100",
-					"--num-threads",{"subst_param_name":"aligner_numthreads","required":"no","default":"12"},
-					"--library-type", {"subst_param_name":"library_type","required":"no","default":"fr-firststrand"},
-					"--no-coverage-search",
-					"--microexon-search",
-					{"subst_param_name":"transcriptome_flag_val",
-						"required":"no",
-						"subst_constructor":{
-							"vals":[
-								"--transcriptome-index",
-								{"subst_param_name":"transcriptome_val",
-									"subst_constructor":{
-										"vals":[
-											{"subst_param_name":"reposdir","required":"no"},
-											"/transcriptomes/",
-											{"subst_param_name":"transcriptome_subpath","required":"no"}
-										],
-										"postproc":{"op":"concat","pad":""}
-									}
-								}
-							],
-							"postproc":{"op":"concat","pad":"="}
-						}
-					},
-					"__REFERENCE_GENOME__",
-					"__FQIN1__",
-					"__FQIN2__"
-				],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		}
+		"cmd":{"subst":"tophat2_cmd"}
 	},
 	{
 		"id":"junctions_bed",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		"name":{"subst_param_name":"junctions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/junctions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/junctions.bed"
-		}
+		"name":{"subst":"junctions_bed"}
 	},
 	{
 		"id":"insertions_bed",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		"name":{"subst_param_name":"insertions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/insertions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/insertions.bed"
-		}
+		"name":{"subst":"insertions_bed"}
 	},
 	{
 		"id":"deletions_bed",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		"name":{"subst_param_name":"deletions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/deletions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/deletions.bed"
-		}
+		"name":{"subst":"deletions_bed"}
 	},
 	{
 		"id":"accepted_hits_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		"name":{"subst_param_name":"accepted_hits_bam",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"accepted_hits","required":"no","default":"accepted_hits.bam"}
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/accepted_hits.bam"
-		}
+		"name":{"subst":"accepted_hits_bam"}
 	},
 	{
 		"id":"unmapped_bam",
 		"type":"RAFILE",
 		"subtype":"DUMMY",
-		"name":{"subst_param_name":"unmapped_bam",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tophat_dir","required":"no","default":"tophat_out"},
-					"_",
-					{"subst_param_name":"rpt","required":"yes"},
-					"/",
-					{"subst_param_name":"unmapped","required":"no","default":"unmapped.bam"}
-				],
-				"postproc":{"op":"concat","pad":""}
-			},
-			"default":"tophat_out/unmapped.bam"
-		}
+		"name":{"subst":"unmapped_bam"}
 	},
 	{
 		"id":"bamcat",
@@ -230,63 +328,21 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{
-			"subst_param_name":"cp_deletions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					"cp ",
-					"__SRC_DELETIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".deletions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		}
+		"cmd":{"subst":"cp_deletions_bed"}
 	},
 	{
 		"id":"cp_insertions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{
-			"subst_param_name":"cp_insertions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					"cp ",
-					"__SRC_INSERTIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".insertions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		}
+		"cmd":{"subst":"cp_insertions_bed"}
 	},
 	{
 		"id":"cp_junctions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{
-			"subst_param_name":"cp_junctions_bed",
-			"required":"no",
-			"subst_constructor":{
-				"vals":[
-					"cp ",
-					"__SRC_JUNCTIONS_BED__ ",
-					{"subst_param_name":"outdatadir","required":"yes"},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".junctions.bed"
-				],
-				"postproc":{"op":"concat","pad":""}
-			}
-		}
+		"cmd":{"subst":"cp_junctions_bed"}
 	}
 ],
 "edges":[

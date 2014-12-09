@@ -1,4 +1,5 @@
 {
+"version":"1.0",
 "description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
 "subgraph_io":{
 	"ports":{
@@ -13,20 +14,45 @@
 		}
 	}
 },
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+                "name": "alignment_common.spf",
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{
+		"name":"samtools_merge",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"samtools_executable"},
+				"merge",
+				"-c",
+				"--",
+				"-",
+				"__TARGETBAM_IN__",
+				"__PHIXBAM_IN__"
+			],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	}
+],
 "nodes":[
 	{
 		"id":"target_tee",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot -vv __BAMCAT_OUT__ __CHKSUM_OUT__"
+		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
 	},
 	{
 		"id":"phix_tee",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":"teepot -vv __BAMCAT_OUT__ __CHKSUM_OUT__"
+		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
 	},
 	{
                 "id":"seqchksum_target",
@@ -48,21 +74,7 @@
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":{"subst_param_name":"samtools_merge",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"samtools_executable","required":"no","default":"samtools"},
-					"merge",
-					"-c",
-					"--",
-					"-",
-					"__TARGETBAM_IN__",
-					"__PHIXBAM_IN__"
-				],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		}
+		"cmd":{"subst":"samtools_merge"}
         },
         {
                 "id":"seqchksum_output",

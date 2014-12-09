@@ -1,4 +1,5 @@
 {
+"version":"1.0",
 "description":"run bwa mem to to align input bam to supplied reference genome",
 "subgraph_io":{
 	"ports":{
@@ -11,6 +12,43 @@
 		}
 	}
 },
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+                "name": "alignment_common.spf",
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{"name":"bwa_T_value","required":"no"},
+	{
+		"name":"bwa_T_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"-T",
+				{"subst":"bwa_T_value"}
+			]
+		}
+	},
+	{
+		"name":"bwa_mem_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"bwa_executable"},
+				"mem",
+				"-t",
+				{"subst":"aligner_numthreads"},
+				"-p",
+				{"subst":"bwa_T_flag"},
+				"__DB_PREFIX_REFERENCE_GENOME__",
+				"__FQ_IN__"
+			],
+			"postproc":{"op":"pack","pad":" "}
+		}
+	}
+],
 "nodes":[
 	{
 		"id":"bamtofastq",
@@ -21,39 +59,16 @@
 		"id":"bwa_mem",
 		"comment":"presuming interleaved FR fastq records (-p flag), output all records (-T 0)",
 		"type":"EXEC",
-		"cmd":{"subst_param_name":"bwa_mem_cmd",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"bwa_executable","required":"no","default":"bwa0_6"},
-					"mem",
-					"-t",
-					{"subst_param_name":"aligner_numthreads","required":"no","default":"2"},
-					"-p",
-					"-T","0",
-					"__DB_PREFIX_REFERENCE_GENOME__",
-					"__FQ_IN__"
-				],
-				"postproc":{"op":"pack","pad":" "}
-			}
-		}
+		"cmd":{"subst":"bwa_mem_cmd"}
 	},
         {
                 "id":"samtobam",
                 "type":"EXEC",
-                "cmd":"scramble -I sam -O bam"
+                "cmd":["scramble", "-I", "sam", "-O", "bam"]
         }
 ],
 "edges":[
-	{
-		"id":"bamtofastq_to_int_fq",
-		"from":"bamtofastq",
-		"to":"bwa_mem:__FQ_IN__"
-	},
-	{
-		"id":"bwa_mem_to_scramble",
-		"from":"bwa_mem",
-		"to":"samtobam"
-	}
+	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:__FQ_IN__" },
+	{ "id":"bwa_mem_to_scramble", "from":"bwa_mem", "to":"samtobam" }
 ]
 }
