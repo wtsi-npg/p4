@@ -313,9 +313,7 @@ sub _fork_off {
 				open STDOUT, q(>), $node->{'STDOUT'} or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
 			}
 			print STDERR "Process $$ for cmd $cmd:\n";
-#			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.$node->{'STDIN'} ."\n";
 			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.($node->{'STDIN'}?$node->{'STDIN'}:'stdin') ."\n";
-#			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.$node->{'STDOUT'}."\n";
 			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') reading from '.($node->{'STDOUT'}?$node->{'STDOUT'}:'stdout') ."\n";
 			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
 			print STDERR " execing....\n";

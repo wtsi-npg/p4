@@ -36,13 +36,14 @@ my %opts;
 my $help;
 my $strict_checks;
 my $outname;
+my $template_path;
 my $logfile;
 my $verbosity_level;
 my $query_mode;
 my $absolute_program_paths=1;
 my @keys = ();
 my @vals = ();
-GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'absolute_program_paths!' => \$absolute_program_paths);
+GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'template_path=s' => \$template_path, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'absolute_program_paths!' => \$absolute_program_paths);
 
 if($help) {
 	croak q[Usage: ], $progname, q{ [-h] [-q] [-s] [-l <log_file>] [-o <output_config_name>] [-v <verbose_level>] [-keys <key> -vals <val> ...]  <viv_template>};
@@ -69,7 +70,7 @@ my $out;
 if($outname) { open $out, ">$outname" or croak "Failed to open $outname for output"; } else { $out = *STDOUT; }
 
 my $param_store;
-my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, vt_file_stack => [], processed_sp_files => {}, };
+my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, vt_file_stack => [], processed_sp_files => {}, template_path => $template_path, };
 
 my $node_tree = process_vtnode(q[], $vtf_name, q[], $param_store, $subst_requests, $globals);    # recursively generate the vtnode tree
 my $flat_graph = flatten_tree($node_tree);
@@ -109,14 +110,12 @@ sub process_vtnode {
 	my ($vtnode_id, $vtf_name, $node_prefix, $param_store, $subst_requests, $globals) = @_;
 
 	if(any { $_ eq $vtf_name} @{$globals->{vt_file_stack}}) {
-#		croak q[Nesting of VTFILE ], $vtf_name, q[ within itself: ], join(q[->], @{$globals->{vt_file_stack}});
 		$logger->($VLFATAL, q[Nesting of VTFILE ], $vtf_name, q[ within itself: ], join(q[->], @{$globals->{vt_file_stack}}));
 	}
 
 	my $vtnode = { id => $vtnode_id, name => $vtf_name, cfg => {}, children => [], };
 	$vtnode->{node_prefix} = get_node_prefix($node_prefix, $globals->{node_prefixes});
-#	$vtnode->{cfg} = read_the_vtf($vtf_name);
-	$vtnode->{cfg} = read_vtf_version_check($vtf_name, $MIN_TEMPLATE_VERSION);
+	$vtnode->{cfg} = read_vtf_version_check($vtf_name, $MIN_TEMPLATE_VERSION, $globals->{template_path}, );
 	$param_store = process_subst_params($param_store, $vtnode->{cfg}->{subst_params}, [ $vtf_name ], $globals);
 	apply_subst($vtnode->{cfg}, $param_store, $subst_requests);   # process any subst directives in cfg (just nodes and edges)
 
@@ -163,7 +162,6 @@ sub get_node_prefix {
 
 	if(defined $node_prefix) {
 		if($node_prefixes->{used_prefixes}->{$node_prefix}) {
-#			croak q[Requested node prefix ], $node_prefix, q[ already used];
 			$logger->($VLFATAL, q[Requested node prefix ], $node_prefix, q[ already used]);
 		}
 	}
@@ -248,8 +246,7 @@ sub process_subst_params {
 		if(not $globals->{processed_sp_files}->{$spname}) { # but only process a given SPFILE once
 			$globals->{processed_sp_files}->{$spname} = 1;   # flag this SPFILE name as seen
 
-#			my $cfg = read_the_vtf($spname);   # Note: we are only concerned with (new-style) subst_param sections
-			my $cfg = read_vtf_version_check($spname, $MIN_TEMPLATE_VERSION);
+			my $cfg = read_vtf_version_check($spname, $MIN_TEMPLATE_VERSION, $globals->{template_path},);
 
 			# NOTE: no mixing of subst_param formats in a template set - in other words, included subst_param
 			#  files must contain (new-style) subst_param sections to be useful
@@ -312,13 +309,11 @@ sub subst_walk {
 			if(ref $elem->{$k} eq q[HASH] and my $param_name = $elem->{$k}->{subst}) {
 				# value for a "subst" key must always be the name of a parameter
 				if(ref $param_name) {
-###					croak q[value for a subst directive must be a param (not a reference), keys for subst is: ], $k;
 					$logger->($VLFATAL, q[value for a subst directive must be a param (not a reference), keys for subst is: ], $k);
 				}
 
 				$elem->{$k} = fetch_subst_value($param_name, $param_store, $subst_requests);  # any subst_constructor faff handled by do_subst()
 
-###				unless(defined $elem->{$k}) { croak q[Failed to fetch subst value for parameter ], $param_name, q[ (key was ], $k; }
 				unless(defined $elem->{$k}) {
 					$logger->($VLFATAL, croak q[Failed to fetch subst value for parameter ], $param_name, q[ (key was ], $k, q[)]);
 				}
@@ -642,9 +637,9 @@ sub subgraph_to_flat_graph {
 }
 
 sub read_vtf_version_check {
-	my ($vtf_name, $version_minimum) = @_;
+	my ($vtf_name, $version_minimum, $template_path) = @_;
 
-	my $cfg = read_the_vtf($vtf_name);
+	my $cfg = read_the_vtf($vtf_name, $template_path);
 	my $version = $cfg->{version};
 	$version ||= -1;
 	if($version < $version_minimum) { 
@@ -659,10 +654,15 @@ sub read_vtf_version_check {
 #  Open the file, read the JSON content, convert to hash and return it
 ######################################################################
 sub read_the_vtf {
-	my ($vtf_name) = @_;
+	my ($vtf_name, $template_path) = @_;
 
 	if(! -e $vtf_name) {
-		$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_name);
+		if($vtf_name !~ /\//) {
+			$vtf_name = $template_path . q[/] . $vtf_name;
+		}
+		if(! -e $vtf_name) {
+			$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_name);
+		}
 	}
 
 	my $s = read_file($vtf_name);
