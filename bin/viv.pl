@@ -11,7 +11,7 @@ use Getopt::Std;
 use Readonly;
 use Data::Dumper;
 
-our $VERSION = '0';
+our $VERSION = '0.11-1-g9240c2e';
 
 Readonly::Scalar my $FROM => 0;
 Readonly::Scalar my $TO => 1;
@@ -124,6 +124,7 @@ $logger->($VLMAX, "\n==================================\nEXEC nodes(post edges p
 $logger->($VLMAX, "EXEC nodes(post EXEC nodes preprocessing): ", Dumper(%exec_nodes), "\n");
 setpgrp; # create new processgroup so signals can be fired easily in suitable way later
 # kick off any unblocked EXEC nodes, noting their details for later release of any dependants
+$logger->($VLMED, qq[master process is $$\n]);
 my %pid2id = ();
 for my $node_id (keys %exec_nodes) {
 	my $wait_counter = $exec_nodes{$node_id}->{wait_counter};
@@ -303,13 +304,19 @@ sub _fork_off {
 			$0 .= q{ (pending }.$node->{'id'}.qq{: $cmd)}; #rename process so fork can be easily identified whilst open waits on fifo
 			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
 			select(STDERR);$|=1;
-			$node->{'STDIN'} ||= '/dev/null';
-			open STDIN,  q(<), $node->{'STDIN'} or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
-			$node->{'STDOUT'} ||= '/dev/null';
-			open STDOUT, q(>), $node->{'STDOUT'} or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
+			if(not $node->{use_STDIN}) { $node->{'STDIN'} ||= '/dev/null'; }
+			if($node->{'STDIN'}) {
+				open STDIN,  q(<), $node->{'STDIN'} or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
+			}
+			if(not $node->{use_STDOUT}) { $node->{'STDOUT'} ||= '/dev/null'; }
+			if($node->{'STDOUT'}) {
+				open STDOUT, q(>), $node->{'STDOUT'} or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
+			}
 			print STDERR "Process $$ for cmd $cmd:\n";
-			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.$node->{'STDIN'} ."\n";
-			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.$node->{'STDOUT'}."\n";
+#			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.$node->{'STDIN'} ."\n";
+			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.($node->{'STDIN'}?$node->{'STDIN'}:'stdin') ."\n";
+#			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.$node->{'STDOUT'}."\n";
+			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') reading from '.($node->{'STDOUT'}?$node->{'STDOUT'}:'stdout') ."\n";
 			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
 			print STDERR " execing....\n";
 			exec @cmd;
