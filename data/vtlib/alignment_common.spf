@@ -16,7 +16,6 @@
 	{"name":"bam_ext","required":"no","default":".bam"},
 	{"name":"cram_ext","required":"no","default":".cram"},
         {"name":"alignment_method","required":"yes"},
-	{"name":"aligner_numthreads","required":"no","default":"2"},
 	{"name":"alignment_reference_genome_name","required":"yes"},
 	{
 		"name":"alignment_reference_genome",

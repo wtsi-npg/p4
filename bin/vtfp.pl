@@ -13,6 +13,7 @@ use Carp;
 use Readonly;
 use Getopt::Long;
 use File::Basename;
+use File::Spec;
 use File::Which qw(which);
 use List::MoreUtils qw(any);
 use Cwd qw(abs_path);
@@ -68,6 +69,10 @@ $logger->($VLMED, 'Using template file '.$vtf_name);
 
 my $out;
 if($outname) { open $out, ">$outname" or croak "Failed to open $outname for output"; } else { $out = *STDOUT; }
+
+if($template_path) {
+	$template_path = [ (split q[:], $template_path) ];
+}
 
 my $param_store;
 my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, vt_file_stack => [], processed_sp_files => {}, template_path => $template_path, };
@@ -656,19 +661,37 @@ sub read_vtf_version_check {
 sub read_the_vtf {
 	my ($vtf_name, $template_path) = @_;
 
-	if(! -e $vtf_name) {
-		if($vtf_name !~ /\//) {
-			$vtf_name = $template_path . q[/] . $vtf_name;
-		}
-		if(! -e $vtf_name) {
-			$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_name);
-		}
-	}
+	my $vtf_fullname = find_vtf($vtf_name, $template_path);
 
-	my $s = read_file($vtf_name);
+	my $s = read_file($vtf_fullname);
 	my $cfg = from_json($s);
 
 	return $cfg;
+}
+
+########################################################
+# prepend appropriate template_path element if necessary
+########################################################
+sub find_vtf {
+	my ($vtf_fullname, $template_path) = @_;
+
+	if(-e $vtf_fullname) {
+		return $vtf_fullname;
+	}
+
+	my ($vtf_name, $directories) = fileparse($vtf_fullname);
+
+	if($vtf_name eq $vtf_fullname) {  # path to file not specified, try template_path
+		for my $path (@$template_path) {
+			my $candidate = File::Spec->catfile($path, $vtf_name);
+			if(-e $candidate) {
+				return $candidate;
+			}
+		}
+	}
+
+	# if we haven't found this file anywhere on the path, bomb out
+	$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_fullname, q[ locally or on template_path: ], join q[:], @$template_path);
 }
 
 sub mklogger {
