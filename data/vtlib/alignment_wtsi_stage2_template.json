@@ -5,7 +5,7 @@
 	{
 		"id": "basic_pipeline_params",
 		"type":"SPFILE",
-		"name": "alignment_common.spf",
+		"name":"alignment_common.spf",
 		"required": "no",
 		"comment":"this will expand to a set of subst_param elements"
 	},
@@ -120,6 +120,24 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
+	{"name":"target_indicator","default":""},
+	{"name":"phix_indicator","default":"_phix"},
+	{
+		"name":"fopid_tgt",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"target_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"name":"fopid_phix",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"phix_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
 	{"name":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
 	{
 		"name":"final_output_prep_target",
@@ -135,120 +153,6 @@
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_phix_name"}, ".json" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{"name":"phix_bam_name","required":"no","default":"phix.bam"},
-	{
-		"name":"phix_bam",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_", {"subst":"phix_bam_name"} ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{"name":"bam_name","required":"no","default":".bam"},
-	{
-		"name":"target_bam",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"bam_name"} ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"cram",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".cram" ],
-				"postproc":{"op":"concat", "pad":""}
-			}
-	},
-	{
-		"name":"cram_md5",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".cram.md5" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"phix_cram",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix.cram" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"phix_cram_md5",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix.cram.md5" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_bamcheck",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".bamcheck" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_stats_F0x900",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_F0x900.stats" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_stats_F0xB00",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_F0xB00.stats" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_phix_bamcheck",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix.bamcheck" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_phix_stats_F0x900",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix_F0x900.stats" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_phix_stats_F0xB00",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix_F0xB00.stats" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_flagstat",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".flagstat" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"name":"out_phix_flagstat",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix.flagstat" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -375,7 +279,7 @@
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
 		"node_prefix":"foptgt_",
-                "subst_map":{"phix_or_target":"","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
@@ -389,24 +293,10 @@
                 "id":"final_output_prep_phix",
                 "type":"VTFILE",
 		"node_prefix":"fopphx_",
-                "subst_map":{"phix_or_target":"_phix","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst":"final_output_prep_phix"},
                 "description":"subgraph containing post alignment_filter process (phix)"
         },
-	{ "id":"phix_bam", "type":"OUTFILE", "name":{"subst":"phix_bam"} },
-	{ "id":"target_bam", "type":"OUTFILE", "name":{"subst":"target_bam"} },
-	{ "id":"cram", "type":"OUTFILE", "name":{"subst":"cram"} },
-	{ "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
-	{ "id":"phix_cram", "type":"OUTFILE", "name":{"subst":"phix_cram"} },
-	{ "id":"phix_cram_md5", "type":"OUTFILE", "name":{"subst":"phix_cram_md5"} },
-	{ "id":"out_bamcheck", "type":"OUTFILE", "name":{"subst":"out_bamcheck"} },
-	{ "id":"out_stats_F0x900", "type":"OUTFILE", "name":{"subst":"out_stats_F0x900"} },
-	{ "id":"out_stats_F0xB00", "type":"OUTFILE", "name":{"subst":"out_stats_F0xB00"} },
-	{ "id":"out_phix_bamcheck", "type":"OUTFILE", "name":{"subst":"out_phix_bamcheck"} },
-	{ "id":"out_phix_stats_F0x900", "type":"OUTFILE", "name":{"subst":"out_phix_stats_F0x900"} },
-	{ "id":"out_phix_stats_F0xB00", "type":"OUTFILE", "name":{"subst":"out_phix_stats_F0xB00"} },
-	{ "id":"out_flagstat", "type":"OUTFILE", "name":{"subst":"out_flagstat"} },
-	{ "id":"out_phix_flagstat", "type":"OUTFILE", "name":{"subst":"out_phix_flagstat"} },
         { "id":"seqchksum", "type":"VTFILE", "node_prefix":"scs_", "name":{"subst":"seqchksum"}, "description":"subgraph containing seqchksum validation of outputs" },
 	{ "id":"phix_chksum", "type":"OUTFILE", "name":{"subst":"phix_chksum"} },
 	{ "id":"target_chksum", "type":"OUTFILE", "name":{"subst":"target_chksum"} }
@@ -430,23 +320,9 @@
 	{ "id":"af_to_paf_phix", "from":"alignment_filter:__PHIX_OUTBAM__", "to":"final_output_prep_phix" },
 	{ "id":"ref_to_paf_target", "from":"reference_genome_fasta", "to":"final_output_prep_target:reference_genome_fasta" },
 	{ "id":"ref_to_paf_phix", "from":"phix_reference_genome_fasta", "to":"final_output_prep_phix:reference_genome_fasta" },
-	{ "id":"paf_to_bam", "from":"final_output_prep_target", "to":"target_bam" },
-	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"phix_bam" },
-	{ "id":"scramble_to_cram", "from":"final_output_prep_target:out_cram", "to":"cram" },
-	{ "id":"scramble_to_cram_md5", "from":"final_output_prep_target:out_cram_md5", "to":"cram_md5" },
-	{ "id":"scramble_to_phix_cram", "from":"final_output_prep_phix:out_cram", "to":"phix_cram" },
-	{ "id":"scramble_to_phix_cram_md5", "from":"final_output_prep_phix:out_cram_md5", "to":"phix_cram_md5" },
-	{ "id":"bamcheck_out_target", "from":"final_output_prep_target:out_bamcheck", "to":"out_bamcheck" },
-	{ "id":"samtools_stats_F0x900_out_target", "from":"final_output_prep_target:out_stats_F0x900", "to":"out_stats_F0x900" },
-	{ "id":"samtools_stats_F0xB00_out_target", "from":"final_output_prep_target:out_stats_F0xB00", "to":"out_stats_F0xB00" },
-	{ "id":"bamcheck_out_phix", "from":"final_output_prep_phix:out_bamcheck", "to":"out_phix_bamcheck" },
-	{ "id":"samtools_stats_F0x900_out_phix", "from":"final_output_prep_phix:out_stats_F0x900", "to":"out_phix_stats_F0x900" },
-	{ "id":"samtools_stats_F0xB00_out_phix", "from":"final_output_prep_phix:out_stats_F0xB00", "to":"out_phix_stats_F0xB00" },
-	{ "id":"flagstat_to_out", "from":"final_output_prep_target:out_flagstat", "to":"out_flagstat" },
-	{ "id":"flagstat_to_phix", "from":"final_output_prep_phix:out_flagstat", "to":"out_phix_flagstat" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
-        { "id":"target_bam_to_seqchksum", "from":"target_bam", "to":"seqchksum:target_bam" },
-        { "id":"phix_bam_to_seqchksum", "from":"phix_bam", "to":"seqchksum:phix_bam" },
+	{ "id":"paf_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_bam" },
+	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_bam" },
 	{ "id":"target_chksum_to_file", "from":"seqchksum:target_chksum", "to":"target_chksum" },
 	{ "id":"phix_chksum_to_file", "from":"seqchksum:phix_chksum", "to":"phix_chksum" }
 ]
