@@ -6,7 +6,7 @@
 		"name":"basic_pipeline_params_file",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.spf" ],
+			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},

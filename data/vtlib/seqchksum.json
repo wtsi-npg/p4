@@ -18,7 +18,7 @@
         {
                 "id": "basic_pipeline_params",
                 "type":"SPFILE",
-                "name": "alignment_common.spf",
+		"name":{"subst":"basic_pipeline_params_file"},
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
         },
