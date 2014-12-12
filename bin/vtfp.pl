@@ -59,7 +59,7 @@ my %subst_requests;
 my $subst_requests = [ \%subst_requests ];
 
 $query_mode ||= 0;
-$verbosity_level = 1 unless defined $verbosity_level;
+$verbosity_level = $VLMIN unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, $progname);
 $logger->($VLMIN, $progname , ' version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $vtf_name = $ARGV[0];
@@ -121,7 +121,7 @@ sub process_vtnode {
 	my $vtnode = { id => $vtnode_id, name => $vtf_name, cfg => {}, children => [], };
 	$vtnode->{node_prefix} = get_node_prefix($node_prefix, $globals->{node_prefixes});
 	$vtnode->{cfg} = read_vtf_version_check($vtf_name, $MIN_TEMPLATE_VERSION, $globals->{template_path}, );
-	$param_store = process_subst_params($param_store, $vtnode->{cfg}->{subst_params}, [ $vtf_name ], $globals);
+	$param_store = process_subst_params($param_store, $subst_requests, $vtnode->{cfg}->{subst_params}, [ $vtf_name ], $globals);
 	apply_subst($vtnode->{cfg}, $param_store, $subst_requests);   # process any subst directives in cfg (just nodes and edges)
 
 	my @vtf_nodes = ();
@@ -196,7 +196,7 @@ sub get_node_prefix {
 #  more sophisticated structure for elements on this stack to improve error reporting
 ##########################################################################################
 sub process_subst_params {
-	my ($param_store, $unprocessed_subst_params, $sp_file_stack, $globals) = @_;
+	my ($param_store, $subst_requests, $unprocessed_subst_params, $sp_file_stack, $globals) = @_;
 	my @spfile_node_queue = ();
 
 	$param_store ||= [ { varnames => {}, } ];
@@ -228,17 +228,20 @@ sub process_subst_params {
 			push @spfile_node_queue, $sp;
 		}
 		else {  # subst_param type PARAM
-			if(my $ips = in_param_store($param_store, $spname)) { # multiply defined - a Bad Thing in the new style (though it could just become a local variable)
+			my $ips = in_param_store($param_store, $spname);
+			if($ips->{errnum} != 0) { # multiply defined - a Bad Thing in the new style (though it could just become a local variable)
 				# should this just be a carp about redeclaration? Should redeclaration be allowed if scope is restricted to within a nesting?
-				if($ips > 0) {
-					$logger->($VLMED, qq[Warning: Duplicate subst_param definition for $spname (], join(q[->], @$sp_file_stack), q[)]);
+				if($ips->{errnum} > 0) {
+					$logger->($VLMED, qq[INFO: Duplicate subst_param definition for $spname (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
 				}
 				else {
 					# it would be better to cache these errors and report as many as possible before exit (TBI)
-					$logger->($VLFATAL, qq[Fatal error: Duplicate (local) subst_param definition for $spname (], join(q[->], @$sp_file_stack), q[)]);
+					$logger->($VLFATAL, qq[Fatal error: Duplicate (local) subst_param definition for $spname (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
 				}
 			}
 
+			$sp->{_declared_by} ||= [];
+			push @{$sp->{_declared_by}}, join q[->], @$sp_file_stack;
 			$param_store->[0]->{varnames}->{$spname} = $sp; # adding to the "local" variable store
 		}
 	}
@@ -247,6 +250,7 @@ sub process_subst_params {
 	# now process the SPFILE entries
 	################################
 	for my $spfile (@spfile_node_queue) {
+		subst_walk($spfile, $param_store, $subst_requests, []);
 		my $spname = $spfile->{name};
 		if(not $globals->{processed_sp_files}->{$spname}) { # but only process a given SPFILE once
 			$globals->{processed_sp_files}->{$spname} = 1;   # flag this SPFILE name as seen
@@ -257,7 +261,7 @@ sub process_subst_params {
 			#  files must contain (new-style) subst_param sections to be useful
 			if(defined $cfg->{subst_params}) {
 				push @$sp_file_stack, $spname;
-				process_subst_params($param_store, $cfg->{subst_params}, $sp_file_stack, $globals);
+				process_subst_params($param_store, $subst_requests, $cfg->{subst_params}, $sp_file_stack, $globals);
 				pop @$sp_file_stack;
 			}
 		}
@@ -269,19 +273,32 @@ sub process_subst_params {
 	return $param_store;
 }
 
-#########################################################################
+##########################################################################
 # in_param_store:
-#  return 0 if not in store, -1 if it's in the "local" store, 1 otherwise
-#  (this is to allow presence in non-local store to be legal)
-#########################################################################
+#  return errnum of 0 if not in store, -1 if it was explicitly declared in
+#  the "local" store, 1 otherwise (this is to allow presence in non-local
+#  store to be legal)
+##########################################################################
 sub in_param_store {
 	my ($param_store, $spname) = @_;
 
 	for my $i (0..$#{$param_store}) {
-		if($param_store->[$i]->{varnames}->{$spname}) { return ($i == 0)? -1: 1; }
+		if($param_store->[$i]->{varnames}->{$spname}) {
+			if($i == 0) {
+				if(defined $param_store->[$i]->{varnames}->{$spname}->{_declared_by} and @{$param_store->[$i]->{varnames}->{$spname}->{_declared_by}} > 0) {
+					return { errnum => -1, ms => q[duplicate local declaration of ] . $spname . q[, already declared in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spname}->{_declared_by}}, };
+				}
+				else {
+					return { errnum => 1, ms => q[already declared locally, but only implicitly], };
+				}
+			}
+			else {
+				return { errnum => 1, ms => q[already declared, but not locally; declarations in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spname}->{_declared_by}} };
+			}
+		}
 	}
 
-	return 0;
+	return { errnum => 0, ms => q[], };
 }
 
 #######################################
