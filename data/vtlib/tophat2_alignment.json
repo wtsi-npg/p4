@@ -97,12 +97,34 @@
 		}
 	},
 	{
-		"name":"transcriptome_flag_val",
+		"name":"transcriptome_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
 				"--transcriptome-index",
 				{"subst":"transcriptome_val"}
+			],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"aligner_numthreads_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"--num-threads",
+				{"subst":"aligner_numthreads"}
+			],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"name":"library_type_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"--library-type",
+				{"subst":"library_type"}
 			],
 			"postproc":{"op":"concat","pad":"="}
 		}
@@ -118,11 +140,11 @@
 				"--output-dir",
 				{"subst":"tophat_out"},
 				"--mate-inner-dist","100",
-				"--num-threads",{"subst":"aligner_numthreads","required":"no","default":"12"},
-				"--library-type", {"subst":"library_type","required":"no","default":"fr-firststrand"},
+				{"subst":"aligner_numthreads_flag"},
+				{"subst":"library_type_flag"},
 				"--no-coverage-search",
 				"--microexon-search",
-				{"subst":"transcriptome_flag_val"},
+				{"subst":"transcriptome_flag"},
 				"__REFERENCE_GENOME__",
 				"__FQIN1__",
 				"__FQIN2__"
