@@ -3,9 +3,17 @@
 "description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
 "subst_params":[
 	{
+		"name":"basic_pipeline_params_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.spf" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
 		"id": "basic_pipeline_params",
 		"type":"SPFILE",
-		"name":"alignment_common.spf",
+		"name":{"subst":"basic_pipeline_params_file"},
 		"required": "no",
 		"comment":"this will expand to a set of subst_param elements"
 	},
