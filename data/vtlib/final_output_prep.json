@@ -313,7 +313,7 @@
 		"name":"flagstat_file",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".flagstat" ],
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".flagstat" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	}
