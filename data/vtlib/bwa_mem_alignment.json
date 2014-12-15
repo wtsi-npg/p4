@@ -20,9 +20,9 @@
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
         },
-	{"name":"bwa_T_value","required":"no"},
+	{"id":"bwa_T_value","required":"no"},
 	{
-		"name":"bwa_T_flag",
+		"id":"bwa_T_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -32,7 +32,7 @@
 		}
 	},
 	{
-		"name":"bwa_mem_cmd",
+		"id":"bwa_mem_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[

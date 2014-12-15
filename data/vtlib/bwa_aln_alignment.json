@@ -21,7 +21,7 @@
                 "comment":"this will expand to a set of subst_param elements"
         },
 	{
-		"name":"bwa_aln_start_bam_name",
+		"id":"bwa_aln_start_bam_name",
 		"required":"no",
 		"default":"bwa_aln_start.bam",
 		"subst_constructor":{
@@ -34,7 +34,7 @@
 		}
 	},
 	{
-		"name":"bwa_aln_start_bam",
+		"id":"bwa_aln_start_bam",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -46,7 +46,7 @@
 		}
 	},
 	{
-		"name":"bwa_aln_1_cmd",
+		"id":"bwa_aln_1_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -62,7 +62,7 @@
 		}
 	},
 	{
-		"name":"bwa_aln_2_cmd",
+		"id":"bwa_aln_2_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -78,7 +78,7 @@
 		}
 	},
 	{
-		"name":"bwa_sampe_cmd",
+		"id":"bwa_sampe_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[

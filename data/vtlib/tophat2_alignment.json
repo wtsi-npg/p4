@@ -21,7 +21,7 @@
                 "comment":"this will expand to a set of subst_param elements"
         },
 	{
-		"name":"fastq1_name",
+		"id":"fastq1_name",
 		"required":"no",
 		"default":"intfile_1.fq.gz",
 		"subst_constructor":{
@@ -34,7 +34,7 @@
 		}
 	},
 	{
-		"name":"fastq1",
+		"id":"fastq1",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -46,7 +46,7 @@
 		}
 	},
 	{
-		"name":"fastq2_name",
+		"id":"fastq2_name",
 		"required":"no",
 		"default":"intfile_2.fq.gz",
 		"subst_constructor":{
@@ -59,7 +59,7 @@
 		}
 	},
 	{
-		"name":"fastq2",
+		"id":"fastq2",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -70,9 +70,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"tophat_dir","required":"no","default":"tophat_out"},
+	{"id":"tophat_dir","required":"no","default":"tophat_out"},
 	{
-		"name":"tophat_out",
+		"id":"tophat_out",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -84,9 +84,9 @@
 		},
 		"default":"tophat_out"
 	},
-	{"name":"transcriptome_subpath","required":"no"},
+	{"id":"transcriptome_subpath","required":"no"},
 	{
-		"name":"transcriptome_val",
+		"id":"transcriptome_val",
 		"subst_constructor":{
 			"vals":[
 				{"subst":"reposdir"},
@@ -97,7 +97,7 @@
 		}
 	},
 	{
-		"name":"transcriptome_flag",
+		"id":"transcriptome_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -108,7 +108,7 @@
 		}
 	},
 	{
-		"name":"aligner_numthreads_flag",
+		"id":"aligner_numthreads_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -119,7 +119,7 @@
 		}
 	},
 	{
-		"name":"library_type_flag",
+		"id":"library_type_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -130,7 +130,7 @@
 		}
 	},
 	{
-		"name":"tophat2_cmd",
+		"id":"tophat2_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -153,7 +153,7 @@
 		}
 	},
 	{
-		"name":"junctions_bed",
+		"id":"junctions_bed",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -167,7 +167,7 @@
 		"default":"tophat_out/junctions.bed"
 	},
 	{
-		"name":"insertions_bed",
+		"id":"insertions_bed",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -181,7 +181,7 @@
 		"default":"tophat_out/insertions.bed"
 	},
 	{
-		"name":"deletions_bed",
+		"id":"deletions_bed",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -194,9 +194,9 @@
 		},
 		"default":"tophat_out/deletions.bed"
 	},
-	{"name":"accepted_hits","required":"no","default":"accepted_hits.bam"},
+	{"id":"accepted_hits","required":"no","default":"accepted_hits.bam"},
 	{
-		"name":"accepted_hits_bam",
+		"id":"accepted_hits_bam",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -210,9 +210,9 @@
 		},
 		"default":"tophat_out/accepted_hits.bam"
 	},
-	{"name":"unmapped","required":"no","default":"unmapped.bam"},
+	{"id":"unmapped","required":"no","default":"unmapped.bam"},
 	{
-		"name":"unmapped_bam",
+		"id":"unmapped_bam",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -227,7 +227,7 @@
 		"default":"tophat_out/unmapped.bam"
 	},
 	{
-		"name":"cp_deletions_bed",
+		"id":"cp_deletions_bed",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -242,7 +242,7 @@
 		}
 	},
 	{
-		"name":"cp_insertions_bed",
+		"id":"cp_insertions_bed",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -257,7 +257,7 @@
 		}
 	},
 	{
-		"name":"cp_junctions_bed",
+		"id":"cp_junctions_bed",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[

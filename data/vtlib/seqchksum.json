@@ -23,7 +23,7 @@
                 "comment":"this will expand to a set of subst_param elements"
         },
 	{
-		"name":"samtools_merge",
+		"id":"samtools_merge",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[

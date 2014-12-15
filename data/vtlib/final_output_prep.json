@@ -20,9 +20,9 @@
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
         },
-	{"name":"phix_or_target","required":"yes"},
+	{"id":"phix_or_target","required":"yes"},
 	{
-		"name":"bs_tmpfile_flag",
+		"id":"bs_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -39,7 +39,7 @@
 		}
 	},
 	{
-		"name":"bamsort_coord",
+		"id":"bamsort_coord",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -55,7 +55,7 @@
 		}
 	},
 	{
-		"name":"bmd_tmpfile_flag",
+		"id":"bmd_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -72,7 +72,7 @@
 		}
 	},
 	{
-		"name":"bmd_metrics_file_flag",
+		"id":"bmd_metrics_file_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -86,9 +86,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
+	{"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 	{
-		"name":"bammarkduplicates",
+		"id":"bammarkduplicates",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -101,9 +101,9 @@
 			"postproc":{"op":"pack", "pad":" "}
 		}
 	},
-	{"name":"stats_filter__F0x900","required":"no","default":"0x900"},
+	{"id":"stats_filter__F0x900","required":"no","default":"0x900"},
 	{
-		"name":"samtools_stats_F0x900",
+		"id":"samtools_stats_F0x900",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -116,9 +116,9 @@
 			"postproc":{"op":"pack","pad":" "}
 		}
 	},
-	{"name":"stats_filter__F0xB00","required":"no","default":"0xB00"},
+	{"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
 	{
-		"name":"samtools_stats_F0xB00",
+		"id":"samtools_stats_F0xB00",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -131,10 +131,10 @@
 			"postproc":{"op":"pack","pad":" "}
 		}
 	},
-	{"name":"calibration_pu_executable","required":"no","default":"calibration_pu"},
-	{"name":"calibration_pu_bad_tiles_count","required":"no","default":"2"},
+	{"id":"calibration_pu_executable","required":"no","default":"calibration_pu"},
+	{"id":"calibration_pu_bad_tiles_count","required":"no","default":"2"},
 	{
-		"name":"calibration_pu_prefix",
+		"id":"calibration_pu_prefix",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -148,7 +148,7 @@
 		}
 	},
 	{
-		"name":"calibration_pu_cmd",
+		"id":"calibration_pu_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -162,7 +162,7 @@
 		}
 	},
 	{
-		"name":"br_indexfile_flag",
+		"id":"br_indexfile_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -177,7 +177,7 @@
 		}
 	},
 	{
-		"name":"br_md5file_flag",
+		"id":"br_md5file_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -192,7 +192,7 @@
 		}
 	},
 	{
-		"name":"br_numthreads_flag",
+		"id":"br_numthreads_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -203,7 +203,7 @@
 		}
 	},
 	{
-		"name":"br_tmpfile_flag",
+		"id":"br_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
@@ -220,7 +220,7 @@
 		}
 	},
 	{
-		"name":"bamrecompress",
+		"id":"bamrecompress",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -236,9 +236,9 @@
 			"postproc":{"op":"pack", "pad":" "}
 		}
 	},
-	{"name":"flagstats_filter_flag","required":"no","default":"0x900"},
+	{"id":"flagstats_filter_flag","required":"no","default":"0x900"},
 	{
-		"name":"samtools_flagstat_filter",
+		"id":"samtools_flagstat_filter",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -253,7 +253,7 @@
 		}
 	},
 	{
-		"name":"samtools_flagstat_cmd",
+		"id":"samtools_flagstat_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -264,9 +264,9 @@
 			"postproc":{"op":"pack","pad":" "}
 		}
 	},
-	{"name":"fopid","default":{"subst":"phix_or_target"}},
+	{"id":"fopid","default":{"subst":"phix_or_target"}},
 	{
-		"name":"bam_file",
+		"id":"bam_file",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"bam_ext"} ],
@@ -274,21 +274,21 @@
 		}
 	},
 	{
-		"name":"cram_file",
+		"id":"cram_file",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"cram_ext"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
 	{
-		"name":"cram_md5",
+		"id":"cram_md5",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".cram.md5" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
 	{
-		"name":"bamcheck_file",
+		"id":"bamcheck_file",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".bamcheck" ],
@@ -296,21 +296,21 @@
 		}
 	},
 	{
-		"name":"stats_F0x900_file",
+		"id":"stats_F0x900_file",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, "_F0x900.stats" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
 	{
-		"name":"stats_F0xB00_file",
+		"id":"stats_F0xB00_file",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, "_F0xB00.stats" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
 	{
-		"name":"flagstat_file",
+		"id":"flagstat_file",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".flagstat" ],

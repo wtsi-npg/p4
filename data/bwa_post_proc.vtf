@@ -3,11 +3,11 @@
 "version":"1.0",
 "subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__","prealign":"bam12auxmerge:__PREALN_BAM__"},"outputs":{"_stdout_":"bam12auxmerge"}}},
 "subst_params":[
-	{"name":"rpt","required":"yes"},
-	{"name":"tmpdir","required":"no","default":"."},
-	{"name":"phix_or_target","required":"yes"},
+	{"id":"rpt","required":"yes"},
+	{"id":"tmpdir","required":"no","default":"."},
+	{"id":"phix_or_target","required":"yes"},
 	{
-		"name":"bamsort_file_name",
+		"id":"bamsort_file_name",
 		"required":"no",
 		"default":"bamsort.bam",
 		"subst_constructor":{
@@ -22,7 +22,7 @@
 		}
 	},
 	{
-		"name":"bamsort_file",
+		"id":"bamsort_file",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -34,7 +34,7 @@
 		}
 	},
 	{
-		"name":"tee_bwa_name",
+		"id":"tee_bwa_name",
 		"required":"no",
 		"default":"tee.bam",
 		"subst_constructor":{
@@ -49,7 +49,7 @@
 		}
 	},
 	{
-		"name":"tee_bwa",
+		"id":"tee_bwa",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[

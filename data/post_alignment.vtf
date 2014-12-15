@@ -3,10 +3,10 @@
 "version":"1.0",
 "subgraph_io":{"ports":{"inputs":{"_stdin_":"bamsort_coord_target","reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"},"outputs":{"_stdout_":"bamrecompress","out_cram":"scramble","out_bamcheck":"bamcheck","out_flagstat":"flagstat"}}},
 "subst_params":[
-	{"name":"outdatadir","required":"no","default":"."},
-	{"name":"rpt","required":"yes"},
+	{"id":"outdatadir","required":"no","default":"."},
+	{"id":"rpt","required":"yes"},
 	{
-		"name":"bammarkduplicates_target",
+		"id":"bammarkduplicates_target",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[

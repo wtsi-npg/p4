@@ -10,7 +10,7 @@
                 "comment":"this will expand to a set of subst_param elements"
         },
 	{
-		"name":"src_bam",
+		"id":"src_bam",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -22,9 +22,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"pre_alignment_name","required":"no","default":"pre_alignment_realign"},
+	{"id":"pre_alignment_name","required":"no","default":"pre_alignment_realign"},
 	{
-		"name":"pre_alignment_target",
+		"id":"pre_alignment_target",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -37,7 +37,7 @@
 		}
 	},
 	{
-		"name":"alignment_vtf",
+		"id":"alignment_vtf",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -49,9 +49,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"reference_dict_name","required":"yes"},
+	{"id":"reference_dict_name","required":"yes"},
 	{
-		"name":"reference_dict",
+		"id":"reference_dict",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -62,9 +62,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"post_alignment","required":"no","default":"post_alignment"},
+	{"id":"post_alignment","required":"no","default":"post_alignment"},
 	{
-		"name":"post_alignment_target",
+		"id":"post_alignment_target",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -76,7 +76,7 @@
 		}
 	},
 	{
-		"name":"initial_phix_aln_bam_name",
+		"id":"initial_phix_aln_bam_name",
 		"required":"no",
 		"default":"no_aln.bam",
 		"subst_constructor":{
@@ -89,7 +89,7 @@
 		}
 	},
 	{
-		"name":"initial_phix_aln_bam",
+		"id":"initial_phix_aln_bam",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -100,9 +100,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"auxmerge_prep_name","required":"no","default":"auxmerge_prep_realign"},
+	{"id":"auxmerge_prep_name","required":"no","default":"auxmerge_prep_realign"},
 	{
-		"name":"auxmerge_prep",
+		"id":"auxmerge_prep",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -114,9 +114,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
+	{"id":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
 	{
-		"name":"final_output_prep_target",
+		"id":"final_output_prep_target",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -129,7 +129,7 @@
 		}
 	},
 	{
-		"name":"target_bam",
+		"id":"target_bam",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -142,7 +142,7 @@
 		}
 	},
 	{
-		"name":"cram",
+		"id":"cram",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -155,7 +155,7 @@
 		}
 	},
 	{
-		"name":"out_bamcheck",
+		"id":"out_bamcheck",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -168,7 +168,7 @@
 		}
 	},
 	{
-		"name":"out_flagstat",
+		"id":"out_flagstat",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -180,9 +180,9 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"seqchksum_vtf","required":"no","default":"seqchksum_realign"},
+	{"id":"seqchksum_vtf","required":"no","default":"seqchksum_realign"},
 	{
-                "name":"seqchksum",
+                "id":"seqchksum",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[

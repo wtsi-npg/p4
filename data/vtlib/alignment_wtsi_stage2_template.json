@@ -3,7 +3,7 @@
 "description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
 "subst_params":[
 	{
-		"name":"basic_pipeline_params_file",
+		"id":"basic_pipeline_params_file",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
@@ -18,16 +18,16 @@
 		"comment":"this will expand to a set of subst_param elements"
 	},
 	{
-		"name":"src_bam",
+		"id":"src_bam",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"indatadir"}, "/", {"subst":"rpt"}, ".bam" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"pre_alignment_name","required":"no","default":"pre_alignment"},
+	{"id":"pre_alignment_name","required":"no","default":"pre_alignment"},
 	{
-		"name":"pre_alignment_target",
+		"id":"pre_alignment_target",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"pre_alignment_name"}, ".json" ],
@@ -35,7 +35,7 @@
 		}
 	},
 	{
-		"name":"alignment_vtf",
+		"id":"alignment_vtf",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"alignment_method"}, "_alignment.json" ],
@@ -43,16 +43,16 @@
 		}
 	},
 	{
-		"name":"reference_dict",
+		"id":"reference_dict",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_dict_name"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"post_alignment","required":"no","default":"post_alignment"},
+	{"id":"post_alignment","required":"no","default":"post_alignment"},
 	{
-		"name":"post_alignment_target",
+		"id":"post_alignment_target",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"post_alignment"}, ".json"
@@ -61,7 +61,7 @@
 		}
 	},
 	{
-		"name":"initial_phix_aln_bam_name",
+		"id":"initial_phix_aln_bam_name",
 		"required":"no",
 		"default":"initial_phix_aln.bam",
 		"subst_constructor":{
@@ -70,33 +70,33 @@
 		}
 	},
 	{
-		"name":"initial_phix_aln_bam",
+		"id":"initial_phix_aln_bam",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"initial_phix_aln_bam_name"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"auxmerge_prep_name","required":"no","default":"auxmerge_prep"},
+	{"id":"auxmerge_prep_name","required":"no","default":"auxmerge_prep"},
 	{
-		"name":"auxmerge_prep",
+		"id":"auxmerge_prep",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"auxmerge_prep_name"}, ".json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"alignment_filter_jar_path","required":"no","default":"/software/npg/java_jars"},
-	{"name":"java_cmd","required":"no","default":"java"},
+	{"id":"alignment_filter_jar_path","required":"no","default":"/software/npg/java_jars"},
+	{"id":"java_cmd","required":"no","default":"java"},
 	{
-		"name":"alignment_filter_jar","required":"no",
+		"id":"alignment_filter_jar","required":"no",
 		"subst_constructor":{
 			"vals":[ {"subst":"alignment_filter_jar_path"}, "/", "AlignmentFilter.jar" ],
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
 	{
-		"name":"alignment_filter_cmd",
+		"id":"alignment_filter_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[
@@ -119,19 +119,19 @@
 			"postproc":{"op":"noconcat", "pad":" "}
 		}
 	},
-	{"name":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"},
+	{"id":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"},
 	{
-		"name":"af_metrics",
+		"id":"af_metrics",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"logdir"}, "/", {"subst":"rpt"}, ".", {"subst":"af_metrics_name"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"target_indicator","default":""},
-	{"name":"phix_indicator","default":"_phix"},
+	{"id":"target_indicator","default":""},
+	{"id":"phix_indicator","default":"_phix"},
 	{
-		"name":"fopid_tgt",
+		"id":"fopid_tgt",
 		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
 		"subst_constructor":{
 			"vals":[ {"subst":"rpt"}, {"subst":"target_indicator"} ],
@@ -139,34 +139,34 @@
 		}
 	},
 	{
-		"name":"fopid_phix",
+		"id":"fopid_phix",
 		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
 		"subst_constructor":{
 			"vals":[ {"subst":"rpt"}, {"subst":"phix_indicator"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
+	{"id":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
 	{
-		"name":"final_output_prep_target",
+		"id":"final_output_prep_target",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_target_name"}, ".json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"final_output_prep_phix_name","required":"no","default":"final_output_prep"},
+	{"id":"final_output_prep_phix_name","required":"no","default":"final_output_prep"},
 	{
-                "name":"final_output_prep_phix",
+                "id":"final_output_prep_phix",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_phix_name"}, ".json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"name":"seqchksum_vtf","required":"no","default":"seqchksum"},
+	{"id":"seqchksum_vtf","required":"no","default":"seqchksum"},
 	{
-                "name":"seqchksum",
+                "id":"seqchksum",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"seqchksum_vtf"}, ".json" ],
@@ -174,7 +174,7 @@
 		}
 	},
 	{
-		"name":"phix_chksum",
+		"id":"phix_chksum",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix.seqchksum" ],
@@ -182,7 +182,7 @@
 		}
 	},
 	{
-		"name":"target_chksum",
+		"id":"target_chksum",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".seqchksum" ],

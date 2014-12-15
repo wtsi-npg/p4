@@ -217,32 +217,39 @@ sub process_subst_params {
 
 		my $sp = $unprocessed_subst_params->[$i];
 		my $spname = $sp->{name}; 
-		# all unprocessed_subst_params elements must have a name
-		if(not $spname) {
-			# it would be better to cache these errors and report as many as possible before exit (TBI)
-			$logger->($VLFATAL, q[No name for ], ($sp->{type} eq q[SPFILE]? q[SPFILE]: q[PARAM]), q[ element, entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
-		}
+		my $spid = $sp->{id}; 
+		my $sptype = $sp->{type}; 
+		$sptype ||= q[PARAM];
 
-		if(defined $sp->{type} and $sp->{type} eq q[SPFILE]) {	# process recursively
+		if($sptype eq q[SPFILE]) {	# process recursively
 			# SPFILE entries will be processed after all PARAM-type entries have been processed (for consistency in redeclaration behaviour)
 			push @spfile_node_queue, $sp;
 		}
-		else {  # subst_param type PARAM
-			my $ips = in_param_store($param_store, $spname);
+		elsif($sptype eq q[PARAM]) {
+			# all unprocessed_subst_params elements of type PARAM must have an id
+			if($sptype eq q[PARAM] and not $spid) {
+				# it would be better to cache these errors and report as many as possible before exit (TBI)
+				$logger->($VLFATAL, q[No id for PARAM element, entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
+			}
+
+			my $ips = in_param_store($param_store, $spid);
 			if($ips->{errnum} != 0) { # multiply defined - a Bad Thing in the new style (though it could just become a local variable)
 				# should this just be a carp about redeclaration? Should redeclaration be allowed if scope is restricted to within a nesting?
 				if($ips->{errnum} > 0) {
-					$logger->($VLMED, qq[INFO: Duplicate subst_param definition for $spname (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
+					$logger->($VLMED, qq[INFO: Duplicate subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
 				}
 				else {
 					# it would be better to cache these errors and report as many as possible before exit (TBI)
-					$logger->($VLFATAL, qq[Fatal error: Duplicate (local) subst_param definition for $spname (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
+					$logger->($VLFATAL, qq[Fatal error: Duplicate (local) subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
 				}
 			}
 
 			$sp->{_declared_by} ||= [];
 			push @{$sp->{_declared_by}}, join q[->], @$sp_file_stack;
-			$param_store->[0]->{varnames}->{$spname} = $sp; # adding to the "local" variable store
+			$param_store->[0]->{varnames}->{$spid} = $sp; # adding to the "local" variable store
+		}
+		else {
+			$logger->($VLFATAL, q[Unrecognised type for subst_param element: ], $sptype, q[; entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
 		}
 	}
 
@@ -252,6 +259,11 @@ sub process_subst_params {
 	for my $spfile (@spfile_node_queue) {
 		subst_walk($spfile, $param_store, $subst_requests, []);
 		my $spname = $spfile->{name};
+		if(not $spname) {
+			# it would be better to cache these errors and report as many as possible before exit (TBI)
+			$logger->($VLFATAL, q[No name for SPFILE element (], , join(q[->], @$sp_file_stack), q[)]);
+		}
+
 		if(not $globals->{processed_sp_files}->{$spname}) { # but only process a given SPFILE once
 			$globals->{processed_sp_files}->{$spname} = 1;   # flag this SPFILE name as seen
 
@@ -266,7 +278,7 @@ sub process_subst_params {
 			}
 		}
 		else {
-			$logger->($VLMAX, qq[Not processing reoccurrence of SPFILE $spname (], join(q[->], @$sp_file_stack), q[)]);  # needs to be a high-verbosity warning
+			$logger->($VLMAX, qq[INFO: Not processing reoccurrence of SPFILE $spname (], join(q[->], @$sp_file_stack), q[)]);  # needs to be a high-verbosity warning
 		}
 	}
 
@@ -280,20 +292,20 @@ sub process_subst_params {
 #  store to be legal)
 ##########################################################################
 sub in_param_store {
-	my ($param_store, $spname) = @_;
+	my ($param_store, $spid) = @_;
 
 	for my $i (0..$#{$param_store}) {
-		if($param_store->[$i]->{varnames}->{$spname}) {
+		if($param_store->[$i]->{varnames}->{$spid}) {
 			if($i == 0) {
-				if(defined $param_store->[$i]->{varnames}->{$spname}->{_declared_by} and @{$param_store->[$i]->{varnames}->{$spname}->{_declared_by}} > 0) {
-					return { errnum => -1, ms => q[duplicate local declaration of ] . $spname . q[, already declared in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spname}->{_declared_by}}, };
+				if(defined $param_store->[$i]->{varnames}->{$spid}->{_declared_by} and @{$param_store->[$i]->{varnames}->{$spid}->{_declared_by}} > 0) {
+					return { errnum => -1, ms => q[duplicate local declaration of ] . $spid . q[, already declared in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spid}->{_declared_by}}, };
 				}
 				else {
 					return { errnum => 1, ms => q[already declared locally, but only implicitly], };
 				}
 			}
 			else {
-				return { errnum => 1, ms => q[already declared, but not locally; declarations in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spname}->{_declared_by}} };
+				return { errnum => 1, ms => q[already declared, but not locally; declarations in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spid}->{_declared_by}} };
 			}
 		}
 	}
@@ -372,9 +384,6 @@ sub subst_walk {
 				push @$labels, sprintf(q[ArrayElem%03d], $i);
 				subst_walk($elem->[$i], $param_store, $subst_requests, $labels);
 				pop @$labels;
-			}
-			else {
-				$logger->($VLMAX, "Non-ref element with ", join(q[ / ], @$labels));
 			}
 		}
 	}
@@ -458,7 +467,7 @@ sub fetch_subst_value {
 		if(not defined $retval) {
 			# caller should decide if undef is allowed, unless required is true
 			my $severity = (defined $param_entry->{required} and $param_entry->{required} eq q[yes])? $VLFATAL: $VLMED;
-			$logger->($severity, q[Undefined elements in subst_param array: ], $param_entry->{name});
+			$logger->($severity, q[INFO: Undefined elements in subst_param array: ], $param_entry->{id});
 			return;
 		}
 	}
@@ -508,7 +517,7 @@ sub resolve_subst_array {
 		}
 		else {
 			# decision about fatality should be left to the caller
-			$logger->($VLMED, q[Undefined elements in subst_param array: ], $subst_param->{name});
+			$logger->($VLMED, q[INFO: Undefined elements in subst_param array: ], $subst_param->{id});
 			return;
 		}
 	}
@@ -665,7 +674,7 @@ sub read_vtf_version_check {
 	my $version = $cfg->{version};
 	$version ||= -1;
 	if($version < $version_minimum) { 
-		$logger->($VLMED, q[Warning: minimum template version requested was ], $version_minimum, q[, template version is ], ($version>=0?$version:q[UNSPECIFIED]));
+		$logger->($VLMED, q[Warning: minimum template version requested for template ], $vtf_name, q[ was ], $version_minimum, q[, template version is ], ($version>=0?$version:q[UNSPECIFIED]));
 	}
 
 	return $cfg;
