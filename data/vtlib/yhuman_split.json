@@ -1,0 +1,92 @@
+{
+"version":"1.0",
+"description":"alignment pipeline post alignment y split of data before sending to standard final output processing",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"split",
+			"reference_genome_fasta":["target_final:__REFERENCE_GENOME_FASTA__", "split_final:__REFERENCE_GENOME_FASTA__"]
+		},
+		"outputs":{
+			"_stdout_":"bamcat"
+		}
+	}
+},
+"foo":        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+                "name": "alignment_common.spf",
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+"subst_params":[
+	{"id":"final_output_prep_no_y_target_name","required":"no","default":"final_output_prep"},
+	{
+		"id":"final_output_prep_no_y_target",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_no_y_target_name"}, ".json" ],
+			"comment":"we need a new subst here as final_output_prep_name will have been replaced in the template above by this template",
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"final_output_prep_y_name","required":"no","default":"final_output_prep"},
+	{
+                "id":"final_output_prep_y",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_y_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"y_indicator","default":"_y"},
+	{
+		"id":"fopid_y",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"y_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"split",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":["something more useful", "__TARGET_OUT__", "__SPLIT_OUT__"]
+	},
+	{
+		"id":"target_final",
+		"type":"VTFILE",
+		"node_prefix":"foptgnyt_",
+		"subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+		"name":{"subst":"final_output_prep_no_y_target"},
+		"use_STDIN": true,
+		"use_STDOUT": true
+	},
+	{
+		"id":"split_final",
+		"type":"VTFILE",
+		"node_prefix":"foptgy_",
+		"subst_map":{"phix_or_target":{"subst":"y_indicator"},"fopid":{"subst":"fopid_y"},"bstmp":"bspafy","brtmp":"brpafy","bmdtmp":"bmdpafy"},
+		"name":{"subst":"final_output_prep_y"},
+		"use_STDIN": true,
+		"use_STDOUT": true
+	},
+	{
+		"id":"bamcat",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":["bamcat", "level=0", "__TARGET_IN__", "__SPLIT_IN__"]
+	}
+],
+"edges":[
+	{ "from":"split:__TARGET_OUT__", "to":"target_final" },
+	{ "from":"split:__SPLIT_OUT__", "to":"split_final" },
+	{ "from":"target_final", "to":"bamcat:__TARGET_IN__" },
+	{ "from":"split_final", "to":"bamcat:__SPLIT_IN__" }
+]
+}
