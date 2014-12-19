@@ -591,9 +591,21 @@ sub subgraph_to_flat_graph {
 	#  in earlier processing) should prevent any id clashes.
 	#########################################################################################################
 	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
-	$subcfg->{edges} = [ (map { $_->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{from}; $_->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{to}; $_; } @{$subcfg->{edges}}) ];
+
+	########################################################################
+	# any edges which refer to nodes in this subgraph should also be updated
+	########################################################################
+	for my $edge (@{$subcfg->{edges}}) {
+		if(not get_child_prefix($tree_node->{children}, $edge->{from})) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+			$edge->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $edge->{from};
+		}
+		if(not get_child_prefix($tree_node->{children}, $edge->{to})) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+			$edge->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $edge->{to};
+		}
+	}
+
 	push @{$flat_graph->{nodes}}, @{$subcfg->{nodes}};
-	push @{$flat_graph->{edges}}, @{$subcfg->{edges}};  # NO LONGER TRUE: in the first instance, I'm assuming this subgraph has no subgraphs of its own
+	push @{$flat_graph->{edges}}, @{$subcfg->{edges}};
 
 	# determine input/output node(s) in the subgraph
 	my $subgraph_nodes_in = $subcfg->{subgraph_io}->{ports}->{inputs};
@@ -633,7 +645,12 @@ sub subgraph_to_flat_graph {
 				else {
 					$mod_edge = $edge;
 				}
-				$mod_edge->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $ports->[$i];
+				if(get_child_prefix($tree_node->{children}, $ports->[$i])) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+					$mod_edge->{to} = $ports->[$i];
+				}
+				else {
+					$mod_edge->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $ports->[$i];
+				}
 			}
 		}
 		else {
@@ -656,7 +673,12 @@ sub subgraph_to_flat_graph {
 			}
 
 			# do check for existence of port in 
-			$edge->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $port;
+			if(get_child_prefix($tree_node->{children}, $port)) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+				$edge->{from} = $port;
+			}
+			else {
+				$edge->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $port;
+			}
 		}
 		else {
 			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
@@ -665,6 +687,14 @@ sub subgraph_to_flat_graph {
 	}
 
 	return $flat_graph;
+}
+
+sub get_child_prefix {
+	my ($children, $edge_to) = @_;
+
+	my $child = (grep { $edge_to =~ /^$_->{id}:?(.*)$/} @$children)[0];
+
+	return $child? $child->{node_prefix}: q[];
 }
 
 sub read_vtf_version_check {
