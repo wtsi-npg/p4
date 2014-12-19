@@ -346,7 +346,7 @@ sub subst_walk {
 					$logger->($VLFATAL, q[value for a subst directive must be a param (not a reference), keys for subst is: ], $k);
 				}
 
-				$elem->{$k} = fetch_subst_value($param_name, $param_store, $subst_requests);  # any subst_constructor faff handled by do_subst()
+				$elem->{$k} = fetch_subst_value($param_name, $param_store, $subst_requests);
 
 				unless(defined $elem->{$k}) {
 					$logger->($VLFATAL, croak q[Failed to fetch subst value for parameter ], $param_name, q[ (key was ], $k, q[)]);
@@ -371,7 +371,7 @@ sub subst_walk {
 					$logger->($VLFATAL, q[value for a subst directive must be a param name (not a reference), index for subst is: ], $i);
 				}
 
-				$elem->[$i] = fetch_subst_value($param_name, $param_store, $subst_requests);  # any subst_constructor faff handled by do_subst()
+				$elem->[$i] = fetch_subst_value($param_name, $param_store, $subst_requests);
 
 				unless(defined $elem->[$i]) {
 					$logger->($VLFATAL, q[Failed to fetch subst value for parameter ], $param_name, q[ (element index was ], $i);
@@ -432,11 +432,6 @@ sub fetch_subst_value {
 
 		$param_entry = $new_param_entry;
 	}
-
-#	if(not defined $param_entry) {
-#		$param_entry = { name => $param_name, };
-#		$param_store->[0]->{varnames}->{$param_name} = $param_entry; # adding to the "local" variable store
-#	}
 
 	if(defined $param_entry->{_value}) {
 		return $param_entry->{_value};   # already evaluated, no need to do again
