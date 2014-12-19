@@ -132,8 +132,8 @@ sub process_vtnode {
 	}
 	$vtnode->{cfg}->{nodes} = [ @nonvtf_nodes ];
 
+	push @{$globals->{vt_file_stack}}, $vtf_name;
 	for my $vtf_node (@vtf_nodes) {
-		push @{$globals->{vt_file_stack}}, $vtf_name;
 
 		# both subst_requests and param_stores have local components
 		my $sr = $vtf_node->{subst_map};
@@ -149,8 +149,8 @@ sub process_vtnode {
 
 		push @{$vtnode->{children}}, $vtc;
 
-		pop @{$globals->{vt_file_stack}};
 	}
+	pop @{$globals->{vt_file_stack}};
 
 	return $vtnode;
 }
@@ -425,10 +425,18 @@ sub fetch_subst_value {
 		if($param_entry) { last; }
 	}
 
-	if(not defined $param_entry) {
-		$param_entry = { name => $param_name, };
-		$param_store->[0]->{varnames}->{$param_name} = $param_entry; # adding to the "local" variable store
+	if(not defined $param_store->[0]->{varnames}->{$param_name}) {	# create a "writeable" param_store entry at local level
+		my $new_param_entry = (not defined $param_entry)? { name => $param_name, }: dclone $param_entry;
+
+		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
+
+		$param_entry = $new_param_entry;
 	}
+
+#	if(not defined $param_entry) {
+#		$param_entry = { name => $param_name, };
+#		$param_store->[0]->{varnames}->{$param_name} = $param_entry; # adding to the "local" variable store
+#	}
 
 	if(defined $param_entry->{_value}) {
 		return $param_entry->{_value};   # already evaluated, no need to do again
@@ -439,7 +447,7 @@ sub fetch_subst_value {
 		if(defined $retval) { last; }
 	}
 
-	if(defined $retval) {
+	if(defined $retval) { # be careful here - don't set _value for a higher-level param_store
 		$param_entry->{_value} = $retval;
 		return $retval;
 	}
@@ -472,7 +480,7 @@ sub fetch_subst_value {
 		}
 	}
 	elsif(defined $param_entry->{default}) {
-		$param_entry->{_value} = $param_entry->{default};
+		$param_entry->{_value} = $param_entry->{default}; # be careful here - don't set _value for a higher-level param_store
 		return $param_entry->{default};
 	}
 	else {
@@ -482,7 +490,7 @@ sub fetch_subst_value {
 		return;
 	}
 
-	$param_entry->{_value} = $retval;
+	$param_entry->{_value} = $retval; # be careful here - don't set _value for a higher-level param_store
 
 	return $retval;
 }

@@ -206,7 +206,6 @@ $logger->($VLMIN, "Done\n");
 sub _get_node_info {
 	my ($edge_id, $all_nodes) = @_;
 
-	my $from = $edge_id;
 	my ($id, $port);
 	# slightly more concise regex usage might be good here
 	if($edge_id =~ /^([^:]*):(.*)$/) {
