@@ -5,7 +5,7 @@
 	"ports":{
 		"inputs":{
 			"_stdin_":"split",
-			"reference_genome_fasta":["target_final:__REFERENCE_GENOME_FASTA__", "split_final:__REFERENCE_GENOME_FASTA__"]
+			"reference_genome_fasta":["target_final:reference_genome_fasta", "split_final:reference_genome_fasta"]
 		},
 		"outputs":{
 			"_stdout_":"bamcat"
