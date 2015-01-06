@@ -274,7 +274,7 @@
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
-                "subst_map":{"phix_or_target":"target","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "subst_map":{"phix_or_target":"","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
