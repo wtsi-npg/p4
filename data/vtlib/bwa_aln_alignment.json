@@ -54,9 +54,7 @@
 				"aln",
 				"-t",
 				{"subst":"aligner_numthreads"},
-				"-b1",
-				"__REFERENCE_GENOME_FASTA__",
-				"__BAM_IN__"
+				"-b1"
 			],
 			"postproc":{"op":"noconcat","pad":" "}
 		}
@@ -70,9 +68,7 @@
 				"aln",
 				"-t",
 				{"subst":"aligner_numthreads"},
-				"-b2",
-				"__REFERENCE_GENOME_FASTA__",
-				"__BAM_IN__"
+				"-b2"
 			],
 			"postproc":{"op":"noconcat","pad":" "}
 		}
@@ -83,12 +79,7 @@
 		"subst_constructor":{
 			"vals":[
 				{"subst":"bwa_executable"},
-				"sampe",
-				"__REFERENCE_GENOME_FASTA__",
-				"__SAI_1__",
-				"__SAI_2__",
-				"__BAM_1__",
-				"__BAM_2__"
+				"sampe"
 			],
 			"postproc":{"op":"noconcat","pad":" "}
 		}
@@ -103,17 +94,17 @@
 	{
 		"id":"bwa_aln_1",
 		"type":"EXEC",
-		"cmd":{"subst":"bwa_aln_1_cmd"}
+		"cmd":[{"subst":"bwa_aln_1_cmd"}, "__REFERENCE_GENOME_FASTA__", "__BAM_IN__"]
 	},
 	{
 		"id":"bwa_aln_2",
 		"type":"EXEC",
-		"cmd":{"subst":"bwa_aln_2_cmd"}
+		"cmd":[{"subst":"bwa_aln_2_cmd"}, "__REFERENCE_GENOME_FASTA__", "__BAM_IN__"]
 	},
         {
                 "id":"bwa_sampe",
                 "type":"EXEC",
-		"cmd":{"subst":"bwa_sampe_cmd"}
+		"cmd":[{"subst":"bwa_sampe_cmd"}, "__REFERENCE_GENOME_FASTA__", "__SAI_1__", "__SAI_2__", "__BAM_1__", "__BAM_2__"]
         },
         {
                 "id":"samtobam",

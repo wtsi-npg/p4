@@ -31,9 +31,7 @@
 				"merge",
 				"-c",
 				"--",
-				"-",
-				"__TARGETBAM_IN__",
-				"__PHIXBAM_IN__"
+				"-"
 			],
 			"postproc":{"op":"pack","pad":" "}
 		}
@@ -74,7 +72,7 @@
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":{"subst":"samtools_merge"}
+		"cmd":[{"subst":"samtools_merge"}, "__TARGETBAM_IN__", "__PHIXBAM_IN__"]
         },
         {
                 "id":"seqchksum_output",

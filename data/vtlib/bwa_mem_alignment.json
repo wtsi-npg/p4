@@ -41,9 +41,7 @@
 				"-t",
 				{"subst":"aligner_numthreads"},
 				"-p",
-				{"subst":"bwa_T_flag"},
-				"__DB_PREFIX_REFERENCE_GENOME__",
-				"__FQ_IN__"
+				{"subst":"bwa_T_flag"}
 			],
 			"postproc":{"op":"pack","pad":" "}
 		}
@@ -59,7 +57,7 @@
 		"id":"bwa_mem",
 		"comment":"presuming interleaved FR fastq records (-p flag), output all records (-T 0)",
 		"type":"EXEC",
-		"cmd":{"subst":"bwa_mem_cmd"}
+		"cmd":[{"subst":"bwa_mem_cmd"}, "__DB_PREFIX_REFERENCE_GENOME__", "__FQ_IN__"]
 	},
         {
                 "id":"samtobam",
