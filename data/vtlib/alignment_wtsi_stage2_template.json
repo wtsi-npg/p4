@@ -103,11 +103,6 @@
 				{"subst":"java_cmd"},
 				"-Xmx1000m",
 				"-jar", {"subst":"alignment_filter_jar"},
-				"IN=__PHIX_INBAM__",
-				"IN=__TARGET_INBAM__",
-				"OUT=__PHIX_OUTBAM__",
-				"OUT=/dev/stdout",
-				"METRICS_FILE=__AF_METRICS__",
 				"VALIDATION_STRINGENCY=SILENT",
 				"CREATE_MD5_FILE=false",
 				"VERBOSITY=INFO",
@@ -229,6 +224,7 @@
 	{
 		"id":"alignment_target",
 		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
 		"node_prefix":"alntgt_",
 		"name":{"subst":"alignment_vtf"},
 		"description":"subgraph containing alignment process"
@@ -242,6 +238,7 @@
 	{
 		"id":"post_alignment_target",
 		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference_dict, no_align_bam; outputs: _stdout_ (bam)",
 		"node_prefix":"postalntgt_",
 		"name":{"subst":"post_alignment_target"},
 		"description":"subgraph containing post alignment process (target)"
@@ -270,7 +267,7 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":{"subst":"alignment_filter_cmd"}
+		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__TARGET_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
 	},
 	{
 		"id":"af_metrics",
@@ -286,6 +283,7 @@
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
 		"node_prefix":"foptgt_",
                 "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst":"final_output_prep_target"},
@@ -300,12 +298,20 @@
         {
                 "id":"final_output_prep_phix",
                 "type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
 		"node_prefix":"fopphx_",
                 "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst":"final_output_prep_phix"},
                 "description":"subgraph containing post alignment_filter process (phix)"
         },
-        { "id":"seqchksum", "type":"VTFILE", "node_prefix":"scs_", "name":{"subst":"seqchksum"}, "description":"subgraph containing seqchksum validation of outputs" },
+        {
+		"id":"seqchksum",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (start bam), target_bam, phix_bam; outputs: target_chksum, phix_chksum",
+		"node_prefix":"scs_",
+		"name":{"subst":"seqchksum"},
+		"description":"subgraph containing seqchksum validation of outputs"
+	},
 	{ "id":"phix_chksum", "type":"OUTFILE", "name":{"subst":"phix_chksum"} },
 	{ "id":"target_chksum", "type":"OUTFILE", "name":{"subst":"target_chksum"} }
 ],

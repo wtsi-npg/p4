@@ -86,6 +86,17 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
+	{
+		"id":"bmd_resetdupflag",
+		"comment":"this option should only be used with bamstreamingmarkduplicates (not bammarkduplicates or bammarkduplicates2)",
+		"subst_constructor":{
+			"vals":[
+				"resetdupflag",
+				{"subst":"bmd_resetdupflag_val"}
+			],
+			"postproc":{"op":"concat", "pad":"="}
+		}
+	},
 	{"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 	{
 		"id":"bammarkduplicates",
@@ -93,12 +104,13 @@
 		"subst_constructor":{
 			"vals":[
 				{"subst":"bmd_cmd"},
-				" level=0",
+				"level=0",
 				"verbose=0",
 				{"subst":"bmd_tmpfile_flag"},
-				{"subst":"bmd_metrics_file_flag"}
+				{"subst":"bmd_metrics_file_flag"},
+				{"subst":"bmd_resetdupflag"}
 			],
-			"postproc":{"op":"pack", "pad":" "}
+			"postproc":{"op":"pack"}
 		}
 	},
 	{"id":"stats_filter__F0x900","required":"no","default":"0x900"},

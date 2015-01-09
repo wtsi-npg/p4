@@ -40,9 +40,7 @@
 		"subst_constructor":{
 			"vals":[
 				{"subst":"samtools_executable"},
-				"reheader",
-				"__IN_SAMHEADER__",
-				"__IN_BAM__"
+				"reheader"
 			],
 			"postproc":{"op":"pack","pad":" "}
 		}
@@ -85,7 +83,7 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":{"subst":"samtools_reheader"}
+		"cmd":[{"subst":"samtools_reheader"}, "__IN_SAMHEADER__", "__IN_BAM__"]
 	},
 	{
 		"id":"bam12split",

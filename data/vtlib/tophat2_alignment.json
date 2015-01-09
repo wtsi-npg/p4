@@ -144,10 +144,7 @@
 				{"subst":"library_type_flag"},
 				"--no-coverage-search",
 				"--microexon-search",
-				{"subst":"transcriptome_flag"},
-				"__REFERENCE_GENOME__",
-				"__FQIN1__",
-				"__FQIN2__"
+				{"subst":"transcriptome_flag"}
 			],
 			"postproc":{"op":"pack","pad":" "}
 		}
@@ -227,12 +224,10 @@
 		"default":"tophat_out/unmapped.bam"
 	},
 	{
-		"id":"cp_deletions_bed",
+		"id":"cp_deletions_bed_target",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
-				"cp ",
-				"__SRC_DELETIONS_BED__ ",
 				{"subst":"outdatadir"},
 				"/",
 				{"subst":"rpt"},
@@ -242,12 +237,10 @@
 		}
 	},
 	{
-		"id":"cp_insertions_bed",
+		"id":"cp_insertions_bed_target",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
-				"cp ",
-				"__SRC_INSERTIONS_BED__ ",
 				{"subst":"outdatadir"},
 				"/",
 				{"subst":"rpt"},
@@ -257,12 +250,10 @@
 		}
 	},
 	{
-		"id":"cp_junctions_bed",
+		"id":"cp_junctions_bed_target",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
-				"cp ",
-				"__SRC_JUNCTIONS_BED__ ",
 				{"subst":"outdatadir"},
 				"/",
 				{"subst":"rpt"},
@@ -295,7 +286,7 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{"subst":"tophat2_cmd"}
+		"cmd":[{"subst":"tophat2_cmd"}, "__REFERENCE_GENOME__", "__FQIN1__", "__FQIN2__"]
 	},
 	{
 		"id":"junctions_bed",
@@ -330,28 +321,40 @@
 	{
 		"id":"bamcat",
 		"type":"EXEC",
-		"cmd":"bamcat I=__IN_BAM1__ I=__IN_BAM2__ level=0"
+		"cmd":["bamcat", "I=__IN_BAM1__", "I=__IN_BAM2__", "level=0"]
 	},
 	{
 		"id":"cp_deletions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{"subst":"cp_deletions_bed"}
+		"cmd":[
+			"cp",
+			"__SRC_DELETIONS_BED__",
+			{"subst":"cp_deletions_bed_target"}
+		]
 	},
 	{
 		"id":"cp_insertions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{"subst":"cp_insertions_bed"}
+		"cmd":[
+			"cp ",
+			"__SRC_INSERTIONS_BED__ ",
+			{"subst":"cp_insertions_bed_target"}
+		]
 	},
 	{
 		"id":"cp_junctions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{"subst":"cp_junctions_bed"}
+		"cmd":[
+			"cp ",
+			"__SRC_JUNCTIONS_BED__ ",
+			{"subst":"cp_junctions_bed_target"}
+		]
 	}
 ],
 "edges":[

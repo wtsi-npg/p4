@@ -232,6 +232,7 @@
 	{
 		"id":"alignment_target",
 		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
 		"name":{"subst":"alignment_vtf"},
 		"description":"subgraph containing alignment process"
 	},
@@ -244,6 +245,7 @@
 	{
 		"id":"post_alignment_target",
 		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference_dict, no_align_bam; outputs: _stdout_ (bam)",
 		"name":{"subst":"post_alignment_target"},
 		"description":"subgraph containing post alignment process (target)"
 	},
@@ -274,7 +276,8 @@
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
-                "subst_map":{"phix_or_target":"target","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+		"comment":"inputs: _stdin_ (bam), reference_genome_fasta; outputs: _stdout_ (bam)",
+                "subst_map":{"phix_or_target":"","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
@@ -301,6 +304,7 @@
 	{
 		"id":"seqchksum",
 		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (start bam), target_bam",
 		"name":{"subst":"seqchksum"},
 		"description":"subgraph containing seqchksum validation of outputs"
 	}

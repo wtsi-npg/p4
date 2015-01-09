@@ -3,7 +3,7 @@
 #################################################################################################
 # vtfp.pl
 # Updated utility to process viv template files.  Handles replacement of substitutable parameters
-#  eith specified values. Croaks when all required parameters are not replaced with values.
+#  with specified values. Croaks when all required parameters are not replaced with values.
 # Will have a query mode which reports available parameters
 #################################################################################################
 
@@ -106,8 +106,9 @@ print $out to_json($flat_graph);
 #   2. process local subst_param section (if any), expanding SPFILE nodes and updating
 #       param_store
 #   3. process subst directives (just nodes and edges)
-#   4. process nodes, expanding elements of type VTFILE (note: there will be a param_store
-#       and subst_request lists, as long as the most deeply nested VTFILE)
+#   4. process nodes, expanding elements of type VTFILE (note: there will be param_store
+#       and subst_request lists, containing as many entries as the current depth of VTFILE
+#       nesting)
 #
 # Returns: root of tree of vtnodes (for later flattening)
 ##########################################################################################
@@ -132,8 +133,8 @@ sub process_vtnode {
 	}
 	$vtnode->{cfg}->{nodes} = [ @nonvtf_nodes ];
 
+	push @{$globals->{vt_file_stack}}, $vtf_name;
 	for my $vtf_node (@vtf_nodes) {
-		push @{$globals->{vt_file_stack}}, $vtf_name;
 
 		# both subst_requests and param_stores have local components
 		my $sr = $vtf_node->{subst_map};
@@ -149,8 +150,8 @@ sub process_vtnode {
 
 		push @{$vtnode->{children}}, $vtc;
 
-		pop @{$globals->{vt_file_stack}};
 	}
+	pop @{$globals->{vt_file_stack}};
 
 	return $vtnode;
 }
@@ -180,38 +181,42 @@ sub get_node_prefix {
 	return $node_prefix;
 }
 
-##########################################################################################
+#######################################################################################
 # process_subst_params:
-#  process a subst_param section, adding varnames declared to the "local" param_store and
-#   recursively processing any included files specified in elements of type SPFILE.
+#  param_store - a list (ref) of maps of variable names to their values or constructor;
+#                  supplies the values when subst directives are processed
+#  subst_requests - a list (ref) of key/value pairs. Keys are subst_param varnames,
+#                    values are string values; supplied at run time or via subst_map
+#                    attributes in VTFILE nodes; used here to expand subst directives
+#                    that appear in subst_param entries
+#  unprocessed_subst_params - the list of subst_param entries to process; either of
+#                    type PARAM (describes how to retrieve/construct the value for the
+#                    specified varname) or SPFILE (specifies a file containing
+#                    subst_params)
+#  sp_file_stack - the list of file names leading to our current location, used for
+#                    warning/error reporting
+#  globals - used here to prevent multiple processing of SPFILE nodes and to pass the
+#                  value of template_path
+#
+# Description:
+#  process a subst_param section, adding any varnames declared in it to the "local"
+#   param_store and recursively processing any included files specified by elements
+#   of type SPFILE.
 #
 #  In other words, step through unprocessed subst_param entries:
-#   a) if element is of type PARAM, add entries in param_store to subst_params
-#       and varnames
+#   a) if element is of type PARAM, add it to the "local" param_store
 #   b) if element is of type SPFILE, [queue it up for] make a recursive call to
 #       process_subst_params() to expand it
 #
 # A stack of spfile names is passed to recursive calls to allow construction of
 #  error strings for later reporting (though initially just croak). Consider a slightly
 #  more sophisticated structure for elements on this stack to improve error reporting
-##########################################################################################
+#######################################################################################
 sub process_subst_params {
 	my ($param_store, $subst_requests, $unprocessed_subst_params, $sp_file_stack, $globals) = @_;
 	my @spfile_node_queue = ();
 
 	$param_store ||= [ { varnames => {}, } ];
-
-	###################################################################################################################
-	# param_store attributes
-	#	varnames = {};		# keys are varnames, values are pointers to the $subst_params element
-	#
-	# unprocessed_subst_params	# elements of this list are subst_param entries, which are:
-	#				#   a) of type PARAM, and are instructions on how to expand subst directives
-	#				#     or
-	#				#   b) of type SPFILE, which should resolve to a subst_param list
-	#
-	# sp_file_stack			# currently a list of names of included subst_param files, used for error reporting
-	###################################################################################################################
 
 	for my $i (0..$#{$unprocessed_subst_params}) {
 
@@ -227,15 +232,14 @@ sub process_subst_params {
 		}
 		elsif($sptype eq q[PARAM]) {
 			# all unprocessed_subst_params elements of type PARAM must have an id
-			if($sptype eq q[PARAM] and not $spid) {
+			if(not $spid) {
 				# it would be better to cache these errors and report as many as possible before exit (TBI)
 				$logger->($VLFATAL, q[No id for PARAM element, entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
 			}
 
 			my $ips = in_param_store($param_store, $spid);
-			if($ips->{errnum} != 0) { # multiply defined - a Bad Thing in the new style (though it could just become a local variable)
-				# should this just be a carp about redeclaration? Should redeclaration be allowed if scope is restricted to within a nesting?
-				if($ips->{errnum} > 0) {
+			if($ips->{errnum} != 0) { # multiply defined - OK unless explicitly declared multiple times at this level
+				if($ips->{errnum} > 0) { # a previous declaration was made by an ancestor of the current vtnode
 					$logger->($VLMED, qq[INFO: Duplicate subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
 				}
 				else {
@@ -325,11 +329,11 @@ sub apply_subst {
 	}
 }
 
-###############################################################################################################
+##############################################################################################################
 # subst_walk:
-#  walk the given element (node or edge), looking for "subst" directives. When found search the param_store and
-#   subst_request lists for the desired key/vaue pair
-###############################################################################################################
+#  walk the given element, looking for "subst" directives. When found search the param_store and subst_request
+#   lists for the desired key/value pair
+##############################################################################################################
 sub subst_walk {
 	my ($elem, $param_store, $subst_requests, $labels) = @_;
 
@@ -343,10 +347,10 @@ sub subst_walk {
 			if(ref $elem->{$k} eq q[HASH] and my $param_name = $elem->{$k}->{subst}) {
 				# value for a "subst" key must always be the name of a parameter
 				if(ref $param_name) {
-					$logger->($VLFATAL, q[value for a subst directive must be a param (not a reference), keys for subst is: ], $k);
+					$logger->($VLFATAL, q[value for a subst directive must be a param (not a reference), key for subst is: ], $k);
 				}
 
-				$elem->{$k} = fetch_subst_value($param_name, $param_store, $subst_requests);  # any subst_constructor faff handled by do_subst()
+				$elem->{$k} = fetch_subst_value($param_name, $param_store, $subst_requests);
 
 				unless(defined $elem->{$k}) {
 					$logger->($VLFATAL, croak q[Failed to fetch subst value for parameter ], $param_name, q[ (key was ], $k, q[)]);
@@ -371,7 +375,14 @@ sub subst_walk {
 					$logger->($VLFATAL, q[value for a subst directive must be a param name (not a reference), index for subst is: ], $i);
 				}
 
-				$elem->[$i] = fetch_subst_value($param_name, $param_store, $subst_requests);  # any subst_constructor faff handled by do_subst()
+#				$elem->[$i] = fetch_subst_value($param_name, $param_store, $subst_requests);
+				my $sval = fetch_subst_value($param_name, $param_store, $subst_requests);
+				if(ref $sval eq q[ARRAY]) {
+					splice @$elem, $i, 1, @$sval;
+				}
+				else {
+					$elem->[$i] = $sval;
+				}
 
 				unless(defined $elem->[$i]) {
 					$logger->($VLFATAL, q[Failed to fetch subst value for parameter ], $param_name, q[ (element index was ], $i);
@@ -396,25 +407,24 @@ sub subst_walk {
 	return;
 }
 
-#####################################################################
+##################################################################
 # fetch_subst_value:
-#  use the param_store and subst_requests to find a value for the
-#  given param_name. The _value attribute of a param_entry caches
-#  successfully resolved values.
+#  use the param_store and subst_requests to find or construct
+#  a value for the given param_name. The _value attribute of a
+#  param_entry caches successfully resolved values.
 #
 #   1. Search the param_store for an entry for this param_name.
 #   2. If there isn't a param_store entry, add [an unset] one.
 #   3. If the param_entry _value attribute is set, return that.
-#   4. Search subst_requests for a value for this param_name. If one
-#       is found, return it.
+#   4. Search subst_requests for a value for this param_name. If
+#       one is found, return it.
 #   5. Try evaluating the param_entry. If it resolves, return that
 #       value.
 #   6. If a default value value was specified in the param_entry,
 #       return that.
 #   7. If the required attribute of the param_entry is true,
 #       it is a fatal error; otherwise return undef
-#
-#####################################################################
+##################################################################
 sub fetch_subst_value {
 	my ($param_name, $param_store, $subst_requests) = @_;
 	my $param_entry;
@@ -425,9 +435,12 @@ sub fetch_subst_value {
 		if($param_entry) { last; }
 	}
 
-	if(not defined $param_entry) {
-		$param_entry = { name => $param_name, };
-		$param_store->[0]->{varnames}->{$param_name} = $param_entry; # adding to the "local" variable store
+	if(not defined $param_store->[0]->{varnames}->{$param_name}) {	# create a "writeable" param_store entry at local level
+		my $new_param_entry = (not defined $param_entry)? { name => $param_name, }: dclone $param_entry;
+
+		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
+
+		$param_entry = $new_param_entry;
 	}
 
 	if(defined $param_entry->{_value}) {
@@ -447,7 +460,11 @@ sub fetch_subst_value {
 	if($param_entry->{subst_constructor}) {
 		my $vals;
 		unless($vals = $param_entry->{subst_constructor}->{vals}) {
-			$logger->($VLFATAL, q[subst_constructor attribute requires a vals attribute]);
+			$logger->($VLFATAL, q[subst_constructor attribute requires a vals attribute, param_name: ], $param_name);
+		}
+
+		unless(ref $vals eq q[ARRAY]) {
+			$logger->($VLFATAL, q[subst_constructor vals attribute must be array, param_name: ], $param_name);
 		}
 
 		for my $i (0..$#$vals) {
@@ -472,7 +489,7 @@ sub fetch_subst_value {
 		}
 	}
 	elsif(defined $param_entry->{default}) {
-		$param_entry->{_value} = $param_entry->{default};
+		$param_entry->{_value} = $param_entry->{default}; # be careful here - don't set _value for a higher-level param_store
 		return $param_entry->{default};
 	}
 	else {
@@ -482,7 +499,7 @@ sub fetch_subst_value {
 		return;
 	}
 
-	$param_entry->{_value} = $retval;
+	$param_entry->{_value} = $retval; # be careful here - don't set _value for a higher-level param_store
 
 	return $retval;
 }
@@ -510,7 +527,7 @@ sub resolve_subst_array {
 	my $ops=$subst_constructor->{postproc}->{op};
 	if(defined $ops and ref $ops ne q[ARRAY]) { $ops = [ $ops ]; }
 
-	# if (post-pack) array contains nulls, it is invalid
+	# if (post-pack) array contains undefs, it is invalid
 	if(any { ! defined($_) } @$subst_value) {
 		if(grep { $_ eq q[pack] } @$ops) {
 			$subst_value = [ (grep { defined($_) } @$subst_value) ];
@@ -586,10 +603,9 @@ sub subgraph_to_flat_graph {
 
 	my $subcfg = $tree_node->{cfg};
 
-	#########################################################################################################
-	# add the new nodes and edges to the flat graph structure. Node prefixes (per-subgraph uniqueness ensured
-	#  in earlier processing) should prevent any id clashes.
-	#########################################################################################################
+	###################################################################################
+	# prefix the nodes in this subgraph with a prefix to ensure uniqueness of id values
+	###################################################################################
 	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
 
 	########################################################################
@@ -604,6 +620,9 @@ sub subgraph_to_flat_graph {
 		}
 	}
 
+	##########################################################
+	# add the new nodes and edges to the flat graph structure.
+	##########################################################
 	push @{$flat_graph->{nodes}}, @{$subcfg->{nodes}};
 	push @{$flat_graph->{edges}}, @{$subcfg->{edges}};
 
@@ -613,7 +632,7 @@ sub subgraph_to_flat_graph {
 
 	# now fiddle the edges in the flattened graph (maybe "fiddle" should be defined)
 
-	#  first inputs to the subgraph... (identify edges in the flat graph which terminate in nodes of this subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
+	# first inputs to the subgraph... (identify edges in the flat graph which terminate in nodes of this subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
 	my $in_edges = [ (grep { $_->{to} =~ /^$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
 	if(@$in_edges and not $subgraph_nodes_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode_id, q[". No inputs specified in subgraph ], $vt_name); }
 	for my $edge (@$in_edges) {
