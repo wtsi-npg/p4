@@ -12,13 +12,6 @@
 		}
 	}
 },
-"foo":        {
-                "id": "basic_pipeline_params",
-                "type":"SPFILE",
-                "name": "alignment_common.spf",
-                "required": "no",
-                "comment":"this will expand to a set of subst_param elements"
-        },
 "subst_params":[
 	{"id":"final_output_prep_no_y_target_name","required":"no","default":"final_output_prep"},
 	{
@@ -70,7 +63,6 @@
 				"MAX_RECORDS_IN_RAM=500000",
 				"S=Y",
 				"V=true"
-				, "I=__IN__", "TARGET_PATH=__TARGET_OUT__", "EXCLUDED_PATH=__SPLIT_OUT__"
 			],
 			"postproc":{"op":"noconcat", "pad":" "}
 		}
@@ -82,8 +74,7 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":{"subst":"split_bam_by_chromosomes_cmd"},
-		"cmd_wishlist":[{"subst":"split_bam_by_chromosomes_cmd"}, "I=__IN__", "TARGET_PATH=__TARGET_OUT__", "EXCLUDED_PATH=__SPLIT_OUT__"]
+		"cmd":[{"subst":"split_bam_by_chromosomes_cmd"}, "I=__IN__", "TARGET_PATH=__TARGET_OUT__", "EXCLUDED_PATH=__SPLIT_OUT__"]
 	},
 	{
 		"id":"target_final",
