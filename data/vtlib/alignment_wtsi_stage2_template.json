@@ -103,7 +103,6 @@
 				{"subst":"java_cmd"},
 				"-Xmx1000m",
 				"-jar", {"subst":"alignment_filter_jar"},
-				"OUT=/dev/stdout",
 				"VALIDATION_STRINGENCY=SILENT",
 				"CREATE_MD5_FILE=false",
 				"VERBOSITY=INFO",
@@ -268,7 +267,7 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__TARGET_INBAM__", "OUT=__PHIX_OUTBAM__", "METRICS_FILE=__AF_METRICS__"]
+		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__TARGET_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
 	},
 	{
 		"id":"af_metrics",
