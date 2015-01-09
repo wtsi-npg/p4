@@ -65,6 +65,7 @@
 				{"subst":"java_cmd"},
 				"-Xmx1000m",
 				"-jar", {"subst":"split_bam_by_chromosomes_jar"},
+				"VALIDATION_STRINGENCY=SILENT",
 				"COMPRESSION_LEVEL=0",
 				"MAX_RECORDS_IN_RAM=500000",
 				"S=Y",
