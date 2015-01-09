@@ -11,7 +11,7 @@ use Getopt::Std;
 use Readonly;
 use Data::Dumper;
 
-our $VERSION = '0.11-1-g9240c2e';
+our $VERSION = '0';
 
 Readonly::Scalar my $FROM => 0;
 Readonly::Scalar my $TO => 1;
