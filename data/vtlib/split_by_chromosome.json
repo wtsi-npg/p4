@@ -32,12 +32,12 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"y_indicator","default":"_yhuman"},
+	{"id":"split_indicator"},
 	{
-		"id":"fopid_y",
+		"id":"fopid_split",
 		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
 		"subst_constructor":{
-			"vals":[ {"subst":"rpt"}, {"subst":"y_indicator"} ],
+			"vals":[ {"subst":"rpt"}, {"subst":"split_indicator"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -50,6 +50,7 @@
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
+	{ "id":"split_bam_by_chromosome_flags","default":"","comment":"specify as [S=Y,V=true] if ysplit" }
 	{
 		"id":"split_bam_by_chromosomes_cmd",
 		"required":"yes",
@@ -61,8 +62,7 @@
 				"VALIDATION_STRINGENCY=SILENT",
 				"COMPRESSION_LEVEL=0",
 				"MAX_RECORDS_IN_RAM=500000",
-				"S=Y",
-				"V=true"
+				{"subst":"split_bam_by_chromosome_flags"}
 			],
 			"postproc":{"op":"noconcat", "pad":" "}
 		}
@@ -89,7 +89,7 @@
 		"id":"split_final",
 		"type":"VTFILE",
 		"node_prefix":"foptgy_",
-		"subst_map":{"phix_or_target":{"subst":"y_indicator"},"fopid":{"subst":"fopid_y"},"bstmp":"bspafy","brtmp":"brpafy","bmdtmp":"bmdpafy"},
+		"subst_map":{"phix_or_target":{"subst":"split_indicator"},"fopid":{"subst":"fopid_split"},"bstmp":"bspafy","brtmp":"brpafy","bmdtmp":"bmdpafy"},
 		"name":{"subst":"final_output_prep_y"},
 		"use_STDIN": true,
 		"use_STDOUT": true

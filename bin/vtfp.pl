@@ -54,9 +54,7 @@ if($help) {
 @keys = split(/,/, join(',', @keys));
 @vals = split(/,/, join(',', @vals));
 
-my %subst_requests;
-@subst_requests{@keys} = @vals;
-my $subst_requests = [ \%subst_requests ];
+my $subst_requests = initialise_subst_requests(\@keys, \@vals);
 
 $query_mode ||= 0;
 $verbosity_level = $VLMIN unless defined $verbosity_level;
@@ -714,6 +712,34 @@ sub get_child_prefix {
 	my $child = (grep { $edge_to =~ /^$_->{id}:?(.*)$/} @$children)[0];
 
 	return $child? $child->{node_prefix}: q[];
+}
+
+#####################################################################
+# initialise_subst_requests:
+#  if a key is specified more than once, its value becomes a list ref
+#####################################################################
+sub initialise_subst_requests {
+	my ($keys, $vals) = @_;
+	my %subst_requests = ();
+
+	if(@$keys != @$vals) {
+		croak q[Mismatch between keys and vals];
+	}
+
+	for my $i (0..$#{$keys}) {
+		if(defined $subst_requests{$keys->[$i]}) {
+			if(ref $subst_requests{$keys->[$i]} ne q[ARRAY]) {
+				$subst_requests{$keys->[$i]} = [ $subst_requests{$keys->[$i]} ];
+			}
+
+			push @{$subst_requests{$keys->[$i]}}, $vals->[$i];
+		}
+		else {
+			$subst_requests{$keys->[$i]} = $vals->[$i];
+		}
+	}
+
+	return [ \%subst_requests ];  # note: the return value is a ref to a list of hash refs
 }
 
 sub read_vtf_version_check {
