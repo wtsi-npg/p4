@@ -78,6 +78,14 @@ my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, 
 my $node_tree = process_vtnode(q[], $vtf_name, q[], $param_store, $subst_requests, $globals);    # recursively generate the vtnode tree
 my $flat_graph = flatten_tree($node_tree);
 
+if($absolute_program_paths) {
+	foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
+		my $cmd_ref = \$node_with_cmd->{'cmd'};
+		if(ref ${$cmd_ref} eq 'ARRAY') { $cmd_ref = \${${$cmd_ref}}[0]}
+		${$cmd_ref} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
+	}
+}
+
 print $out to_json($flat_graph);
 
 ########
