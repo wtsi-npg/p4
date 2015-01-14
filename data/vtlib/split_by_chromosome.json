@@ -50,7 +50,7 @@
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
-	{ "id":"split_bam_by_chromosome_flags","default":"","comment":"specify as [S=Y,V=true] if ysplit" }
+	{ "id":"split_bam_by_chromosome_flags","default":"","comment":"specify as [S=Y,V=true] if ysplit" },
 	{
 		"id":"split_bam_by_chromosomes_cmd",
 		"required":"yes",
