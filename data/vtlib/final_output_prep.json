@@ -159,6 +159,7 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
+	{"id":"seqchksum_cmd","required":"no","default":"bamseqchksum"},
 	{
 		"id":"calibration_pu_cmd",
 		"required":"yes",
@@ -300,6 +301,14 @@
 		}
 	},
 	{
+		"id":"seqchksum_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".seqchksum" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
 		"id":"bamcheck_file",
 		"required":"yes",
 		"subst_constructor":{
@@ -351,7 +360,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-w", "300", "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__CALIBRATION_PU_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900__", "__SAMTOOLS_STATS_F0xB00__"]
+		"cmd":["teepot", "-w", "300", "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__CALIBRATION_PU_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900__", "__SAMTOOLS_STATS_F0xB00__", "__SEQCHKSUM_OUT__" ]
 	},
 	{
 		"id":"scramble",
@@ -404,6 +413,13 @@
 		"use_STDOUT": true,
 		"cmd":{"subst":"samtools_stats_F0xB00"}
 	},
+	{
+		"id":"seqchksum",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"subst":"seqchksum_cmd"}
+	},
 
 	{
 		"id":"calibration_pu",
@@ -422,6 +438,7 @@
 	{ "id":"bam_file", "type":"OUTFILE", "name":{"subst":"bam_file"} },
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
 	{ "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
+	{ "id":"seqchksum_file", "type":"OUTFILE", "name":{"subst":"seqchksum_file"} },
 	{ "id":"bamcheck_file", "type":"OUTFILE", "name":{"subst":"bamcheck_file"} },
 	{ "id":"stats_F0x900_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_file"} },
 	{ "id":"stats_F0xB00_file", "type":"OUTFILE", "name":{"subst":"stats_F0xB00_file"} },
@@ -453,15 +470,17 @@
 	{ "id":"bmd_to_sts_F0x900", "from":"bmd_multiway:__SAMTOOLS_STATS_F0x900__", "to":"samtools_stats_F0x900" },
 	{ "id":"bmd_to_sts_F0xB00", "from":"bmd_multiway:__SAMTOOLS_STATS_F0xB00__", "to":"samtools_stats_F0xB00" },
 	{ "id":"bmd_to_calibration_pu", "from":"bmd_multiway:__CALIBRATION_PU_OUT__", "to":"calibration_pu" },
+	{ "id":"bmd_to_", "from":"bmd_multiway:__SEQCHKSUM_OUT__", "to":"seqchksum" },
 	{ "id":"bmd_to_flagstat", "from":"bmd_multiway:__FLAGSTAT_OUT__", "to":"flagstat_filter" },
 	{ "id":"flagstat_filter_to_flagstat", "from":"flagstat_filter", "to":"flagstat" },
 	{ "id":"bmd_to_bam", "from":"bmd_multiway:__BAM_OUT__", "to":"bamrecompress" },
-	{ "id":"", "from":"bamrecompress", "to":"bam_file" },
-	{ "id":"", "from":"scramble_tee:__CRAM_OUT__", "to":"cram_file" },
-	{ "id":"", "from":"postprocess_md5", "to":"cram_md5" },
-	{ "id":"", "from":"bamcheck", "to":"bamcheck_file" },
-	{ "id":"", "from":"samtools_stats_F0x900", "to":"stats_F0x900_file" },
-	{ "id":"", "from":"samtools_stats_F0xB00", "to":"stats_F0xB00_file" },
-	{ "id":"", "from":"flagstat", "to":"flagstat_file" }
+        { "id":"brc_to_bam", "from":"bamrecompress", "to":"bam_file" },
+        { "id":"tee_to_cram", "from":"scramble_tee:__CRAM_OUT__", "to":"cram_file" },
+        { "id":"corrected_md5_out", "from":"postprocess_md5", "to":"cram_md5" },
+        { "id":"bamcheck_to_file", "from":"bamcheck", "to":"bamcheck_file" },
+	{ "id":"scs_to_file", "from":"seqchksum", "to":"seqchksum_file" },
+        { "id":"samtools_stats_F0x900_to_file", "from":"samtools_stats_F0x900", "to":"stats_F0x900_file" },
+        { "id":"samtools_stats_F0xB00_to_file", "from":"samtools_stats_F0xB00", "to":"stats_F0xB00_file" },
+        { "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" }
 ]
 }

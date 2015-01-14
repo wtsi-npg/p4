@@ -336,8 +336,6 @@
 	{ "id":"ref_to_paf_phix", "from":"phix_reference_genome_fasta", "to":"final_output_prep_phix:reference_genome_fasta" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
 	{ "id":"paf_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_bam" },
-	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_bam" },
-	{ "id":"target_chksum_to_file", "from":"seqchksum:target_chksum", "to":"target_chksum" },
-	{ "id":"phix_chksum_to_file", "from":"seqchksum:phix_chksum", "to":"phix_chksum" }
+	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_bam" }
 ]
 }

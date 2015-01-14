@@ -5,12 +5,8 @@
 	"ports":{
 		"inputs":{
 				"_stdin_":"seqchksum_input",
-				"target_bam":"target_tee",
-				"phix_bam":"phix_tee"
-		},
-		"outputs":{
-				"target_chksum":"seqchksum_target",
-				"phix_chksum":"seqchksum_phix"
+				"target_bam":"bamcat_output:__TARGETBAM_IN__",
+				"phix_bam":"bamcat_output:__PHIXBAM_IN__"
 		}
 	}
 },
@@ -38,34 +34,6 @@
 	}
 ],
 "nodes":[
-	{
-		"id":"target_tee",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": false,
-		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
-	},
-	{
-		"id":"phix_tee",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": false,
-		"cmd":"teepot __BAMCAT_OUT__ __CHKSUM_OUT__"
-	},
-	{
-                "id":"seqchksum_target",
-                "type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-                "cmd":"bamseqchksum"
-	},
-	{
-                "id":"seqchksum_phix",
-                "type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-                "cmd":"bamseqchksum"
-	},
         {
                 "id":"bamcat_output",
 		"comment":"changed from bamcat when deadlock occurred when using new approach of saving chksum files",
@@ -75,14 +43,14 @@
 		"cmd":[{"subst":"samtools_merge"}, "__TARGETBAM_IN__", "__PHIXBAM_IN__"]
         },
         {
-                "id":"seqchksum_output",
+                "id":"seqchksum_input",
                 "type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
                 "cmd":"bamseqchksum"
         },
         {
-                "id":"seqchksum_input",
+                "id":"seqchksum_output",
                 "type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -98,27 +66,6 @@
         }
 ],
 "edges":[
-        {
-                "id":"phix_to_chksum",
-                "from":"phix_tee:__CHKSUM_OUT__",
-                "to":"seqchksum_phix"
-        },
-        {
-                "id":"phix_to_bamcat",
-                "from":"phix_tee:__BAMCAT_OUT__",
-                "to":"bamcat_output:__PHIXBAM_IN__"
-        },
-        {
-                "id":"target_to_chksum",
-                "from":"target_tee:__CHKSUM_OUT__",
-                "to":"seqchksum_target"
-        },
-        {
-                "id":"target_to_bamcat",
-                "from":"target_tee:__BAMCAT_OUT__",
-                "to":"bamcat_output:__TARGETBAM_IN__"
-        },
-
         {
                 "id":"bamcat_to_chk_output",
                 "from":"bamcat_output",
