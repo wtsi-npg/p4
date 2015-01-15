@@ -160,6 +160,30 @@
 		}
 	},
 	{"id":"seqchksum_cmd","required":"no","default":"bamseqchksum"},
+	{"id":"seqchksum_hash_type","required":"no","default":"sha512primesums512"},
+	{
+		"id":"seqchksum_hash_flag",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"hash",
+				{"subst":"seqchksum_hash_type"}
+			],
+			"postproc":{"op":"pack","pad":"="}
+		}
+	},
+	{
+		"id":"seqchksum_extrahash_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				"bamseqchksum",
+				{"subst":"seqchksum_hash_flag"}
+			],
+			"postproc":{"op":"pack","pad":" "}
+		},
+		"comment":"it seems peculiar to fix the command here, but the flag is specific to it; hash type is selectable"
+	},
 	{
 		"id":"calibration_pu_cmd",
 		"required":"yes",
@@ -309,6 +333,22 @@
 		}
 	},
 	{
+		"id":"seqchksum_extrahash_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"outdatadir"},
+				"/",
+				{"subst":"fopid"},
+				".",
+				{"subst":"seqchksum_hash_type"},
+				".seqchksum"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		},
+		"comment":"default hash type is currently sha512primesums512"
+	},
+	{
 		"id":"bamcheck_file",
 		"required":"yes",
 		"subst_constructor":{
@@ -360,7 +400,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-w", "300", "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__CALIBRATION_PU_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900__", "__SAMTOOLS_STATS_F0xB00__", "__SEQCHKSUM_OUT__" ]
+		"cmd":["teepot", "-w", "300", "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__CALIBRATION_PU_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900__", "__SAMTOOLS_STATS_F0xB00__", "__SEQCHKSUM_OUT__", "__SEQCHKSUM_EXTRAHASH_OUT__" ]
 	},
 	{
 		"id":"scramble",
@@ -420,6 +460,14 @@
 		"use_STDOUT": true,
 		"cmd":{"subst":"seqchksum_cmd"}
 	},
+	{
+		"id":"seqchksum_extrahash",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"subst":"seqchksum_extrahash_cmd"},
+		"comment":"default hash type is currently sha512primesums512"
+	},
 
 	{
 		"id":"calibration_pu",
@@ -439,6 +487,7 @@
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
 	{ "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
 	{ "id":"seqchksum_file", "type":"OUTFILE", "name":{"subst":"seqchksum_file"} },
+	{ "id":"seqchksum_extrahash_file", "type":"OUTFILE", "name":{"subst":"seqchksum_extrahash_file"} },
 	{ "id":"bamcheck_file", "type":"OUTFILE", "name":{"subst":"bamcheck_file"} },
 	{ "id":"stats_F0x900_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_file"} },
 	{ "id":"stats_F0xB00_file", "type":"OUTFILE", "name":{"subst":"stats_F0xB00_file"} },
@@ -471,6 +520,7 @@
 	{ "id":"bmd_to_sts_F0xB00", "from":"bmd_multiway:__SAMTOOLS_STATS_F0xB00__", "to":"samtools_stats_F0xB00" },
 	{ "id":"bmd_to_calibration_pu", "from":"bmd_multiway:__CALIBRATION_PU_OUT__", "to":"calibration_pu" },
 	{ "id":"bmd_to_", "from":"bmd_multiway:__SEQCHKSUM_OUT__", "to":"seqchksum" },
+	{ "id":"bmd_to_", "from":"bmd_multiway:__SEQCHKSUM_EXTRAHASH_OUT__", "to":"seqchksum_extrahash" },
 	{ "id":"bmd_to_flagstat", "from":"bmd_multiway:__FLAGSTAT_OUT__", "to":"flagstat_filter" },
 	{ "id":"flagstat_filter_to_flagstat", "from":"flagstat_filter", "to":"flagstat" },
 	{ "id":"bmd_to_bam", "from":"bmd_multiway:__BAM_OUT__", "to":"bamrecompress" },
@@ -479,6 +529,7 @@
         { "id":"corrected_md5_out", "from":"postprocess_md5", "to":"cram_md5" },
         { "id":"bamcheck_to_file", "from":"bamcheck", "to":"bamcheck_file" },
 	{ "id":"scs_to_file", "from":"seqchksum", "to":"seqchksum_file" },
+	{ "id":"scs_extrahash_to_file", "from":"seqchksum_extrahash", "to":"seqchksum_extrahash_file" },
         { "id":"samtools_stats_F0x900_to_file", "from":"samtools_stats_F0x900", "to":"stats_F0x900_file" },
         { "id":"samtools_stats_F0xB00_to_file", "from":"samtools_stats_F0xB00", "to":"stats_F0xB00_file" },
         { "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" }
