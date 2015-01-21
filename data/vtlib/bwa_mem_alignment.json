@@ -20,7 +20,7 @@
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
         },
-	{"id":"bwa_T_value","required":"no"},
+	{"id":"bwa_T_value","required":"no","default":"0"},
 	{
 		"id":"bwa_T_flag",
 		"required":"no",
