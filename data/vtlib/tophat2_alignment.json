@@ -340,7 +340,7 @@
 		"use_STDIN": false,
 		"use_STDOUT": false,
 		"cmd":[
-			"cp ",
+			"cp",
 			"__SRC_INSERTIONS_BED__ ",
 			{"subst":"cp_insertions_bed_target"}
 		]
@@ -351,7 +351,7 @@
 		"use_STDIN": false,
 		"use_STDOUT": false,
 		"cmd":[
-			"cp ",
+			"cp",
 			"__SRC_JUNCTIONS_BED__ ",
 			{"subst":"cp_junctions_bed_target"}
 		]
