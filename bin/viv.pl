@@ -316,7 +316,7 @@ sub _fork_off {
 			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.($node->{'STDOUT'}?$node->{'STDOUT'}:'stdout') ."\n";
 			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
 			print STDERR " execing....\n";
-			exec @cmd;
+			exec @cmd or croak qq[Failed to exec cmd: ], join " ", @cmd;
 		}
 		else {
 			$logger->($VLMED, q[child exec not switched on], "\n");
