@@ -1,5 +1,6 @@
 {
 "description":"preprocessing of non/phix-aligned bam before merging back auxiliary tags using bam12auxmerge",
+"version":"1.0",
 "subgraph_io":{
 	"ports":{
 		"inputs":{

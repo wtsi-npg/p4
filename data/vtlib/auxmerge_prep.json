@@ -1,4 +1,5 @@
 {
+"version":"1.0",
 "description":"preprocessing of non/phix-aligned bam before merging back auxiliary tags using bam12auxmerge",
 "subgraph_io":{
 	"ports":{
@@ -16,7 +17,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamreset resetaux=0 level=0 verbose=0",
+		"cmd":["bamreset", "resetaux=0", "level=0", "verbose=0"],
 		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
@@ -24,14 +25,10 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamadapterclip verbose=0 level=0"
+		"cmd":["bamadapterclip", "verbose=0", "level=0"]
 	}
 ],
 "edges":[
-	{
-		"id":"bamreset_to_bamadapterclip",
-		"from":"bamreset_pre_auxmerge",
-		"to":"bamadapterclip_pre_auxmerge"
-	}
+	{ "id":"bamreset_to_bamadapterclip", "from":"bamreset_pre_auxmerge", "to":"bamadapterclip_pre_auxmerge" }
 ]
 }

@@ -1,76 +1,83 @@
 {
 "description":"A HiSeqX processing pipeline",
+"version":"1.0",
 "subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__","prealign":"bam12auxmerge:__PREALN_BAM__"},"outputs":{"_stdout_":"bam12auxmerge"}}},
-"nodes":[
-    {
-        "id":"bamsort_file",
-        "type":"RAFILE",
-        "name":{"subst_param_name":"bamsort_file",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"tmpdir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"bamsort_file_name",
-                        "required":"no",
-                        "default":"bamsort.bam",
-                        "subst_constructor":{
-                            "vals":[
-                                "bamsort_",
-								{"subst_param_name":"phix_or_target","required":"yes"},
-								"_",
-                                {"subst_param_name":"rpt","required":"yes"},
-                                ".bam"
-                            ],
-                            "postproc":{"op":"concat", "pad":""}
-                        }
-                    }
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
-
+"subst_params":[
+	{"id":"rpt","required":"yes"},
+	{"id":"tmpdir","required":"no","default":"."},
+	{"id":"phix_or_target","required":"yes"},
 	{
-        "id":"tee_bwa",
-        "type":"RAFILE",
-        "name":{"subst_param_name":"tee_bwa",
-            "required":"yes",
-            "subst_constructor":{
-                "vals":[
-                    {"subst_param_name":"tmpdir","required":"no","default":"."},
-                    "/",
-                    {"subst_param_name":"tee_bwa_name",
-                        "required":"no",
-                        "default":"tee.bam",
-                        "subst_constructor":{
-                            "vals":[
-                                "tee_bwa_",
-								{"subst_param_name":"phix_or_target","required":"yes"},
-								"_",
-                                {"subst_param_name":"rpt","required":"yes"},
-                                ".bam"
-                            ],
-                            "postproc":{"op":"concat", "pad":""}
-                        }
-                    }
-                ],
-                "postproc":{"op":"concat", "pad":""}
-            }
-        }
-    },
+		"id":"bamsort_file_name",
+		"required":"no",
+		"default":"bamsort.bam",
+		"subst_constructor":{
+			"vals":[
+				"bamsort_",
+				{"subst":"phix_or_target"},
+				"_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bamsort_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"bamsort_file_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"tee_bwa_name",
+		"required":"no",
+		"default":"tee.bam",
+		"subst_constructor":{
+			"vals":[
+				"tee_bwa_",
+				{"subst":"phix_or_target"},
+				"_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"tee_bwa",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"tee_bwa_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
 
+],
+"nodes":[
+	{
+		"id":"bamsort_file",
+		"type":"RAFILE",
+		"name":{"subst":"bamsort_file"}
+	},
+	{
+		"id":"tee_bwa",
+		"type":"RAFILE",
+		"name":{"subst":"tee_bwa"}
+	},
 	{
 		"id":"scramble_sam_to_bam",
 		"type":"EXEC",
 		"cmd":"scramble -I sam -O bam"
 	},
-#	{
-#		"id":"tee_headerSQfix",
-#		"type":"EXEC",
-#		"cmd":"mbuffer -f -q -m 5M -o __OUT1__ -o __OUT2__",
-#		"comment":"get deadlock when tee used here"
-#	},
 	{
 		"id":"sam_headerSQfix",
 		"type":"EXEC",
@@ -98,12 +105,11 @@
 		"type":"EXEC",
 		"cmd":"bamsort SO=queryname level=0"
 	},
-    {
-        "id":"bam12auxmerge",
-        "type":"EXEC",
-        "cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
-    }
-
+	{
+		"id":"bam12auxmerge",
+		"type":"EXEC",
+		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
+	}
 ],
 "edges":[
 	{
