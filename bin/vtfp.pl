@@ -1,23 +1,25 @@
 #!/usr/bin/env perl
 
-########################################################################################################
-# Utility to process viv template files. Has a query mode which reports available parameters and handles
-#  replacement of substitutable parameters with specified values. Croaks when all required parameters
-#  are not replaced with values.
-########################################################################################################
+#################################################################################################
+# vtfp.pl
+# Updated utility to process viv template files.  Handles replacement of substitutable parameters
+#  with specified values. Croaks when all required parameters are not replaced with values.
+# Will have a query mode which reports available parameters
+#################################################################################################
 
 use strict;
 use warnings;
 use Carp;
 use Readonly;
 use Getopt::Long;
+use File::Basename;
+use File::Spec;
 use File::Which qw(which);
 use List::MoreUtils qw(any);
 use Cwd qw(abs_path);
 use File::Slurp;
 use JSON;
 use Storable 'dclone';
-
 
 our $VERSION = '0';
 
@@ -27,34 +29,37 @@ Readonly::Scalar my $VLMIN => 1;
 Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
+Readonly::Scalar my $MIN_TEMPLATE_VERSION => 1;
+
+my $progname = (fileparse($0))[0];
 my %opts;
 
 my $help;
 my $strict_checks;
 my $outname;
+my $template_path;
 my $logfile;
 my $verbosity_level;
 my $query_mode;
 my $absolute_program_paths=1;
 my @keys = ();
 my @vals = ();
-GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'absolute_program_paths!' => \$absolute_program_paths);
+GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'template_path=s' => \$template_path, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'absolute_program_paths!' => \$absolute_program_paths);
 
 if($help) {
-	croak qq{vtfp.pl [-h] [-q] [-s] [-l <log_file>] [-o <output_config_name>] [-v <verbose_level>] [-keys <key> -vals <val> ...]  <viv_template>\n};
+	croak q[Usage: ], $progname, q{ [-h] [-q] [-s] [-l <log_file>] [-o <output_config_name>] [-v <verbose_level>] [-keys <key> -vals <val> ...]  <viv_template>};
 }
 
 # allow multiple options to be separated by commas
 @keys = split(/,/, join(',', @keys));
 @vals = split(/,/, join(',', @vals));
 
-my %subst_requests;
-@subst_requests{@keys} = @vals;
+my $subst_requests = initialise_subst_requests(\@keys, \@vals);
 
 $query_mode ||= 0;
-$verbosity_level = 1 unless defined $verbosity_level;
-my $logger = mklogger($verbosity_level, $logfile, q[vtfp]);
-$logger->($VLMIN, 'vtfp.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
+$verbosity_level = $VLMIN unless defined $verbosity_level;
+my $logger = mklogger($verbosity_level, $logfile, $progname);
+$logger->($VLMIN, $progname , ' version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $vtf_name = $ARGV[0];
 
 croak q[template file unspecified] unless($vtf_name);
@@ -63,364 +68,464 @@ $logger->($VLMED, 'Using template file '.$vtf_name);
 my $out;
 if($outname) { open $out, ">$outname" or croak "Failed to open $outname for output"; } else { $out = *STDOUT; }
 
-my $cfg = read_the_vtf($vtf_name);
-my $substitutable_params = walk($cfg, [], {});
+if($template_path) {
+	$template_path = [ (split q[:], $template_path) ];
+}
 
-if($query_mode) { print join("\t", qw[KeyID Req Id RawAttrib]), "\n"; }
+my $param_store;
+my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, vt_file_stack => [], processed_sp_files => {}, template_path => $template_path, };
 
-do_substitutions($substitutable_params, \%subst_requests, $query_mode);
+my $node_tree = process_vtnode(q[], $vtf_name, q[], $param_store, $subst_requests, $globals);    # recursively generate the vtnode tree
+my $flat_graph = flatten_tree($node_tree);
 
-############################################################################
-# now search the processed graph for subgraphs. Expand the subgraphs using
-#  walk() and make_substitutions() as before
-# Bear in mind that there may be nested subgraphs (beware of Russian dolls).
-# Also a check should be made to avoid infinite recursion where A includes B
-# and B includes A (however camouflaged).
-# The issue of query_mode needs revisiting very soon.
-############################################################################
-my $arbitrary_prefix = 0;
-my $vtf_nodes = [ (grep { $_->{type} eq q[VTFILE]; } @{$cfg->{nodes}}) ];
-for my $vtnode (@$vtf_nodes) {
-	$arbitrary_prefix++;
+if($absolute_program_paths) {
+	foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
+		my $cmd_ref = \$node_with_cmd->{'cmd'};
+		if(ref ${$cmd_ref} eq 'ARRAY') { $cmd_ref = \${${$cmd_ref}}[0]}
+		${$cmd_ref} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
+	}
+}
 
-	my $subcfg = read_the_vtf($vtnode->{name});
+print $out to_json($flat_graph);
 
-	# perform any param substitutions in the the subgraph after adding/overriding any subst_request mappings specified via subst_map
-	my $stash = { del_keys => [], store_vals => {}, };
-	my $subst_map = {};
-	if($subst_map = $vtnode->{subst_map}) {
-		for my $smk (keys %$subst_map) {
-			if(exists $subst_requests{$smk}) {
-				$stash->{store_vals}->{$smk} = $subst_requests{$smk};   # check subst_map for multiple use of same key?
-			}
-			else {
-				push @{$stash->{del_keys}}, $smk;
-			}
-			$subst_requests{$smk} = $subst_map->{$smk};
-		}
+########
+# Done #
+########
+
+##########################################################################################
+# process_vtnode:
+#  vtnode_id - id of the VTFILE node; needed to resolve I/O connections
+#  vtf_name - name of the file to read for this vtfile
+#  node_prefix - if specified (note: zero-length string is "specified"), prefix all nodes
+#                  from this vtfile with this string; otherwise auto-generate prefix
+#  param_store - a list ref of maps of variable names to their values or constructor;
+#                  supplies the values when subst directives are processed
+#  subst_requests - a list ref of key/value pairs, keys are subst_param [var]names, values
+#                    are string values; supplied at run time or via subst_map attributes
+#                    in VTFILE nodes
+#  globals - auxiliary items used for error checking/reporting (and final flattening, e.g.
+#             node_prefix validation and generation for ensuring unique node ids in
+#             subgraphs)
+#
+# Description:
+#   1. read cfg for given vtf_name
+#   2. process local subst_param section (if any), expanding SPFILE nodes and updating
+#       param_store
+#   3. process subst directives (just nodes and edges)
+#   4. process nodes, expanding elements of type VTFILE (note: there will be param_store
+#       and subst_request lists, containing as many entries as the current depth of VTFILE
+#       nesting)
+#
+# Returns: root of tree of vtnodes (for later flattening)
+##########################################################################################
+sub process_vtnode {
+	my ($vtnode_id, $vtf_name, $node_prefix, $param_store, $subst_requests, $globals) = @_;
+
+	if(any { $_ eq $vtf_name} @{$globals->{vt_file_stack}}) {
+		$logger->($VLFATAL, q[Nesting of VTFILE ], $vtf_name, q[ within itself: ], join(q[->], @{$globals->{vt_file_stack}}));
 	}
 
+	my $vtnode = { id => $vtnode_id, name => $vtf_name, cfg => {}, children => [], };
+	$vtnode->{node_prefix} = get_node_prefix($node_prefix, $globals->{node_prefixes});
+	$vtnode->{cfg} = read_vtf_version_check($vtf_name, $MIN_TEMPLATE_VERSION, $globals->{template_path}, );
+	$param_store = process_subst_params($param_store, $subst_requests, $vtnode->{cfg}->{subst_params}, [ $vtf_name ], $globals);
+	apply_subst($vtnode->{cfg}, $param_store, $subst_requests);   # process any subst directives in cfg (just nodes and edges)
 
-	my $substitutable_params = walk($subcfg, [], {});
-	do_substitutions($substitutable_params, \%subst_requests, $query_mode);
+	my @vtf_nodes = ();
+	my @nonvtf_nodes = ();
+	for my $e (@{$vtnode->{cfg}->{nodes}}) { # remove VTFILE nodes for expansion into children nodes
+		if($e->{type} eq q[VTFILE]) { push @vtf_nodes, $e; }
+		else { push @nonvtf_nodes, $e; }
+	}
+	$vtnode->{cfg}->{nodes} = [ @nonvtf_nodes ];
 
-	# add the new nodes and edges to the top-level graph (id alterations will be done first to ensure no clash with existing ids [WIP])
-	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%03d_%s", $arbitrary_prefix, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
-	$subcfg->{edges} = [ (map { $_->{from} = sprintf "%03d_%s", $arbitrary_prefix, $_->{from}; $_->{to} = sprintf "%03d_%s", $arbitrary_prefix, $_->{to}; $_; } @{$subcfg->{edges}}) ];
-	push @{$cfg->{nodes}}, @{$subcfg->{nodes}};
-	push @{$cfg->{edges}}, @{$subcfg->{edges}};  # in the first instance, I'm assuming this subgraph has no subgraphs of its own
+	push @{$globals->{vt_file_stack}}, $vtf_name;
+	for my $vtf_node (@vtf_nodes) {
 
-	# determine input node(s) in the subgraph
-	my $subgraph_nodes_in = $subcfg->{subgraph_io}->{ports}->{inputs};
-	my $subgraph_nodes_out = $subcfg->{subgraph_io}->{ports}->{outputs};
+		# both subst_requests and param_stores have local components
+		my $sr = $vtf_node->{subst_map};
+		$sr ||= {};
+		unshift @$subst_requests, $sr;
+		my $ps = { varnames => {}, };
+		unshift @$param_store, $ps;
 
-	# now fiddle the edges in the top-level cfg
+		my $vtc = process_vtnode($vtf_node->{id}, $vtf_node->{name}, $vtf_node->{node_prefix}, $param_store, $subst_requests, $globals);
 
-	#  first inputs to the subgraph...
-	my $in_edges = [ (grep { $_->{to} =~ /^$vtnode->{id}(:|$)/; } @{$cfg->{edges}}) ];
-	if(@$in_edges and not $subgraph_nodes_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No inputs specified in subgraph ], $vtnode->{name}); }
-	for my $edge (@$in_edges) {
-		if($edge->{to} =~ /^$vtnode->{id}:?(.*)$/) {
-			my $portkey = $1;
-			$portkey ||= q[_stdin_];
+		shift @$param_store;
+		shift @$subst_requests;
 
-			my $ports = $subgraph_nodes_in->{$portkey};
-			unless($ports) {
-				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode->{id}, q[:], $portkey);
+		push @{$vtnode->{children}}, $vtc;
+
+	}
+	pop @{$globals->{vt_file_stack}};
+
+	return $vtnode;
+}
+
+##############################################################
+# get_node_prefix:
+#    validates requested node prefix.
+#    If node_prefix is defined, just check to be sure
+#       it is still unused and available.
+#    If node_prefix is undefined, generate a new unique prefix
+##############################################################
+sub get_node_prefix {
+	my ($node_prefix, $node_prefixes) = @_;
+
+	if(defined $node_prefix) {
+		if($node_prefixes->{used_prefixes}->{$node_prefix}) {
+			$logger->($VLFATAL, q[Requested node prefix ], $node_prefix, q[ already used]);
+		}
+	}
+	else {
+		$node_prefix = sprintf "%03d_", $node_prefixes->{auto_node_prefix};
+		++$node_prefixes->{auto_node_prefix};
+	}
+
+	$node_prefixes->{used_prefixes}->{$node_prefix} = 1;
+
+	return $node_prefix;
+}
+
+#######################################################################################
+# process_subst_params:
+#  param_store - a list (ref) of maps of variable names to their values or constructor;
+#                  supplies the values when subst directives are processed
+#  subst_requests - a list (ref) of key/value pairs. Keys are subst_param varnames,
+#                    values are string values; supplied at run time or via subst_map
+#                    attributes in VTFILE nodes; used here to expand subst directives
+#                    that appear in subst_param entries
+#  unprocessed_subst_params - the list of subst_param entries to process; either of
+#                    type PARAM (describes how to retrieve/construct the value for the
+#                    specified varname) or SPFILE (specifies a file containing
+#                    subst_params)
+#  sp_file_stack - the list of file names leading to our current location, used for
+#                    warning/error reporting
+#  globals - used here to prevent multiple processing of SPFILE nodes and to pass the
+#                  value of template_path
+#
+# Description:
+#  process a subst_param section, adding any varnames declared in it to the "local"
+#   param_store and recursively processing any included files specified by elements
+#   of type SPFILE.
+#
+#  In other words, step through unprocessed subst_param entries:
+#   a) if element is of type PARAM, add it to the "local" param_store
+#   b) if element is of type SPFILE, [queue it up for] make a recursive call to
+#       process_subst_params() to expand it
+#
+# A stack of spfile names is passed to recursive calls to allow construction of
+#  error strings for later reporting (though initially just croak). Consider a slightly
+#  more sophisticated structure for elements on this stack to improve error reporting
+#######################################################################################
+sub process_subst_params {
+	my ($param_store, $subst_requests, $unprocessed_subst_params, $sp_file_stack, $globals) = @_;
+	my @spfile_node_queue = ();
+
+	$param_store ||= [ { varnames => {}, } ];
+
+	for my $i (0..$#{$unprocessed_subst_params}) {
+
+		my $sp = $unprocessed_subst_params->[$i];
+		my $spname = $sp->{name}; 
+		my $spid = $sp->{id}; 
+		my $sptype = $sp->{type}; 
+		$sptype ||= q[PARAM];
+
+		if($sptype eq q[SPFILE]) {	# process recursively
+			# SPFILE entries will be processed after all PARAM-type entries have been processed (for consistency in redeclaration behaviour)
+			push @spfile_node_queue, $sp;
+		}
+		elsif($sptype eq q[PARAM]) {
+			# all unprocessed_subst_params elements of type PARAM must have an id
+			if(not $spid) {
+				# it would be better to cache these errors and report as many as possible before exit (TBI)
+				$logger->($VLFATAL, q[No id for PARAM element, entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
 			}
-			my $pt = ref $ports;
-			if($pt) {
-				if($pt ne q[ARRAY]) {
-					$logger->($VLFATAL, q[Input ports specification values in subgraphs must be string or array ref. Type ], $pt, q[ not allowed]);
-				}
-			}
-			else {
-				$ports = [ $ports ];
-			}
 
-			# do check for existence of port in 
-			for my $i (0..$#$ports) {
-				my $mod_edge;
-				if($i > 0) {
-					$mod_edge = dclone $edge;
-					push @{$cfg->{edges}}, $mod_edge;
+			my $ips = in_param_store($param_store, $spid);
+			if($ips->{errnum} != 0) { # multiply defined - OK unless explicitly declared multiple times at this level
+				if($ips->{errnum} > 0) { # a previous declaration was made by an ancestor of the current vtnode
+					$logger->($VLMED, qq[INFO: Duplicate subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
 				}
 				else {
-					$mod_edge = $edge;
+					# it would be better to cache these errors and report as many as possible before exit (TBI)
+					$logger->($VLFATAL, qq[Fatal error: Duplicate (local) subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
 				}
-				$mod_edge->{to} = sprintf "%03d_%s", $arbitrary_prefix, $ports->[$i];
+			}
+
+			$sp->{_declared_by} ||= [];
+			push @{$sp->{_declared_by}}, join q[->], @$sp_file_stack;
+			$param_store->[0]->{varnames}->{$spid} = $sp; # adding to the "local" variable store
+		}
+		else {
+			$logger->($VLFATAL, q[Unrecognised type for subst_param element: ], $sptype, q[; entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
+		}
+	}
+
+	################################
+	# now process the SPFILE entries
+	################################
+	for my $spfile (@spfile_node_queue) {
+		subst_walk($spfile, $param_store, $subst_requests, []);
+		my $spname = $spfile->{name};
+		if(not $spname) {
+			# it would be better to cache these errors and report as many as possible before exit (TBI)
+			$logger->($VLFATAL, q[No name for SPFILE element (], , join(q[->], @$sp_file_stack), q[)]);
+		}
+
+		if(not $globals->{processed_sp_files}->{$spname}) { # but only process a given SPFILE once
+			$globals->{processed_sp_files}->{$spname} = 1;   # flag this SPFILE name as seen
+
+			my $cfg = read_vtf_version_check($spname, $MIN_TEMPLATE_VERSION, $globals->{template_path},);
+
+			# NOTE: no mixing of subst_param formats in a template set - in other words, included subst_param
+			#  files must contain (new-style) subst_param sections to be useful
+			if(defined $cfg->{subst_params}) {
+				push @$sp_file_stack, $spname;
+				process_subst_params($param_store, $subst_requests, $cfg->{subst_params}, $sp_file_stack, $globals);
+				pop @$sp_file_stack;
 			}
 		}
 		else {
-			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
-			next;
+			$logger->($VLMAX, qq[INFO: Not processing reoccurrence of SPFILE $spname (], join(q[->], @$sp_file_stack), q[)]);  # needs to be a high-verbosity warning
 		}
 	}
 
-	#  ...then outputs from the subgraph
-	my $out_edges = [ (grep { $_->{from} =~ /^$vtnode->{id}(:|$)/; } @{$cfg->{edges}}) ];
-	if(@$out_edges and not $subgraph_nodes_out) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode->{id}, q[". No outputs specified in subgraph ], $vtnode->{name}); }
-	for my $edge (@$out_edges) {
-		if($edge->{from} =~ /^$vtnode->{id}:?(.*)$/) {
-			my $portkey = $1;
-			$portkey ||= q[_stdout_];
+	return $param_store;
+}
 
-			my $port;
-			unless(($port = $subgraph_nodes_out->{$portkey})) {
-				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode->{id}, q[:], $portkey);
+##########################################################################
+# in_param_store:
+#  return errnum of 0 if not in store, -1 if it was explicitly declared in
+#  the "local" store, 1 otherwise (this is to allow presence in non-local
+#  store to be legal)
+##########################################################################
+sub in_param_store {
+	my ($param_store, $spid) = @_;
+
+	for my $i (0..$#{$param_store}) {
+		if($param_store->[$i]->{varnames}->{$spid}) {
+			if($i == 0) {
+				if(defined $param_store->[$i]->{varnames}->{$spid}->{_declared_by} and @{$param_store->[$i]->{varnames}->{$spid}->{_declared_by}} > 0) {
+					return { errnum => -1, ms => q[duplicate local declaration of ] . $spid . q[, already declared in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spid}->{_declared_by}}, };
+				}
+				else {
+					return { errnum => 1, ms => q[already declared locally, but only implicitly], };
+				}
 			}
-
-			# do check for existence of port in 
-			$edge->{from} = sprintf "%03d_%s", $arbitrary_prefix, $port;
-		}
-		else {
-			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
-			next;
+			else {
+				return { errnum => 1, ms => q[already declared, but not locally; declarations in: ] . join q[, ], @{$param_store->[$i]->{varnames}->{$spid}->{_declared_by}} };
+			}
 		}
 	}
 
-	# restore subst_request mappings to original state
-	for my $smk (keys %{$stash->{store_vals}}) {
-		$subst_requests{$smk} = $subst_map->{$smk};
-	}
-	for my $dk (@{$stash->{del_keys}}) {
-		delete $subst_requests{$dk};
+	return { errnum => 0, ms => q[], };
+}
+
+#######################################
+# apply_subst:
+#  replace subst directives with values
+#######################################
+sub apply_subst {
+	my ($cfg, $param_store, $subst_requests) = @_;   # process any subst directives in cfg (just nodes and edges?)
+
+	for my $elem (@{$cfg->{nodes}}, @{$cfg->{edges}}) {
+		subst_walk($elem, $param_store, $subst_requests, []);
 	}
 }
 
-# now remove all the VTFILE nodes (assumption: all remappings were sucessful and complete)
-$cfg->{nodes} = [ (grep { $_->{type} ne q[VTFILE]; } @{$cfg->{nodes}}) ];
+##############################################################################################################
+# subst_walk:
+#  walk the given element, looking for "subst" directives. When found search the param_store and subst_request
+#   lists for the desired key/value pair
+##############################################################################################################
+sub subst_walk {
+	my ($elem, $param_store, $subst_requests, $labels) = @_;
 
-if($absolute_program_paths){
-        foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$cfg->{'nodes'}}) {
-                my $cmd_ref = \$node_with_cmd->{'cmd'};
-                if(ref ${$cmd_ref} eq 'ARRAY') { $cmd_ref = \${${$cmd_ref}}[0]}
-                ${$cmd_ref} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
-        }
-}
-
-unless($query_mode) { print $out to_json($cfg) };
-
-#######################################################################
-# walk: walk the config structure, identifying substitutable params and
-#  add an entry for them in the substitutable_params hash
-#######################################################################
-sub walk {
-	my ($node, $labels, $substitutable_params) = @_;
-
-	my $r = ref $node;
+	my $r = ref $elem;
 	if(!$r) {
-		return $substitutable_params;	# substitution only triggered by key names
+		next;	# hit the bottom
 	}
-	elsif(ref $node eq q[HASH]) {
-		for my $k (keys %$node) {
-			if(ref $node->{$k} eq q[HASH] and my $param_name = $node->{$k}->{subst_param_name}) {
-				my $parent_id = $node->{id};   # used for logging
-				my $req_param = ($node->{$k}->{required} and $node->{$k}->{required} eq q[yes])? 1: 0;
-				my $subst_constructor = $node->{$k}->{subst_constructor};  # I expect this will always be an ARRAY ref, though this will only be enforced by the caller
-				my $default_value = $node->{$k}->{default};
-				if(not defined $substitutable_params->{$param_name}) {
-					$substitutable_params->{$param_name} = { param_name => $param_name, parent_info => [ { parent_node => $node, parent_id => $parent_id, attrib_name => $k, }, ], required => $req_param, subst_constructor => $subst_constructor, default_value => $default_value, depth => scalar @$labels, };
+	elsif(ref $elem eq q[HASH]) {
+		for my $k (keys %$elem) {
+
+			if(ref $elem->{$k} eq q[HASH] and my $param_name = $elem->{$k}->{subst}) {
+				# value for a "subst" key must always be the name of a parameter
+				if(ref $param_name) {
+					$logger->($VLFATAL, q[value for a subst directive must be a param (not a reference), key for subst is: ], $k);
 				}
-				else {
-					push @{$substitutable_params->{$param_name}->{parent_info}}, { parent_node => $node, parent_id => $parent_id, attrib_name => $k, };
+
+				$elem->{$k} = fetch_subst_value($param_name, $param_store, $subst_requests);
+
+				unless(defined $elem->{$k}) {
+					$logger->($VLFATAL, croak q[Failed to fetch subst value for parameter ], $param_name, q[ (key was ], $k, q[)]);
 				}
+
+				next;
 			}
-			if(ref $node->{$k}) {
+
+			if(ref $elem->{$k}) {
 				push @$labels, $k;
-				walk($node->{$k}, $labels, $substitutable_params);
+				subst_walk($elem->{$k}, $param_store, $subst_requests, $labels);
 				pop @$labels;
-			}
-			else {
-				$logger->($VLMAX, "Scalar value with ", join(q[_], @$labels), ", key $k");
 			}
 		}
 	}
-	elsif(ref $node eq q[ARRAY]) {
-		for my $i (0 .. $#{$node}) {
+	elsif(ref $elem eq q[ARRAY]) {
+		for my $i (0 .. $#{$elem}) {
 			# if one of the elements is a subst_param hash,
-			if(ref $node->[$i] eq q[HASH] and my $param_name = $node->[$i]->{subst_param_name}) {
-				my $req_param = ($node->[$i]->{required} and $node->[$i]->{required} eq q[yes])? 1: 0;
-				my $subst_constructor = $node->[$i]->{subst_constructor};  # I expect this will always be an ARRAY ref, though this will only be enforced by the caller
-				my $default_value = $node->[$i]->{default};
-				if(not defined $substitutable_params->{$param_name}) {
-					$substitutable_params->{$param_name} = { param_name => $param_name, parent_info => [ { parent_node => $node, elem_index => $i, }, ], required => $req_param, subst_constructor => $subst_constructor, default_value => $default_value, depth => scalar @$labels, };
+			if(ref $elem->[$i] eq q[HASH] and my $param_name = $elem->[$i]->{subst}) {
+				# value for a "subst" key must always be the name of a parameter
+				if(ref $param_name) {
+					$logger->($VLFATAL, q[value for a subst directive must be a param name (not a reference), index for subst is: ], $i);
+				}
+
+#				$elem->[$i] = fetch_subst_value($param_name, $param_store, $subst_requests);
+				my $sval = fetch_subst_value($param_name, $param_store, $subst_requests);
+				if(ref $sval eq q[ARRAY]) {
+					splice @$elem, $i, 1, @$sval;
 				}
 				else {
-					push @{$substitutable_params->{$param_name}->{parent_info}}, { parent_node => $node, elem_index => $i, };
+					$elem->[$i] = $sval;
 				}
+
+				unless(defined $elem->[$i]) {
+					$logger->($VLFATAL, q[Failed to fetch subst value for parameter ], $param_name, q[ (element index was ], $i);
+				}
+
+				next;
 			}
-			if(ref $node->[$i]) {
-				push @$labels, $i;
-				walk($node->[$i], $labels, $substitutable_params);   # index
+
+			if(ref $elem->[$i]) {
+				push @$labels, sprintf(q[ArrayElem%03d], $i);
+				subst_walk($elem->[$i], $param_store, $subst_requests, $labels);
 				pop @$labels;
 			}
-			else {
-				$logger->($VLMAX, "Non-ref element with ", join(q[_], @$labels));
+		}
+	}
+	elsif(ref $elem eq q[JSON::XS::Boolean]) {
+	}
+	else {
+		$logger->($VLMED, "REF TYPE $r currently not processable");
+	}
+
+	return;
+}
+
+##################################################################
+# fetch_subst_value:
+#  use the param_store and subst_requests to find or construct
+#  a value for the given param_name. The _value attribute of a
+#  param_entry caches successfully resolved values.
+#
+#   1. Search the param_store for an entry for this param_name.
+#   2. If there isn't a param_store entry, add [an unset] one.
+#   3. If the param_entry _value attribute is set, return that.
+#   4. Search subst_requests for a value for this param_name. If
+#       one is found, return it.
+#   5. Try evaluating the param_entry. If it resolves, return that
+#       value.
+#   6. If a default value value was specified in the param_entry,
+#       return that.
+#   7. If the required attribute of the param_entry is true,
+#       it is a fatal error; otherwise return undef
+##################################################################
+sub fetch_subst_value {
+	my ($param_name, $param_store, $subst_requests) = @_;
+	my $param_entry;
+	my $retval;
+
+	for my $ps (@$param_store) {
+		$param_entry = $ps->{varnames}->{$param_name};
+		if($param_entry) { last; }
+	}
+
+	if(not defined $param_store->[0]->{varnames}->{$param_name}) {	# create a "writeable" param_store entry at local level
+		my $new_param_entry = (not defined $param_entry)? { name => $param_name, }: dclone $param_entry;
+
+		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
+
+		$param_entry = $new_param_entry;
+	}
+
+	if(defined $param_entry->{_value}) {
+		return $param_entry->{_value};   # already evaluated, no need to do again
+	}
+
+	for my $sr (@$subst_requests) {
+		$retval = $sr->{$param_name};
+		if(defined $retval) { last; }
+	}
+
+	if(defined $retval) {
+		$param_entry->{_value} = $retval;
+		return $retval;
+	}
+
+	if($param_entry->{subst_constructor}) {
+		my $vals;
+		unless($vals = $param_entry->{subst_constructor}->{vals}) {
+			$logger->($VLFATAL, q[subst_constructor attribute requires a vals attribute, param_name: ], $param_name);
+		}
+
+		unless(ref $vals eq q[ARRAY]) {
+			$logger->($VLFATAL, q[subst_constructor vals attribute must be array, param_name: ], $param_name);
+		}
+
+		for my $i (0..$#$vals) {
+			if(ref $vals->[$i] eq q[HASH] and $vals->[$i]->{subst}) {
+				$vals->[$i] = fetch_subst_value($vals->[$i]->{subst}, $param_store, $subst_requests);
+				if(ref $vals->[$i] eq q[ARRAY]) {
+					splice(@$vals, $i, 1, (@{$vals->[$i]}));
+				}
 			}
 		}
-	}
-	elsif(ref $node eq q[JSON::XS::Boolean]) {
-	}
-	else {
-		carp "REF TYPE $r currently not processable";
-	}
 
-	return $substitutable_params;
-}
+		$retval = resolve_subst_array($param_entry, $vals);
 
-sub do_substitutions {
-	my ($substitutable_params, $subst_requests, $query_mode) = @_;
-
-	for my $subst_param_name (sort { $substitutable_params->{$a}->{depth} <=> $substitutable_params->{$b}->{depth} } (keys %$substitutable_params)) {
-
-		if(not $query_mode and $substitutable_params->{$subst_param_name}->{processed}) {
-			next;
-		}
-
-		my $subst_value = make_substitutions($subst_param_name, $substitutable_params, \%subst_requests, $query_mode);
-
-		if($query_mode) {
-			print $out join(qq[\t], ($subst_param_name, ($substitutable_params->{$subst_param_name}->{required}? q[required]: q[not_required]), $substitutable_params->{$subst_param_name}->{parent_id}, $substitutable_params->{$subst_param_name}->{attrib_name}, )), "\n";
-		}
-	}
-
-	return $substitutable_params;
-}
-
-#################################################################################################################
-# make_substitutions:
-# check the subst_constructor parameter which gives instructions on how to construct the value to be substituted.
-# If defined, subst_constructor is a HASH ref with two attributes:
-#   "vals": ARRAY ref; any elements which are subst_params will be recursively expanded
-#   "postproc": (optional) HASH ref; specifies any post-processing on the "vals" ARRAY ref. Initially, this
-#      will only be flavours of concatenation of the array elements
-#
-# If subst_constructor is not present, then the value to substitute should be available from the subst_requests
-# (which are derived from the command line keys/vals flags) or from a specified default value; the subst_requests
-# key will be the value given in the subst_param_name attribute
-#
-# When query_mode is true, substitutions aren't done, but any nested substitutions are flagged as processed.
-#  If, when working through nested substitutions, an explicit value has been specified via the command-line
-#  flags, query_mode is switched on so that any inner substitutions are simply flagged as processed so they will
-#  be skipped by the top-level processing loop.
-#################################################################################################################
-sub make_substitutions {
-	my ($subst_param_name, $substitutable_params, $subst_requests, $query_mode) = @_;
-	my $subst_value;
-
-	#################################################################################################################
-	# first check to see if the value for this subst section has been explicitly set on the command line; if it has,
-	#  that value takes precedence over any nested subst sections, so set query_mode on after making the substitution
-	#################################################################################################################
-	$subst_value = $subst_requests->{$subst_param_name};
-	if(defined $subst_value and not $query_mode) {
-		# on transition to query_mode, the current substitution should be done, but none in any nested substitutions
-		do_subst($substitutable_params->{$subst_param_name}, $subst_value);
-		$query_mode = 1;
-	}
-
-	my $subst_param = $substitutable_params->{$subst_param_name};
-	my $subst_constructor = $subst_param->{subst_constructor};
-
-	if(not defined $subst_constructor) {
-		#####################
-		# simple substitution
-		#####################
-		if(not $query_mode) {
-			$subst_value = resolve_subst_to_string($subst_param, $subst_value, $query_mode);
-		}
-	}
-	else {
-		#######################################################################################
-		# existence of a subst_constructor section means that an array of values, some of which
-		#  may themselves be subst sections, needs to be processed recursively
-		#######################################################################################
-
-		#############################################################################
-		# validate the subst_constructor - must be a hash ref containing a "vals" key
-		#############################################################################
-		my $svrt = ref $subst_constructor;
-		$svrt ||= q[non-ref];
-		unless($svrt eq q[HASH]) {
-			$logger->($VLFATAL, q[subst_constructor attribute in substitutable_params section must be an HASH ref, here it is: ], $svrt);
-		}
-		my $vals;
-		unless($vals = $subst_constructor->{vals}) {
-			$logger->($VLFATAL, q[subst_constructor attribute requires a vals attribute]);
-		}
-
-		########################################
-		# recursively process the array elements
-		########################################
-		$vals = [ map { (ref $_ eq q[HASH] and $_->{subst_param_name})? make_substitutions($_->{subst_param_name}, $substitutable_params, $subst_requests, $query_mode) : $_; } @$vals ];
-
-		if(not $query_mode) {
-			$subst_value = resolve_subst_array($subst_param, $vals);
-		}
-	}
-
-	if(not $query_mode and defined $subst_value) {
-		do_subst($subst_param, $subst_value);
-	}
-
-	$substitutable_params->{$subst_param_name}->{processed} = 1;
-
-	return $subst_value;
-}
-
-############################################################################################################
-# resolve_subst_to_string
-#   validate proposed substitution value: if it is undefined, decide if a supplied default value can be used
-#   NOTE: this will return undef if no subst_value is given, the sustitution isn't required, and there
-#    is no default
-############################################################################################################
-sub resolve_subst_to_string {
-	my ($subst_param, $subst_value, $query_mode) = @_;
-
-	if(not defined $subst_value) {
-		# do a little unpacking for readability
-		my $subst_param_name = $subst_param->{param_name};
-		my $parent_id = $subst_param->{parent_id};
-		$parent_id ||= q[NO_PARENT_ID];   # should be ARRAY?
-
-		if($subst_param->{required} and not $query_mode) { # required means "must be specified by the caller", so default value is disregarded
-#			$logger->($VLFATAL, q[No substitution specified for required substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
-			# NOTE: the decision to fail can only be decided at the top level of the subst_param structure
-			$logger->($VLMIN, q[No substitution specified for required substitutable param ], $subst_param_name);
+		if(not defined $retval) {
+			$retval = $param_entry->{default};
+		} 
+		if(not defined $retval) {
+			# caller should decide if undef is allowed, unless required is true
+			my $severity = (defined $param_entry->{required} and $param_entry->{required} eq q[yes])? $VLFATAL: $VLMED;
+			$logger->($severity, q[INFO: Undefined elements in subst_param array: ], $param_entry->{id});
 			return;
 		}
-
-		$subst_value = $subst_param->{default_value};
-		if(not defined $subst_value) {
-			$logger->($VLMIN, q[No default value specified for apparent substitutable param ], $subst_param_name);
-		}
+	}
+	elsif(defined $param_entry->{default}) {
+		$param_entry->{_value} = $param_entry->{default}; # be careful here - don't set _value for a higher-level param_store
+		return $param_entry->{default};
+	}
+	else {
+		# caller should decide if undef is allowed, unless required is true
+		my $severity = (defined $param_entry->{required} and $param_entry->{required} eq q[yes])? $VLFATAL: $VLMED;
+		$logger->($severity, q[No value found for param_entry ], $param_name);
+		return;
 	}
 
-	return $subst_value;
+	$param_entry->{_value} = $retval; # be careful here - don't set _value for a higher-level param_store
+
+	return $retval;
 }
 
-############################################################################################################
-# resolve_subst_array
+#######################################################################################################
+# resolve_subst_array:
 #   caller will have already flattened the array (i.e. no ref elements)
 #   process as specified by op directives (pack, concat,...)
 #   validate proposed substitution value
 #      1. if it contains any undef elements, it is invalid.
-#      2. if it contains any null string elements but no allow_null_strings opt, it is invalid.
-#
-#   if invalid and a default is supplied, substition value becomes default (without further validation)
-#   if undef and required, fatal error
-#   return substitution value
-#
-#   NOTE: this will return undef if no subst_value is given, the sustitution isn't required, and there
-#    is no default
-############################################################################################################
+#      2. if it contains any null string elements but no allow_null_strings opt, it is invalid. (TBI)
+#######################################################################################################
 sub resolve_subst_array {
-	my ($subst_param, $subst_value, $query_mode) = @_;
+	my ($subst_param, $subst_value) = @_;
 
 	if(ref $subst_value ne q[ARRAY]) {
-		$logger->($VLMIN, q[Attempt to substitute array for non-array in substitutable param ],
-				$subst_param->{param_name});
+		$logger->($VLMIN, q[Attempt to substitute array for non-array in substitutable param (],
+				$subst_param->{param_name},
+				q[ for ], $subst_param->{attrib_name},
+				q[ in ], ($subst_param->{parent_id}? $subst_param->{parent_id}: q[UNNAMED_PARENT]), q[)]);
 		return;
 	}
 
@@ -428,21 +533,15 @@ sub resolve_subst_array {
 	my $ops=$subst_constructor->{postproc}->{op};
 	if(defined $ops and ref $ops ne q[ARRAY]) { $ops = [ $ops ]; }
 
-	# if (post-pack) array contains nulls, it is invalid
+	# if (post-pack) array contains undefs, it is invalid
 	if(any { ! defined($_) } @$subst_value) {
 		if(grep { $_ eq q[pack] } @$ops) {
 			$subst_value = [ (grep { defined($_) } @$subst_value) ];
 		}
 		else {
-			if($subst_param->{required}) {
-				$logger->($VLFATAL, q[No substitution specified for required substitutable param ],
-						$subst_param->{param_name});
-			}
-			else {
-				$logger->($VLMIN, q[No default value specified for apparent substitutable param ],
-						$subst_param->{param_name});
-				return;
-			}
+			# decision about fatality should be left to the caller
+			$logger->($VLMED, q[INFO: Undefined elements in subst_param array: ], $subst_param->{id});
+			return;
 		}
 	}
 
@@ -470,37 +569,238 @@ sub resolve_subst_array {
 	return $subst_value;
 }
 
-###############################################################
-# do_subst:
-#  Do the substitution of the primitive value into the cfg tree
-###############################################################
-sub do_subst {
-	my ($subst_param, $subst_value) = @_;
+#######################################################################################
+# flatten_tree:
+#
+# Take the node_tree produced by process_vtnode() and flatten it into one graph. Main
+#  tasks are to update node ids with prefixes (to ensure uniqueness) and remap edges to
+#  subgraph nodes.
+#
+# Note: at the moment, only the nodes and edges are being transferred to the final flat
+#         graph. In other words, any comments, descriptions, etc which appear outside
+#         of these sections will be discarded. Is this a problem? (Consider review of
+#         the resulting graph with one of the visualisation tools.)
+#######################################################################################
+sub flatten_tree {
+	my ($tree_node, $flat_graph) = @_; 
 
+	$flat_graph ||= {};
 
-	if(defined $subst_value) {
-		for my $parent_info (@{$subst_param->{parent_info}}) {
-			my $node = $parent_info->{parent_node};
-			my $attrib_name = $parent_info->{attrib_name};
-			my $elem_index = $parent_info->{elem_index};
+	# insert edges and nodes from current tree_node to $flat_graph
+	subgraph_to_flat_graph($tree_node, $flat_graph);
 
-			if(defined $attrib_name) {
-				$node->{$attrib_name} = $subst_value;
+	# do the same recursively for any children
+	for my $tn (@{$tree_node->{children}}) {
+		flatten_tree($tn, $flat_graph);
+	}
+
+	return $flat_graph;
+}
+
+#########################################################################################
+# subgraph_to_flat_graph:
+#  losing everything except nodes and edges is a possibly undesirable side-effect of this
+#########################################################################################
+sub subgraph_to_flat_graph {
+	my ($tree_node, $flat_graph) = @_;
+
+	my $vtnode_id = $tree_node->{id};
+	my $vt_name = $tree_node->{name};
+
+	my $subcfg = $tree_node->{cfg};
+
+	###################################################################################
+	# prefix the nodes in this subgraph with a prefix to ensure uniqueness of id values
+	###################################################################################
+	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
+
+	########################################################################
+	# any edges which refer to nodes in this subgraph should also be updated
+	########################################################################
+	for my $edge (@{$subcfg->{edges}}) {
+		if(not get_child_prefix($tree_node->{children}, $edge->{from})) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+			$edge->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $edge->{from};
+		}
+		if(not get_child_prefix($tree_node->{children}, $edge->{to})) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+			$edge->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $edge->{to};
+		}
+	}
+
+	##########################################################
+	# add the new nodes and edges to the flat graph structure.
+	##########################################################
+	push @{$flat_graph->{nodes}}, @{$subcfg->{nodes}};
+	push @{$flat_graph->{edges}}, @{$subcfg->{edges}};
+
+	# determine input/output node(s) in the subgraph
+	my $subgraph_nodes_in = $subcfg->{subgraph_io}->{ports}->{inputs};
+	my $subgraph_nodes_out = $subcfg->{subgraph_io}->{ports}->{outputs};
+
+	# now fiddle the edges in the flattened graph (maybe "fiddle" should be defined)
+
+	# first inputs to the subgraph... (identify edges in the flat graph which terminate in nodes of this subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
+	my $in_edges = [ (grep { $_->{to} =~ /^$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
+	if(@$in_edges and not $subgraph_nodes_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode_id, q[". No inputs specified in subgraph ], $vt_name); }
+	for my $edge (@$in_edges) {
+		if($edge->{to} =~ /^$vtnode_id:?(.*)$/) {
+			my $portkey = $1;
+			$portkey ||= q[_stdin_];
+
+			my $ports = $subgraph_nodes_in->{$portkey};
+			unless($ports) {
+				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode_id, q[:], $portkey);
 			}
-			elsif(defined $elem_index) {
-				$node->[$elem_index] = $subst_value;
+			my $pt = ref $ports;
+			if($pt) {
+				if($pt ne q[ARRAY]) {
+					$logger->($VLFATAL, q[Input ports specification values in subgraphs must be string or array ref. Type ], $pt, q[ not allowed]);
+				}
 			}
 			else {
-				my $subst_param_name = $subst_param->{param_name};
-				my $parent_id = $parent_info->{parent_id};
-				$parent_id ||= q[NO_PARENT_ID];
+				$ports = [ $ports ];
+			}
 
-				$logger->($VLFATAL, q[Neither attrib_name nor elem_index found for substitution specified for required substitutable param (], $subst_param_name, q[ for ], $attrib_name, q[ in ], $parent_id, q[) - use -q for full list of substitutable parameters]);
+			# do check for existence of port in 
+			for my $i (0..$#$ports) {
+				my $mod_edge;
+				if($i > 0) {
+					$mod_edge = dclone $edge;
+					push @{$flat_graph->{edges}}, $mod_edge;
+				}
+				else {
+					$mod_edge = $edge;
+				}
+				if(get_child_prefix($tree_node->{children}, $ports->[$i])) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+					$mod_edge->{to} = $ports->[$i];
+				}
+				else {
+					$mod_edge->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $ports->[$i];
+				}
+			}
+		}
+		else {
+			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
+			next;
+		}
+	}
+
+	#  ...then outputs from the subgraph (identify edges in the flat graph which originate in nodes of the subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
+	my $out_edges = [ (grep { $_->{from} =~ /^$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
+	if(@$out_edges and not $subgraph_nodes_out) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode_id, q[". No outputs specified in subgraph ], $vt_name); }
+	for my $edge (@$out_edges) {
+		if($edge->{from} =~ /^$vtnode_id:?(.*)$/) {
+			my $portkey = $1;
+			$portkey ||= q[_stdout_];
+
+			my $port;
+			unless(($port = $subgraph_nodes_out->{$portkey})) {
+				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode_id, q[:], $portkey);
+			}
+
+			# do check for existence of port in 
+			if(get_child_prefix($tree_node->{children}, $port)) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
+				$edge->{from} = $port;
+			}
+			else {
+				$edge->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $port;
+			}
+		}
+		else {
+			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});
+			next;
+		}
+	}
+
+	return $flat_graph;
+}
+
+sub get_child_prefix {
+	my ($children, $edge_to) = @_;
+
+	my $child = (grep { $edge_to =~ /^$_->{id}:?(.*)$/} @$children)[0];
+
+	return $child? $child->{node_prefix}: q[];
+}
+
+#####################################################################
+# initialise_subst_requests:
+#  if a key is specified more than once, its value becomes a list ref
+#####################################################################
+sub initialise_subst_requests {
+	my ($keys, $vals) = @_;
+	my %subst_requests = ();
+
+	if(@$keys != @$vals) {
+		croak q[Mismatch between keys and vals];
+	}
+
+	for my $i (0..$#{$keys}) {
+		if(defined $subst_requests{$keys->[$i]}) {
+			if(ref $subst_requests{$keys->[$i]} ne q[ARRAY]) {
+				$subst_requests{$keys->[$i]} = [ $subst_requests{$keys->[$i]} ];
+			}
+
+			push @{$subst_requests{$keys->[$i]}}, $vals->[$i];
+		}
+		else {
+			$subst_requests{$keys->[$i]} = $vals->[$i];
+		}
+	}
+
+	return [ \%subst_requests ];  # note: the return value is a ref to a list of hash refs
+}
+
+sub read_vtf_version_check {
+	my ($vtf_name, $version_minimum, $template_path) = @_;
+
+	my $cfg = read_the_vtf($vtf_name, $template_path);
+	my $version = $cfg->{version};
+	$version ||= -1;
+	if($version < $version_minimum) { 
+		$logger->($VLMED, q[Warning: minimum template version requested for template ], $vtf_name, q[ was ], $version_minimum, q[, template version is ], ($version>=0?$version:q[UNSPECIFIED]));
+	}
+
+	return $cfg;
+}
+
+######################################################################
+# read_the_vtf:
+#  Open the file, read the JSON content, convert to hash and return it
+######################################################################
+sub read_the_vtf {
+	my ($vtf_name, $template_path) = @_;
+
+	my $vtf_fullname = find_vtf($vtf_name, $template_path);
+
+	my $s = read_file($vtf_fullname);
+	my $cfg = from_json($s);
+
+	return $cfg;
+}
+
+########################################################
+# prepend appropriate template_path element if necessary
+########################################################
+sub find_vtf {
+	my ($vtf_fullname, $template_path) = @_;
+
+	if(-e $vtf_fullname) {
+		return $vtf_fullname;
+	}
+
+	my ($vtf_name, $directories) = fileparse($vtf_fullname);
+
+	if($vtf_name eq $vtf_fullname) {  # path to file not specified, try template_path
+		for my $path (@$template_path) {
+			my $candidate = File::Spec->catfile($path, $vtf_name);
+			if(-e $candidate) {
+				return $candidate;
 			}
 		}
 	}
 
-	return $subst_value;
+	# if we haven't found this file anywhere on the path, bomb out
+	$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_fullname, q[ locally or on template_path: ], join q[:], @$template_path);
 }
 
 sub mklogger {
@@ -545,20 +845,4 @@ sub mklogger {
 	}
 }
 
-######################################################################
-# read_the_vtf:
-#  Open the file, read the JSON content, convert to hash and return it
-######################################################################
-sub read_the_vtf {
-	my ($vtf_name) = @_;
-
-	if(! -e $vtf_name) {
-		$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_name);
-	}
-
-	my $s = read_file($vtf_name);
-	my $cfg = from_json($s);
-
-	return $cfg;
-}
 

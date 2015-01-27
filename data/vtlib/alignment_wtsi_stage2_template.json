@@ -1,21 +1,195 @@
 {
+"version":"1.0",
 "description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
+"subst_params":[
+	{
+		"id":"basic_pipeline_params_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
+	{
+		"id":"src_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"indatadir"}, "/", {"subst":"rpt"}, ".bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"pre_alignment_name","required":"no","default":"pre_alignment"},
+	{
+		"id":"pre_alignment_target",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"pre_alignment_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"alignment_vtf",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"alignment_method"}, "_alignment.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"reference_dict",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_dict_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"post_alignment","required":"no","default":"post_alignment"},
+	{
+		"id":"post_alignment_target",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"post_alignment"}, ".json"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"initial_phix_aln_bam_name",
+		"required":"no",
+		"default":"initial_phix_aln.bam",
+		"subst_constructor":{
+			"vals":[ "initial_phix_aln_", {"subst":"rpt"}, ".bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"initial_phix_aln_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"initial_phix_aln_bam_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"auxmerge_prep_name","required":"no","default":"auxmerge_prep"},
+	{
+		"id":"auxmerge_prep",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"auxmerge_prep_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"alignment_filter_jar_path","required":"no","default":"/software/npg/java_jars"},
+	{"id":"java_cmd","required":"no","default":"java"},
+	{
+		"id":"alignment_filter_jar","required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"alignment_filter_jar_path"}, "/", "AlignmentFilter.jar" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"alignment_filter_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"java_cmd"},
+				"-Xmx1000m",
+				"-jar", {"subst":"alignment_filter_jar"},
+				"VALIDATION_STRINGENCY=SILENT",
+				"CREATE_MD5_FILE=false",
+				"VERBOSITY=INFO",
+				"QUIET=false",
+				"COMPRESSION_LEVEL=5",
+				"MAX_RECORDS_IN_RAM=500000",
+				"CREATE_INDEX=false"
+			],
+			"postproc":{"op":"noconcat", "pad":" "}
+		}
+	},
+	{"id":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"},
+	{
+		"id":"af_metrics",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"logdir"}, "/", {"subst":"rpt"}, ".", {"subst":"af_metrics_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"target_indicator","default":""},
+	{"id":"phix_indicator","default":"_phix"},
+	{
+		"id":"fopid_tgt",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"target_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"fopid_phix",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"phix_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
+	{
+		"id":"final_output_prep_target",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_target_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"final_output_prep_phix_name","required":"no","default":"final_output_prep"},
+	{
+                "id":"final_output_prep_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_phix_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"seqchksum_vtf","required":"no","default":"seqchksum"},
+	{
+                "id":"seqchksum",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"seqchksum_vtf"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"phix_chksum",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix.seqchksum" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"target_chksum",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".seqchksum" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
 "nodes":[
 	{
 		"id":"src_bam",
 		"type":"INFILE",
-		"name":{"subst_param_name":"src_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"indatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".bam"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"src_bam"},
 		"description":"BAM using as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
 	},
 	{
@@ -32,89 +206,41 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk",
-		"cmd":"teepot -w 30000 -m 1G __PHIX_ALN_OUT__ __TGT_ALN_OUT__"
+		"cmd":["teepot", "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__" ]
 	},
 	{
 		"id":"pre_alignment_target",
 		"type":"VTFILE",
-		"name":{"subst_param_name":"pre_alignment_target",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"pre_alignment_name","required":"no","default":"pre_alignment"},
-					".json"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"node_prefix":"prealntgt_",
+		"name":{"subst":"pre_alignment_target"},
 		"description":"subgraph containing pre alignment process"
 	},
 	{
 		"id":"alignment_reference_genome",
 		"type":"INFILE",
-		"name":{"subst_param_name":"alignment_reference_genome",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"alignment_reference_genome_name","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"alignment_reference_genome"},
 		"description":"Prefix for reference fasta and Bowtie2 index files"
 	},
 	{
 		"id":"alignment_target",
 		"type":"VTFILE",
-		"name":{"subst_param_name":"alignment_vtf",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"alignment_method","required":"yes"},
-					"_alignment.json"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
+		"node_prefix":"alntgt_",
+		"name":{"subst":"alignment_vtf"},
 		"description":"subgraph containing alignment process"
 	},
 	{
 		"id":"reference_dict",
 		"type":"INFILE",
-		"name":{"subst_param_name":"reference_dict",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"reference_dict_name","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"reference_dict"},
 		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
 	},
 	{
 		"id":"post_alignment_target",
 		"type":"VTFILE",
-		"name":{"subst_param_name":"post_alignment_target",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"post_alignment","required":"no","default":"post_alignment"},
-					".json"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"comment":"inputs: _stdin_ (bam), reference_dict, no_align_bam; outputs: _stdout_ (bam)",
+		"node_prefix":"postalntgt_",
+		"name":{"subst":"post_alignment_target"},
 		"description":"subgraph containing post alignment process (target)"
 	},
 	{
@@ -127,44 +253,13 @@
 	{
 		"id":"initial_phix_aln_bam",
 		"type":"RAFILE",
-		"name":{"subst_param_name":"initial_phix_aln_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"tmpdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"initial_phix_aln_bam_name",
-						"required":"no",
-						"default":"initial_phix_aln.bam",
-						"subst_constructor":{
-							"vals":[
-								"initial_phix_aln_",
-								{"subst_param_name":"rpt","required":"yes"},
-								".bam"
-							],
-							"postproc":{"op":"concat", "pad":""}
-						}
-					}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"initial_phix_aln_bam"}
 	},
 	{
 		"id":"auxmerge_prep",
 		"type":"VTFILE",
-		"name":{"subst_param_name":"auxmerge_prep",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"cfgdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"auxmerge_prep_name","required":"no","default":"auxmerge_prep"},
-					".json"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"node_prefix":"amp_",
+		"name":{"subst":"auxmerge_prep"},
 		"description":"subgraph containing pre alignment process"
 	},
 	{
@@ -172,587 +267,75 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":{"subst_param_name":"alignment_filter",
-			"required":"yes",
-			"subst_constructor":{
-			"vals":[
-					{"subst_param_name":"java_cmd","required":"no","default":"java"},
-					"-Xmx1000m",
-					"-jar", {"subst_param_name":"alignment_filter_jar","required":"no",
-						"subst_constructor":{
-							"vals":[
-								{"subst_param_name":"alignment_filter_jar_path","required":"no","default":"/software/npg/java_jars"},
-								"/",
-								"AlignmentFilter.jar"
-							],
-							"postproc":{"op":"concat","pad":""}
-						}
-					},
-					"IN=__PHIX_INBAM__",
-					"IN=__TARGET_INBAM__",
-					"OUT=__PHIX_OUTBAM__",
-					"OUT=/dev/stdout",
-					"METRICS_FILE=__AF_METRICS__",
-					"VALIDATION_STRINGENCY=SILENT",
-					"CREATE_MD5_FILE=false",
-					"VERBOSITY=INFO",
-					"QUIET=false",
-					"COMPRESSION_LEVEL=5",
-					"MAX_RECORDS_IN_RAM=500000",
-					"CREATE_INDEX=false"
-				],
-				"postproc":{"op":"noconcat", "pad":" "}
-			}
-		}
+		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__TARGET_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
 	},
 	{
 		"id":"af_metrics",
 		"type":"OUTFILE",
-		"name":{"subst_param_name":"af_metrics",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"logdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".",
-					{"subst_param_name":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"name":{"subst":"af_metrics"}
 	},
 	{
 		"id":"reference_genome_fasta",
 		"type":"INFILE",
-		"name":{"subst_param_name":"reference_genome_fasta",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"reference_genome_fasta_name","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"reference_genome_fasta"},
 		"description":"Prefix for reference fasta and Bowtie2 index files"
 	},
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
-                "subst_map":{"phix_or_target":"","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
-                "name":{"subst_param_name":"final_output_prep_target",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
-                                        ".json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
+		"comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"node_prefix":"foptgt_",
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
 	{
 		"id":"phix_reference_genome_fasta",
 		"type":"INFILE",
-		"name":{"subst_param_name":"phix_reference_genome_fasta",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"reposdir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"phix_reference_genome_fasta_name","required":"yes"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		},
+		"name":{"subst":"phix_reference_genome_fasta"},
 		"description":"Prefix for reference fasta and Bowtie2 index files"
 	},
         {
                 "id":"final_output_prep_phix",
                 "type":"VTFILE",
-                "subst_map":{"phix_or_target":"_phix","bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
-                "name":{"subst_param_name":"final_output_prep_phix",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"final_output_prep_phix_name","required":"no","default":"final_output_prep"},
-                                        ".json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
+		"comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"node_prefix":"fopphx_",
+                "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "name":{"subst":"final_output_prep_phix"},
                 "description":"subgraph containing post alignment_filter process (phix)"
         },
-	{
-		"id":"phix_bam",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"phix_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_",
-					{"subst_param_name":"phix_bam_name","required":"no","default":"phix.bam"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"target_bam",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"target_bam",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					{"subst_param_name":"bam_name","required":"no","default":".bam"}
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"cram",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"cram",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".cram"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"cram_md5",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"cram_md5",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".cram.md5"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"phix_cram",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"phix_cram",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix.cram"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"phix_cram_md5",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"phix_cram_md5",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix.cram.md5"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"out_bamcheck",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_bamcheck",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".bamcheck"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"out_stats_F0x900",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_stats_F0x900",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_F0x900.stats"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"out_stats_F0xB00",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_stats_F0xB00",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_F0xB00.stats"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"out_phix_bamcheck",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_phix_bamcheck",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix.bamcheck"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"out_phix_stats_F0x900",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_phix_stats_F0x900",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix_F0x900.stats"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"out_phix_stats_F0xB00",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_phix_stats_F0xB00",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix_F0xB00.stats"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-
-	{
-		"id":"out_flagstat",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_flagstat",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".flagstat"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
-	{
-		"id":"out_phix_flagstat",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"out_phix_flagstat",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix.flagstat"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	},
         {
-                "id":"seqchksum",
-                "type":"VTFILE",
-                "name":{"subst_param_name":"seqchksum",
-                        "required":"yes",
-                        "subst_constructor":{
-                                "vals":[
-                                        {"subst_param_name":"cfgdatadir","required":"no","default":"."},
-                                        "/",
-                                        {"subst_param_name":"seqchksum_vtf","required":"no","default":"seqchksum"},
-                                        ".json"
-                                ],
-                                "postproc":{"op":"concat", "pad":""}
-                        }
-                },
-                "description":"subgraph containing seqchksum validation of outputs"
-        },
-	{
-		"id":"phix_chksum",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"phix_chksum",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					"_phix.seqchksum"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
+		"id":"seqchksum",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (start bam), target_bam, phix_bam; outputs: target_chksum, phix_chksum",
+		"node_prefix":"scs_",
+		"name":{"subst":"seqchksum"},
+		"description":"subgraph containing seqchksum validation of outputs"
 	},
-	{
-		"id":"target_chksum",
-		"type":"OUTFILE",
-		"name":{"subst_param_name":"target_chksum",
-			"required":"yes",
-			"subst_constructor":{
-				"vals":[
-					{"subst_param_name":"outdatadir","required":"no","default":"."},
-					"/",
-					{"subst_param_name":"rpt","required":"yes"},
-					".seqchksum"
-				],
-				"postproc":{"op":"concat", "pad":""}
-			}
-		}
-	}
+	{ "id":"phix_chksum", "type":"OUTFILE", "name":{"subst":"phix_chksum"} },
+	{ "id":"target_chksum", "type":"OUTFILE", "name":{"subst":"target_chksum"} }
 ],
 "edges":[
-	{
-		"id":"src_to_bc2",
-		"from":"src_bam",
-		"to":"bamcollate2"
-	},
-	{
-		"id":"bc2_to_ti",
-		"from":"bamcollate2",
-		"to":"tee0"
-	},
-	{
-		"id":"t0_to_bamcollate2_ranking_phix",
-		"from":"tee0:__PHIX_ALN_OUT__",
-		"to":"bamrecompress_input"
-	},
-	{
-		"id":"brci_to_ipab",
-		"from":"bamrecompress_input",
-		"to":"initial_phix_aln_bam"
-	},
-	{
-		"id":"ipab_to_bamreset_pre_aln_flt",
-		"from":"initial_phix_aln_bam",
-		"to":"auxmerge_prep"
-	},
-	{
-		"id":"bamreset_pre_aln_flt_to_",
-		"from":"auxmerge_prep",
-		"to":"post_alignment_target:no_align_bam"
-	},
-	{
-		"id":"t0_to_bamcollate2_ranking",
-		"from":"tee0:__TGT_ALN_OUT__",
-		"to":"pre_alignment_target"
-	},
-	{
-		"id":"bamadapterclip_to_alignment",
-		"from":"pre_alignment_target",
-		"to":"alignment_target"
-	},
-	{
-		"id":"ref_to_alignment",
-		"from":"alignment_reference_genome",
-		"to":"alignment_target:reference"
-	},
-	{
-		"id":"alignment_target_to_post_alignment_target",
-		"from":"alignment_target",
-		"to":"post_alignment_target"
-	},
-        {
-                "id":"reference_dict_to_post_alignment",
-                "from":"reference_dict",
-                "to":"post_alignment_target:reference_dict"
-        },
-	{
-		"id":"post_alignment_to_alignment_filter",
-		"from":"post_alignment_target",
-		"to":"alignment_filter:__TARGET_INBAM__"
-	},
-	{
-		"id":"iab_to_alignment_filter",
-		"from":"initial_phix_aln_bam",
-		"to":"alignment_filter:__PHIX_INBAM__"
-	},
-	{
-		"id":"alignment_filter_to_metrics",
-		"from":"alignment_filter:__AF_METRICS__",
-		"to":"af_metrics"
-	},
-	{
-		"id":"af_to_paf_target",
-		"from":"alignment_filter",
-		"to":"final_output_prep_target"
-	},
-	{
-		"id":"af_to_paf_phix",
-		"from":"alignment_filter:__PHIX_OUTBAM__",
-		"to":"final_output_prep_phix"
-	},
-	{
-		"id":"ref_to_paf_target",
-		"from":"reference_genome_fasta",
-		"to":"final_output_prep_target:reference_genome_fasta"
-	},
-	{
-		"id":"ref_to_paf_phix",
-		"from":"phix_reference_genome_fasta",
-		"to":"final_output_prep_phix:reference_genome_fasta"
-	},
-	{
-		"id":"paf_to_bam",
-		"from":"final_output_prep_target",
-		"to":"target_bam"
-	},
-	{
-		"id":"paf_to_bam_phix",
-		"from":"final_output_prep_phix",
-		"to":"phix_bam"
-	},
-	{
-		"id":"scramble_to_cram",
-		"from":"final_output_prep_target:out_cram",
-		"to":"cram"
-	},
-	{
-		"id":"scramble_to_cram_md5",
-		"from":"final_output_prep_target:out_cram_md5",
-		"to":"cram_md5"
-	},
-	{
-		"id":"scramble_to_phix_cram",
-		"from":"final_output_prep_phix:out_cram",
-		"to":"phix_cram"
-	},
-	{
-		"id":"scramble_to_phix_cram_md5",
-		"from":"final_output_prep_phix:out_cram_md5",
-		"to":"phix_cram_md5"
-	},
-	{
-		"id":"bamcheck_out_target",
-		"from":"final_output_prep_target:out_bamcheck",
-		"to":"out_bamcheck"
-	},
-	{
-		"id":"samtools_stats_F0x900_out_target",
-		"from":"final_output_prep_target:out_stats_F0x900",
-		"to":"out_stats_F0x900"
-	},
-	{
-		"id":"samtools_stats_F0xB00_out_target",
-		"from":"final_output_prep_target:out_stats_F0xB00",
-		"to":"out_stats_F0xB00"
-	},
-
-	{
-		"id":"bamcheck_out_phix",
-		"from":"final_output_prep_phix:out_bamcheck",
-		"to":"out_phix_bamcheck"
-	},
-	{
-		"id":"samtools_stats_F0x900_out_phix",
-		"from":"final_output_prep_phix:out_stats_F0x900",
-		"to":"out_phix_stats_F0x900"
-	},
-	{
-		"id":"samtools_stats_F0xB00_out_phix",
-		"from":"final_output_prep_phix:out_stats_F0xB00",
-		"to":"out_phix_stats_F0xB00"
-	},
-
-	{
-		"id":"flagstat_to_out",
-		"from":"final_output_prep_target:out_flagstat",
-		"to":"out_flagstat"
-	},
-	{
-		"id":"flagstat_to_phix",
-		"from":"final_output_prep_phix:out_flagstat",
-		"to":"out_phix_flagstat"
-	},
-        {
-                "id":"src_bam_to_seqchksum",
-                "from":"src_bam",
-                "to":"seqchksum"
-        },
-        {
-                "id":"target_bam_to_seqchksum",
-                "from":"target_bam",
-                "to":"seqchksum:target_bam"
-        },
-        {
-                "id":"phix_bam_to_seqchksum",
-                "from":"phix_bam",
-                "to":"seqchksum:phix_bam"
-        },
-	{
-		"id":"target_chksum_to_file",
-		"from":"seqchksum:target_chksum",
-		"to":"target_chksum"
-	},
-	{
-		"id":"phix_chksum_to_file",
-		"from":"seqchksum:phix_chksum",
-		"to":"phix_chksum"
-	}
+	{ "id":"src_to_bc2", "from":"src_bam", "to":"bamcollate2" },
+	{ "id":"bc2_to_ti", "from":"bamcollate2", "to":"tee0" },
+	{ "id":"t0_to_bamcollate2_ranking_phix", "from":"tee0:__PHIX_ALN_OUT__", "to":"bamrecompress_input" },
+	{ "id":"brci_to_ipab", "from":"bamrecompress_input", "to":"initial_phix_aln_bam" },
+	{ "id":"ipab_to_bamreset_pre_aln_flt", "from":"initial_phix_aln_bam", "to":"auxmerge_prep" },
+	{ "id":"bamreset_pre_aln_flt_to_", "from":"auxmerge_prep", "to":"post_alignment_target:no_align_bam" },
+	{ "id":"t0_to_bamcollate2_ranking", "from":"tee0:__TGT_ALN_OUT__", "to":"pre_alignment_target" },
+	{ "id":"bamadapterclip_to_alignment", "from":"pre_alignment_target", "to":"alignment_target" },
+	{ "id":"ref_to_alignment", "from":"alignment_reference_genome", "to":"alignment_target:reference" },
+	{ "id":"alignment_target_to_post_alignment_target", "from":"alignment_target", "to":"post_alignment_target" },
+        { "id":"reference_dict_to_post_alignment", "from":"reference_dict", "to":"post_alignment_target:reference_dict" },
+	{ "id":"post_alignment_to_alignment_filter", "from":"post_alignment_target", "to":"alignment_filter:__TARGET_INBAM__" },
+	{ "id":"iab_to_alignment_filter", "from":"initial_phix_aln_bam", "to":"alignment_filter:__PHIX_INBAM__" },
+	{ "id":"alignment_filter_to_metrics", "from":"alignment_filter:__AF_METRICS__", "to":"af_metrics" },
+	{ "id":"af_to_paf_target", "from":"alignment_filter", "to":"final_output_prep_target" },
+	{ "id":"af_to_paf_phix", "from":"alignment_filter:__PHIX_OUTBAM__", "to":"final_output_prep_phix" },
+	{ "id":"ref_to_paf_target", "from":"reference_genome_fasta", "to":"final_output_prep_target:reference_genome_fasta" },
+	{ "id":"ref_to_paf_phix", "from":"phix_reference_genome_fasta", "to":"final_output_prep_phix:reference_genome_fasta" },
+        { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
+	{ "id":"paf_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_bam" },
+	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_bam" }
 ]
 }

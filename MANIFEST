@@ -2,9 +2,6 @@ bin/viv.pl
 bin/vtfp.pl
 Build.PL
 Changes
-data/bwamem_wtsi_stage2_template.vtf
-data/snap_sample_template.vtf
-data/tophat2_wtsi_stage2_template.vtf
 examples/bwa_aln_cfg.png
 examples/bwa_mem/bwa_mem_alignment.vtf
 examples/bwa_mem/generic_alignment_with_phix.vtf

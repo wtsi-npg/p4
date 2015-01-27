@@ -1,5 +1,22 @@
 CHANGES LOG
 -----------
 
+release 0.12
+  -viv.pl
+    read/write to/from stdin/stdout
+    exec failure of a node's command is now fatal (bug fix)
+  
+  -vtfp.pl
+    updated to use new subst_params format in templates
+    multiple -keys/-values pairs on the command-line now produce an array on substitution into the template
+    when substition of nested parameters is done, array elements which are themselves arrays are flattened
+      (its elements are spliced into the position of the original array); net result is that top-level
+      parameter substitutions result in either strings or arrays of strings
+  
+  -templates
+    new subst_params format for production templates
+    changes to final_output_prep template to add flexibility to this phase of analysis (e.g. y chrom. split)
+    output of seqchksum files for hash type sha512primesums512 added
+
 release 0.09
   -install action should not remove lib directory at target

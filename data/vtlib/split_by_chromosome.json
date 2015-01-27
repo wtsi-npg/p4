@@ -1,0 +1,111 @@
+{
+"version":"1.0",
+"description":"alignment pipeline post alignment y split of data before sending to standard final output processing",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"split:__IN__",
+			"reference_genome_fasta":["target_final:reference_genome_fasta", "split_final:reference_genome_fasta"]
+		},
+		"outputs":{
+			"_stdout_":"bamcat"
+		}
+	}
+},
+"subst_params":[
+	{"id":"final_output_prep_no_y_target_name","required":"no","default":"final_output_prep"},
+	{
+		"id":"final_output_prep_no_y_target",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_no_y_target_name"}, ".json" ],
+			"comment":"we need a new subst here as final_output_prep_name will have been replaced in the template above by this template",
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"final_output_prep_y_name","required":"no","default":"final_output_prep"},
+	{
+                "id":"final_output_prep_y",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_y_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"split_indicator"},
+	{
+		"id":"fopid_split",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"split_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"split_bam_by_chromosomes_jar_path","required":"no","default":"/software/npg/java_jars"},
+	{"id":"java_cmd","required":"no","default":"java"},
+	{
+		"id":"split_bam_by_chromosomes_jar","required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"split_bam_by_chromosomes_jar_path"}, "/", "SplitBamByChromosomes.jar" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{ "id":"split_bam_by_chromosome_flags","default":"","comment":"specify as [S=Y,V=true] if ysplit" },
+	{
+		"id":"split_bam_by_chromosomes_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"java_cmd"},
+				"-Xmx1000m",
+				"-jar", {"subst":"split_bam_by_chromosomes_jar"},
+				"VALIDATION_STRINGENCY=SILENT",
+				"COMPRESSION_LEVEL=0",
+				"MAX_RECORDS_IN_RAM=500000",
+				{"subst":"split_bam_by_chromosome_flags"}
+			],
+			"postproc":{"op":"noconcat", "pad":" "}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"split",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+		"cmd":[{"subst":"split_bam_by_chromosomes_cmd"}, "I=__IN__", "TARGET_PATH=__TARGET_OUT__", "EXCLUDED_PATH=__SPLIT_OUT__"]
+	},
+	{
+		"id":"target_final",
+		"type":"VTFILE",
+		"node_prefix":"foptgnyt_",
+		"subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+		"name":{"subst":"final_output_prep_no_y_target"},
+		"use_STDIN": true,
+		"use_STDOUT": true
+	},
+	{
+		"id":"split_final",
+		"type":"VTFILE",
+		"node_prefix":"foptgy_",
+		"subst_map":{"phix_or_target":{"subst":"split_indicator"},"fopid":{"subst":"fopid_split"},"bstmp":"bspafy","brtmp":"brpafy","bmdtmp":"bmdpafy"},
+		"name":{"subst":"final_output_prep_y"},
+		"use_STDIN": true,
+		"use_STDOUT": true
+	},
+	{
+		"id":"bamcat",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":["bamcat", "level=0", "__TARGET_IN__", "__SPLIT_IN__"]
+	}
+],
+"edges":[
+	{ "from":"split:__TARGET_OUT__", "to":"target_final" },
+	{ "from":"split:__SPLIT_OUT__", "to":"split_final" },
+	{ "from":"target_final", "to":"bamcat:__TARGET_IN__" },
+	{ "from":"split_final", "to":"bamcat:__SPLIT_IN__" }
+]
+}
