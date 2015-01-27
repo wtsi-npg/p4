@@ -50,7 +50,7 @@
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
-	{ "id":"split_bam_by_chromosome_flags","default":"","comment":"specify as [S=Y,V=true] if ysplit" },
+	{ "id":"split_bam_by_chromosome_flags","comment":"specify as [S=Y,V=true] if ysplit" },
 	{
 		"id":"split_bam_by_chromosomes_cmd",
 		"required":"yes",
@@ -64,7 +64,7 @@
 				"MAX_RECORDS_IN_RAM=500000",
 				{"subst":"split_bam_by_chromosome_flags"}
 			],
-			"postproc":{"op":"noconcat", "pad":" "}
+			"postproc":{"op":"pack"}
 		}
 	}
 ],
