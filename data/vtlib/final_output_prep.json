@@ -318,6 +318,13 @@
 		}
 	},
 	{
+		"id":"crai_file",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"cram_idx_ext"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
 		"id":"cram_md5",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".cram.md5" ],
@@ -414,7 +421,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-w", "30000", "__CRAM_OUT__", "__MD5_OUT__"],
+		"cmd":["teepot", "-w", "30000", "__CRAM_OUT__", "__CRAI_OUT__", "__MD5_OUT__"],
 		"comment":"allow a generous 500 minutes for the teepot timeout"
 	},
 	{
@@ -431,6 +438,13 @@
 		"use_STDOUT": true,
 		"cmd":["tr", "-d", " \\-\n"],
 		"comment":"the double-backslash is required to get the correct character set to the tr command"
+	},
+	{
+		"id":"cram_index",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":["cram_index", "-", {"subst":"crai_file"}]
 	},
 	{
 		"id":"bamcheck",
@@ -514,6 +528,7 @@
 	{ "id":"bmdmw_to_scramble", "from":"bmd_multiway:__SCRAMBLE_OUT__", "to":"scramble" },
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
 	{ "id":"scramble_tee_to_md5", "from":"scramble_tee:__MD5_OUT__", "to":"scramble_md5" },
+	{ "id":"scramble_tee_to_crai", "from":"scramble_tee:__CRAI_OUT__", "to":"cram_index" },
 	{ "id":"md5_to_postprocess", "from":"scramble_md5", "to":"postprocess_md5" },
 	{ "id":"bmd_to_bamcheck", "from":"bmd_multiway:__BAMCHECK_OUT__", "to":"bamcheck" },
 	{ "id":"bmd_to_sts_F0x900", "from":"bmd_multiway:__SAMTOOLS_STATS_F0x900__", "to":"samtools_stats_F0x900" },
