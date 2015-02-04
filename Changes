@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.13
+ - create cram index files
+
 release 0.12
   -viv.pl
     read/write to/from stdin/stdout
