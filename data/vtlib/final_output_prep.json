@@ -153,8 +153,7 @@
 				{"subst":"outdatadir"},
 				"/",
 				{"subst":"rpt"},
-				{"subst":"phix_or_target"},
-				{"subst":"bam_ext"}
+				{"subst":"phix_or_target"}
 			],
 			"postproc":{"op":"concat", "pad":""}
 		}
