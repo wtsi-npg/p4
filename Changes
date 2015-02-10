@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.14
+ - correct prefix value given to calibration_pu -p flag (used in output file naming - it contained an unwanted ".bam")
+
 release 0.13
  - create cram index files
 
