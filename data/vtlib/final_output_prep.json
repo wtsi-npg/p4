@@ -168,7 +168,7 @@
 				"hash",
 				{"subst":"seqchksum_hash_type"}
 			],
-			"postproc":{"op":"pack","pad":"="}
+			"postproc":{"op":"concat","pad":"="}
 		}
 	},
 	{
