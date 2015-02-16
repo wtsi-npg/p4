@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.15
+ - fix construction of alternate hash command to construct sha512primesums512 seqchksum file
+
 release 0.14
  - correct prefix value given to calibration_pu -p flag (used in output file naming - it contained an unwanted ".bam")
 
