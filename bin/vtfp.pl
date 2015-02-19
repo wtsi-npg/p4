@@ -71,6 +71,9 @@ if($outname) { open $out, ">$outname" or croak "Failed to open $outname for outp
 if($template_path) {
 	$template_path = [ (split q[:], $template_path) ];
 }
+else {
+	$template_path = [];
+}
 
 my $param_store;
 my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, vt_file_stack => [], processed_sp_files => {}, template_path => $template_path, };
