@@ -44,7 +44,8 @@ my $query_mode;
 my $absolute_program_paths=1;
 my @keys = ();
 my @vals = ();
-GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'template_path=s' => \$template_path, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'absolute_program_paths!' => \$absolute_program_paths);
+my @nullkeys = ();
+GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'template_path=s' => \$template_path, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'nullkeys=s' => \@nullkeys, 'absolute_program_paths!' => \$absolute_program_paths);
 
 if($help) {
 	croak q[Usage: ], $progname, q{ [-h] [-q] [-s] [-l <log_file>] [-o <output_config_name>] [-v <verbose_level>] [-keys <key> -vals <val> ...]  <viv_template>};
@@ -54,7 +55,7 @@ if($help) {
 @keys = split(/,/, join(',', @keys));
 @vals = split(/,/, join(',', @vals));
 
-my $subst_requests = initialise_subst_requests(\@keys, \@vals);
+my $subst_requests = initialise_subst_requests(\@keys, \@vals, \@nullkeys);
 
 $query_mode ||= 0;
 $verbosity_level = $VLMIN unless defined $verbosity_level;
@@ -459,13 +460,10 @@ sub fetch_subst_value {
 	}
 
 	for my $sr (@$subst_requests) {
-		$retval = $sr->{$param_name};
-		if(defined $retval) { last; }
-	}
-
-	if(defined $retval) {
-		$param_entry->{_value} = $retval;
-		return $retval;
+		if(exists $sr->{$param_name}) { # allow undef value
+			$param_entry->{_value} = $sr->{$param_name};
+			return $sr->{$param_name};
+		}
 	}
 
 	if($param_entry->{subst_constructor}) {
@@ -732,11 +730,15 @@ sub get_child_prefix {
 #  if a key is specified more than once, its value becomes a list ref
 #####################################################################
 sub initialise_subst_requests {
-	my ($keys, $vals) = @_;
+	my ($keys, $vals, $nullkeys) = @_;
 	my %subst_requests = ();
 
 	if(@$keys != @$vals) {
 		croak q[Mismatch between keys and vals];
+	}
+
+	for my $nullkey (@$nullkeys) {
+		$subst_requests{$nullkey} = undef;
 	}
 
 	for my $i (0..$#{$keys}) {
