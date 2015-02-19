@@ -448,7 +448,7 @@ sub fetch_subst_value {
 	}
 
 	if(not defined $param_store->[0]->{varnames}->{$param_name}) {	# create a "writeable" param_store entry at local level
-		my $new_param_entry = (not defined $param_entry)? { name => $param_name, }: dclone $param_entry;
+		my $new_param_entry = (not defined $param_entry)? { name => $param_name, _declared_by => [], }: dclone $param_entry;
 
 		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
 
