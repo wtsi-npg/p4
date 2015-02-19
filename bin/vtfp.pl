@@ -387,7 +387,6 @@ sub subst_walk {
 					$logger->($VLFATAL, q[value for a subst directive must be a param name (not a reference), index for subst is: ], $i);
 				}
 
-#				$elem->[$i] = fetch_subst_value($param_name, $param_store, $subst_requests);
 				my $sval = fetch_subst_value($param_name, $param_store, $subst_requests);
 				if(ref $sval eq q[ARRAY]) {
 					splice @$elem, $i, 1, @$sval;
