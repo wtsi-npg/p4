@@ -5,8 +5,8 @@
 	"ports":{
 		"inputs":{
 				"_stdin_":"seqchksum_input",
-				"target_bam":"bamcat_output:__TARGETBAM_IN__",
-				"phix_bam":"bamcat_output:__PHIXBAM_IN__"
+				"target_seqchksum":"merge_output_seqchksum:__TARGET_CHKSUM_IN__",
+				"phix_seqchksum":"merge_output_seqchksum:__PHIX_CHKSUM_IN__"
 		}
 	}
 },
@@ -18,30 +18,26 @@
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
         },
+	{ "id":"rehash_acc_flds"},
+	{ "id":"rehash_chksum_flds"},
+	{ "id":"rehash_match_flds"},
+	{ "id":"rehash_acc_flag", "subst_constructor":{ "vals":[ "-a", {"subst":"rehash_acc_flds"} ], "postproc":{"op":"concat","pad":""} } },
+	{ "id":"rehash_chksum_flag", "subst_constructor":{ "vals":[ "-c", {"subst":"rehash_chksum_flds"} ], "postproc":{"op":"concat","pad":""} } },
+	{ "id":"rehash_match_flag", "subst_constructor":{ "vals":[ "-m", {"subst":"rehash_match_flds"} ], "postproc":{"op":"concat","pad":""} } },
 	{
-		"id":"samtools_merge",
-		"required":"yes",
+		"id":"seqchksum_merge",
 		"subst_constructor":{
 			"vals":[
-				{"subst":"samtools_executable"},
-				"merge",
-				"-c",
-				"--",
-				"-"
+				"seqchksum_merge.pl",
+				{"subst":"rehash_acc_flag"},
+				{"subst":"rehash_chksum_flag"},
+				{"subst":"rehash_match_flag"}
 			],
-			"postproc":{"op":"pack","pad":" "}
+			"postproc":{"op":"pack"}
 		}
 	}
 ],
 "nodes":[
-        {
-                "id":"bamcat_output",
-		"comment":"changed from bamcat when deadlock occurred when using new approach of saving chksum files",
-                "type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
-		"cmd":[{"subst":"samtools_merge"}, "__TARGETBAM_IN__", "__PHIXBAM_IN__"]
-        },
         {
                 "id":"seqchksum_input",
                 "type":"EXEC",
@@ -50,11 +46,11 @@
                 "cmd":"bamseqchksum"
         },
         {
-                "id":"seqchksum_output",
+                "id":"merge_output_seqchksum",
                 "type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-                "cmd":"bamseqchksum"
+                "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
         },
         {
                 "id":"cmp_seqchksum",
@@ -66,20 +62,7 @@
         }
 ],
 "edges":[
-        {
-                "id":"bamcat_to_chk_output",
-                "from":"bamcat_output",
-                "to":"seqchksum_output"
-        },
-        {
-                "id":"seqchksum_output_to_cmp",
-                "from":"seqchksum_output",
-                "to":"cmp_seqchksum:__OUTPUTCHK_IN__"
-        },
-        {
-                "id":"seqchksum_input_to_cmp",
-                "from":"seqchksum_input",
-                "to":"cmp_seqchksum:__INPUTCHK_IN__"
-        }
+        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_input", "to":"cmp_seqchksum:__INPUTCHK_IN__" },
+        { "id":"bamcat_to_chk_output", "from":"merge_output_seqchksum", "to":"cmp_seqchksum:__OUTPUTCHK_IN__" }
 ]
 }

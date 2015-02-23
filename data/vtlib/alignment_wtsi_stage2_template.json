@@ -307,7 +307,8 @@
         {
 		"id":"seqchksum",
 		"type":"VTFILE",
-		"comment":"inputs: _stdin_ (start bam), target_bam, phix_bam; outputs: target_chksum, phix_chksum",
+		"old_comment":"inputs: _stdin_ (start bam), target_bam, phix_bam; outputs: target_chksum, phix_chksum",
+		"comment":"inputs: _stdin_ (start bam), target_seqchksum, phix_seqchksum; outputs: target_chksum, phix_chksum",
 		"node_prefix":"scs_",
 		"name":{"subst":"seqchksum"},
 		"description":"subgraph containing seqchksum validation of outputs"
@@ -335,7 +336,7 @@
 	{ "id":"ref_to_paf_target", "from":"reference_genome_fasta", "to":"final_output_prep_target:reference_genome_fasta" },
 	{ "id":"ref_to_paf_phix", "from":"phix_reference_genome_fasta", "to":"final_output_prep_phix:reference_genome_fasta" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
-	{ "id":"paf_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_bam" },
-	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_bam" }
+	{ "id":"paf_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
+	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" }
 ]
 }

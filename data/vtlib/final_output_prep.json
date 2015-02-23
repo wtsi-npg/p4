@@ -8,7 +8,7 @@
 			"reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"
 		},
 		"outputs":{
-			"_stdout_":"bam_file"
+			"_stdout_":"seqchksum_file"
 		}
 	}
 },
@@ -420,7 +420,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-w", "30000", "__CRAM_OUT__", "__CRAI_OUT__", "__MD5_OUT__"],
+		"cmd":["teepot", "-w", "30000", "__CRAM_OUT__", "__CRAI_OUT__", "__MD5_OUT__", "__SEQCHKSUM_OUT__" ],
 		"comment":"allow a generous 500 minutes for the teepot timeout"
 	},
 	{
@@ -444,6 +444,13 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"cmd":["cram_index", "-", {"subst":"crai_file"}]
+	},
+	{
+		"id":"cram_seqchksum",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bamseqchksum", "inputformat=cram", "-"]
 	},
 	{
 		"id":"bamcheck",
@@ -519,6 +526,13 @@
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd":{"subst":"samtools_flagstat_cmd"}
+	},
+	{
+		"id":"cmp_seqchksum",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":["cmp", "-s", "__BAM_SEQCHKSUM_IN__", "__CRAM_SEQCHKSUM_IN__"]
 	}
 ],
 "edges":[
@@ -528,6 +542,7 @@
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
 	{ "id":"scramble_tee_to_md5", "from":"scramble_tee:__MD5_OUT__", "to":"scramble_md5" },
 	{ "id":"scramble_tee_to_crai", "from":"scramble_tee:__CRAI_OUT__", "to":"cram_index" },
+	{ "id":"scramble_tee_to_bscs", "from":"scramble_tee:__SEQCHKSUM_OUT__", "to":"cram_seqchksum" },
 	{ "id":"md5_to_postprocess", "from":"scramble_md5", "to":"postprocess_md5" },
 	{ "id":"bmd_to_bamcheck", "from":"bmd_multiway:__BAMCHECK_OUT__", "to":"bamcheck" },
 	{ "id":"bmd_to_sts_F0x900", "from":"bmd_multiway:__SAMTOOLS_STATS_F0x900__", "to":"samtools_stats_F0x900" },
@@ -546,6 +561,8 @@
 	{ "id":"scs_extrahash_to_file", "from":"seqchksum_extrahash", "to":"seqchksum_extrahash_file" },
         { "id":"samtools_stats_F0x900_to_file", "from":"samtools_stats_F0x900", "to":"stats_F0x900_file" },
         { "id":"samtools_stats_F0xB00_to_file", "from":"samtools_stats_F0xB00", "to":"stats_F0xB00_file" },
-        { "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" }
+        { "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" },
+        { "id":"cscs_to_cmp", "from":"cram_seqchksum", "to":"cmp_seqchksum:__CRAM_SEQCHKSUM_IN__" },
+        { "id":"bscs_to_cmp", "from":"seqchksum_file", "to":"cmp_seqchksum:__BAM_SEQCHKSUM_IN__" }
 ]
 }
