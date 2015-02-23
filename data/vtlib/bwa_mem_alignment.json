@@ -20,17 +20,18 @@
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
         },
-	{"id":"bwa_T_value","required":"no","default":"0"},
+	{"id":"bwa_mem_T_value","required":"no","default":"0"},
 	{
-		"id":"bwa_T_flag",
+		"id":"bwa_mem_T_flag",
 		"required":"no",
 		"subst_constructor":{
 			"vals":[
 				"-T",
-				{"subst":"bwa_T_value"}
+				{"subst":"bwa_mem_T_value"}
 			]
 		}
 	},
+	{"id":"bwa_mem_p_flag","required":"no","default":"-p","comment":"by default, paired alignment is assumed"},
 	{
 		"id":"bwa_mem_cmd",
 		"required":"yes",
@@ -40,8 +41,8 @@
 				"mem",
 				"-t",
 				{"subst":"aligner_numthreads"},
-				"-p",
-				{"subst":"bwa_T_flag"}
+				{"subst":"bwa_mem_p_flag"},
+				{"subst":"bwa_mem_T_flag"}
 			],
 			"postproc":{"op":"pack","pad":" "}
 		}
