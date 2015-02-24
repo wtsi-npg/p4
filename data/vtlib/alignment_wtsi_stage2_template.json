@@ -167,22 +167,6 @@
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"seqchksum_vtf"}, ".json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
-	},
-	{
-		"id":"phix_chksum",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_phix.seqchksum" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"target_chksum",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".seqchksum" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
 	}
 ],
 "nodes":[
@@ -307,14 +291,11 @@
         {
 		"id":"seqchksum",
 		"type":"VTFILE",
-		"old_comment":"inputs: _stdin_ (start bam), target_bam, phix_bam; outputs: target_chksum, phix_chksum",
-		"comment":"inputs: _stdin_ (start bam), target_seqchksum, phix_seqchksum; outputs: target_chksum, phix_chksum",
+		"comment":"inputs: _stdin_ (start bam), target_seqchksum, phix_seqchksum; outputs: NONE",
 		"node_prefix":"scs_",
 		"name":{"subst":"seqchksum"},
 		"description":"subgraph containing seqchksum validation of outputs"
-	},
-	{ "id":"phix_chksum", "type":"OUTFILE", "name":{"subst":"phix_chksum"} },
-	{ "id":"target_chksum", "type":"OUTFILE", "name":{"subst":"target_chksum"} }
+	}
 ],
 "edges":[
 	{ "id":"src_to_bc2", "from":"src_bam", "to":"bamcollate2" },
@@ -336,7 +317,7 @@
 	{ "id":"ref_to_paf_target", "from":"reference_genome_fasta", "to":"final_output_prep_target:reference_genome_fasta" },
 	{ "id":"ref_to_paf_phix", "from":"phix_reference_genome_fasta", "to":"final_output_prep_phix:reference_genome_fasta" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
-	{ "id":"paf_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
-	{ "id":"paf_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" }
+	{ "id":"fopt_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
+	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" }
 ]
 }
