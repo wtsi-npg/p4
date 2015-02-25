@@ -48,7 +48,7 @@
         {
                 "id":"merge_output_seqchksum",
                 "type":"EXEC",
-		"use_STDIN": true,
+		"use_STDIN": false,
 		"use_STDOUT": true,
                 "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
         },

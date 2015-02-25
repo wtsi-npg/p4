@@ -232,17 +232,12 @@
 		"name":{"subst":"auxmerge_prep"},
 		"description":"subgraph containing pre alignment process"
 	},
-	{
-		"id":"reference_genome_fasta",
-		"type":"INFILE",
-		"name":{"subst":"reference_genome_fasta"},
-		"description":"Prefix for reference fasta and Bowtie2 index files"
-	},
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
-		"comment":"inputs: _stdin_ (bam), reference_genome_fasta; outputs: _stdout_ (bam)",
-                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta; outputs: _stdout_ (bam)",
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft","scramble_reference_fasta":{"subst":"reference_genome_fasta"}},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
@@ -267,7 +262,6 @@
 	{ "id":"alignment_target_to_post_alignment_target", "from":"alignment_target", "to":"post_alignment_target" },
         { "id":"reference_dict_to_post_alignment", "from":"reference_dict", "to":"post_alignment_target:reference_dict" },
 	{ "id":"post_alignment_to_alignment_filter", "from":"post_alignment_target", "to":"final_output_prep_target" },
-	{ "id":"ref_to_fopt", "from":"reference_genome_fasta", "to":"final_output_prep_target:reference_genome_fasta" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
 	{ "id":"fopt_to_scs", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" }
 ]

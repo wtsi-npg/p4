@@ -4,8 +4,7 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-			"_stdin_":"bamsort_coord",
-			"reference_genome_fasta":"scramble:__REFERENCE_GENOME_FASTA__"
+			"_stdin_":"bamsort_coord"
 		},
 		"outputs":{
 			"_stdout_":"seqchksum_file"
@@ -52,6 +51,28 @@
 				{"subst":"bs_tmpfile_flag"}
 			],
 			"postproc":{"op":"pack", "pad":" "}
+		}
+	},
+        {
+                "id":"scramble_reference_flag",
+                "required":"no",
+		"comment":"flag will disappear unless scramble_reference_fasta value is given (allows unaligned cram)",
+                "subst_constructor":{ "vals":[ "-r", {"subst":"scramble_reference_fasta"} ]
+                }
+        },
+	{
+		"id":"scramble_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"scramble_executable"},
+				"-I",
+				"bam",
+				"-O",
+				"cram",
+				{"subst":"scramble_reference_flag"}
+			],
+			"postproc":{"op":"pack"}
 		}
 	},
 	{
@@ -413,7 +434,8 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["scramble", "-I", "bam", "-O", "cram", "-r", "__REFERENCE_GENOME_FASTA__"]
+		"old_cmd":["scramble", "-I", "bam", "-O", "cram", "-r", "__REFERENCE_GENOME_FASTA__"],
+		"cmd":{"subst":"scramble_cmd"}
 	},
 	{
 		"id":"scramble_tee",

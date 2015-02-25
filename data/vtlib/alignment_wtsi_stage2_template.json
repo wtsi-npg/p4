@@ -258,33 +258,23 @@
 		"type":"OUTFILE",
 		"name":{"subst":"af_metrics"}
 	},
-	{
-		"id":"reference_genome_fasta",
-		"type":"INFILE",
-		"name":{"subst":"reference_genome_fasta"},
-		"description":"Prefix for reference fasta and Bowtie2 index files"
-	},
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
-		"comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
 		"node_prefix":"foptgt_",
-                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft","scramble_reference_fasta":{"subst":"reference_genome_fasta"}},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
-	{
-		"id":"phix_reference_genome_fasta",
-		"type":"INFILE",
-		"name":{"subst":"phix_reference_genome_fasta"},
-		"description":"Prefix for reference fasta and Bowtie2 index files"
-	},
         {
                 "id":"final_output_prep_phix",
                 "type":"VTFILE",
-		"comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
 		"node_prefix":"fopphx_",
-                "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
+                "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft","scramble_reference_fasta":{"subst":"phix_reference_genome_fasta"}},
                 "name":{"subst":"final_output_prep_phix"},
                 "description":"subgraph containing post alignment_filter process (phix)"
         },
@@ -314,8 +304,6 @@
 	{ "id":"alignment_filter_to_metrics", "from":"alignment_filter:__AF_METRICS__", "to":"af_metrics" },
 	{ "id":"af_to_paf_target", "from":"alignment_filter", "to":"final_output_prep_target" },
 	{ "id":"af_to_paf_phix", "from":"alignment_filter:__PHIX_OUTBAM__", "to":"final_output_prep_phix" },
-	{ "id":"ref_to_paf_target", "from":"reference_genome_fasta", "to":"final_output_prep_target:reference_genome_fasta" },
-	{ "id":"ref_to_paf_phix", "from":"phix_reference_genome_fasta", "to":"final_output_prep_phix:reference_genome_fasta" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
 	{ "id":"fopt_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
 	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" }

@@ -13,11 +13,15 @@
         {
                 "id":"seqchksum_input",
                 "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
                 "cmd":"bamseqchksum"
         },
         {
                 "id":"cmp_seqchksum",
                 "type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
                 "cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
                 "description":"check input primary/sequence data matches output"
         }
