@@ -33,6 +33,20 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
+	{"id":"hs_alignment_reference_genome_name","required":"yes"},
+	{
+		"id":"hs_alignment_reference_genome",
+		"description":"full path to properly formatted reference genome data for the aligner for human split",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"hs_alignment_reference_genome_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
 	{"id":"reference_genome_fasta_name","required":"yes"},
 	{
 		"id":"reference_genome_fasta",
@@ -55,6 +69,19 @@
 				{"subst":"reposdir"},
 				"/",
 				{"subst":"phix_reference_genome_fasta_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"hs_reference_genome_fasta_name","required":"yes"},
+	{
+		"id":"hs_reference_genome_fasta",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"hs_reference_genome_fasta_name"}
 			],
 			"postproc":{"op":"concat", "pad":""}
 		}
