@@ -69,6 +69,7 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
+	{"id":"bwa_mem_T_value_hs","required":"no","default":"30"},
 	{"id":"alignment_hs_method","required":"no","default":{"subst":"alignment_method"},"comment":"default to same aligner as for target"},
 	{
 		"id":"alignment_hs_vtf",
@@ -308,6 +309,7 @@
 		"type":"VTFILE",
 		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
 		"node_prefix":"alnhs_",
+                "subst_map":{"bwa_mem_T_value":{"subst":"bwa_mem_T_value_hs"}},
 		"name":{"subst":"alignment_hs_vtf"},
 		"description":"subgraph containing alignment process"
 	},
