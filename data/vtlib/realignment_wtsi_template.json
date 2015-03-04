@@ -241,7 +241,7 @@
                 "type":"VTFILE",
 		"node_prefix":"foptgt_",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (seqchksum)",
-                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft","scramble_reference_fasta":{"subst":"reference_genome_fasta"}},
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bsfopt","brtmp":"brfopt","bmdtmp":"bmdfopt","scramble_reference_fasta":{"subst":"reference_genome_fasta"}},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
