@@ -434,7 +434,6 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"old_cmd":["scramble", "-I", "bam", "-O", "cram", "-r", "__REFERENCE_GENOME_FASTA__"],
 		"cmd":{"subst":"scramble_cmd"}
 	},
 	{
