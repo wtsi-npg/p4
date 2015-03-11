@@ -15,7 +15,7 @@
                 "type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-                "cmd":"bamseqchksum"
+                "cmd":["bamseqchksum",{"subst":"src_input_format_flag"}]
         },
         {
                 "id":"cmp_seqchksum",
