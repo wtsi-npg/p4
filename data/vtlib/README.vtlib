@@ -16,7 +16,7 @@ $ vtfp.pl -l aln_vtf.log -o aln.json \
 -keys aligner_numthreads -vals <NUMBER_OF_THREADS_USED_BY_ALIGNER> \
 cfgdata/wtsi_alignment_stage2_template.json 
 
-$ viv.pl -x -s -o v 3 -o viv_run.log aln.json
+$ viv.pl -x -s -v 3 -o viv_run.log aln.json
 
 * vtfp.pl flags (subst_params) description:
  indatadir - input data, default to '.'
@@ -43,5 +43,6 @@ $ vtfp.pl -l aws2_bwa_mem.vtf.log -o aws2_bwa_mem.json -keys indatadir -vals ind
 tophat2:
 $ vtfp.pl -l aws2_tophat2.vtf.log -o aws2_tophat2.json -keys indatadir -vals indata -keys outdatadir -vals outdata_tophat2 -keys cfgdatadir -vals cfgdata -keys tmpdir -vals tmpdata -keys rpt -vals 13430_8#1 -keys alignment_method -vals tophat2 -keys reposdir -vals /path/to/references -keys alignment_reference_genome_name -vals Homo_sapiens/1000Genomes_hs37d5/all/bowtie2/hs37d5.fa -keys reference_dict_name -vals Homo_sapiens/1000Genomes_hs37d5/all/picard/hs37d5.fa.dict -keys reference_genome_fasta_name -vals Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa -keys phix_reference_genome_fasta_name -vals PhiX/default/all/fasta/phix_unsnipped_short_no_N.fa -keys aligner_numthreads -vals 8 cfgdata/alignment_wtsi_stage2_template.json
 
-
+tophat2 with ysplit:
+$ vtfp.pl -l aws2_tophat2_ysplit.vtf.log -o aws2_tophat2_ysplit.json -keys indatadir -vals indata -keys outdatadir -vals outdata_tophat2_ysplit -keys cfgdatadir -vals cfgdata -keys tmpdir -vals tmpdata -keys rpt -vals 13430_8#1 -keys alignment_method -vals tophat2 -keys reposdir -vals /path/to/reference_repository -keys alignment_reference_genome_name -vals references/Homo_sapiens/1000Genomes_hs37d5/all/bowtie2/hs37d5.fa -keys reference_dict_name -vals references/Homo_sapiens/1000Genomes_hs37d5/all/picard/hs37d5.fa.dict -keys reference_genome_fasta_name -vals references/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa -keys phix_reference_genome_fasta_name -vals references/PhiX/default/all/fasta/phix_unsnipped_short_no_N.fa -keys transcriptome_subpath -vals transcriptomes/Homo_sapiens/ensembl_75_transcriptome/1000Genomes_hs37d5/tophat2/1000Genomes_hs37d5.known -keys aligner_numthreads -vals 8 -keys library_type -vals fr-firststrand -keys final_output_prep_target_name -vals split_by_chromosome -keys split_bam_by_chromosome_flags -vals S=Y -keys split_bam_by_chromosome_flags -vals V=true -keys split_indicator -vals _yhuman cfgdata/alignment_wtsi_stage2_template.json
 

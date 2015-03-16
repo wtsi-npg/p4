@@ -5,7 +5,7 @@
 	"ports":{
 		"inputs":{
 				"_stdin_":"seqchksum_input",
-				"target_bam":"seqchksum_output"
+				"target_seqchksum":"cmp_seqchksum:__OUTPUTCHK__"
 		}
 	}
 },
@@ -13,16 +13,15 @@
         {
                 "id":"seqchksum_input",
                 "type":"EXEC",
-                "cmd":"bamseqchksum"
-        },
-        {
-                "id":"seqchksum_output",
-                "type":"EXEC",
-                "cmd":"bamseqchksum"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":["bamseqchksum",{"subst":"src_input_format_flag"}]
         },
         {
                 "id":"cmp_seqchksum",
                 "type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
                 "cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
                 "description":"check input primary/sequence data matches output"
         }
@@ -32,11 +31,6 @@
                 "id":"input_chksum_to_cmp",
                 "from":"seqchksum_input",
                 "to":"cmp_seqchksum:__INPUTCHK__"
-        },
-        {
-                "id":"output_chksum_to_cmp",
-                "from":"seqchksum_output",
-                "to":"cmp_seqchksum:__OUTPUTCHK__"
         }
 ]
 }

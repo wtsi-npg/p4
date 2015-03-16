@@ -44,7 +44,8 @@ my $query_mode;
 my $absolute_program_paths=1;
 my @keys = ();
 my @vals = ();
-GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'template_path=s' => \$template_path, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'absolute_program_paths!' => \$absolute_program_paths);
+my @nullkeys = ();
+GetOptions('help' => \$help, 'strict_checks!' => \$strict_checks, 'verbosity_level=i' => \$verbosity_level, 'template_path=s' => \$template_path, 'logfile=s' => \$logfile, 'outname:s' => \$outname, 'query_mode!' => \$query_mode, 'keys=s' => \@keys, 'values|vals=s' => \@vals, 'nullkeys=s' => \@nullkeys, 'absolute_program_paths!' => \$absolute_program_paths);
 
 if($help) {
 	croak q[Usage: ], $progname, q{ [-h] [-q] [-s] [-l <log_file>] [-o <output_config_name>] [-v <verbose_level>] [-keys <key> -vals <val> ...]  <viv_template>};
@@ -54,7 +55,7 @@ if($help) {
 @keys = split(/,/, join(',', @keys));
 @vals = split(/,/, join(',', @vals));
 
-my $subst_requests = initialise_subst_requests(\@keys, \@vals);
+my $subst_requests = initialise_subst_requests(\@keys, \@vals, \@nullkeys);
 
 $query_mode ||= 0;
 $verbosity_level = $VLMIN unless defined $verbosity_level;
@@ -70,6 +71,9 @@ if($outname) { open $out, ">$outname" or croak "Failed to open $outname for outp
 
 if($template_path) {
 	$template_path = [ (split q[:], $template_path) ];
+}
+else {
+	$template_path = [];
 }
 
 my $param_store;
@@ -120,6 +124,10 @@ print $out to_json($flat_graph);
 ##########################################################################################
 sub process_vtnode {
 	my ($vtnode_id, $vtf_name, $node_prefix, $param_store, $subst_requests, $globals) = @_;
+
+	unless(is_valid_name($vtf_name)) {
+		$logger->($VLFATAL, q[Missing or invalid name for VTFILE element id], $vtnode_id, q[ (], , join(q[->], @{$globals->{vt_file_stack}}), q[)]);
+	}
 
 	if(any { $_ eq $vtf_name} @{$globals->{vt_file_stack}}) {
 		$logger->($VLFATAL, q[Nesting of VTFILE ], $vtf_name, q[ within itself: ], join(q[->], @{$globals->{vt_file_stack}}));
@@ -227,7 +235,6 @@ sub process_subst_params {
 	for my $i (0..$#{$unprocessed_subst_params}) {
 
 		my $sp = $unprocessed_subst_params->[$i];
-		my $spname = $sp->{name}; 
 		my $spid = $sp->{id}; 
 		my $sptype = $sp->{type}; 
 		$sptype ||= q[PARAM];
@@ -268,10 +275,10 @@ sub process_subst_params {
 	################################
 	for my $spfile (@spfile_node_queue) {
 		subst_walk($spfile, $param_store, $subst_requests, []);
-		my $spname = $spfile->{name};
+		my $spname = is_valid_name($spfile->{name});
 		if(not $spname) {
 			# it would be better to cache these errors and report as many as possible before exit (TBI)
-			$logger->($VLFATAL, q[No name for SPFILE element (], , join(q[->], @$sp_file_stack), q[)]);
+			$logger->($VLFATAL, q[Missing or invalid name for SPFILE element id], $spfile->{id}, q[ (], , join(q[->], @$sp_file_stack), q[)]);
 		}
 
 		if(not $globals->{processed_sp_files}->{$spname}) { # but only process a given SPFILE once
@@ -381,7 +388,6 @@ sub subst_walk {
 					$logger->($VLFATAL, q[value for a subst directive must be a param name (not a reference), index for subst is: ], $i);
 				}
 
-#				$elem->[$i] = fetch_subst_value($param_name, $param_store, $subst_requests);
 				my $sval = fetch_subst_value($param_name, $param_store, $subst_requests);
 				if(ref $sval eq q[ARRAY]) {
 					splice @$elem, $i, 1, @$sval;
@@ -442,7 +448,7 @@ sub fetch_subst_value {
 	}
 
 	if(not defined $param_store->[0]->{varnames}->{$param_name}) {	# create a "writeable" param_store entry at local level
-		my $new_param_entry = (not defined $param_entry)? { name => $param_name, }: dclone $param_entry;
+		my $new_param_entry = (not defined $param_entry)? { name => $param_name, _declared_by => [], }: dclone $param_entry;
 
 		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
 
@@ -454,13 +460,10 @@ sub fetch_subst_value {
 	}
 
 	for my $sr (@$subst_requests) {
-		$retval = $sr->{$param_name};
-		if(defined $retval) { last; }
-	}
-
-	if(defined $retval) {
-		$param_entry->{_value} = $retval;
-		return $retval;
+		if(exists $sr->{$param_name}) { # allow undef value
+			$param_entry->{_value} = $sr->{$param_name};
+			return $sr->{$param_name};
+		}
 	}
 
 	if($param_entry->{subst_constructor}) {
@@ -727,11 +730,15 @@ sub get_child_prefix {
 #  if a key is specified more than once, its value becomes a list ref
 #####################################################################
 sub initialise_subst_requests {
-	my ($keys, $vals) = @_;
+	my ($keys, $vals, $nullkeys) = @_;
 	my %subst_requests = ();
 
 	if(@$keys != @$vals) {
 		croak q[Mismatch between keys and vals];
+	}
+
+	for my $nullkey (@$nullkeys) {
+		$subst_requests{$nullkey} = undef;
 	}
 
 	for my $i (0..$#{$keys}) {
@@ -748,6 +755,33 @@ sub initialise_subst_requests {
 	}
 
 	return [ \%subst_requests ];  # note: the return value is a ref to a list of hash refs
+}
+
+#############################################################################################
+# is_valid_name:
+#   valid names should be defined strings. Whether invalidity is fatal is left to the caller.
+#############################################################################################
+sub is_valid_name {
+	my ($name, $id) = @_;
+
+	if(not $name) {
+		$logger->($VLMIN, q[No name for element with id ], $id);
+	}
+
+	if(my $r = ref $name) {
+		if($r eq q[ARRAY]) {
+			$logger->($VLMIN, q{Element with id }, $id, q{ has name of type ARRAY ref, it should be a string. Elements: [ }, join(q[;], @$name), q{]});
+
+			return;
+		}
+		elsif($r eq q[HASH]) {
+			$logger->($VLMIN, q[Element with id ], $id, q[ has name of type HASH ref, it should be a string.]);
+
+			return;
+		}
+	}
+
+	return $name;
 }
 
 sub read_vtf_version_check {
