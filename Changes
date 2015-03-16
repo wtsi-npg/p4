@@ -1,6 +1,13 @@
 CHANGES LOG
 -----------
 
+release 0.16
+ - human split: new alignment_wtsi_stage2_humansplit_template.json, seqchksum_hs.json; addition of subst_params to alignment_common
+ - seqchksum comparisons: merge bamseqchksum files for outputs for comparison with initial bam file in seqchksum.json
+ - added comparison of cram and bam seqchksum within final_output_prep
+ - scramble reference optional in final_output_prep template (reference name passed as a parameter instead of via subgraph_io)
+ - realignment templates fixes/amendents: default value for common subst_params file; default to cram input
+
 release 0.15
  - fix construction of alternate hash command to construct sha512primesums512 seqchksum file
 
