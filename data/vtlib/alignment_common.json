@@ -13,6 +13,7 @@
         {"id":"reposdir","required":"no","default":"."},
 	{"id":"samtools_executable","required":"no","default":"samtools"},
 	{"id":"bwa_executable","required":"no","default":"bwa0_6"},
+	{"id":"scramble_executable","required":"no","default":"scramble"},
 	{"id":"aligner_numthreads","required":"no","default":"2"},
 	{"id":"bam_ext","required":"no","default":".bam"},
 	{"id":"cram_ext","required":"no","default":".cram"},
@@ -28,6 +29,20 @@
 				{"subst":"reposdir"},
 				"/",
 				{"subst":"alignment_reference_genome_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"hs_alignment_reference_genome_name","required":"yes"},
+	{
+		"id":"hs_alignment_reference_genome",
+		"description":"full path to properly formatted reference genome data for the aligner for human split",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"hs_alignment_reference_genome_name"}
 			],
 			"postproc":{"op":"concat", "pad":""}
 		}
@@ -54,6 +69,19 @@
 				{"subst":"reposdir"},
 				"/",
 				{"subst":"phix_reference_genome_fasta_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"hs_reference_genome_fasta_name","required":"yes"},
+	{
+		"id":"hs_reference_genome_fasta",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"reposdir"},
+				"/",
+				{"subst":"hs_reference_genome_fasta_name"}
 			],
 			"postproc":{"op":"concat", "pad":""}
 		}

@@ -6,6 +6,7 @@
 		"inputs":{
 				"_stdin_":"seqchksum_input",
 				"target_seqchksum":"merge_output_seqchksum:__TARGET_CHKSUM_IN__",
+				"hs_seqchksum":"merge_output_seqchksum:__HUMAN_SPLIT_CHKSUM_IN__",
 				"phix_seqchksum":"merge_output_seqchksum:__PHIX_CHKSUM_IN__"
 		}
 	}
@@ -50,7 +51,7 @@
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-                "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
+                "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__HUMAN_SPLIT_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
         },
         {
                 "id":"cmp_seqchksum",

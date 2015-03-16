@@ -8,7 +8,7 @@
 			"reference_genome_fasta":["target_final:reference_genome_fasta", "split_final:reference_genome_fasta"]
 		},
 		"outputs":{
-			"_stdout_":"bamcat"
+			"_stdout_":"seqchksum_merge"
 		}
 	}
 },
@@ -95,17 +95,17 @@
 		"use_STDOUT": true
 	},
 	{
-		"id":"bamcat",
+		"id":"seqchksum_merge",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":["bamcat", "level=0", "__TARGET_IN__", "__SPLIT_IN__"]
+		"cmd":["seqchksum_merge.pl", "__TARGET_CHKSUM_IN__", "__SPLIT_CHKSUM_IN__"]
 	}
 ],
 "edges":[
 	{ "from":"split:__TARGET_OUT__", "to":"target_final" },
 	{ "from":"split:__SPLIT_OUT__", "to":"split_final" },
-	{ "from":"target_final", "to":"bamcat:__TARGET_IN__" },
-	{ "from":"split_final", "to":"bamcat:__SPLIT_IN__" }
+	{ "from":"target_final", "to":"seqchksum_merge:__TARGET_CHKSUM_IN__" },
+	{ "from":"split_final", "to":"seqchksum_merge:__SPLIT_CHKSUM_IN__" }
 ]
 }
