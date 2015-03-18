@@ -85,6 +85,17 @@
 			],
 			"postproc":{"op":"concat", "pad":""}
 		}
+	},
+	{"id":"teepot_tempdir_value","required":"no","default":"."},
+	{
+		"id":"teepot_tempdir_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				"-t",
+				{"subst":"teepot_tempdir_value"}
+			]
+		}
 	}
 ]
 }

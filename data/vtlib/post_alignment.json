@@ -52,8 +52,8 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-w", "300", "-m", "5M", "__HEADER_FIX_OUT__", "__FULL_BAM_OUT__"],
-		"comment":"get deadlock when tee used here"
+		"cmd":["teepot", {"subst":"teepot_tempdir_flag"}, "-w", "300", "-m", "5M", "__HEADER_FIX_OUT__", "__FULL_BAM_OUT__"],
+		"comment":"get deadlock when tee used here; specify parameter value teepot_tempdir_value to specify teepot tempdir"
 	},
 	{
 		"id":"sam_headerSQfix",
