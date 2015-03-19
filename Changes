@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.16.1
+ - add tempdir parameter and verbose (-v) flag for teepot
+
 release 0.16
  - human split: new alignment_wtsi_stage2_humansplit_template.json, seqchksum_hs.json; addition of subst_params to alignment_common
  - seqchksum comparisons: merge bamseqchksum files for outputs for comparison with initial bam file in seqchksum.json
