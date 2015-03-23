@@ -472,7 +472,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamseqchksum", "inputformat=cram", "-"]
+		"cmd":["bamseqchksum", "inputformat=cram"]
 	},
 	{
 		"id":"bamcheck",
