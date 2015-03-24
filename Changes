@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+release 0.16.2
+ - remove superfluous "-" argumant to bamseqchksum command
+ - increase teepot timeout for bmd_multiway node to 50000 (from 500)
+
 release 0.16.1
  - add tempdir parameter and verbose (-v) flag for teepot
 
