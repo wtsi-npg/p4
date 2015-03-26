@@ -4,6 +4,7 @@ CHANGES LOG
 release 0.16.3
  - add tee after seqchksum (bam) output to split output to file and cmp node, to remove deadlock
  - remove -s flag from all cmp commands (improve diagnostics)
+ - decrease teepot timeout for bmd_multiway node back to 300
 
 release 0.16.2
  - remove superfluous "-" argumant to bamseqchksum command
