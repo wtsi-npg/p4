@@ -22,7 +22,7 @@
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-                "cmd":"cmp -s __INPUTCHK__ __OUTPUTCHK__",
+                "cmd":"cmp __INPUTCHK__ __OUTPUTCHK__",
                 "description":"check input primary/sequence data matches output"
         }
 ],
