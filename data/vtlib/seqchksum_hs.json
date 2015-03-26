@@ -58,7 +58,7 @@
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-                "cmd":"cmp -s __INPUTCHK_IN__ __OUTPUTCHK_IN__",
+                "cmd":"cmp __INPUTCHK_IN__ __OUTPUTCHK_IN__",
                 "description":"check input primary/sequence data matches output"
         }
 ],
