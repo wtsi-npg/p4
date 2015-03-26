@@ -562,7 +562,7 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":["cmp", "-s", "__BAM_SEQCHKSUM_IN__", "__CRAM_SEQCHKSUM_IN__"]
+		"cmd":["cmp", "__BAM_SEQCHKSUM_IN__", "__CRAM_SEQCHKSUM_IN__"]
 	}
 ],
 "edges":[
