@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add extra branch to teepot command in to stream seqchksum output downstream (instead of using a file as an internal node)
+
 release 0.16.3
  - add tee after seqchksum (bam) output to split output to file and cmp node, to remove deadlock
  - remove -s flag from all cmp commands (improve diagnostics)
