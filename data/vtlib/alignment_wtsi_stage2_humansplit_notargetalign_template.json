@@ -28,7 +28,6 @@
 	{"id":"pre_alignment_hs_name","required":"no","default":"pre_alignment"},
 	{
 		"id":"pre_alignment_hs",
-		"comment":"this is tied to the same subgraph as is used for target for now",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"pre_alignment_hs_name"}, ".json" ],
@@ -57,7 +56,6 @@
 	{"id":"post_alignment_hs_name","required":"no","default":"post_alignment"},
 	{
 		"id":"post_alignment_hs",
-		"comment":"this is tied to the same subgraph as is used for target for now",
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"post_alignment_hs_name"}, ".json"
