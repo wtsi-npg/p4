@@ -1,0 +1,102 @@
+{
+"version":"1.0",
+"description":"run bwa aln to to align input bam (single-end) to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bwa_aln_start_bam",
+			"reference":["bwa_aln:__REFERENCE_GENOME_FASTA__", "bwa_samse:__REFERENCE_GENOME_FASTA__"]
+		},
+		"outputs":{
+			"_stdout_":"samtobam"
+		}
+	}
+},
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{
+		"id":"bwa_aln_start_bam_name",
+		"required":"no",
+		"default":"bwa_aln_start.bam",
+		"subst_constructor":{
+			"vals":[
+				"bwa_aln_start_",
+				{"subst":"rpt"},
+				".bam"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bwa_aln_start_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"tmpdir"},
+				"/",
+				{"subst":"bwa_aln_start_bam_name"}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bwa_aln_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"bwa_executable"},
+				"aln",
+				"-t",
+				{"subst":"aligner_numthreads"},
+				"-b"
+			],
+			"postproc":{"op":"noconcat","pad":" "}
+		}
+	},
+	{
+		"id":"bwa_samse_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"bwa_executable"},
+				"samse"
+			],
+			"postproc":{"op":"noconcat","pad":" "}
+		}
+	}
+],
+"nodes":[
+	{
+             "id":"bwa_aln_start_bam",
+             "type":"RAFILE",
+             "name":{"subst":"bwa_aln_start_bam"}
+        },
+	{
+		"id":"bwa_aln",
+		"type":"EXEC",
+		"cmd":[{"subst":"bwa_aln_cmd"}, "__REFERENCE_GENOME_FASTA__", "__BAM_IN__"]
+	},
+        {
+                "id":"bwa_samse",
+                "type":"EXEC",
+		"cmd":[{"subst":"bwa_samse_cmd"}, "__REFERENCE_GENOME_FASTA__", "__SAI__", "__BAM__"]
+        },
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+                "cmd":"scramble -I sam -O bam"
+        }
+],
+"edges":[
+	{ "id":"bwa_aln_bam", "from":"bwa_aln_start_bam", "to":"bwa_aln:__BAM_IN__" },
+	{ "id":"bwa_samse_bam", "from":"bwa_aln_start_bam", "to":"bwa_samse:__BAM__" },
+	{ "id":"aln_sai_to_samse", "from":"bwa_aln", "to":"bwa_samse:__SAI__" },
+	{ "id":"bwa_samse_to_scramble", "from":"bwa_samse", "to":"samtobam" }
+]
+}
