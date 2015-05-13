@@ -1,5 +1,6 @@
 CHANGES LOG
 -----------
+ - library cram merging: merge_aligned.json and merge_final_output_prep.json
 
 release 0.16.4
  - add extra branch to teepot command in to stream seqchksum output downstream (instead of using a file as an internal node)
