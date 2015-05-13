@@ -4,7 +4,7 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-			"_stdin_":"bwa_aln_start_bam",
+			"_stdin_":"tee2",
 			"reference":["bwa_aln:__REFERENCE_GENOME_FASTA__", "bwa_samse:__REFERENCE_GENOME_FASTA__"]
 		},
 		"outputs":{
@@ -19,73 +19,44 @@
 		"name":{"subst":"basic_pipeline_params_file"},
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
-        },
-	{
-		"id":"bwa_aln_start_bam_name",
-		"required":"no",
-		"default":"bwa_aln_start.bam",
-		"subst_constructor":{
-			"vals":[
-				"bwa_aln_start_",
-				{"subst":"rpt"},
-				".bam"
-			],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"bwa_aln_start_bam",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"tmpdir"},
-				"/",
-				{"subst":"bwa_aln_start_bam_name"}
-			],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"bwa_aln_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"bwa_executable"},
-				"aln",
-				"-t",
-				{"subst":"aligner_numthreads"},
-				"-b"
-			],
-			"postproc":{"op":"noconcat","pad":" "}
-		}
-	},
-	{
-		"id":"bwa_samse_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"bwa_executable"},
-				"samse"
-			],
-			"postproc":{"op":"noconcat","pad":" "}
-		}
-	}
+        }
 ],
 "nodes":[
 	{
-             "id":"bwa_aln_start_bam",
-             "type":"RAFILE",
-             "name":{"subst":"bwa_aln_start_bam"}
-        },
+		"id":"tee2",
+		"type":"EXEC",
+		"cmd":["teepot", "-v", "-w", "300", "-m", "1G", "__ALN_OUT__", "__SAMPE_OUT__" ]
+	},
 	{
 		"id":"bwa_aln",
 		"type":"EXEC",
-		"cmd":[{"subst":"bwa_aln_cmd"}, "__REFERENCE_GENOME_FASTA__", "__BAM_IN__"]
+		"cmd":[
+			{"subst":"bwa_executable"},
+			"aln",
+			"-t",
+			{"subst":"aligner_numthreads"},
+			"-b",
+			"__REFERENCE_GENOME_FASTA__",
+			"__BAM_IN__"
+		]
+	},
+	{
+		"id":"simple_cat",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":"cat"
 	},
         {
                 "id":"bwa_samse",
                 "type":"EXEC",
-		"cmd":[{"subst":"bwa_samse_cmd"}, "__REFERENCE_GENOME_FASTA__", "__SAI__", "__BAM__"]
+		"cmd":[
+			{"subst":"bwa_executable"},
+			"samse",
+			"__REFERENCE_GENOME_FASTA__",
+			"__SAI_IN__",
+			"__BAM_IN__"
+		]
         },
         {
                 "id":"samtobam",
@@ -94,9 +65,10 @@
         }
 ],
 "edges":[
-	{ "id":"bwa_aln_bam", "from":"bwa_aln_start_bam", "to":"bwa_aln:__BAM_IN__" },
-	{ "id":"bwa_samse_bam", "from":"bwa_aln_start_bam", "to":"bwa_samse:__BAM__" },
-	{ "id":"aln_sai_to_samse", "from":"bwa_aln", "to":"bwa_samse:__SAI__" },
+	{ "id":"bwa_aln_bam", "from":"tee2:__ALN_OUT__", "to":"bwa_aln:__BAM_IN__" },
+	{ "id":"tee_to_cat", "from":"tee2:__SAMPE_OUT__", "to":"simple_cat" },
+	{ "id":"cat1_to_sampe", "from":"simple_cat", "to":"bwa_samse:__BAM_IN__" },
+	{ "id":"aln_sai_to_samse", "from":"bwa_aln", "to":"bwa_samse:__SAI_IN__" },
 	{ "id":"bwa_samse_to_scramble", "from":"bwa_samse", "to":"samtobam" }
 ]
 }
