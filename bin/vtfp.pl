@@ -380,7 +380,7 @@ sub subst_walk {
 		}
 	}
 	elsif(ref $elem eq q[ARRAY]) {
-		for my $i (0 .. $#{$elem}) {
+		for my $i (reverse (0 .. $#{$elem})) {
 			# if one of the elements is a subst_param hash,
 			if(ref $elem->[$i] eq q[HASH] and my $param_name = $elem->[$i]->{subst}) {
 				# value for a "subst" key must always be the name of a parameter
@@ -476,7 +476,7 @@ sub fetch_subst_value {
 			$logger->($VLFATAL, q[subst_constructor vals attribute must be array, param_name: ], $param_name);
 		}
 
-		for my $i (0..$#$vals) {
+		for my $i (reverse (0..$#$vals)) {
 			if(ref $vals->[$i] eq q[HASH] and $vals->[$i]->{subst}) {
 				$vals->[$i] = fetch_subst_value($vals->[$i]->{subst}, $param_store, $subst_requests);
 				if(ref $vals->[$i] eq q[ARRAY]) {
