@@ -20,7 +20,7 @@
       "required":"yes", 
       "subst_constructor":{
           "vals":[
-              "/software/hpag/biobambam/0.0.188/bin/bammerge",
+              "bammerge",
               "SO=coordinate",
               "inputformat=cram", 
               "outputformat=bam", 
