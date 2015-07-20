@@ -1,10 +1,11 @@
 {
 "version":"1.0",
 "description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
+"comment":"bammarkduplicates reintroduced for unaligned file because downstream qc processing relies on presence of markdups_metrics file",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-			"_stdin_":"fo_in_multiway"
+			"_stdin_":"bammarkduplicates"
 		},
 		"outputs":{
 			"_stdout_":"seqchksum_tee:__FINAL_OUT__"
@@ -40,6 +41,46 @@
 				"bam",
 				"-O",
 				"cram"
+			],
+			"postproc":{"op":"pack"}
+		}
+	},
+	{
+		"id":"bmd_tmpfile_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bmdtmp","required":"yes"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bmd_metrics_file_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "M=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".markdups_metrics.txt" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bmd_resetdupflag",
+		"comment":"this option should only be used with bamstreamingmarkduplicates (not bammarkduplicates or bammarkduplicates2)",
+		"subst_constructor":{
+			"vals":[ "resetdupflag", {"subst":"bmd_resetdupflag_val"} ],
+			"postproc":{"op":"concat", "pad":"="}
+		}
+	},
+	{"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
+	{
+		"id":"bammarkduplicates",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"bmd_cmd"},
+				"level=0",
+				"verbose=0",
+				{"subst":"bmd_tmpfile_flag"},
+				{"subst":"bmd_metrics_file_flag"},
+				{"subst":"bmd_resetdupflag"}
 			],
 			"postproc":{"op":"pack"}
 		}
@@ -266,6 +307,14 @@
 ],
 "nodes":[
 	{
+		"id":"bammarkduplicates",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"subst":"bammarkduplicates"}
+	},
+	{
 		"id":"fo_in_multiway",
 		"type":"EXEC",
 		"use_STDIN": true,
@@ -395,6 +444,7 @@
 	}
 ],
 "edges":[
+	{ "id":"bammarkduplicates_to_multiway", "from":"bammarkduplicates", "to":"fo_in_multiway" },
 	{ "id":"bmdmw_to_scramble", "from":"fo_in_multiway:__SCRAMBLE_OUT__", "to":"scramble" },
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
 	{ "id":"scramble_tee_to_md5", "from":"scramble_tee:__MD5_OUT__", "to":"scramble_md5" },

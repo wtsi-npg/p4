@@ -1,5 +1,6 @@
 CHANGES LOG
 -----------
+ - bammarkduplicates reintroduced for unaligned file because downstream qc processing relies on presence of markdups_metrics file
  - library cram merging: merge_aligned.json and merge_final_output_prep.json
 
 release 0.16.4
