@@ -156,7 +156,7 @@
     {
     "id":"crammerge",
          "type":"EXEC",
-         "use_STDIN": true,
+         "use_STDIN": false,
          "use_STDOUT": true,
          "cmd":{"subst":"crammerge"},
          "description":"merge individual cram files from a sample into one cram file"
@@ -183,7 +183,7 @@
     {
       "id":"merge_seqchksum",
       "type":"EXEC",
-      "use_STDIN": true,
+      "use_STDIN": false,
       "use_STDOUT": true,
       "cmd":{"subst":"merge_seqchksum"},
       "description": "merge individual cram seqchksum (crc32prod) files"
