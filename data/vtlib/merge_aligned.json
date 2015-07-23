@@ -2,6 +2,14 @@
   "description": "Read ALIGNED data from multiple library CRAM files producing merged output in CRAM format: full PG history, complete SQ lines, adapter marking, etc. The seqchksum file merged from the originals is compared with the seqchksum produced post merge.The input cram is already expected to have been sorted by coordinates with the adddupmarksupport flag specified",
   "version":"0.5",
   "subst_params": [
+	{
+		"id":"basic_pipeline_params_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
     {
                 "id": "basic_pipeline_params",
                 "type":"SPFILE",
@@ -116,32 +124,6 @@
           ],
           "postproc":{"op":"concat", "pad":""}
       }
-    },
-    {
-      "id":"out_seqchksumdefault",
-      "required":"yes",
-      "subst_constructor":{
-          "vals":[
-              {"subst":"outdatadir"},
-              "/",
-              {"subst":"library"},
-              ".seqchksum"
-          ],
-          "postproc":{"op":"concat", "pad":""}
-      }
-    },
-    {
-     "id":"head5outfile",
-     "required":"yes",
-      "subst_constructor":{
-          "vals":[
-              {"subst":"outdatadir"},
-              "/",
-              {"subst":"library"},
-              ".head5.seqchksum"
-          ],
-          "postproc":{"op":"concat", "pad":""}
-      }
     }
   ],
   "nodes": [
@@ -156,7 +138,7 @@
     {
     "id":"crammerge",
          "type":"EXEC",
-         "use_STDIN": true,
+         "use_STDIN": false,
          "use_STDOUT": true,
          "cmd":{"subst":"crammerge"},
          "description":"merge individual cram files from a sample into one cram file"
@@ -174,16 +156,10 @@
       "comment":"inputs: _stdin_ (bam); outputs: _stdout_ (seqchksum_file)",
       "description": "subgraph containing post alignment_filter process (target)"
     },
-    
-    {
-      "id": "out_seqchksumdefault",
-      "type": "OUTFILE",
-      "name": {"subst":"out_seqchksumdefault"}
-    },
     {
       "id":"merge_seqchksum",
       "type":"EXEC",
-      "use_STDIN": true,
+      "use_STDIN": false,
       "use_STDOUT": true,
       "cmd":{"subst":"merge_seqchksum"},
       "description": "merge individual cram seqchksum (crc32prod) files"
@@ -200,17 +176,11 @@
     {
      "id":"seqchksumdefault_head5",
      "type":"EXEC",
-     "use_STDIN": false,
+     "use_STDIN": true,
      "use_STDOUT": true,
      "type":"EXEC",
-     "cmd":["head", "-5","__MERGED_SEQCHKSUM_HEAD5_IN__"],
+     "cmd":["head", "-5"],
      "description":"Only use top 5 lines of seqchksum file for the comparison."
-    },
-    {
-     "id":"seqchksumdefault_head5_file",
-     "type":"OUTFILE", 
-     "name":{"subst":"head5outfile"},
-     "comment": "Top 5 lines of merged seqchksum is written to file as cmp needs at least one input to be a file."
     },
     {
       "id":"cmp_seqchksumdefault",
@@ -224,11 +194,9 @@
   "edges": [
     { "id": "crammerge_to_bammarkduplicates", "from": "crammerge", "to": "bammarkduplicates" },
     { "id": "bammarkduplicates_to_final_output_prep", "from": "bammarkduplicates", "to": "merge_final_output_prep" },
-    { "id": "merge_seqchksum_to_out_seqchksumdefault", "from": "merge_seqchksum", "to": "out_seqchksumdefault" },
+    { "id": "merge_seqchksum_to_seqchksumdefault_tee", "from": "merge_seqchksum", "to": "seqchksumdefault_head5" },
+    { "id": "seqchksumdefault_head5", "from":"seqchksumdefault_head5", "to":"cmp_seqchksumdefault:__MERGED_SEQCHKSUM_IN__" },
     { "id": "final_output_prep_to_head5", "from": "merge_final_output_prep","to": "seqchksum_head5" },
-    { "id": "seqchksum_head5_to_cmp_seqchksumdefault", "from": "seqchksum_head5","to": "cmp_seqchksumdefault" },
-    { "id": "out_seqchksumdefault_to_head5", "from":"out_seqchksumdefault", "to":"seqchksumdefault_head5:__MERGED_SEQCHKSUM_HEAD5_IN__" },
-    { "id": "seqchksumdefault_head5_to_head5outfile", "from":"seqchksumdefault_head5", "to":"seqchksumdefault_head5_file" },
-    { "id": "head5file_to_cmp_seqchksumdefault", "from":"seqchksumdefault_head5_file", "to":"cmp_seqchksumdefault:__MERGED_SEQCHKSUM_IN__" }
+    { "id": "seqchksum_head5_to_cmp_seqchksumdefault", "from": "seqchksum_head5","to": "cmp_seqchksumdefault" }
   ]
 }
