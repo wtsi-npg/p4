@@ -1,6 +1,6 @@
 {
 "version":"1.0",
-"description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output. This is the version that does human split",
+"description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output. This is the version that does human split when there is no target alignment",
 "subst_params":[
 	{
 		"id":"basic_pipeline_params_file",
@@ -22,41 +22,6 @@
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"indatadir"}, "/", {"subst":"rpt"}, ".bam" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{"id":"pre_alignment_name","required":"no","default":"pre_alignment"},
-	{
-		"id":"pre_alignment_target",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"pre_alignment_name"}, ".json" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"alignment_vtf",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"alignment_method"}, "_alignment.json" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"reference_dict",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_dict_name"} ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{"id":"post_alignment_name","required":"no","default":"post_alignment"},
-	{
-		"id":"post_alignment_target",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"post_alignment_name"}, ".json"
-			],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -205,7 +170,7 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"final_output_prep_target_name","required":"no","default":"final_output_prep"},
+	{"id":"final_output_prep_target_name","required":"no","default":"final_output_noalign_prep"},
 	{
 		"id":"final_output_prep_target",
 		"required":"yes",
@@ -254,42 +219,7 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__", "__HUMAN_SPLIT_OUT__" ]
-	},
-	{
-		"id":"pre_alignment_target",
-		"type":"VTFILE",
-		"node_prefix":"prealntgt_",
-		"name":{"subst":"pre_alignment_target"},
-		"description":"subgraph containing pre alignment process"
-	},
-	{
-		"id":"alignment_reference_genome",
-		"type":"INFILE",
-		"name":{"subst":"alignment_reference_genome"},
-		"description":"Prefix for reference fasta and Bowtie2 index files"
-	},
-	{
-		"id":"alignment_target",
-		"type":"VTFILE",
-		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
-		"node_prefix":"alntgt_",
-		"name":{"subst":"alignment_vtf"},
-		"description":"subgraph containing alignment process"
-	},
-	{
-		"id":"reference_dict",
-		"type":"INFILE",
-		"name":{"subst":"reference_dict"},
-		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
-	},
-	{
-		"id":"post_alignment_target",
-		"type":"VTFILE",
-		"comment":"inputs: _stdin_ (bam), reference_dict, no_align_bam; outputs: _stdout_ (bam)",
-		"node_prefix":"postalntgt_",
-		"name":{"subst":"post_alignment_target"},
-		"description":"subgraph containing post alignment process (target)"
+		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__HUMAN_SPLIT_OUT__" ]
 	},
 	{
 		"id":"pre_alignment_hs",
@@ -347,21 +277,11 @@
 		"description":"subgraph containing pre alignment process"
 	},
 	{
-		"id":"tee_amp",
-		"type":"RAFILE",
-		"name":{"subst":"hs_intfile0"},
-		"orig_type":"EXEC",
-		"orig_use_STDIN": true,
-		"orig_use_STDOUT": false,
-		"orig_comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"orig_cmd":["teepot", {"subst":"teepot_tempdir_flag"}, "-vv", "-w", "30000", "-m", "1G", "__TGT_OUT__", "__HUMAN_SPLIT_OUT__" ]
-	},
-	{
 		"id":"alignment_filter",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__HUMAN_SPLIT_INBAM__", "IN=__TARGET_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=__HUMAN_SPLIT_OUTBAM__", "OUT=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
+		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__HUMAN_SPLIT_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=__HUMAN_SPLIT_OUTBAM__", "UNALIGNED=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
 	},
 	{
 		"id":"af_metrics",
@@ -374,7 +294,7 @@
 		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
 		"node_prefix":"foptgt_",
-                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bsfopt","brtmp":"brfopt","bmdtmp":"bmdfopt","scramble_reference_fasta":{"subst":"reference_genome_fasta"}},
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bsfopt","brtmp":"brfopt","bmdtmp":"bmdfopt"},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
@@ -413,15 +333,7 @@
 	{ "id":"t0_to_bamcollate2_ranking_phix", "from":"tee0:__PHIX_ALN_OUT__", "to":"bamrecompress_input" },
 	{ "id":"brci_to_ipab", "from":"bamrecompress_input", "to":"initial_phix_aln_bam" },
 	{ "id":"ipab_to_bamreset_pre_aln_flt", "from":"initial_phix_aln_bam", "to":"auxmerge_prep" },
-	{ "id":"amp_to_tee_amp", "from":"auxmerge_prep", "to":"tee_amp" },
-	{ "id":"tee_amp_to_pat", "orig_from":"tee_amp:__TGT_OUT__", "from":"tee_amp", "to":"post_alignment_target:no_align_bam" },
-	{ "id":"tee_amp_to_pah", "orig_from":"tee_amp:__HUMAN_SPLIT_OUT__", "from":"tee_amp", "to":"post_alignment_hs:no_align_bam" },
-	{ "id":"t0_to_bamcollate2_ranking", "from":"tee0:__TGT_ALN_OUT__", "to":"pre_alignment_target" },
-	{ "id":"bamadapterclip_to_alignment", "from":"pre_alignment_target", "to":"alignment_target" },
-	{ "id":"ref_to_alignment", "from":"alignment_reference_genome", "to":"alignment_target:reference" },
-	{ "id":"alignment_target_to_post_alignment_target", "from":"alignment_target", "to":"post_alignment_target" },
-        { "id":"reference_dict_to_post_alignment", "from":"reference_dict", "to":"post_alignment_target:reference_dict" },
-	{ "id":"post_alignment_to_alignment_filter", "from":"post_alignment_target", "to":"alignment_filter:__TARGET_INBAM__" },
+	{ "id":"amp_to_pah", "from":"auxmerge_prep", "to":"post_alignment_hs:no_align_bam" },
 	{ "id":"t0_to_prealnhs", "from":"tee0:__HUMAN_SPLIT_OUT__", "to":"pre_alignment_hs" },
 	{ "id":"prealnhs_to_alnhs", "from":"pre_alignment_hs", "to":"alignment_hs" },
 	{ "id":"hsref_to_alignment", "from":"hs_alignment_reference_genome", "to":"alignment_hs:reference" },

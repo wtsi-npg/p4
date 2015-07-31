@@ -1,6 +1,13 @@
 CHANGES LOG
 -----------
 
+release 0.17
+ - human split with no target align (secondary stage) template introduced
+ - initial work for stage one (bcl, adapter, phiX and spatial filter to split processing) using templates
+ - bammarkduplicates reintroduced for unaligned file because downstream qc processing relies on presence of markdups_metrics file
+ - library cram merging: merge_aligned.json and merge_final_output_prep.json
+ - remove potential deadlock by using non-blocking open of STDIN
+
 release 0.16.4
  - add extra branch to teepot command in to stream seqchksum output downstream (instead of using a file as an internal node)
 

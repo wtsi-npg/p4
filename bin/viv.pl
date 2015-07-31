@@ -6,6 +6,7 @@ use Carp;
 use File::Slurp;
 use JSON;
 use POSIX;
+use Fcntl;
 use File::Temp qw/ tempdir /;
 use Getopt::Std;
 use Readonly;
@@ -303,18 +304,21 @@ sub _fork_off {
 			$0 .= q{ (pending }.$node->{'id'}.qq{: $cmd)}; #rename process so fork can be easily identified whilst open waits on fifo
 			open STDERR, q(>), $node->{'id'}.q(.).$$.q(.err) or croak "Failed to reset STDERR, pid $$ with cmd: $cmd";
 			select(STDERR);$|=1;
+			print STDERR "Process $$ for cmd $cmd:\n";
+			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
 			if(not $node->{use_STDIN}) { $node->{'STDIN'} ||= '/dev/null'; }
 			if($node->{'STDIN'}) {
-				open STDIN,  q(<), $node->{'STDIN'} or croak "Failed to reset STDIN, pid $$ with cmd: $cmd";
+				sysopen STDIN, $node->{'STDIN'}, O_RDONLY|O_NONBLOCK or croak "Failed to reset STDIN, pid $$ with cmd: $cmd\n$!";
+				fcntl STDIN, F_SETFL, (fcntl STDIN,F_GETFL,0 or croak "fcntl F_GETFL fail $!")&~O_NONBLOCK or croak "fcntl F_SETFL fail $!" ;
 			}
+			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.($node->{'STDIN'}?$node->{'STDIN'}:'stdin') ."\n";
 			if(not $node->{use_STDOUT}) { $node->{'STDOUT'} ||= '/dev/null'; }
 			if($node->{'STDOUT'}) {
 				open STDOUT, q(>), $node->{'STDOUT'} or croak "Failed to reset STDOUT, pid $$ with cmd: $cmd";
 			}
-			print STDERR "Process $$ for cmd $cmd:\n";
-			print STDERR ' fileno(STDIN,'.(fileno STDIN).') reading from '.($node->{'STDIN'}?$node->{'STDIN'}:'stdin') ."\n";
 			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.($node->{'STDOUT'}?$node->{'STDOUT'}:'stdout') ."\n";
-			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
+			print STDERR ' select waiting on STDIN' ."\n";
+			my$rin="";vec($rin,fileno(STDIN),1)=1; select($rin,undef,undef,undef);
 			print STDERR " execing....\n";
 			exec @cmd or croak qq[Failed to exec cmd: ], join " ", @cmd;
 		}
