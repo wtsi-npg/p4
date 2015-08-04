@@ -1,0 +1,466 @@
+{
+"version":"1.0",
+"description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output. This is the version that does human split, and another genome, when there is no target alignment",
+"subst_params":[
+	{
+		"id":"basic_pipeline_params_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
+	{
+		"id":"src_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"indatadir"}, "/", {"subst":"rpt"}, ".bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"pre_alignment_es_name","required":"no","default":"pre_alignment"},
+	{
+		"id":"pre_alignment_es",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"pre_alignment_es_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"bwa_mem_T_value_es","required":"no","default":"30"},
+	{"id":"alignment_es_method","required":"no","default":{"subst":"alignment_method"},"comment":"default to same aligner as for target"},
+	{
+		"id":"alignment_es_vtf",
+		"comment":"it is possible to use a different aligner to split extra",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"alignment_es_method"}, "_alignment.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"reference_dict_es",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_dict_es_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"post_alignment_es_name","required":"no","default":"post_alignment"},
+	{
+		"id":"post_alignment_es",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"post_alignment_es_name"}, ".json"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"pre_alignment_hs_name","required":"no","default":"pre_alignment"},
+	{
+		"id":"pre_alignment_hs",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"pre_alignment_hs_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"bwa_mem_T_value_hs","required":"no","default":"30"},
+	{"id":"alignment_hs_method","required":"no","default":{"subst":"alignment_method"},"comment":"default to same aligner as for target"},
+	{
+		"id":"alignment_hs_vtf",
+		"comment":"it is possible to use a different aligner to split human",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"alignment_hs_method"}, "_alignment.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"reference_dict_hs",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_dict_hs_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"post_alignment_hs_name","required":"no","default":"post_alignment"},
+	{
+		"id":"post_alignment_hs",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"post_alignment_hs_name"}, ".json"
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"initial_phix_aln_bam_name",
+		"required":"no",
+		"default":"initial_phix_aln.bam",
+		"subst_constructor":{
+			"vals":[ "initial_phix_aln_", {"subst":"rpt"}, ".bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"initial_phix_aln_bam",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"initial_phix_aln_bam_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"ehs_intfile0_name",
+		"required":"no",
+		"default":"ehs_intfile0.bam",
+		"subst_constructor":{
+			"vals":[ "ehs_intfile0_", {"subst":"rpt"}, ".bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"ehs_intfile0",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"ehs_intfile0_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"auxmerge_prep_name","required":"no","default":"auxmerge_prep"},
+	{
+		"id":"auxmerge_prep",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"auxmerge_prep_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"alignment_filter_jar_path","required":"no","default":"/software/npg/java_jars"},
+	{"id":"java_cmd","required":"no","default":"java"},
+	{
+		"id":"alignment_filter_jar","required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"alignment_filter_jar_path"}, "/", "AlignmentFilter.jar" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"alignment_filter_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"java_cmd"},
+				"-Xmx1000m",
+				"-jar", {"subst":"alignment_filter_jar"},
+				"VALIDATION_STRINGENCY=SILENT",
+				"CREATE_MD5_FILE=false",
+				"VERBOSITY=INFO",
+				"QUIET=false",
+				"COMPRESSION_LEVEL=5",
+				"MAX_RECORDS_IN_RAM=500000",
+				"CREATE_INDEX=false"
+			],
+			"postproc":{"op":"noconcat", "pad":" "}
+		}
+	},
+	{"id":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"},
+	{
+		"id":"af_metrics",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"logdir"}, "/", {"subst":"rpt"}, ".", {"subst":"af_metrics_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"target_indicator","default":""},
+	{"id":"phix_indicator","default":"_phix"},
+	{"id":"es_indicator","default":"_extra"},
+	{"id":"hs_indicator","default":"_human"},
+	{
+		"id":"fopid_tgt",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"target_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"fopid_phix",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"phix_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"fopid_es",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"es_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"fopid_hs",
+		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+		"subst_constructor":{
+			"vals":[ {"subst":"rpt"}, {"subst":"hs_indicator"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"final_output_prep_target_name","required":"no","default":"final_output_noalign_prep"},
+	{
+		"id":"final_output_prep_target",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_target_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"final_output_prep_phix_name","required":"no","default":"final_output_prep"},
+	{
+                "id":"final_output_prep_phix",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_phix_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{"id":"seqchksum_vtf","required":"no","default":"seqchksum_ehs"},
+	{
+                "id":"seqchksum",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"seqchksum_vtf"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"src_bam",
+		"type":"INFILE",
+		"name":{"subst":"src_bam"},
+		"description":"BAM using as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
+	},
+	{
+		"id":"bamcollate2",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bamcollate2", "collate=1", "level=0"],
+		"comment":"ensure BAM records are gathered by template i.e. queryname"
+	},
+	{
+		"id":"tee0",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__HUMAN_SPLIT_OUT__", "__EXTRA_SPLIT_OUT__" ]
+	},
+	{
+		"id":"pre_alignment_es",
+		"type":"VTFILE",
+		"node_prefix":"prealnes_",
+		"name":{"subst":"pre_alignment_es"},
+		"description":"subgraph containing pre alignment process"
+	},
+	{
+		"id":"es_alignment_reference_genome",
+		"type":"INFILE",
+		"name":{"subst":"es_alignment_reference_genome"},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
+		"id":"alignment_es",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
+		"node_prefix":"alnes_",
+                "subst_map":{"bwa_mem_T_value":{"subst":"bwa_mem_T_value_es"}},
+		"name":{"subst":"alignment_es_vtf"},
+		"description":"subgraph containing alignment process"
+	},
+	{
+		"id":"reference_dict_es",
+		"type":"INFILE",
+		"name":{"subst":"reference_dict_es"},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
+	{
+		"id":"post_alignment_es",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference_dict, no_align_bam; outputs: _stdout_ (bam)",
+		"node_prefix":"postalnes_",
+		"name":{"subst":"post_alignment_es"},
+		"description":"subgraph containing post alignment process (target)"
+	},
+	{
+		"id":"pre_alignment_hs",
+		"type":"VTFILE",
+		"node_prefix":"prealnhs_",
+		"name":{"subst":"pre_alignment_hs"},
+		"description":"subgraph containing pre alignment process"
+	},
+	{
+		"id":"hs_alignment_reference_genome",
+		"type":"INFILE",
+		"name":{"subst":"hs_alignment_reference_genome"},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
+		"id":"alignment_hs",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
+		"node_prefix":"alnhs_",
+                "subst_map":{"bwa_mem_T_value":{"subst":"bwa_mem_T_value_hs"}},
+		"name":{"subst":"alignment_hs_vtf"},
+		"description":"subgraph containing alignment process"
+	},
+	{
+		"id":"reference_dict_hs",
+		"type":"INFILE",
+		"name":{"subst":"reference_dict_hs"},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
+	{
+		"id":"post_alignment_hs",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference_dict, no_align_bam; outputs: _stdout_ (bam)",
+		"node_prefix":"postalnhs_",
+		"name":{"subst":"post_alignment_hs"},
+		"description":"subgraph containing post alignment process (target)"
+	},
+	{
+		"id":"bamrecompress_input",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"bamrecompress verbose=0 numthreads=2"
+	},
+	{
+		"id":"initial_phix_aln_bam",
+		"type":"RAFILE",
+		"name":{"subst":"initial_phix_aln_bam"}
+	},
+	{
+		"id":"auxmerge_prep",
+		"type":"VTFILE",
+		"node_prefix":"amp_",
+		"name":{"subst":"auxmerge_prep"},
+		"description":"subgraph containing pre alignment process"
+	},
+	{
+		"id":"tee_amp",
+		"type":"RAFILE",
+		"name":{"subst":"ehs_intfile0"},
+		"orig_type":"EXEC",
+		"orig_use_STDIN": true,
+		"orig_use_STDOUT": false,
+		"orig_comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"orig_cmd":["teepot", {"subst":"teepot_tempdir_flag"}, "-vv", "-w", "30000", "-m", "1G", "__EXTRA_SPLIT_OUT__", "__HUMAN_SPLIT_OUT__" ]
+	},
+	{
+		"id":"alignment_filter",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__HUMAN_SPLIT_INBAM__", "IN=__EXTRA_SPLIT_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=__HUMAN_SPLIT_OUTBAM__", "OUT=__EXTRA_SPLIT_OUTBAM__", "UNALIGNED=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
+	},
+	{
+		"id":"af_metrics",
+		"type":"OUTFILE",
+		"name":{"subst":"af_metrics"}
+	},
+        {
+                "id":"final_output_prep_target",
+                "type":"VTFILE",
+		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
+		"node_prefix":"foptgt_",
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bsfopt","brtmp":"brfopt","bmdtmp":"bmdfopt"},
+                "name":{"subst":"final_output_prep_target"},
+                "description":"subgraph containing post alignment_filter process (target)"
+        },
+        {
+                "id":"final_output_prep_phix",
+                "type":"VTFILE",
+		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
+		"node_prefix":"fopphx_",
+                "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bsfopp","brtmp":"brfopp","bmdtmp":"bmdfopp","scramble_reference_fasta":{"subst":"phix_reference_genome_fasta"}},
+                "name":{"subst":"final_output_prep_phix"},
+                "description":"subgraph containing post alignment_filter process (phix)"
+        },
+        {
+                "id":"final_output_prep_es",
+                "type":"VTFILE",
+		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
+		"node_prefix":"fopes_",
+                "subst_map":{"phix_or_target":{"subst":"es_indicator"},"fopid":{"subst":"fopid_es"},"bstmp":"bsfoph","brtmp":"brfoph","bmdtmp":"bmdfoph","scramble_reference_fasta":{"subst":"es_reference_genome_fasta"}},
+                "name":{"subst":"final_output_prep_phix"},
+                "description":"subgraph containing post alignment_filter process (phix)"
+        },
+        {
+                "id":"final_output_prep_hs",
+                "type":"VTFILE",
+		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
+		"node_prefix":"fophs_",
+                "subst_map":{"phix_or_target":{"subst":"hs_indicator"},"fopid":{"subst":"fopid_hs"},"bstmp":"bsfoph","brtmp":"brfoph","bmdtmp":"bmdfoph","scramble_reference_fasta":{"subst":"hs_reference_genome_fasta"}},
+                "name":{"subst":"final_output_prep_phix"},
+                "description":"subgraph containing post alignment_filter process (phix)"
+        },
+        {
+		"id":"seqchksum",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (start bam), target_seqchksum, phix_seqchksum; outputs: NONE",
+		"node_prefix":"scs_",
+		"name":{"subst":"seqchksum"},
+		"description":"subgraph containing seqchksum validation of outputs"
+	}
+],
+"edges":[
+	{ "id":"src_to_bc2", "from":"src_bam", "to":"bamcollate2" },
+	{ "id":"bc2_to_ti", "from":"bamcollate2", "to":"tee0" },
+	{ "id":"t0_to_bamcollate2_ranking_phix", "from":"tee0:__PHIX_ALN_OUT__", "to":"bamrecompress_input" },
+	{ "id":"brci_to_ipab", "from":"bamrecompress_input", "to":"initial_phix_aln_bam" },
+	{ "id":"ipab_to_bamreset_pre_aln_flt", "from":"initial_phix_aln_bam", "to":"auxmerge_prep" },
+	{ "id":"amp_to_tee_amp", "from":"auxmerge_prep", "to":"tee_amp" },
+	{ "id":"tee_amp_to_pae", "orig_from":"tee_amp:__EXTRA_SPLIT_OUT__", "from":"tee_amp", "to":"post_alignment_es:no_align_bam" },
+	{ "id":"tee_amp_to_pah", "orig_from":"tee_amp:__HUMAN_SPLIT_OUT__", "from":"tee_amp", "to":"post_alignment_hs:no_align_bam" },
+	{ "id":"t0_to_prealnes", "from":"tee0:__EXTRA_SPLIT_OUT__", "to":"pre_alignment_es" },
+	{ "id":"prealnes_to_alnes", "from":"pre_alignment_es", "to":"alignment_es" },
+	{ "id":"esref_to_alignment", "from":"es_alignment_reference_genome", "to":"alignment_es:reference" },
+	{ "id":"alignment_es_to_post_alignment_es", "from":"alignment_es", "to":"post_alignment_es" },
+	{ "id":"reference_dict_es_to_post_alignment", "from":"reference_dict_es", "to":"post_alignment_es:reference_dict" },
+	{ "id":"postalnes_to_alignment_filter", "from":"post_alignment_es", "to":"alignment_filter:__EXTRA_SPLIT_INBAM__" },
+	{ "id":"t0_to_prealnhs", "from":"tee0:__HUMAN_SPLIT_OUT__", "to":"pre_alignment_hs" },
+	{ "id":"prealnhs_to_alnhs", "from":"pre_alignment_hs", "to":"alignment_hs" },
+	{ "id":"hsref_to_alignment", "from":"hs_alignment_reference_genome", "to":"alignment_hs:reference" },
+	{ "id":"alignment_hs_to_post_alignment_hs", "from":"alignment_hs", "to":"post_alignment_hs" },
+        { "id":"reference_dict_hs_to_post_alignment", "from":"reference_dict_hs", "to":"post_alignment_hs:reference_dict" },
+	{ "id":"postalnhs_to_alignment_filter", "from":"post_alignment_hs", "to":"alignment_filter:__HUMAN_SPLIT_INBAM__" },
+	{ "id":"iab_to_alignment_filter", "from":"initial_phix_aln_bam", "to":"alignment_filter:__PHIX_INBAM__" },
+	{ "id":"alignment_filter_to_metrics", "from":"alignment_filter:__AF_METRICS__", "to":"af_metrics" },
+	{ "id":"af_to_fopt", "from":"alignment_filter", "to":"final_output_prep_target" },
+	{ "id":"af_to_fopp", "from":"alignment_filter:__PHIX_OUTBAM__", "to":"final_output_prep_phix" },
+	{ "id":"af_to_fopes", "from":"alignment_filter:__EXTRA_SPLIT_OUTBAM__", "to":"final_output_prep_es" },
+	{ "id":"af_to_fophs", "from":"alignment_filter:__HUMAN_SPLIT_OUTBAM__", "to":"final_output_prep_hs" },
+        { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
+	{ "id":"fopt_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
+	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" },
+	{ "id":"fopp_to_bam_es", "from":"final_output_prep_es", "to":"seqchksum:es_seqchksum" },
+	{ "id":"fopp_to_bam_hs", "from":"final_output_prep_hs", "to":"seqchksum:hs_seqchksum" }
+]
+}
