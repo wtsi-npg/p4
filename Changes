@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add (secondary stage) extra split template - remove human and another genome
+
 release 0.17
  - human split with no target align (secondary stage) template introduced
  - initial work for stage one (bcl, adapter, phiX and spatial filter to split processing) using templates
