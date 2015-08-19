@@ -5,7 +5,7 @@
 	"ports":{
 		"inputs":{
 			"_stdin_":"tee4",
-			"reference":["bwa_aln_1:__REFERENCE_GENOME_FASTA__", "bwa_aln_2:__REFERENCE_GENOME_FASTA__", "bwa_sampe:__REFERENCE_GENOME_FASTA__"]
+			"reference":["bwa_aln_1:__REFERENCE_GENOME_FASTA_IN__", "bwa_aln_2:__REFERENCE_GENOME_FASTA_IN__", "bwa_sampe:__REFERENCE_GENOME_FASTA_IN__"]
 		},
 		"outputs":{
 			"_stdout_":"samtobam"
@@ -25,33 +25,17 @@
 	{
 		"id":"tee4",
 		"type":"EXEC",
-		"cmd":["teepot", "-v", "-w", "300", "-m", "1G", "__ALN_1_OUT__", "__ALN_2_OUT__", "__SAMPE_1_OUT__", "__SAMPE_2_OUT__" ]
+		"cmd":[ "teepot", "-v", "-w", "300", "-m", "1G", "__ALN_1_OUT__", "__ALN_2_OUT__", "__SAMPE_1_OUT__", "__SAMPE_2_OUT__" ]
 	},
 	{
 		"id":"bwa_aln_1",
 		"type":"EXEC",
-		"cmd":[
-			{"subst":"bwa_executable"},
-			"aln",
-			"-t",
-			{"subst":"aligner_numthreads"},
-			"-b1",
-			"__REFERENCE_GENOME_FASTA__",
-			"__BAM_IN__"
-		]
+		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b1", "__REFERENCE_GENOME_FASTA_IN__", "__BAM_IN__" ]
 	},
 	{
 		"id":"bwa_aln_2",
 		"type":"EXEC",
-		"cmd":[
-			{"subst":"bwa_executable"},
-			"aln",
-			"-t",
-			{"subst":"aligner_numthreads"},
-			"-b2",
-			"__REFERENCE_GENOME_FASTA__",
-			"__BAM_IN__"
-		]
+		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b2", "__REFERENCE_GENOME_FASTA_IN__", "__BAM_IN__" ]
 	},
         {
                 "id":"simple_cat1",
@@ -70,15 +54,7 @@
         {
                 "id":"bwa_sampe",
                 "type":"EXEC",
-		"cmd":[
-			{"subst":"bwa_executable"},
-			"sampe",
-			"__REFERENCE_GENOME_FASTA__",
-			"__SAI_1__",
-			"__SAI_2__",
-			"__BAM_1__",
-			"__BAM_2__"
-		]
+		"cmd":[ {"subst":"bwa_executable"}, "sampe", "__REFERENCE_GENOME_FASTA__", "__SAI_1_IN__", "__SAI_2_IN__", "__BAM_1_IN__", "__BAM_2_IN__" ]
         },
         {
                 "id":"samtobam",
@@ -90,11 +66,11 @@
 	{ "id":"bwa_aln_bam1", "from":"tee4:__ALN_1_OUT__", "to":"bwa_aln_1:__BAM_IN__" },
 	{ "id":"bwa_aln_bam2", "from":"tee4:__ALN_2_OUT__", "to":"bwa_aln_2:__BAM_IN__" },
 	{ "id":"tee_to_cat1", "from":"tee4:__SAMPE_1_OUT__", "to":"simple_cat1" },
-	{ "id":"cat1_to_sampe1", "from":"simple_cat1", "to":"bwa_sampe:__BAM_1__" },
+	{ "id":"cat1_to_sampe1", "from":"simple_cat1", "to":"bwa_sampe:__BAM_1_IN__" },
 	{ "id":"tee_to_cat2", "from":"tee4:__SAMPE_2_OUT__", "to":"simple_cat2" },
-	{ "id":"cat1_to_sampe2", "from":"simple_cat2", "to":"bwa_sampe:__BAM_2__" },
-	{ "id":"aln1_sai_to_sampe", "from":"bwa_aln_1", "to":"bwa_sampe:__SAI_1__" },
-	{ "id":"aln2_sai_to_sampe", "from":"bwa_aln_2", "to":"bwa_sampe:__SAI_2__" },
+	{ "id":"cat1_to_sampe2", "from":"simple_cat2", "to":"bwa_sampe:__BAM_2_IN__" },
+	{ "id":"aln1_sai_to_sampe", "from":"bwa_aln_1", "to":"bwa_sampe:__SAI_1_IN__" },
+	{ "id":"aln2_sai_to_sampe", "from":"bwa_aln_2", "to":"bwa_sampe:__SAI_2_IN__" },
 	{ "id":"bwa_sampe_to_scramble", "from":"bwa_sampe", "to":"samtobam" }
 ]
 }

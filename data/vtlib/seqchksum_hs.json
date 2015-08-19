@@ -44,14 +44,23 @@
                 "type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-                "cmd":"bamseqchksum"
+                "cmd":[ "bamseqchksum" ]
         },
         {
                 "id":"merge_output_seqchksum",
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-                "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__HUMAN_SPLIT_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
+                "orig_cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__HUMAN_SPLIT_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ],
+		"cmd": [
+				"seqchksum_merge.pl",
+				{"subst":"rehash_acc_flag"},
+				{"subst":"rehash_chksum_flag"},
+				{"subst":"rehash_match_flag"},
+				"__TARGET_CHKSUM_IN__",
+				"__HUMAN_SPLIT_CHKSUM_IN__",
+				"__PHIX_CHKSUM_IN__"
+		]
         },
         {
                 "id":"cmp_seqchksum",

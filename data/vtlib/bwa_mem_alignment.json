@@ -5,7 +5,7 @@
 	"ports":{
 		"inputs":{
 			"_stdin_":"bamtofastq",
-			"reference":"bwa_mem:__DB_PREFIX_REFERENCE_GENOME__"
+			"reference":"bwa_mem:__DB_PREFIX_REFERENCE_GENOME_IN__"
 		},
 		"outputs":{
 			"_stdout_":"samtobam"
@@ -24,29 +24,9 @@
 	{
 		"id":"bwa_mem_T_flag",
 		"required":"no",
-		"subst_constructor":{
-			"vals":[
-				"-T",
-				{"subst":"bwa_mem_T_value"}
-			]
-		}
+		"subst_constructor":{ "vals":[ "-T", {"subst":"bwa_mem_T_value"} ] }
 	},
-	{"id":"bwa_mem_p_flag","required":"no","default":"-p","comment":"by default, paired alignment is assumed"},
-	{
-		"id":"bwa_mem_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"bwa_executable"},
-				"mem",
-				"-t",
-				{"subst":"aligner_numthreads"},
-				{"subst":"bwa_mem_p_flag"},
-				{"subst":"bwa_mem_T_flag"}
-			],
-			"postproc":{"op":"pack","pad":" "}
-		}
-	}
+	{"id":"bwa_mem_p_flag","required":"no","default":"-p","comment":"by default, paired alignment is assumed"}
 ],
 "nodes":[
 	{
@@ -58,7 +38,7 @@
 		"id":"bwa_mem",
 		"comment":"presuming interleaved FR fastq records (-p flag), output all records (-T 0)",
 		"type":"EXEC",
-		"cmd":[{"subst":"bwa_mem_cmd"}, "__DB_PREFIX_REFERENCE_GENOME__", "__FQ_IN__"]
+		"cmd":[ {"subst":"bwa_executable"}, "mem", "-t", {"subst":"aligner_numthreads"}, {"subst":"bwa_mem_p_flag"}, {"subst":"bwa_mem_T_flag"}, "__DB_PREFIX_REFERENCE_GENOME_IN__", "__FQ_IN__" ]
 	},
         {
                 "id":"samtobam",

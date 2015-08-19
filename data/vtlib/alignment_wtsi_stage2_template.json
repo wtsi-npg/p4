@@ -190,7 +190,7 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__" ]
+		"cmd":[ "teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__" ]
 	},
 	{
 		"id":"pre_alignment_target",
@@ -232,7 +232,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamrecompress verbose=0 numthreads=2"
+		"cmd":[ "bamrecompress", "verbose=0", "numthreads=2" ]
 	},
 	{
 		"id":"initial_phix_aln_bam",
@@ -251,7 +251,24 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__TARGET_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
+		"orig_cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_BAM_IN__", "IN=__TARGET_BAM_IN__", "OUT=__PHIX_BAM_OUT__", "OUT=/dev/stdout", "METRICS_FILE=__AF_METRICS_OUT__"],
+		"cmd": [
+				{"subst":"java_cmd"},
+				"-Xmx1000m",
+				"-jar", {"subst":"alignment_filter_jar"},
+				"VALIDATION_STRINGENCY=SILENT",
+				"CREATE_MD5_FILE=false",
+				"VERBOSITY=INFO",
+				"QUIET=false",
+				"COMPRESSION_LEVEL=5",
+				"MAX_RECORDS_IN_RAM=500000",
+				"CREATE_INDEX=false",
+				"IN=__PHIX_BAM_IN__",
+				"IN=__TARGET_BAM_IN__",
+				"OUT=__PHIX_BAM_OUT__",
+				"OUT=/dev/stdout",
+				"METRICS_FILE=__AF_METRICS_OUT__"
+		]
 	},
 	{
 		"id":"af_metrics",
@@ -297,11 +314,11 @@
 	{ "id":"ref_to_alignment", "from":"alignment_reference_genome", "to":"alignment_target:reference" },
 	{ "id":"alignment_target_to_post_alignment_target", "from":"alignment_target", "to":"post_alignment_target" },
         { "id":"reference_dict_to_post_alignment", "from":"reference_dict", "to":"post_alignment_target:reference_dict" },
-	{ "id":"post_alignment_to_alignment_filter", "from":"post_alignment_target", "to":"alignment_filter:__TARGET_INBAM__" },
-	{ "id":"iab_to_alignment_filter", "from":"initial_phix_aln_bam", "to":"alignment_filter:__PHIX_INBAM__" },
-	{ "id":"alignment_filter_to_metrics", "from":"alignment_filter:__AF_METRICS__", "to":"af_metrics" },
+	{ "id":"post_alignment_to_alignment_filter", "from":"post_alignment_target", "to":"alignment_filter:__TARGET_BAM_IN__" },
+	{ "id":"iab_to_alignment_filter", "from":"initial_phix_aln_bam", "to":"alignment_filter:__PHIX_BAM_IN__" },
+	{ "id":"alignment_filter_to_metrics", "from":"alignment_filter:__AF_METRICS_OUT__", "to":"af_metrics" },
 	{ "id":"af_to_paf_target", "from":"alignment_filter", "to":"final_output_prep_target" },
-	{ "id":"af_to_paf_phix", "from":"alignment_filter:__PHIX_OUTBAM__", "to":"final_output_prep_phix" },
+	{ "id":"af_to_paf_phix", "from":"alignment_filter:__PHIX_BAM_OUT__", "to":"final_output_prep_phix" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
 	{ "id":"fopt_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
 	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" }

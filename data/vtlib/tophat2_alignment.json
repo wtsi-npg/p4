@@ -5,7 +5,7 @@
 	"ports":{
 		"inputs":{
 			"_stdin_":"bamtofastq",
-			"reference":"tophat2:__REFERENCE_GENOME__"
+			"reference":"tophat2:__REFERENCE_GENOME_IN__"
 		},
 		"outputs":{
 			"_stdout_":"bamcat"
@@ -25,11 +25,7 @@
 		"required":"no",
 		"default":"intfile_1.fq.gz",
 		"subst_constructor":{
-			"vals":[
-				"intfile_1_",
-				{"subst":"rpt"},
-				".fq.gz"
-			],
+			"vals":[ "intfile_1_", {"subst":"rpt"}, ".fq.gz" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -37,11 +33,7 @@
 		"id":"fastq1",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tmpdir"},
-				"/",
-				{"subst":"fastq1_name"}
-			],
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"fastq1_name"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -50,11 +42,7 @@
 		"required":"no",
 		"default":"intfile_2.fq.gz",
 		"subst_constructor":{
-			"vals":[
-				"intfile_2_",
-				{"subst":"rpt"},
-				".fq.gz"
-			],
+			"vals":[ "intfile_2_", {"subst":"rpt"}, ".fq.gz" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -62,11 +50,7 @@
 		"id":"fastq2",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tmpdir"},
-				"/",
-				{"subst":"fastq2_name"}
-			],
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"fastq2_name"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -75,11 +59,7 @@
 		"id":"tophat_out",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tophat_dir"},
-				"_",
-				{"subst":"rpt"}
-			],
+			"vals":[ {"subst":"tophat_dir"}, "_", {"subst":"rpt"} ],
 			"postproc":{"op":"concat","pad":""}
 		},
 		"default":"tophat_out"
@@ -88,11 +68,7 @@
 	{
 		"id":"transcriptome_val",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"reposdir"},
-				"/transcriptomes/",
-				{"subst":"transcriptome_subpath"}
-			],
+			"vals":[ {"subst":"reposdir"}, "/transcriptomes/", {"subst":"transcriptome_subpath"} ],
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
@@ -100,10 +76,7 @@
 		"id":"transcriptome_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				"--transcriptome-index",
-				{"subst":"transcriptome_val"}
-			],
+			"vals":[ "--transcriptome-index", {"subst":"transcriptome_val"} ],
 			"postproc":{"op":"concat","pad":"="}
 		}
 	},
@@ -111,10 +84,7 @@
 		"id":"aligner_numthreads_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				"--num-threads",
-				{"subst":"aligner_numthreads"}
-			],
+			"vals":[ "--num-threads", {"subst":"aligner_numthreads"} ],
 			"postproc":{"op":"concat","pad":"="}
 		}
 	},
@@ -122,43 +92,15 @@
 		"id":"library_type_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				"--library-type",
-				{"subst":"library_type"}
-			],
+			"vals":[ "--library-type", {"subst":"library_type"} ],
 			"postproc":{"op":"concat","pad":"="}
-		}
-	},
-	{
-		"id":"tophat2_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				"tophat2",
-				"--keep-fasta-order",
-				"--no-sort-bam",
-				"--output-dir",
-				{"subst":"tophat_out"},
-				"--mate-inner-dist","100",
-				{"subst":"aligner_numthreads_flag"},
-				{"subst":"library_type_flag"},
-				"--no-coverage-search",
-				"--microexon-search",
-				{"subst":"transcriptome_flag"}
-			],
-			"postproc":{"op":"pack","pad":" "}
 		}
 	},
 	{
 		"id":"junctions_bed",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tophat_dir"},
-				"_",
-				{"subst":"rpt"},
-				"/junctions.bed"
-			],
+			"vals":[ {"subst":"tophat_dir"}, "_", {"subst":"rpt"}, "/junctions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		},
 		"default":"tophat_out/junctions.bed"
@@ -167,12 +109,7 @@
 		"id":"insertions_bed",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tophat_dir"},
-				"_",
-				{"subst":"rpt"},
-				"/insertions.bed"
-			],
+			"vals":[ {"subst":"tophat_dir"}, "_", {"subst":"rpt"}, "/insertions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		},
 		"default":"tophat_out/insertions.bed"
@@ -181,12 +118,7 @@
 		"id":"deletions_bed",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tophat_dir"},
-				"_",
-				{"subst":"rpt"},
-				"/deletions.bed"
-			],
+			"vals":[ {"subst":"tophat_dir"}, "_", {"subst":"rpt"}, "/deletions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		},
 		"default":"tophat_out/deletions.bed"
@@ -196,13 +128,7 @@
 		"id":"accepted_hits_bam",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tophat_dir"},
-				"_",
-				{"subst":"rpt"},
-				"/",
-				{"subst":"accepted_hits"}
-			],
+			"vals":[ {"subst":"tophat_dir"}, "_", {"subst":"rpt"}, "/", {"subst":"accepted_hits"} ],
 			"postproc":{"op":"concat","pad":""}
 		},
 		"default":"tophat_out/accepted_hits.bam"
@@ -212,13 +138,7 @@
 		"id":"unmapped_bam",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"tophat_dir"},
-				"_",
-				{"subst":"rpt"},
-				"/",
-				{"subst":"unmapped"}
-			],
+			"vals":[ {"subst":"tophat_dir"}, "_", {"subst":"rpt"}, "/", {"subst":"unmapped"} ],
 			"postproc":{"op":"concat","pad":""}
 		},
 		"default":"tophat_out/unmapped.bam"
@@ -227,12 +147,7 @@
 		"id":"cp_deletions_bed_target",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"outdatadir"},
-				"/",
-				{"subst":"rpt"},
-				".deletions.bed"
-			],
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".deletions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
@@ -240,12 +155,7 @@
 		"id":"cp_insertions_bed_target",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"outdatadir"},
-				"/",
-				{"subst":"rpt"},
-				".insertions.bed"
-			],
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".insertions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
@@ -253,12 +163,7 @@
 		"id":"cp_junctions_bed_target",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"outdatadir"},
-				"/",
-				{"subst":"rpt"},
-				".junctions.bed"
-			],
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".junctions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		}
 	}
@@ -269,7 +174,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["bamtofastq", "gz=1", "F=__FQOUT1__", "F2=__FQOUT2__"]
+		"cmd":["bamtofastq", "gz=1", "F=__FQ1_OUT__", "F2=__FQ2_OUT__"]
 	},
 	{
 		"id":"fq1",
@@ -286,7 +191,22 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[{"subst":"tophat2_cmd"}, "__REFERENCE_GENOME__", "__FQIN1__", "__FQIN2__"]
+		"cmd": [
+				"tophat2",
+				"--keep-fasta-order",
+				"--no-sort-bam",
+				"--output-dir",
+				{"subst":"tophat_out"},
+				"--mate-inner-dist","100",
+				{"subst":"aligner_numthreads_flag"},
+				{"subst":"library_type_flag"},
+				"--no-coverage-search",
+				"--microexon-search",
+				{"subst":"transcriptome_flag"} ,
+				"__REFERENCE_GENOME__",
+				"__FQ1_IN__",
+				"__FQ2_IN__"
+		]
 	},
 	{
 		"id":"junctions_bed",
@@ -321,112 +241,44 @@
 	{
 		"id":"bamcat",
 		"type":"EXEC",
-		"cmd":["bamcat", "I=__IN_BAM1__", "I=__IN_BAM2__", "level=0"]
+		"cmd":[ "bamcat", "I=__IN_BAM1__", "I=__IN_BAM2__", "level=0" ]
 	},
 	{
 		"id":"cp_deletions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[
-			"cp",
-			"__SRC_DELETIONS_BED__",
-			{"subst":"cp_deletions_bed_target"}
-		]
+		"cmd":[ "cp", "__SRC_DELETIONS_BED_IN__", {"subst":"cp_deletions_bed_target"} ]
 	},
 	{
 		"id":"cp_insertions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[
-			"cp",
-			"__SRC_INSERTIONS_BED__",
-			{"subst":"cp_insertions_bed_target"}
-		]
+		"cmd":[ "cp", "__SRC_INSERTIONS_BED_IN__", {"subst":"cp_insertions_bed_target"} ]
 	},
 	{
 		"id":"cp_junctions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[
-			"cp",
-			"__SRC_JUNCTIONS_BED__",
-			{"subst":"cp_junctions_bed_target"}
-		]
+		"cmd":[ "cp", "__SRC_JUNCTIONS_BED_IN__", {"subst":"cp_junctions_bed_target"} ]
 	}
 ],
 "edges":[
-	{
-		"id":"bamtofastq_to_fq1",
-		"from":"bamtofastq:__FQOUT1__",
-		"to":"fq1"
-	},
-	{
-		"id":"bamtofastq_to_fq2",
-		"from":"bamtofastq:__FQOUT2__",
-		"to":"fq2"
-	},
-	{
-		"id":"fq1_to_tophat2",
-		"from":"fq1",
-		"to":"tophat2:__FQIN1__"
-	},
-	{
-		"id":"fq2_to_tophat2",
-		"from":"fq2",
-		"to":"tophat2:__FQIN2__"
-	},
-	{
-		"id":"tophat2_to_accepted_hits_bam",
-		"from":"tophat2",
-		"to":"accepted_hits_bam"
-	},
-	{
-		"id":"tophat2_to_unmapped_bam",
-		"from":"tophat2",
-		"to":"unmapped_bam"
-	},
-	{
-		"id":"tophat2_to_deletions_bed",
-		"from":"tophat2",
-		"to":"deletions_bed"
-	},
-	{
-		"id":"cp_deletions_bed",
-		"from":"deletions_bed",
-		"to":"cp_deletions_bed:__SRC_DELETIONS_BED__"
-	},
-	{
-		"id":"tophat2_to_insertions_bed",
-		"from":"tophat2",
-		"to":"insertions_bed"
-	},
-	{
-		"id":"cp_insertions_bed",
-		"from":"insertions_bed",
-		"to":"cp_insertions_bed:__SRC_INSERTIONS_BED__"
-	},
-	{
-		"id":"tophat2_to_junctions_bed",
-		"from":"tophat2",
-		"to":"junctions_bed"
-	},
-	{
-		"id":"cp_junctions_bed",
-		"from":"junctions_bed",
-		"to":"cp_junctions_bed:__SRC_JUNCTIONS_BED__"
-	},
-	{
-		"id":"accepted_hits_bam_to_bamcat",
-		"from":"accepted_hits_bam",
-		"to":"bamcat:__IN_BAM1__"
-	},
-	{
-		"id":"unmapped_bam_to_bamcat",
-		"from":"unmapped_bam",
-		"to":"bamcat:__IN_BAM2__"
-	}
+	{ "id":"bamtofastq_to_fq1", "from":"bamtofastq:__FQ1_OUT__", "to":"fq1" },
+	{ "id":"bamtofastq_to_fq2", "from":"bamtofastq:__FQ2_OUT__", "to":"fq2" },
+	{ "id":"fq1_to_tophat2", "from":"fq1", "to":"tophat2:__FQ1_IN__" },
+	{ "id":"fq2_to_tophat2", "from":"fq2", "to":"tophat2:__FQ2_IN__" },
+	{ "id":"tophat2_to_accepted_hits_bam", "from":"tophat2", "to":"accepted_hits_bam" },
+	{ "id":"tophat2_to_unmapped_bam", "from":"tophat2", "to":"unmapped_bam" },
+	{ "id":"tophat2_to_deletions_bed", "from":"tophat2", "to":"deletions_bed" },
+	{ "id":"cp_deletions_bed", "from":"deletions_bed", "to":"cp_deletions_bed:__SRC_DELETIONS_BED_IN__" },
+	{ "id":"tophat2_to_insertions_bed", "from":"tophat2", "to":"insertions_bed" },
+	{ "id":"cp_insertions_bed", "from":"insertions_bed", "to":"cp_insertions_bed:__SRC_INSERTIONS_BED_IN__" },
+	{ "id":"tophat2_to_junctions_bed", "from":"tophat2", "to":"junctions_bed" },
+	{ "id":"cp_junctions_bed", "from":"junctions_bed", "to":"cp_junctions_bed:__SRC_JUNCTIONS_BED_IN__" },
+	{ "id":"accepted_hits_bam_to_bamcat", "from":"accepted_hits_bam", "to":"bamcat:__IN_BAM1__" },
+	{ "id":"unmapped_bam_to_bamcat", "from":"unmapped_bam", "to":"bamcat:__IN_BAM2__" }
 ]
 }
