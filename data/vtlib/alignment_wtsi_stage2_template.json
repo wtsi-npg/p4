@@ -251,7 +251,6 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"orig_cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_BAM_IN__", "IN=__TARGET_BAM_IN__", "OUT=__PHIX_BAM_OUT__", "OUT=/dev/stdout", "METRICS_FILE=__AF_METRICS_OUT__"],
 		"cmd": [
 				{"subst":"java_cmd"},
 				"-Xmx1000m",
