@@ -203,7 +203,7 @@
 				"--no-coverage-search",
 				"--microexon-search",
 				{"subst":"transcriptome_flag"} ,
-				"__REFERENCE_GENOME__",
+				"__REFERENCE_GENOME_IN__",
 				"__FQ1_IN__",
 				"__FQ2_IN__"
 		]

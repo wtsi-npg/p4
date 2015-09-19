@@ -54,7 +54,7 @@
         {
                 "id":"bwa_sampe",
                 "type":"EXEC",
-		"cmd":[ {"subst":"bwa_executable"}, "sampe", "__REFERENCE_GENOME_FASTA__", "__SAI_1_IN__", "__SAI_2_IN__", "__BAM_1_IN__", "__BAM_2_IN__" ]
+		"cmd":[ {"subst":"bwa_executable"}, "sampe", "__REFERENCE_GENOME_FASTA_IN__", "__SAI_1_IN__", "__SAI_2_IN__", "__BAM_1_IN__", "__BAM_2_IN__" ]
         },
         {
                 "id":"samtobam",
