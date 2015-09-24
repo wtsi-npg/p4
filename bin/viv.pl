@@ -240,7 +240,6 @@ sub _update_node_data_xfer {
 				#ensure port is connected to in manner suggested by naming convention
 				croak 'Node '.($node->{'id'})." port $port connected as ".($edge_side == $FROM?q("from"):q("to")) if (($inout eq q(OUT))^($edge_side == $FROM));
 			} else {
-#				$logger->($VLMED, 'Node '.($node->{'id'})." has poorly described port $port (no _{IN,OUT}__ {suf,pre}fix)\n");
 				croak 'Node '.($node->{'id'})." has poorly described port $port (no _{IN,OUT}__ {suf,pre}fix)\n";
 			}
 			my $cmd = $node->{'cmd'};
