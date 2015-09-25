@@ -1,5 +1,5 @@
 {
-	"description":	"minimal carping test pipeline - works, but I/O port names are poorly named. See log for warning",
+	"description":	"minimal failing test pipeline - fails as I/O port names are poorly named",
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",
