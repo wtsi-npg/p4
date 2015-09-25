@@ -1037,8 +1037,6 @@ sub combine_pvs {
 		push @all_pvs, $clpv; # add parameter value structure created from command-line
 	}
 
-#	Hash::Merge::set_behavior( 'RIGHT_PRECEDENT' );
-#	Hash::Merge::set_behavior( 'LEFT_PRECEDENT' );
 	# merge user-supplied params files with slightly modified RIGHT_PRECEDENT behaviour
 	Hash::Merge::specify_behavior(
 		{
