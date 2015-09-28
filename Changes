@@ -10,6 +10,7 @@ CHANGES LOG
     subst directive attributes ifnull and required added
     remove dead code, review relevance of comments, general tidying
     more tests
+ - add tests for viv.pl
 
 release 0.17
  - human split with no target align (secondary stage) template introduced

@@ -1,0 +1,33 @@
+{
+	"description":	"minimal failing test pipeline. Fails because of false in cmd",
+	"nodes":[
+	{	"id": "n1",
+		"type": "EXEC",
+		"cmd": "echo stuff; sleep 1 && cat"
+	},
+	{	"id": "n2",
+		"type": "EXEC",
+		"ocmd": "cat; false",
+		"cmd": "head -1; false"
+	},
+	{	"id": "m",
+		"type": "EXEC",
+		"cmd": ["echo", "stuff"]
+	},
+	{	"id": "d",
+		"type": "EXEC",
+		"cmd": "diff __IN_1__ __IN_2__"
+	}
+	],
+	"edges":[
+	{	"from": "n1",
+		"to": "n2"
+	},
+	{	"from": "n2",
+		"to": "d:__IN_1__"
+	},
+	{	"from": "m",
+		"to": "d:__IN_2__"
+	}
+	]
+}
