@@ -73,6 +73,7 @@ my $builder = $class->new(
     'File::Which'           => 0,
     'Getopt::Long'          => 0,
     'Getopt::Std'           => 0,
+    'Hash::Merge'           => 0,
     'JSON'                  => 0,
     'List::MoreUtils'       => 0,
     'POSIX'                 => 0,

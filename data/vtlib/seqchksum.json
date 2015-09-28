@@ -23,19 +23,7 @@
 	{ "id":"rehash_match_flds"},
 	{ "id":"rehash_acc_flag", "subst_constructor":{ "vals":[ "-a", {"subst":"rehash_acc_flds"} ], "postproc":{"op":"concat","pad":""} } },
 	{ "id":"rehash_chksum_flag", "subst_constructor":{ "vals":[ "-c", {"subst":"rehash_chksum_flds"} ], "postproc":{"op":"concat","pad":""} } },
-	{ "id":"rehash_match_flag", "subst_constructor":{ "vals":[ "-m", {"subst":"rehash_match_flds"} ], "postproc":{"op":"concat","pad":""} } },
-	{
-		"id":"seqchksum_merge",
-		"subst_constructor":{
-			"vals":[
-				"seqchksum_merge.pl",
-				{"subst":"rehash_acc_flag"},
-				{"subst":"rehash_chksum_flag"},
-				{"subst":"rehash_match_flag"}
-			],
-			"postproc":{"op":"pack"}
-		}
-	}
+	{ "id":"rehash_match_flag", "subst_constructor":{ "vals":[ "-m", {"subst":"rehash_match_flds"} ], "postproc":{"op":"concat","pad":""} } }
 ],
 "nodes":[
         {
@@ -43,21 +31,21 @@
                 "type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-                "cmd":"bamseqchksum"
+                "cmd":[ "bamseqchksum" ]
         },
         {
                 "id":"merge_output_seqchksum",
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-                "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
+		"cmd": [ "seqchksum_merge.pl", {"subst":"rehash_acc_flag"}, {"subst":"rehash_chksum_flag"}, {"subst":"rehash_match_flag"}, "__TARGET_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
         },
         {
                 "id":"cmp_seqchksum",
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-                "cmd":"cmp __INPUTCHK_IN__ __OUTPUTCHK_IN__",
+                "cmd":[ "cmp", "__INPUTCHK_IN__", "__OUTPUTCHK_IN__" ],
                 "description":"check input primary/sequence data matches output"
         }
 ],

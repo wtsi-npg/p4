@@ -163,7 +163,7 @@
 				"-jar",{"subst":"bamindexdecoder_jar"},
 				"I=/dev/stdin",
 				"O=/dev/stdout",
-				"M=__METRICS_FILE__",
+				"M=__METRICS_FILE_OUT__",
 				{"subst":"barcode_file_flag"}
 			],
 			"postproc":{"op":"pack","pad":" "}
@@ -277,11 +277,7 @@
 	{
 		"id":"bamadapterfind",
 		"type":"EXEC",
-		"cmd":[
-			"bamadapterfind",
-			"md5=1",
-			{"subst":"bamadapterfind_md5file_flag"}
-		],
+		"cmd":[ "bamadapterfind", "md5=1", {"subst":"bamadapterfind_md5file_flag"} ],
 		"description":"Find and mark the adaptors used by Illumina"
 	},
 	{
@@ -293,7 +289,7 @@
 			"-jar", {"subst":"bamindexdecoder_jar"},
 			"I=/dev/stdin",
 			"O=/dev/stdout",
-			"M=__METRICS_FILE__",
+			"M=__METRICS_FILE_OUT__",
 			{"subst":"barcode_file_flag"}
 		]
 	},
@@ -305,12 +301,12 @@
 	{
 		"id":"bamcollate",
 		"type":"EXEC",
-		"cmd":["bamcollate2", "collate=2", "level=0"]
+		"cmd":[ "bamcollate2", "collate=2", "level=0" ]
 	},
 	{
 		"id":"tee_decode",
 		"type":"EXEC",
-		"cmd":[ "teepot", "-v", "-m", "2M", "__TD1__", "__TD2__" ]
+		"cmd":[ "teepot", "-v", "-m", "2M", "__TD1_OUT__", "__TD2_OUT__" ]
 	},
 	{
 		"id":"simple_cat",
@@ -336,12 +332,12 @@
 	{
 		"id":"bammerge",
 		"type":"EXEC",
-		"cmd":[ "bam12auxmerge", "level=0", "rankstrip=1", "ranksplit=0", "zztoname=0", "clipreinsert=1", "__PREALN_BAM__" ]
+		"cmd":[ "bam12auxmerge", "level=0", "rankstrip=1", "ranksplit=0", "zztoname=0", "clipreinsert=1", "__PREALN_BAM_IN__" ]
 	},
 	{
 		"id":"prefilter",
 		"type":"EXEC",
-		"cmd":[ "teepot", "-v", "-t", ".", "-m", "2M", "__PF1__", "__PF2__" ]
+		"cmd":[ "teepot", "-v", "-t", ".", "-m", "2M", "__PF1_OUT__", "__PF2_OUT__" ]
 	},
 	{
 		"id":"cat2",
@@ -366,7 +362,7 @@
 	{
 		"id":"apply_filter",
 		"type":"EXEC",
-		"cmd":[ "spatial_filter", "-a", "-f", "-q", "-F __FILTER__", "/dev/stdin" ],
+		"cmd":[ "spatial_filter", "-a", "-f", "-q", "-F __FILTER_IN__", "/dev/stdin" ],
 		"description":"Apply a spatial filter"
 	},
 	{
@@ -383,13 +379,7 @@
 	{
 		"id":"splitter",
 		"type":"EXEC",
-		"cmd":[
-			{"subst":"samtools_executable"},
-			"split",
-			"-f",
-			{"subst":"split_format"},
-			"-"
-		],
+		"cmd":[ {"subst":"samtools_executable"}, "split", "-f", {"subst":"split_format"}, "-" ],
 		"description":"Split the BAM file into separate BAM files by Read Group"
 	}
 ],
@@ -398,17 +388,17 @@
 	{ "id":"bamadapterfind_to_decoder", "from":"bamadapterfind", "to":"bamindexdecoder" },
 	{ "id":"bamindexdecoder_to_collate", "from":"bamindexdecoder", "to":"bamcollate" },
 	{ "id":"collate_to_tee", "from":"bamcollate", "to":"tee_decode" },
-	{ "id":"decoder_to_metrics", "from":"bamindexdecoder:__METRICS_FILE__", "to":"decoder_metrics" },
-	{ "id":"tee_decode_to_cat", "from":"tee_decode:__TD1__", "to":"simple_cat" },
-	{ "id":"cat_to_merge", "from":"simple_cat", "to":"bammerge:__PREALN_BAM__" },
-	{ "id":"tee_decode_to_alignment", "from":"tee_decode:__TD2__", "old_to":"bam2fastq", "to":"alignment_phix" },
-	{ "id":"ref_to_alignment", "from":"reference_phix", "orig_to":"bwa_mem:__REFERENCE_PHIX__", "to":"alignment_phix:reference" },
+	{ "id":"decoder_to_metrics", "from":"bamindexdecoder:__METRICS_FILE_OUT__", "to":"decoder_metrics" },
+	{ "id":"tee_decode_to_cat", "from":"tee_decode:__TD1_OUT__", "to":"simple_cat" },
+	{ "id":"cat_to_merge", "from":"simple_cat", "to":"bammerge:__PREALN_BAM_IN__" },
+	{ "id":"tee_decode_to_alignment", "from":"tee_decode:__TD2_OUT__", "old_to":"bam2fastq", "to":"alignment_phix" },
+	{ "id":"ref_to_alignment", "from":"reference_phix", "to":"alignment_phix:reference" },
 	{ "id":"alignment_to_merge", "from":"alignment_phix", "to":"bammerge" },
 	{ "id":"merge_to_prefilter", "from":"bammerge", "to":"prefilter" },
-	{ "id":"prefilter_to_create_filter", "from":"prefilter:__PF1__", "to":"create_filter" },
+	{ "id":"prefilter_to_create_filter", "from":"prefilter:__PF1_OUT__", "to":"create_filter" },
 	{ "id":"create_filter_to_filter_file", "from":"create_filter", "to":"spatial_filter_file" },
-	{ "id":"filter_file_to_apply_filter", "from":"spatial_filter_file", "to":"apply_filter:__FILTER__" },
-	{ "id":"prefilter_to_tmp_bam", "from":"prefilter:__PF2__", "to":"pre_spatial_filter_bam" },
+	{ "id":"filter_file_to_apply_filter", "from":"spatial_filter_file", "to":"apply_filter:__FILTER_IN__" },
+	{ "id":"prefilter_to_tmp_bam", "from":"prefilter:__PF2_OUT__", "to":"pre_spatial_filter_bam" },
 	{ "id":"tmp_bam_to_apply", "from":"pre_spatial_filter_bam", "to":"apply_filter" },
 	{ "id":"apply_filter_to_tee", "from":"apply_filter", "to":"tee_split" },
 	{ "id":"tee_to_filtered_bam", "from":"tee_split:__FILTERED_BAM_OUT__", "to":"filtered_bam" },

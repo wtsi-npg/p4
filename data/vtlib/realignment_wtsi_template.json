@@ -186,7 +186,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamcollate2", {"subst":"src_input_format_flag"}, "collate=1", "level=0"],
+		"cmd":[ "bamcollate2", {"subst":"src_input_format_flag"}, "collate=1", "level=0" ],
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
 	{
@@ -194,7 +194,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__"],
+		"cmd":[ "teepot", "-v", {"subst":"teepot_tempdir_flag"}, "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__" ],
 		"comment":"specify parameter value teepot_tempdir_value to specif teepot tempdir"
 	},
 	{
@@ -237,7 +237,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamrecompress", "verbose=0", "numthreads=2"]
+		"cmd":[ "bamrecompress", "verbose=0", "numthreads=2" ]
 	},
 	{
 		"id":"initial_phix_aln_bam",

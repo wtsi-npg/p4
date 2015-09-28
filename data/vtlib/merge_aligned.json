@@ -1,7 +1,7 @@
 {
-  "description": "Read ALIGNED data from multiple library CRAM files producing merged output in CRAM format: full PG history, complete SQ lines, adapter marking, etc. The seqchksum file merged from the originals is compared with the seqchksum produced post merge.The input cram is already expected to have been sorted by coordinates with the adddupmarksupport flag specified",
-  "version":"0.5",
-  "subst_params": [
+"description": "Read ALIGNED data from multiple library CRAM files producing merged output in CRAM format: full PG history, complete SQ lines, adapter marking, etc. The seqchksum file merged from the originals is compared with the seqchksum produced post merge.The input cram is already expected to have been sorted by coordinates with the adddupmarksupport flag specified",
+"version":"0.5",
+"subst_params": [
 	{
 		"id":"basic_pipeline_params_file",
 		"required":"yes",
@@ -10,193 +10,129 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-    {
-                "id": "basic_pipeline_params",
-                "type":"SPFILE",
-                "name":{"subst":"basic_pipeline_params_file"},
-                "required": "no",
-                "comment":"this will expand to a set of subst_param elements"
-    },
-    { 
-     "id":"incrams", 
-     "required":"yes", 
-     "default":"",
-     "comment":"An iRODS path can be specified here"
-    },
-    {
-      "id":"crammerge",
-      "required":"yes", 
-      "subst_constructor":{
-          "vals":[
-              "bammerge",
-              "SO=coordinate",
-              "inputformat=cram", 
-              "outputformat=bam", 
-              {"subst":"incrams"}
-          ],
-          "postproc":{"op":"pack", "pad":" "}
-      }
-    },
-    {
-    "id":"bmd_tmpfile_flag",
-    "required":"no",
-    "subst_constructor":{
-      "vals":[
-        "tmpfile=",
-        {"subst":"outdatadir"},
-        "/",
-        {"subst":"bmdtmp","required":"yes"},
-        "_",
-        {"subst":"library"},
-        ".tmp"
-      ],
-      "postproc":{"op":"concat", "pad":""}
-    }
-  },
-  {
-    "id":"bmd_metrics_file_flag",
-    "required":"no",
-    "subst_constructor":{
-      "vals":[
-        "M=",
-        {"subst":"outdatadir"},
-        "/",
-        {"subst":"library"},
-        ".markdups_metrics.txt"
-      ],
-      "postproc":{"op":"concat", "pad":""}
-    }
-  },
-  {
-    "id":"bmd_resetdupflag",
-    "comment":"this option should only be used with bamstreamingmarkduplicates (not bammarkduplicates or bammarkduplicates2)",
-    "subst_constructor":{
-      "vals":[
-        "resetdupflag",
-        {"subst":"bmd_resetdupflag_val"}
-      ],
-      "postproc":{"op":"concat", "pad":"="}
-    }
-   },
-   {"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
-   {
-    "id":"bammarkduplicates",
-    "required":"yes",
-    "subst_constructor":{
-      "vals":[
-        {"subst":"bmd_cmd"},
-        "level=0",
-        "verbose=0",
-        {"subst":"bmd_tmpfile_flag"},
-        {"subst":"bmd_metrics_file_flag"},
-        {"subst":"bmd_resetdupflag"}
-      ],
-      "postproc":{"op":"pack"}
-      }
-    },
-    { 
-     "id":"incrams_seqchksum", 
-     "required":"yes", 
-     "default":"",
-     "comment":"An iRODS path should not be used here"
-    },
-    {
-      "id":"merge_seqchksum",
-      "required":"yes",
-      "subst_constructor":{
-          "vals":[
-              "./seqchksum_merge.pl",
-              {"subst":"incrams_seqchksum"}
-          ],
-          "postproc":{"op":"pack", "pad":" "}
-      }
-    },
-    {"id":"final_output_prep_name","required":"no","default":"merge_final_output_prep"},
-    {
-      "id":"merge_final_output_prep",
-      "required":"yes",
-      "subst_constructor":{
-          "vals":[
-              {"subst":"cfgdatadir"},
-              "/",
-              {"subst":"final_output_prep_name"},
-              ".json"
-          ],
-          "postproc":{"op":"concat", "pad":""}
-      }
-    }
-  ],
-  "nodes": [
-    {
-    "id":"bammarkduplicates",
-    "comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
-    "type":"EXEC",
-    "use_STDIN": true,
-    "use_STDOUT": true,
-    "cmd":{"subst":"bammarkduplicates"}
-  },
-    {
-    "id":"crammerge",
-         "type":"EXEC",
-         "use_STDIN": false,
-         "use_STDOUT": true,
-         "cmd":{"subst":"crammerge"},
-         "description":"merge individual cram files from a sample into one cram file"
-    },
-    {
-      "id": "merge_final_output_prep",
-      "type": "VTFILE",
-      "subst_map":
-      {
-        "bstmp":"bspaft",
-        "brtmp":"brpaft",
-        "bmdtmp":"bmdpaft"
-      },
-      "name": {"subst":"merge_final_output_prep"},
-      "comment":"inputs: _stdin_ (bam); outputs: _stdout_ (seqchksum_file)",
-      "description": "subgraph containing post alignment_filter process (target)"
-    },
-    {
-      "id":"merge_seqchksum",
-      "type":"EXEC",
-      "use_STDIN": false,
-      "use_STDOUT": true,
-      "cmd":{"subst":"merge_seqchksum"},
-      "description": "merge individual cram seqchksum (crc32prod) files"
-    },
-    {
-     "id":"seqchksum_head5",
-     "type":"EXEC",
-     "use_STDIN": true,
-     "use_STDOUT": true,
-     "type":"EXEC",
-     "cmd":["head", "-5"],
-     "description":"Only use top 5 lines of seqchksum file for the comparison"
-    },
-    {
-     "id":"seqchksumdefault_head5",
-     "type":"EXEC",
-     "use_STDIN": true,
-     "use_STDOUT": true,
-     "type":"EXEC",
-     "cmd":["head", "-5"],
-     "description":"Only use top 5 lines of seqchksum file for the comparison."
-    },
-    {
-      "id":"cmp_seqchksumdefault",
-      "use_STDIN": true,
-      "use_STDOUT": true,
-      "type":"EXEC",
-      "cmd":["cmp", "-s", "__MERGED_SEQCHKSUM_IN__"],
-      "description":"check input primary/sequence data matches output"
-    }
-  ],
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
+	{ 
+		"id":"incrams", 
+		"required":"yes", 
+		"default":"",
+		"comment":"An iRODS path can be specified here"
+	},
+	{
+		"id":"bmd_tmpfile_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bmdtmp","required":"yes"}, "_", {"subst":"library"}, ".tmp" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bmd_metrics_file_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "M=", {"subst":"outdatadir"}, "/", {"subst":"library"}, ".markdups_metrics.txt" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bmd_resetdupflag",
+		"comment":"this option should only be used with bamstreamingmarkduplicates (not bammarkduplicates or bammarkduplicates2)",
+		"subst_constructor":{
+			"vals":[ "resetdupflag", {"subst":"bmd_resetdupflag_val"} ],
+			"postproc":{"op":"concat", "pad":"="}
+		}
+	},
+	{"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
+	{ 
+		"id":"incrams_seqchksum", 
+		"required":"yes", 
+		"default":"",
+		"comment":"An iRODS path should not be used here"
+	},
+	{"id":"final_output_prep_name","required":"no","default":"merge_final_output_prep"},
+	{
+		"id":"merge_final_output_prep",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_name"}, ".json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes": [
+	{
+		"id":"bammarkduplicates",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"orig_cmd":{"subst":"bammarkduplicates"},
+		"cmd": [ {"subst":"bmd_cmd"}, "level=0", "verbose=0", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"}, {"subst":"bmd_resetdupflag"} ]
+	},
+	{
+		"id":"crammerge",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"orig_cmd":{"subst":"crammerge"},
+		"cmd": [ "bammerge", "SO=coordinate", "inputformat=cram", "outputformat=bam", {"subst":"incrams"} ],
+		"description":"merge individual cram files from a sample into one cram file"
+	},
+	{
+		"id": "merge_final_output_prep",
+		"type": "VTFILE",
+		"subst_map": { "bstmp":"bspaft", "brtmp":"brpaft", "bmdtmp":"bmdpaft" },
+		"name": {"subst":"merge_final_output_prep"},
+		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (seqchksum_file)",
+		"description": "subgraph containing post alignment_filter process (target)"
+	},
+	{
+		"id":"merge_seqchksum",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"orig_cmd":{"subst":"merge_seqchksum"},
+		"cmd":[ "seqchksum_merge.pl", {"subst":"incrams_seqchksum"} ],
+		"description": "merge individual cram seqchksum (crc32prod) files"
+	},
+	{
+		"id":"seqchksum_head5",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"type":"EXEC",
+		"cmd":[ "head", "-5" ],
+		"description":"Only use top 5 lines of seqchksum file for the comparison"
+	},
+	{
+		"id":"seqchksumdefault_head5",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"type":"EXEC",
+		"cmd":[ "head", "-5" ],
+		"description":"Only use top 5 lines of seqchksum file for the comparison."
+	},
+	{
+		"id":"cmp_seqchksumdefault",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"type":"EXEC",
+		"cmd":[ "cmp", "-s", "__MERGED_SEQCHKSUM_IN__" ],
+		"description":"check input primary/sequence data matches output"
+	}
+],
   "edges": [
-    { "id": "crammerge_to_bammarkduplicates", "from": "crammerge", "to": "bammarkduplicates" },
-    { "id": "bammarkduplicates_to_final_output_prep", "from": "bammarkduplicates", "to": "merge_final_output_prep" },
-    { "id": "merge_seqchksum_to_seqchksumdefault_tee", "from": "merge_seqchksum", "to": "seqchksumdefault_head5" },
-    { "id": "seqchksumdefault_head5", "from":"seqchksumdefault_head5", "to":"cmp_seqchksumdefault:__MERGED_SEQCHKSUM_IN__" },
-    { "id": "final_output_prep_to_head5", "from": "merge_final_output_prep","to": "seqchksum_head5" },
-    { "id": "seqchksum_head5_to_cmp_seqchksumdefault", "from": "seqchksum_head5","to": "cmp_seqchksumdefault" }
-  ]
+	{ "id": "crammerge_to_bammarkduplicates", "from": "crammerge", "to": "bammarkduplicates" },
+	{ "id": "bammarkduplicates_to_final_output_prep", "from": "bammarkduplicates", "to": "merge_final_output_prep" },
+	{ "id": "merge_seqchksum_to_seqchksumdefault_tee", "from": "merge_seqchksum", "to": "seqchksumdefault_head5" },
+	{ "id": "seqchksumdefault_head5", "from":"seqchksumdefault_head5", "to":"cmp_seqchksumdefault:__MERGED_SEQCHKSUM_IN__" },
+	{ "id": "final_output_prep_to_head5", "from": "merge_final_output_prep","to": "seqchksum_head5" },
+	{ "id": "seqchksum_head5_to_cmp_seqchksumdefault", "from": "seqchksum_head5","to": "cmp_seqchksumdefault" }
+]
 }

@@ -5,7 +5,7 @@
 	"ports":{
 		"inputs":{
 			"_stdin_":"tee2",
-			"reference":["bwa_aln:__REFERENCE_GENOME_FASTA__", "bwa_samse:__REFERENCE_GENOME_FASTA__"]
+			"reference":["bwa_aln:__REFERENCE_GENOME_FASTA_IN__", "bwa_samse:__REFERENCE_GENOME_FASTA_IN__"]
 		},
 		"outputs":{
 			"_stdout_":"samtobam"
@@ -25,20 +25,12 @@
 	{
 		"id":"tee2",
 		"type":"EXEC",
-		"cmd":["teepot", "-v", "-w", "300", "-m", "1G", "__ALN_OUT__", "__SAMPE_OUT__" ]
+		"cmd":[ "teepot", "-v", "-w", "300", "-m", "1G", "__ALN_OUT__", "__SAMPE_OUT__" ]
 	},
 	{
 		"id":"bwa_aln",
 		"type":"EXEC",
-		"cmd":[
-			{"subst":"bwa_executable"},
-			"aln",
-			"-t",
-			{"subst":"aligner_numthreads"},
-			"-b",
-			"__REFERENCE_GENOME_FASTA__",
-			"__BAM_IN__"
-		]
+		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b", "__REFERENCE_GENOME_FASTA_IN__", "__BAM_IN__" ]
 	},
 	{
 		"id":"simple_cat",
@@ -50,13 +42,7 @@
         {
                 "id":"bwa_samse",
                 "type":"EXEC",
-		"cmd":[
-			{"subst":"bwa_executable"},
-			"samse",
-			"__REFERENCE_GENOME_FASTA__",
-			"__SAI_IN__",
-			"__BAM_IN__"
-		]
+		"cmd":[ {"subst":"bwa_executable"}, "samse", "__REFERENCE_GENOME_FASTA_IN__", "__SAI_IN__", "__BAM_IN__" ]
         },
         {
                 "id":"samtobam",

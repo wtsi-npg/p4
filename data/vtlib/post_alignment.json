@@ -6,7 +6,7 @@
                 "inputs":{
                         "_stdin_":"tee_headerSQfix",
                         "reference_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__",
-                        "no_align_bam":"bam12auxmerge:__NO_ALN_BAM__"
+                        "no_align_bam":"bam12auxmerge:__NO_ALN_BAM_IN__"
                 },
                 "outputs":{
                         "_stdout_":"bam12auxmerge"
@@ -20,31 +20,7 @@
 		"name":{"subst":"basic_pipeline_params_file"},
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
-        },
-	{
-		"id":"samtools_view",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"samtools_executable"},
-				"view",
-				"-h",
-				"-"
-			],
-			"postproc":{"op":"pack","pad":" "}
-		}
-	},
-	{
-		"id":"samtools_reheader",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"samtools_executable"},
-				"reheader"
-			],
-			"postproc":{"op":"pack","pad":" "}
-		}
-	}
+        }
 ],
 "nodes":[
 	{
@@ -60,7 +36,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"samtools_view"}
+		"cmd":[ {"subst":"samtools_executable"}, "view", "-h", "-" ]
 	},
 	{
 		"id":"alterSQ_headerSQfix",
@@ -76,14 +52,14 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["teepot", "-v", "-m", "5M", "-"]
+		"cmd":[ "teepot", "-v", "-m", "5M", "-" ]
 	},
 	{
 		"id":"reheader_headerSQfix",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":[{"subst":"samtools_reheader"}, "__IN_SAMHEADER__", "__IN_BAM__"]
+		"cmd":[ {"subst":"samtools_executable"}, "reheader", "__IN_SAMHEADER__", "__IN_BAM__" ]
 	},
 	{
 		"id":"bam12split",
@@ -104,49 +80,17 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bam12auxmerge", "level=0", "rankstrip=1", "ranksplit=0", "zztoname=0", "clipreinsert=1", "__NO_ALN_BAM__"]
+		"cmd":["bam12auxmerge", "level=0", "rankstrip=1", "ranksplit=0", "zztoname=0", "clipreinsert=1", "__NO_ALN_BAM_IN__"]
 	}
 ],
 "edges":[
-	{
-		"id":"tee_headerSQfix_to_sam",
-		"from":"tee_headerSQfix:__HEADER_FIX_OUT__",
-		"to":"sam_headerSQfix"
-	},
-	{
-		"id":"sam_headerSQfix_to_alterSQ",
-		"from":"sam_headerSQfix",
-		"to":"alterSQ_headerSQfix"
-	},
-	{
-		"id":"alterSQ_headerSQfix_to_reheader",
-		"from":"alterSQ_headerSQfix",
-		"to":"reheader_headerSQfix:__IN_SAMHEADER__"
-	},
-	{
-		"id":"tee_headerSQfix_to_mbuffer",
-		"from":"tee_headerSQfix:__FULL_BAM_OUT__",
-		"to":"mbuffer_headerSQfix"
-	},
-	{
-		"id":"mbuffer_headerSQfix_to_reheader",
-		"from":"mbuffer_headerSQfix",
-		"to":"reheader_headerSQfix:__IN_BAM__"
-	},
-	{
-		"id":"reheader_headerSQfix_to_bam12split",
-		"from":"reheader_headerSQfix",
-		"to":"bam12split"
-	},
-	{
-		"id":"bam12split_to_bamsort_qname",
-		"from":"bam12split",
-		"to":"bamsort_qname"
-	},
-	{
-		"id":"bsqn_to_bam12auxmerge",
-		"from":"bamsort_qname",
-		"to":"bam12auxmerge"
-	}
+	{ "id":"tee_headerSQfix_to_sam", "from":"tee_headerSQfix:__HEADER_FIX_OUT__", "to":"sam_headerSQfix" },
+	{ "id":"sam_headerSQfix_to_alterSQ", "from":"sam_headerSQfix", "to":"alterSQ_headerSQfix" },
+	{ "id":"alterSQ_headerSQfix_to_reheader", "from":"alterSQ_headerSQfix", "to":"reheader_headerSQfix:__IN_SAMHEADER__" },
+	{ "id":"tee_headerSQfix_to_mbuffer", "from":"tee_headerSQfix:__FULL_BAM_OUT__", "to":"mbuffer_headerSQfix" },
+	{ "id":"mbuffer_headerSQfix_to_reheader", "from":"mbuffer_headerSQfix", "to":"reheader_headerSQfix:__IN_BAM__" },
+	{ "id":"reheader_headerSQfix_to_bam12split", "from":"reheader_headerSQfix", "to":"bam12split" },
+	{ "id":"bam12split_to_bamsort_qname", "from":"bam12split", "to":"bamsort_qname" },
+	{ "id":"bsqn_to_bam12auxmerge", "from":"bamsort_qname", "to":"bam12auxmerge" }
 ]
 }

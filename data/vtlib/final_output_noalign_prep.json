@@ -18,31 +18,8 @@
 		"id":"bs_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				"tmpfile=",
-				{"subst":"outdatadir"},
-				"/",
-				{"subst":"bstmp"},
-				"_",
-				{"subst":"rpt"},
-				{"subst":"phix_or_target"},
-				".tmp"
-			],
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bstmp"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
 			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"scramble_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"scramble_executable"},
-				"-I",
-				"bam",
-				"-O",
-				"cram"
-			],
-			"postproc":{"op":"pack"}
 		}
 	},
 	{
@@ -70,88 +47,22 @@
 		}
 	},
 	{"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
-	{
-		"id":"bammarkduplicates",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"bmd_cmd"},
-				"level=0",
-				"verbose=0",
-				{"subst":"bmd_tmpfile_flag"},
-				{"subst":"bmd_metrics_file_flag"},
-				{"subst":"bmd_resetdupflag"}
-			],
-			"postproc":{"op":"pack"}
-		}
-	},
 	{"id":"stats_filter__F0x900","required":"no","default":"0x900"},
-	{
-		"id":"samtools_stats_F0x900",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"samtools_executable"},
-				"stats",
-				"-F",
-				{"subst":"stats_filter__F0x900"},
-				"-"
-			],
-			"postproc":{"op":"pack","pad":" "}
-		}
-	},
 	{"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
-	{
-		"id":"samtools_stats_F0xB00",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"samtools_executable"},
-				"stats",
-				"-F",
-				{"subst":"stats_filter__F0xB00"},
-				"-"
-			],
-			"postproc":{"op":"pack","pad":" "}
-		}
-	},
-	{"id":"seqchksum_cmd","required":"no","default":"bamseqchksum"},
 	{"id":"seqchksum_hash_type","required":"no","default":"sha512primesums512"},
 	{
 		"id":"seqchksum_hash_flag",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[
-				"hash",
-				{"subst":"seqchksum_hash_type"}
-			],
+			"vals":[ "hash", {"subst":"seqchksum_hash_type"} ],
 			"postproc":{"op":"concat","pad":"="}
 		}
-	},
-	{
-		"id":"seqchksum_extrahash_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				"bamseqchksum",
-				{"subst":"seqchksum_hash_flag"}
-			],
-			"postproc":{"op":"pack","pad":" "}
-		},
-		"comment":"it seems peculiar to fix the command here, but the flag is specific to it; hash type is selectable"
 	},
 	{
 		"id":"br_md5file_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				"md5filename=",
-				{"subst":"outdatadir"},
-				"/",
-				{"subst":"rpt"},
-				{"subst":"phix_or_target"},
-				".bam.md5"
-			],
+			"vals":[ "md5filename=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".bam.md5" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -159,10 +70,7 @@
 		"id":"br_numthreads_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				"numthreads=",
-				{"subst":"br_numthreads_val"}
-			],
+			"vals":[ "numthreads=", {"subst":"br_numthreads_val"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -170,63 +78,11 @@
 		"id":"br_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[
-				"tmpfile=",
-				{"subst":"outdatadir"},
-				"/",
-				{"subst":"brtmp"},
-				"_",
-				{"subst":"rpt"},
-				{"subst":"phix_or_target"},
-				".tmp"
-			],
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"brtmp"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{
-		"id":"bamrecompress",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				"bamrecompress",
-				"verbose=0",
-				"index=0",
-				"md5=1",
-				{"subst":"br_md5file_flag"},
-				{"subst":"br_numthreads_flag"},
-				{"subst":"br_tmpfile_flag"}
-			],
-			"postproc":{"op":"pack", "pad":" "}
-		}
-	},
 	{"id":"flagstats_filter_flag","required":"no","default":"0x900"},
-	{
-		"id":"samtools_flagstat_filter",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"samtools_executable"},
-				"view",
-				"-u",
-				"-F",
-				{"subst":"flagstats_filter_flag"},
-				"-"
-			],
-			"postproc":{"op":"pack","pad":" "}
-		}
-	},
-	{
-		"id":"samtools_flagstat_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"samtools_executable"},
-				"flagstat",
-				"-"
-			],
-			"postproc":{"op":"pack","pad":" "}
-		}
-	},
 	{"id":"fopid","default":{"subst":"phix_or_target"}},
 	{
 		"id":"bam_file",
@@ -262,14 +118,7 @@
 		"id":"seqchksum_extrahash_file",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[
-				{"subst":"outdatadir"},
-				"/",
-				{"subst":"fopid"},
-				".",
-				{"subst":"seqchksum_hash_type"},
-				".seqchksum"
-			],
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".", {"subst":"seqchksum_hash_type"}, ".seqchksum" ],
 			"postproc":{"op":"concat", "pad":""}
 		},
 		"comment":"default hash type is currently sha512primesums512"
@@ -312,7 +161,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"bammarkduplicates"}
+		"cmd": [ {"subst":"bmd_cmd"}, "level=0", "verbose=0", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"}, {"subst":"bmd_resetdupflag"} ]
 	},
 	{
 		"id":"fo_in_multiway",
@@ -320,21 +169,21 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "300", "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900__", "__SAMTOOLS_STATS_F0xB00__", "__SEQCHKSUM_OUT__", "__SEQCHKSUM_EXTRAHASH_OUT__" ]
+		"cmd":[ "teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "300", "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900_OUT__", "__SAMTOOLS_STATS_F0xB00_OUT__", "__SEQCHKSUM_OUT__", "__SEQCHKSUM_EXTRAHASH_OUT__" ]
 	},
 	{
 		"id":"scramble",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"scramble_cmd"}
+		"cmd": [ {"subst":"scramble_executable"}, "-I", "bam", "-O", "cram" ]
 	},
 	{
 		"id":"scramble_tee",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "__CRAM_OUT__", "__MD5_OUT__", "__SEQCHKSUM_OUT__" ],
+		"cmd":[ "teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "__CRAM_OUT__", "__MD5_OUT__", "__SEQCHKSUM_OUT__" ],
 		"comment":"allow a generous 500 minutes for the teepot timeout; specify parameter value teepot_tempdir_value to specify teepot tempdir"
 	},
 	{
@@ -342,14 +191,14 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"md5sum"
+		"cmd":[ "md5sum" ]
 	},
 	{
 		"id":"postprocess_md5",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["tr", "-d", " \\-\n"],
+		"cmd":[ "tr", "-d", " \\-\n" ],
 		"comment":"the double-backslash is required to get the correct character set to the tr command"
 	},
 	{
@@ -357,42 +206,42 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamseqchksum", "inputformat=cram"]
+		"cmd":[ "bamseqchksum", "inputformat=cram" ]
 	},
 	{
 		"id":"bamcheck",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamcheck", "-F", "0x900"]
+		"cmd":[ "bamcheck", "-F", "0x900" ]
 	},
 	{
 		"id":"samtools_stats_F0x900",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"samtools_stats_F0x900"}
+		"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0x900"}, "-" ]
 	},
 	{
 		"id":"samtools_stats_F0xB00",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"samtools_stats_F0xB00"}
+		"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0xB00"}, "-" ]
 	},
 	{
 		"id":"seqchksum",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"seqchksum_cmd"}
+		"cmd":[ "bamseqchksum" ]
 	},
 	{
 		"id":"seqchksum_tee",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "__FILE_OUT__", "__SEQCHKSUM_OUT__", "__FINAL_OUT__" ],
+		"cmd":[ "teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "__FILE_OUT__", "__SEQCHKSUM_OUT__", "__FINAL_OUT__" ],
 		"comment":"allow a generous 500 minutes for the teepot timeout; specify parameter value teepot_tempdir_value to specify teepot tempdir"
 	},
 	{
@@ -400,7 +249,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"seqchksum_extrahash_cmd"},
+		"cmd":[ "bamseqchksum", {"subst":"seqchksum_hash_flag"} ],
 		"comment":"default hash type is currently sha512primesums512"
 	},
 
@@ -409,7 +258,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"bamrecompress"}
+		"cmd":[ "bamrecompress", "verbose=0", "index=0", "md5=1", {"subst":"br_md5file_flag"}, {"subst":"br_numthreads_flag"}, {"subst":"br_tmpfile_flag"} ]
 	},
 	{ "id":"bam_file", "type":"OUTFILE", "name":{"subst":"bam_file"} },
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
@@ -425,7 +274,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"samtools_flagstat_filter"},
+		"cmd": [ {"subst":"samtools_executable"}, "view", "-u", "-F", {"subst":"flagstats_filter_flag"}, "-" ],
 		"description":"Filter out secondary and supplementary alignment records"
 	},
 	{
@@ -433,14 +282,14 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"samtools_flagstat_cmd"}
+		"cmd": [ {"subst":"samtools_executable"}, "flagstat", "-" ]
 	},
 	{
 		"id":"cmp_seqchksum",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":["cmp", "__BAM_SEQCHKSUM_IN__", "__CRAM_SEQCHKSUM_IN__"]
+		"cmd":[ "cmp", "__BAM_SEQCHKSUM_IN__", "__CRAM_SEQCHKSUM_IN__" ]
 	}
 ],
 "edges":[
@@ -451,8 +300,8 @@
 	{ "id":"scramble_tee_to_bscs", "from":"scramble_tee:__SEQCHKSUM_OUT__", "to":"cram_seqchksum" },
 	{ "id":"md5_to_postprocess", "from":"scramble_md5", "to":"postprocess_md5" },
 	{ "id":"bmdmw_to_bamcheck", "from":"fo_in_multiway:__BAMCHECK_OUT__", "to":"bamcheck" },
-	{ "id":"bmdmw_to_sts_F0x900", "from":"fo_in_multiway:__SAMTOOLS_STATS_F0x900__", "to":"samtools_stats_F0x900" },
-	{ "id":"bmdmw_to_sts_F0xB00", "from":"fo_in_multiway:__SAMTOOLS_STATS_F0xB00__", "to":"samtools_stats_F0xB00" },
+	{ "id":"bmdmw_to_sts_F0x900", "from":"fo_in_multiway:__SAMTOOLS_STATS_F0x900_OUT__", "to":"samtools_stats_F0x900" },
+	{ "id":"bmdmw_to_sts_F0xB00", "from":"fo_in_multiway:__SAMTOOLS_STATS_F0xB00_OUT__", "to":"samtools_stats_F0xB00" },
 	{ "id":"bmdmw_to_seqchksum", "from":"fo_in_multiway:__SEQCHKSUM_OUT__", "to":"seqchksum" },
 	{ "id":"bmdmw_to_seqchksum_extrahash", "from":"fo_in_multiway:__SEQCHKSUM_EXTRAHASH_OUT__", "to":"seqchksum_extrahash" },
 	{ "id":"bmdmw_to_flagstat", "from":"fo_in_multiway:__FLAGSTAT_OUT__", "to":"flagstat_filter" },

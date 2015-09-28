@@ -1,6 +1,16 @@
 CHANGES LOG
 -----------
 
+ - port naming conventions (IN/OUT pre- and postfixes) adopted in templates and enforced in viv.pl
+ - vtfp.pl
+    improved error reporting
+    refactoring to ensure more consistent/intuitive evaluation of parameter values
+    allow specification of "local" parameter substitution (within a specific vtnode)
+    added --param_vals --export_param_vals flags
+    subst directive attributes ifnull and required added
+    remove dead code, review relevance of comments, general tidying
+    more tests
+
 release 0.17
  - human split with no target align (secondary stage) template introduced
  - initial work for stage one (bcl, adapter, phiX and spatial filter to split processing) using templates
