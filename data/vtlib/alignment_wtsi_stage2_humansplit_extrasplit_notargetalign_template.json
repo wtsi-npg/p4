@@ -278,7 +278,7 @@
 	{
 		"id":"es_alignment_reference_genome",
 		"type":"INFILE",
-		"name":{"subst":"es_alignment_reference_genome"},
+		"name":{"subst":"es_alignment_reference_genome", "required":"yes"},
 		"description":"Prefix for reference fasta and Bowtie2 index files"
 	},
 	{
@@ -314,7 +314,7 @@
 	{
 		"id":"hs_alignment_reference_genome",
 		"type":"INFILE",
-		"name":{"subst":"hs_alignment_reference_genome"},
+		"name":{"subst":"hs_alignment_reference_genome","required":"yes"},
 		"description":"Prefix for reference fasta and Bowtie2 index files"
 	},
 	{
@@ -374,7 +374,7 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_INBAM__", "IN=__HUMAN_SPLIT_INBAM__", "IN=__EXTRA_SPLIT_INBAM__", "OUT=__PHIX_OUTBAM__", "OUT=__HUMAN_SPLIT_OUTBAM__", "OUT=__EXTRA_SPLIT_OUTBAM__", "UNALIGNED=/dev/stdout", "METRICS_FILE=__AF_METRICS__"]
+		"cmd":[{"subst":"alignment_filter_cmd"}, "IN=__PHIX_BAM_IN__", "IN=__HUMAN_SPLIT_BAM_IN__", "IN=__EXTRA_SPLIT_BAM_IN__", "OUT=__PHIX_BAM_OUT__", "OUT=__HUMAN_SPLIT_BAM_OUT__", "OUT=__EXTRA_SPLIT_BAM_OUT__", "UNALIGNED=/dev/stdout", "METRICS_FILE=__AF_METRICS_OUT__"]
 	},
 	{
 		"id":"af_metrics",
@@ -444,19 +444,19 @@
 	{ "id":"esref_to_alignment", "from":"es_alignment_reference_genome", "to":"alignment_es:reference" },
 	{ "id":"alignment_es_to_post_alignment_es", "from":"alignment_es", "to":"post_alignment_es" },
 	{ "id":"reference_dict_es_to_post_alignment", "from":"reference_dict_es", "to":"post_alignment_es:reference_dict" },
-	{ "id":"postalnes_to_alignment_filter", "from":"post_alignment_es", "to":"alignment_filter:__EXTRA_SPLIT_INBAM__" },
+	{ "id":"postalnes_to_alignment_filter", "from":"post_alignment_es", "to":"alignment_filter:__EXTRA_SPLIT_BAM_IN__" },
 	{ "id":"t0_to_prealnhs", "from":"tee0:__HUMAN_SPLIT_OUT__", "to":"pre_alignment_hs" },
 	{ "id":"prealnhs_to_alnhs", "from":"pre_alignment_hs", "to":"alignment_hs" },
 	{ "id":"hsref_to_alignment", "from":"hs_alignment_reference_genome", "to":"alignment_hs:reference" },
 	{ "id":"alignment_hs_to_post_alignment_hs", "from":"alignment_hs", "to":"post_alignment_hs" },
         { "id":"reference_dict_hs_to_post_alignment", "from":"reference_dict_hs", "to":"post_alignment_hs:reference_dict" },
-	{ "id":"postalnhs_to_alignment_filter", "from":"post_alignment_hs", "to":"alignment_filter:__HUMAN_SPLIT_INBAM__" },
-	{ "id":"iab_to_alignment_filter", "from":"initial_phix_aln_bam", "to":"alignment_filter:__PHIX_INBAM__" },
-	{ "id":"alignment_filter_to_metrics", "from":"alignment_filter:__AF_METRICS__", "to":"af_metrics" },
+	{ "id":"postalnhs_to_alignment_filter", "from":"post_alignment_hs", "to":"alignment_filter:__HUMAN_SPLIT_BAM_IN__" },
+	{ "id":"iab_to_alignment_filter", "from":"initial_phix_aln_bam", "to":"alignment_filter:__PHIX_BAM_IN__" },
+	{ "id":"alignment_filter_to_metrics", "from":"alignment_filter:__AF_METRICS_OUT__", "to":"af_metrics" },
 	{ "id":"af_to_fopt", "from":"alignment_filter", "to":"final_output_prep_target" },
-	{ "id":"af_to_fopp", "from":"alignment_filter:__PHIX_OUTBAM__", "to":"final_output_prep_phix" },
-	{ "id":"af_to_fopes", "from":"alignment_filter:__EXTRA_SPLIT_OUTBAM__", "to":"final_output_prep_es" },
-	{ "id":"af_to_fophs", "from":"alignment_filter:__HUMAN_SPLIT_OUTBAM__", "to":"final_output_prep_hs" },
+	{ "id":"af_to_fopp", "from":"alignment_filter:__PHIX_BAM_OUT__", "to":"final_output_prep_phix" },
+	{ "id":"af_to_fopes", "from":"alignment_filter:__EXTRA_SPLIT_BAM_OUT__", "to":"final_output_prep_es" },
+	{ "id":"af_to_fophs", "from":"alignment_filter:__HUMAN_SPLIT_BAM_OUT__", "to":"final_output_prep_hs" },
         { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
 	{ "id":"fopt_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
 	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" },
