@@ -176,7 +176,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"scramble_executable"}, "-I", "bam", "-O", "cram" ]
+		"cmd": [ {"subst":"scramble_executable"}, "-7", "-I", "bam", "-O", "cram" ]
 	},
 	{
 		"id":"scramble_tee",

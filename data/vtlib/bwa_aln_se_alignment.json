@@ -47,7 +47,7 @@
         {
                 "id":"samtobam",
                 "type":"EXEC",
-                "cmd":"scramble -I sam -O bam"
+                "cmd":[ "scramble", "-0", "-I", "sam", "-O", "bam" ]
         }
 ],
 "edges":[
