@@ -1,0 +1,70 @@
+{
+"version":"1.0",
+"description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+				"_stdin_":"seqchksum_input",
+				"target_seqchksum":"merge_output_seqchksum:__TARGET_CHKSUM_IN__",
+				"es_seqchksum":"merge_output_seqchksum:__EXTRA_SPLIT_CHKSUM_IN__",
+				"hs_seqchksum":"merge_output_seqchksum:__HUMAN_SPLIT_CHKSUM_IN__",
+				"phix_seqchksum":"merge_output_seqchksum:__PHIX_CHKSUM_IN__"
+		}
+	}
+},
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{ "id":"rehash_acc_flds"},
+	{ "id":"rehash_chksum_flds"},
+	{ "id":"rehash_match_flds"},
+	{ "id":"rehash_acc_flag", "subst_constructor":{ "vals":[ "-a", {"subst":"rehash_acc_flds"} ], "postproc":{"op":"concat","pad":""} } },
+	{ "id":"rehash_chksum_flag", "subst_constructor":{ "vals":[ "-c", {"subst":"rehash_chksum_flds"} ], "postproc":{"op":"concat","pad":""} } },
+	{ "id":"rehash_match_flag", "subst_constructor":{ "vals":[ "-m", {"subst":"rehash_match_flds"} ], "postproc":{"op":"concat","pad":""} } },
+	{
+		"id":"seqchksum_merge",
+		"subst_constructor":{
+			"vals":[
+				"seqchksum_merge.pl",
+				{"subst":"rehash_acc_flag"},
+				{"subst":"rehash_chksum_flag"},
+				{"subst":"rehash_match_flag"}
+			],
+			"postproc":{"op":"pack"}
+		}
+	}
+],
+"nodes":[
+        {
+                "id":"seqchksum_input",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":"bamseqchksum"
+        },
+        {
+                "id":"merge_output_seqchksum",
+                "type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+                "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__HUMAN_SPLIT_CHKSUM_IN__",  "__EXTRA_SPLIT_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
+        },
+        {
+                "id":"cmp_seqchksum",
+                "type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+                "cmd":"cmp __INPUTCHK_IN__ __OUTPUTCHK_IN__",
+                "description":"check input primary/sequence data matches output"
+        }
+],
+"edges":[
+        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_input", "to":"cmp_seqchksum:__INPUTCHK_IN__" },
+        { "id":"bamcat_to_chk_output", "from":"merge_output_seqchksum", "to":"cmp_seqchksum:__OUTPUTCHK_IN__" }
+]
+}
