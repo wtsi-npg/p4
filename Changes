@@ -11,6 +11,7 @@ CHANGES LOG
     remove dead code, review relevance of comments, general tidying
     more tests
  - add tests for viv.pl
+ - add (secondary stage) extra split template - remove human and another genome
 
 release 0.17
  - human split with no target align (secondary stage) template introduced
