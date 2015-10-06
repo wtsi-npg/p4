@@ -13,7 +13,6 @@
         {"id":"reposdir","required":"no","default":"."},
 	{"id":"samtools_executable","required":"no","default":"samtools"},
 	{"id":"bwa_executable","required":"no","default":"bwa0_6"},
-	{"id":"scramble_executable","required":"no","default":"scramble"},
 	{"id":"aligner_numthreads","required":"no","default":"2"},
 	{"id":"bam_ext","required":"no","default":".bam"},
 	{"id":"cram_ext","required":"no","default":".cram"},

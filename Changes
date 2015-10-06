@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+ - scramble compression
+   - up to 7 for final output cram files
+   - down to 0 for internal bam streams
  - port naming conventions (IN/OUT pre- and postfixes) adopted in templates and enforced in viv.pl
  - vtfp.pl
     improved error reporting

@@ -26,21 +26,6 @@
                 "subst_constructor":{ "vals":[ "-r", {"subst":"scramble_reference_fasta"} ]
                 }
         },
-	{
-		"id":"scramble_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"scramble_executable"},
-				"-I",
-				"bam",
-				"-O",
-				"cram",
-				{"subst":"scramble_reference_flag"}
-			],
-			"postproc":{"op":"pack"}
-		}
-	},
 	{"id":"stats_filter__F0x900","required":"no","default":"0x900"},
 	{
 		"id":"samtools_stats_F0x900",
@@ -214,7 +199,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":{"subst":"scramble_cmd"}
+		"cmd":[ "scramble", "-7", "-I", "bam", "-O", "cram", {"subst":"scramble_reference_flag"} ]
 	},
 	{
 		"id":"scramble_tee",
