@@ -43,7 +43,7 @@
         {
                 "id":"samtobam",
                 "type":"EXEC",
-                "cmd":["scramble", "-0", "-I", "sam", "-O", "bam"]
+                "cmd":[ "scramble", {"subst":"s2b_compress_level", "ifnull":"-0"}, "-I", "sam", "-O", "bam" ]
         }
 ],
 "edges":[

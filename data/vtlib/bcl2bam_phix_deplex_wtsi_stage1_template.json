@@ -306,7 +306,7 @@
 	{
 		"id":"tee_decode",
 		"type":"EXEC",
-		"cmd":[ "teepot", "-v", "-m", "2M", "__TD1_OUT__", "__TD2_OUT__" ]
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-m", "2M", "__TD1_OUT__", "__TD2_OUT__" ]
 	},
 	{
 		"id":"simple_cat",
@@ -337,7 +337,7 @@
 	{
 		"id":"prefilter",
 		"type":"EXEC",
-		"cmd":[ "teepot", "-v", "-t", ".", "-m", "2M", "__PF1_OUT__", "__PF2_OUT__" ]
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-t", ".", "-m", "2M", "__PF1_OUT__", "__PF2_OUT__" ]
 	},
 	{
 		"id":"cat2",
@@ -368,7 +368,7 @@
 	{
 		"id":"tee_split",
 		"type":"EXEC",
-		"cmd":[ "teepot", "-v", "-m", "5M __FILTERED_BAM_OUT__", "__SPLIT_BAM_OUT__" ]
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-m", "5M __FILTERED_BAM_OUT__", "__SPLIT_BAM_OUT__" ]
 	},
 	{
 		"id":"filtered_bam",
