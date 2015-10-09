@@ -1174,11 +1174,13 @@ sub finalise_cmd {
 
 		for my $i (reverse (0..$#{$cmd})) {
 			if(not defined $cmd->[$i]) {
-				splice @{$cmd->[$i]}, $i, 1;
+#				splice @{$cmd->[$i]}, $i, 1;
+				splice @{$cmd}, $i, 1;
 			}
 			elsif(ref $cmd->[$i] eq q[ARRAY]) {
 				$cmd->[$i] = finalise_cmd($cmd->[$i]);
-				splice @{$cmd->[$i]}, $i, 1, @{$cmd->[$i]};
+#				splice @{$cmd->[$i]}, $i, 1, @{$cmd->[$i]};
+				splice @{$cmd}, $i, 1, @{$cmd->[$i]};
 			}
 		}
 	}
