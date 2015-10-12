@@ -169,14 +169,21 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, {"subst":"teepot_tempdir_flag"}, "-w", "300", "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900_OUT__", "__SAMTOOLS_STATS_F0xB00_OUT__", "__SEQCHKSUM_OUT__", "__SEQCHKSUM_EXTRAHASH_OUT__" ]
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, {"subst":"teepot_tempdir_flag"}, "-w", {"subst":"fomw_teepot_wval", "ifnull":"7200"}, "__SCRAMBLE_OUT__", "__BAMCHECK_OUT__", "__FLAGSTAT_OUT__", "__BAM_OUT__", "__SAMTOOLS_STATS_F0x900_OUT__", "__SAMTOOLS_STATS_F0xB00_OUT__", "__SEQCHKSUM_OUT__", "__SEQCHKSUM_EXTRAHASH_OUT__" ]
 	},
 	{
 		"id":"scramble",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-                "cmd":[ "scramble", {"subst":"b2c_compress_level", "ifnull":"-7"}, "-I", "bam", "-O", "cram" ]
+		"cmd":[
+			"scramble",
+			{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"b2c_mt_val"} ]}}},
+			{"subst":"b2c_fmtver", "ifnull":{"subst_constructor":{ "vals":[ "-V", {"subst":"b2c_format_version"} ]}}},
+			{"subst":"b2c_compress_level", "ifnull":"-7"},
+			"-I", "bam",
+			"-O", "cram"
+		]
 	},
 	{
 		"id":"scramble_tee",

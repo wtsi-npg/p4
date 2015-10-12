@@ -59,7 +59,14 @@
         {
                 "id":"samtobam",
                 "type":"EXEC",
-                "cmd":[ "scramble", {"subst":"s2b_compress_level", "ifnull":"-0"}, "-I", "sam", "-O", "bam" ]
+                "cmd":[
+			"scramble",
+			{"subst":"s2b_compress_level", "ifnull":"-0"},
+			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
+			{"subst":"s2b_fmtver", "ifnull":{"subst_constructor":{ "vals":[ "-V", {"subst":"s2b_format_version"} ]}}},
+			"-I", "sam",
+			"-O", "bam"
+		]
         }
 ],
 "edges":[
