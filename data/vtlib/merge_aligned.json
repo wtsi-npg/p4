@@ -80,7 +80,7 @@
 		"use_STDIN": false,
 		"use_STDOUT": true,
 		"orig_cmd":{"subst":"crammerge"},
-		"cmd": [ "bammerge", "SO=coordinate", "inputformat=cram", "outputformat=bam", {"subst":"incrams"} ],
+		"cmd": [ "bammerge", "level=0", "SO=coordinate", "inputformat=cram", "outputformat=bam", {"subst":"incrams"} ],
 		"description":"merge individual cram files from a sample into one cram file"
 	},
 	{
