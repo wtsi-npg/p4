@@ -194,7 +194,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":[ "teepot", "-v", {"subst":"teepot_tempdir_flag"}, "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__" ],
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, {"subst":"teepot_tempdir_flag"}, "__PHIX_ALN_OUT__", "__TGT_ALN_OUT__" ],
 		"comment":"specify parameter value teepot_tempdir_value to specif teepot tempdir"
 	},
 	{
