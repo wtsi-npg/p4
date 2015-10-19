@@ -368,7 +368,7 @@
 	{
 		"id":"tee_split",
 		"type":"EXEC",
-		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-m", "5M __FILTERED_BAM_OUT__", "__SPLIT_BAM_OUT__" ]
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-m", "5M", "__FILTERED_BAM_OUT__", "__SPLIT_BAM_OUT__" ]
 	},
 	{
 		"id":"filtered_bam",
