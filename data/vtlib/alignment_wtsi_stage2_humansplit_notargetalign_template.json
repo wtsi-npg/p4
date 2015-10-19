@@ -199,7 +199,7 @@
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":[ "teepot", "-v", {"subst":"teepot_tempdir_flag"}, "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__HUMAN_SPLIT_OUT__" ]
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, {"subst":"teepot_tempdir_flag"}, "-w", "30000", "-m", "1G", "__PHIX_ALN_OUT__", "__HUMAN_SPLIT_OUT__" ]
 	},
 	{
 		"id":"pre_alignment_hs",

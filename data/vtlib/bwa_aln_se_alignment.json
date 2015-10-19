@@ -25,7 +25,7 @@
 	{
 		"id":"tee2",
 		"type":"EXEC",
-		"cmd":[ "teepot", "-v", "-w", "300", "-m", "1G", "__ALN_OUT__", "__SAMPE_OUT__" ]
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-w", "300", "-m", "1G", "__ALN_OUT__", "__SAMPE_OUT__" ]
 	},
 	{
 		"id":"bwa_aln",
@@ -47,7 +47,13 @@
         {
                 "id":"samtobam",
                 "type":"EXEC",
-                "cmd":[ "scramble", "-0", "-I", "sam", "-O", "bam" ]
+                "cmd":[
+			"scramble",
+			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
+			{"subst":"s2b_compress_level", "ifnull":"-0"},
+			"-I", "sam",
+			"-O", "bam"
+		]
         }
 ],
 "edges":[
