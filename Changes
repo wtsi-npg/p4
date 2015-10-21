@@ -1,7 +1,6 @@
 CHANGES LOG
 -----------
-
-release 0.17.1
+ - -n 1 flag added to seqchksum_merge.pl command in merge_aligned template to allow different tags in column 1
  - scramble compression
    - up to 7 for final output cram files
    - down to 0 for internal bam streams
