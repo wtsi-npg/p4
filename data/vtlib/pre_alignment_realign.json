@@ -17,7 +17,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamcollate2 collate=3 level=0",
+		"cmd":[ "bamcollate2", "collate=3", "level=0" ],
 		"comment":"already collated suitably - just here to do the ranking in the name"
 	},
 	{
@@ -25,7 +25,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamreset resetaux=1 level=0 verbose=0",
+		"cmd":[ "bamreset", "resetaux=1", "level=0", "verbose=0" ],
 		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
@@ -33,20 +33,12 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"bamadapterfind clip=1 verbose=0 level=0",
+		"cmd":[ "bamadapterfind", "clip=1", "verbose=0", "level=0" ],
 		"description":"Find and hard clip adapter sequence from reads before feeding to aligner"
 	}
 ],
 "edges":[
-	{
-		"id":"bamcollate2_ranking_to_bamreset_prealn",
-		"from":"bamcollate2_ranking",
-		"to":"bamreset_pre_alignment"
-	},
-	{
-		"id":"bamreset_prealn_to_bamadapterclip",
-		"from":"bamreset_pre_alignment",
-		"to":"bamadapterclip"
-	}
+	{ "id":"bamcollate2_ranking_to_bamreset_prealn", "from":"bamcollate2_ranking", "to":"bamreset_pre_alignment" },
+	{ "id":"bamreset_prealn_to_bamadapterclip", "from":"bamreset_pre_alignment", "to":"bamadapterclip" }
 ]
 }

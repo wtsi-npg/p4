@@ -60,8 +60,12 @@ my $builder = $class->new(
 
   'build_requires' => {
     'English'               => 0,
+  },
+  'test_requires' => {
     'Test::More'            => 0,
     'Test::Compile'         => 0,
+    'Test::Cmd'             => 0,
+    'Perl6::Slurp'          => 0,
   },
 
   'requires' => {
@@ -73,6 +77,7 @@ my $builder = $class->new(
     'File::Which'           => 0,
     'Getopt::Long'          => 0,
     'Getopt::Std'           => 0,
+    'Hash::Merge'           => 0,
     'JSON'                  => 0,
     'List::MoreUtils'       => 0,
     'POSIX'                 => 0,

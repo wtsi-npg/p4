@@ -1,0 +1,19 @@
+{
+"description":"Test expansion of parameters, specifically cases where there are multiple instances of multi-valued parameters (arrays)",
+"version":"1.0",
+"subst_params":[
+	{ "id": "p1", "subst_constructor":{ "vals":[ "1A", "1B" ] } },
+	{ "id": "p2", "subst_constructor":{ "vals":[ "2A" ] } },
+	{ "id": "p3", "subst_constructor":{ "vals":[ "3A", "3B", "3C", "3D" ] } },
+	{ "id": "p4", "default":"4A"},
+	{ "id": "p5", "subst_constructor":{ "vals":[ "5A", "5B" ] } }
+],
+"nodes":[
+	{
+		"id":"n1",
+		"type":"EXEC",
+		"cmd":[ "echo", {"subst":"p1"}, {"subst":"p2"}, {"subst":"p3"}, {"subst":"p4"}, {"subst":"p5"}  ]
+	}
+]
+}
+

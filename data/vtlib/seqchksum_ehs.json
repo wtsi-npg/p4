@@ -6,6 +6,7 @@
 		"inputs":{
 				"_stdin_":"seqchksum_input",
 				"target_seqchksum":"merge_output_seqchksum:__TARGET_CHKSUM_IN__",
+				"es_seqchksum":"merge_output_seqchksum:__EXTRA_SPLIT_CHKSUM_IN__",
 				"hs_seqchksum":"merge_output_seqchksum:__HUMAN_SPLIT_CHKSUM_IN__",
 				"phix_seqchksum":"merge_output_seqchksum:__PHIX_CHKSUM_IN__"
 		}
@@ -44,23 +45,14 @@
                 "type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-                "cmd":[ "bamseqchksum" ]
+                "cmd":"bamseqchksum"
         },
         {
                 "id":"merge_output_seqchksum",
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-                "orig_cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__HUMAN_SPLIT_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ],
-		"cmd": [
-				"seqchksum_merge.pl",
-				{"subst":"rehash_acc_flag"},
-				{"subst":"rehash_chksum_flag"},
-				{"subst":"rehash_match_flag"},
-				"__TARGET_CHKSUM_IN__",
-				"__HUMAN_SPLIT_CHKSUM_IN__",
-				"__PHIX_CHKSUM_IN__"
-		]
+                "cmd":[ {"subst":"seqchksum_merge"}, "__TARGET_CHKSUM_IN__", "__HUMAN_SPLIT_CHKSUM_IN__",  "__EXTRA_SPLIT_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
         },
         {
                 "id":"cmp_seqchksum",

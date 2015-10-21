@@ -1,0 +1,18 @@
+{
+"description":"test export and import of parameter values using the -[export_]param_vals flags",
+"version":"1.0",
+"subst_params":[
+	{ "id": "subject", "default":"funeral"},
+	{ "id": "verb", "default":"ends"},
+	{ "id": "adj", "default":"mournful"},
+	{ "id": "prepobj", "subst_constructor":{ "vals":[ "fireworks", "display" ] } }
+],
+"nodes":[
+	{
+		"id":"n1",
+		"type":"EXEC",
+		"cmd":[ "echo", "The", {"subst":"subject"}, {"subst":"verb"}, "with", "a", {"subst":"adj"}, {"subst":"prepobj"}  ]
+	}
+]
+}
+

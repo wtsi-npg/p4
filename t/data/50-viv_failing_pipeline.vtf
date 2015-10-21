@@ -1,5 +1,5 @@
 {
-	"description":	"minimal failing test pipeline. Fails because of false in cmd. Also carps about poorly named __IN1__ and __IN2__ ports",
+	"description":	"minimal failing test pipeline. Fails because of false in cmd",
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",
@@ -16,7 +16,7 @@
 	},
 	{	"id": "d",
 		"type": "EXEC",
-		"cmd": "diff __IN1__ __IN2__"
+		"cmd": "diff __IN_1__ __IN_2__"
 	}
 	],
 	"edges":[
@@ -24,10 +24,10 @@
 		"to": "n2"
 	},
 	{	"from": "n2",
-		"to": "d:__IN1__"
+		"to": "d:__IN_1__"
 	},
 	{	"from": "m",
-		"to": "d:__IN2__"
+		"to": "d:__IN_2__"
 	}
 	]
 }

@@ -1,6 +1,23 @@
 CHANGES LOG
 -----------
 
+release 0.17.1
+ - -n 1 flag added to seqchksum_merge.pl command in merge_aligned template to allow different tags in column 1
+ - scramble compression
+   - up to 7 for final output cram files
+   - down to 0 for internal bam streams
+ - port naming conventions (IN/OUT pre- and postfixes) adopted in templates and enforced in viv.pl
+ - vtfp.pl
+    improved error reporting
+    refactoring to ensure more consistent/intuitive evaluation of parameter values
+    allow specification of "local" parameter substitution (within a specific vtnode)
+    added --param_vals --export_param_vals flags
+    subst directive attributes ifnull and required added
+    remove dead code, review relevance of comments, general tidying
+    more tests
+ - add tests for viv.pl
+ - add (secondary stage) extra split template - remove human and another genome
+
 release 0.17
  - human split with no target align (secondary stage) template introduced
  - initial work for stage one (bcl, adapter, phiX and spatial filter to split processing) using templates

@@ -3,12 +3,8 @@
 "description":"preprocessing of non/phix-aligned bam before merging back auxiliary tags using bam12auxmerge",
 "subgraph_io":{
 	"ports":{
-		"inputs":{
-			"_stdin_":"bamreset_pre_auxmerge"
-		},
-		"outputs":{
-			"_stdout_":"bamadapterclip_pre_auxmerge"
-		}
+		"inputs":{ "_stdin_":"bamreset_pre_auxmerge" },
+		"outputs":{ "_stdout_":"bamadapterclip_pre_auxmerge" }
 	}
 },
 "nodes":[
