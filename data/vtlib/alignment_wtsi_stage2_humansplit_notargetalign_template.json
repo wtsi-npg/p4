@@ -269,7 +269,7 @@
 				"CREATE_MD5_FILE=false",
 				"VERBOSITY=INFO",
 				"QUIET=false",
-				"COMPRESSION_LEVEL=5",
+				"COMPRESSION_LEVEL=0",
 				"MAX_RECORDS_IN_RAM=500000",
 				"CREATE_INDEX=false",
 				"IN=__PHIX_BAM_IN__",

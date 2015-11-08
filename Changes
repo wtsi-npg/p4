@@ -2,6 +2,7 @@ CHANGES LOG
 -----------
 
  - use threaded bamsormadup in place of name bamsort
+ - turn off compression of AlignmentFilter output
 
 release 0.17.1
  - -n 1 flag added to seqchksum_merge.pl command in merge_aligned template to allow different tags in column 1
