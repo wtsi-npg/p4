@@ -1,0 +1,278 @@
+{
+  "description": "Read ALIGNED data in BAM format producing output in CRAM format: full PG history, complete SQ lines, adapter marking, etc",
+  "version":"0.7",
+  "subst_params": [
+    {"id":"target_indicator","default":""},
+    {
+      "id":"fopid_tgt",
+      "comment":"id passed to the final_output_prep template; used there to construct unique file names",
+      "subst_constructor":{
+          "vals":[
+              {"subst":"rpt"},
+              {"subst":"target_indicator"}
+          ],
+          "postproc":{"op":"concat", "pad":""}
+      }
+    },
+    {"id":"bam_ext","required":"no","default":".bam"},
+    {
+      "id":"src_bam",
+      "required":"yes",
+      "subst_constructor":{
+          "vals":[ {"subst":"indatadir"}, "/", {"subst":"rpt"}, {"subst":"bam_ext"} ],
+          "postproc":{"op":"concat", "pad":""}
+      }
+    },
+    {"id":"samtools_executable","required":"no","default":"samtools"},
+    {
+      "id":"sam_headerRGfix",
+      "required":"yes",
+      "subst_constructor":{
+          "vals":[
+              {"subst":"samtools_executable"},
+              "view",
+              "-H",
+              "-"
+          ],
+          "postproc":{"op":"pack","pad":" "}
+      }
+    },
+    {
+      "id":"alterRG_headerRGfix",
+      "required":"yes",
+      "subst_constructor":{
+					"vals":[
+							"perl",
+							"/nfs/gapi/users/rb11/viv_reprocessing/bin/filter_header_r_v1.pl",
+							"-rpt",
+							{"subst": "rpt"}
+					],
+					"postproc":{"op":"pack","pad":" "}
+				}
+    },
+    {
+      "id":"reheader_headerRGfix",
+      "required":"yes",
+      "subst_constructor":{
+          "vals":[
+              {"subst":"samtools_executable"},
+              "reheader",
+              "__IN_SAMHEADER__",
+              "-"
+          ],
+          "postproc":{"op":"pack","pad":" "}
+      }
+    },
+    { "id":"phix_or_target", "required":"no", "default":""},
+    {
+      "id":"bs_tmpfile_flag",
+      "required":"no",
+      "subst_constructor":{
+          "vals":[
+              "tmpfile=",
+              {"subst":"outdatadir"},
+              "/",
+              {"subst":"bstmp"},
+              "_",
+              {"subst":"rpt"},
+              {"subst":"phix_or_target"},
+              ".tmp"
+          ],
+          "postproc":{"op":"concat", "pad":""}
+      }
+    },
+    {
+      "id":"bamsort_coord",
+      "required":"yes",
+      "subst_constructor":{
+          "vals":[
+              "bamsort",
+              "SO=coordinate",
+              "level=0",
+              "verbose=0",
+              "fixmate=1",
+              "adddupmarksupport=1",
+              {"subst":"bs_tmpfile_flag"}
+          ],
+          "postproc":{"op":"pack", "pad":" "}
+      }
+    },
+    {
+      "id":"bmd_tmpfile_flag",
+      "required":"no",
+      "subst_constructor":{
+          "vals":[
+              "tmpfile=",
+              {"subst":"outdatadir"},
+              "/",
+              {"subst":"bmdtmp","required":"yes"},
+              "_",
+              {"subst":"rpt"},
+              {"subst":"phix_or_target"},
+              ".tmp"
+          ],
+          "postproc":{"op":"concat", "pad":""}
+      }
+    },
+    {
+      "id":"bmd_metrics_file_flag",
+      "required":"no",
+      "subst_constructor":{
+          "vals":[
+              "M=",
+              {"subst":"outdatadir"},
+              "/",
+              {"subst":"rpt"},
+              {"subst":"phix_or_target"},
+              ".markdups_metrics.txt"
+          ],
+          "postproc":{"op":"concat", "pad":""}
+      }
+    },
+    {
+      "id":"bmd_resetdupflag",
+      "subst_constructor":{
+          "vals":[
+              "resetdupflag",
+              {"subst":"bmd_resetdupflag_val"}
+          ],
+          "postproc":{"op":"concat", "pad":"="},
+          "comment":"this option should only be used with bamstreamingmarkduplicates (not bammarkduplicates or bammarkduplicates2)"
+      }
+    },
+    {"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
+    {
+      "id":"bammarkduplicates",
+      "required":"yes",
+      "subst_constructor":{
+          "vals":[
+              {"subst":"bmd_cmd"},
+              "level=0",
+              "verbose=0",
+              {"subst":"bmd_tmpfile_flag"},
+              {"subst":"bmd_metrics_file_flag"},
+              {"subst":"bmd_resetdupflag"}
+          ],
+          "postproc":{"op":"pack"}
+      }
+    },
+    {"id":"output_prep_btoc_name","required":"no","default":"output_prep_btoc"},
+    {
+      "id":"output_prep_btoc",
+      "required":"yes",
+      "subst_constructor":{
+          "vals":[
+              {"subst":"cfgdatadir"},
+              "/",
+              {"subst":"output_prep_btoc_name"},
+              ".json"
+          ],
+          "postproc":{"op":"concat", "pad":""}
+      }
+    },
+    {"id":"seqchksum_vtf","required":"no","default":"seqchksum_btoc"},
+    {
+      "id":"seqchksum_btoc",
+      "required":"yes",
+      "subst_constructor":{
+          "vals":[
+              {"subst":"cfgdatadir"},
+              "/",
+              {"subst":"seqchksum_vtf"},
+              ".json"
+          ],
+          "postproc":{"op":"concat", "pad":""}
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "src_bam",
+      "type": "INFILE",
+      "name": {"subst":"src_bam"},
+      "description": "BAM used as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
+    },
+    {
+      "id":"sam_headerRGfix",
+      "type":"EXEC",
+      "use_STDIN": true,
+      "use_STDOUT": true,
+      "cmd":{"subst":"sam_headerRGfix"}
+    },
+    {
+      "id":"alterRG_headerRGfix",
+      "type":"EXEC",
+      "use_STDIN": true,
+      "use_STDOUT": true,
+      "cmd":{"subst":"alterRG_headerRGfix"},
+      "description": "update RG line"
+    },
+    {
+      "id":"reheader_headerRGfix",
+      "type":"EXEC",
+      "use_STDIN": true,
+      "use_STDOUT": true,
+      "cmd":{"subst":"reheader_headerRGfix"}
+    },
+    {
+      "id": "bamsort_qname",
+      "type": "EXEC",
+      "use_STDIN": true,
+      "use_STDOUT": true,
+      "cmd": ["bamsort", "SO=queryname", "level=0"],
+      "comment": "ensure BAM records are gathered by template i.e. queryname"
+    },
+    {
+      "id":"bamsort_coord",
+      "type":"EXEC",
+      "use_STDIN": true,
+      "use_STDOUT": true,
+      "cmd":{"subst":"bamsort_coord"},
+      "comment": "ensure BAM records are sorted by coordinate"
+    },
+    {
+      "id":"bammarkduplicates",
+      "type":"EXEC",
+      "use_STDIN": true,
+      "use_STDOUT": true,
+      "cmd":{"subst":"bammarkduplicates"},
+      "comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174"
+    },
+    {
+      "id": "output_prep_btoc",
+      "type": "VTFILE",
+      "subst_map":
+      {
+        "phix_or_target":"",
+        "fopid":{"subst":"fopid_tgt"},
+        "bstmp":"bspaft",
+        "brtmp":"brpaft",
+        "bmdtmp":"bmdpaft"
+      },
+      "name": {"subst":"output_prep_btoc"},
+      "comment":"inputs: _stdin_ (bam); outputs: _stdout_ (cram)",
+      "description": "subgraph containing post alignment_filter process (target)"
+    },
+
+    {
+      "id":"seqchksum_btoc",
+      "type":"VTFILE",
+      "comment":"inputs: _stdin_ (start bam), target_bam",
+      "name":{"subst":"seqchksum_btoc"},
+      "description":"subgraph containing seqchksum validation of outputs"
+	}
+
+  ],
+  "edges": [
+    { "id":"src_to_sam_headerRGfix", "from": "src_bam", "to": "sam_headerRGfix" },
+    { "id":"src_to_sam_headerRGfix", "from": "src_bam", "to": "reheader_headerRGfix" },
+    { "id":"sam_headerRGfix_to_alterRG", "from":"sam_headerRGfix", "to":"alterRG_headerRGfix" },
+    { "id":"alterRG_headerRGfix_to_reheader", "from":"alterRG_headerRGfix", "to":"reheader_headerRGfix:__IN_SAMHEADER__" },
+    { "id":"reheader_to_bsortqname", "from": "reheader_headerRGfix", "to": "bamsort_qname" },
+    { "id":"bsortqname_to_bsortcoord", "from": "bamsort_qname", "to": "bamsort_coord" },
+    { "id":"bsortcoord_to_bammarkduplicates", "from": "bamsort_coord", "to": "bammarkduplicates" },
+    { "id":"bammarkduplicates_to_output_prep_btoc", "from": "bammarkduplicates", "to": "output_prep_btoc" },
+    { "id":"output_prep_btoc_to_seqchksum_btoc", "from":"output_prep_btoc", "to":"seqchksum_btoc:cram_file" },
+    { "id":"src_bam_to_seqchksum_btoc", "from":"src_bam", "to":"seqchksum_btoc" }
+  ]
+}
