@@ -1,6 +1,6 @@
 {
-  "description": "Read ALIGNED data in BAM format producing output in CRAM format: full PG history, complete SQ lines, adapter marking, etc",
-  "version":"0.7",
+  "description": "Read ALIGNED data in BAM format producing output in CRAM format: full PG history, complete SQ lines, adapter marking, etc. Uses Biobambam2",
+  "version":"0.8",
   "subst_params": [
     {"id":"target_indicator","default":""},
     {
@@ -82,22 +82,6 @@
       }
     },
     {
-      "id":"bamsort_coord",
-      "required":"yes",
-      "subst_constructor":{
-          "vals":[
-              "bamsort",
-              "SO=coordinate",
-              "level=0",
-              "verbose=0",
-              "fixmate=1",
-              "adddupmarksupport=1",
-              {"subst":"bs_tmpfile_flag"}
-          ],
-          "postproc":{"op":"pack", "pad":" "}
-      }
-    },
-    {
       "id":"bmd_tmpfile_flag",
       "required":"no",
       "subst_constructor":{
@@ -130,30 +114,18 @@
       }
     },
     {
-      "id":"bmd_resetdupflag",
-      "subst_constructor":{
-          "vals":[
-              "resetdupflag",
-              {"subst":"bmd_resetdupflag_val"}
-          ],
-          "postproc":{"op":"concat", "pad":"="},
-          "comment":"this option should only be used with bamstreamingmarkduplicates (not bammarkduplicates or bammarkduplicates2)"
-      }
-    },
-    {"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
-    {
-      "id":"bammarkduplicates",
+      "id":"bamsortcoord_markdup",
       "required":"yes",
       "subst_constructor":{
           "vals":[
-              {"subst":"bmd_cmd"},
+              "bamsormadup",
+              "SO=coordinate",
               "level=0",
-              "verbose=0",
+              "threads=2",
               {"subst":"bmd_tmpfile_flag"},
-              {"subst":"bmd_metrics_file_flag"},
-              {"subst":"bmd_resetdupflag"}
+              {"subst":"bmd_metrics_file_flag"}
           ],
-          "postproc":{"op":"pack"}
+          "postproc":{"op":"pack", "pad":" "}
       }
     },
     {"id":"output_prep_btoc_name","required":"no","default":"output_prep_btoc"},
@@ -215,28 +187,20 @@
       "cmd":{"subst":"reheader_headerRGfix"}
     },
     {
-      "id": "bamsort_qname",
+      "id": "bamsormadup_qname",
       "type": "EXEC",
       "use_STDIN": true,
       "use_STDOUT": true,
-      "cmd": ["bamsort", "SO=queryname", "level=0"],
+      "cmd": ["bamsormadup", "SO=queryname", "level=0", "threads=2"],
       "comment": "ensure BAM records are gathered by template i.e. queryname"
     },
     {
-      "id":"bamsort_coord",
+      "id":"bamsortcoord_markdup",
       "type":"EXEC",
       "use_STDIN": true,
       "use_STDOUT": true,
-      "cmd":{"subst":"bamsort_coord"},
-      "comment": "ensure BAM records are sorted by coordinate"
-    },
-    {
-      "id":"bammarkduplicates",
-      "type":"EXEC",
-      "use_STDIN": true,
-      "use_STDOUT": true,
-      "cmd":{"subst":"bammarkduplicates"},
-      "comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174"
+      "cmd":{"subst":"bamsortcoord_markdup"},
+      "comment": "sort name collated BAM by coordinate and mark duplicates default tool bamsormadup must be from Biobambam2 >= 2.0.0"
     },
     {
       "id": "output_prep_btoc",
@@ -268,10 +232,9 @@
     { "id":"src_to_sam_headerRGfix", "from": "src_bam", "to": "reheader_headerRGfix" },
     { "id":"sam_headerRGfix_to_alterRG", "from":"sam_headerRGfix", "to":"alterRG_headerRGfix" },
     { "id":"alterRG_headerRGfix_to_reheader", "from":"alterRG_headerRGfix", "to":"reheader_headerRGfix:__IN_SAMHEADER__" },
-    { "id":"reheader_to_bsortqname", "from": "reheader_headerRGfix", "to": "bamsort_qname" },
-    { "id":"bsortqname_to_bsortcoord", "from": "bamsort_qname", "to": "bamsort_coord" },
-    { "id":"bsortcoord_to_bammarkduplicates", "from": "bamsort_coord", "to": "bammarkduplicates" },
-    { "id":"bammarkduplicates_to_output_prep_btoc", "from": "bammarkduplicates", "to": "output_prep_btoc" },
+    { "id":"reheader_to_bsortqname", "from": "reheader_headerRGfix", "to": "bamsormadup_qname" },
+    { "id":"bsortqname_to_bsortcoordmdup", "from": "bamsormadup_qname", "to": "bamsortcoord_markdup" },
+    { "id":"bsortcoordmdup_to_output_prep_btoc", "from": "bamsortcoord_markdup", "to": "output_prep_btoc" },
     { "id":"output_prep_btoc_to_seqchksum_btoc", "from":"output_prep_btoc", "to":"seqchksum_btoc:cram_file" },
     { "id":"src_bam_to_seqchksum_btoc", "from":"src_bam", "to":"seqchksum_btoc" }
   ]
