@@ -12,33 +12,34 @@
 	}
 },
 "subst_params":[
-        {
-                "id": "basic_pipeline_params",
-                "type":"SPFILE",
-		"name":{"subst":"basic_pipeline_params_file"},
-                "required": "no",
-                "comment":"this will expand to a set of subst_param elements"
-        },
-        {
-                "id":"scramble_reference_flag",
+    {
+        "id": "basic_pipeline_params",
+        "type":"SPFILE",
+		    "name":{"subst":"basic_pipeline_params_file"},
+        "required": "no",
+        "comment":"this will expand to a set of subst_param elements"
+    },
+    {"id":"genome_reference_fasta","required":"yes"},
+    {
+        "id":"scramble_reference_flag",
                 "required":"no",
-		            "comment":"flag will disappear unless genome_reference_fasta value is given (allows unaligned cram)",
-                "subst_constructor":{ "vals":[ "-r", {"subst":"genome_reference_fasta"} ]
-                }
-        },
-        {
-                "id":"samtools_reference_flag",
-                "required":"yes",
-		            "comment":"Reference required for alts, GC-depth and mismatches-per-cycle calculation (if reference with alts, both .alt and .fai must exist in same directory as reference fasta).",
-                "subst_constructor":{ "vals":[ "-r", {"subst":"genome_reference_fasta"} ]
-                }
-        }, 
-	{"id":"stats_filter__F0x900","required":"no","default":"0x900"},
-	{"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
-	{"id":"stats_filter__F0x200","required":"no","default":"0x200"},
-	{"id":"seqchksum_cmd","required":"no","default":"bamseqchksum"},
-	{"id":"seqchksum_hash_type","required":"no","default":"sha512primesums512"},
-	{
+		    "comment":"flag will disappear unless genome_reference_fasta value is given (allows unaligned cram)",
+        "subst_constructor":{ "vals":[ "-r", {"subst":"genome_reference_fasta"} ]
+                            }
+    },
+    {
+        "id":"samtools_reference_flag",
+        "required":"yes",
+		    "comment":"Reference required for alts, GC-depth and mismatches-per-cycle calculation (if reference with alts, both .alt and .fai must exist in same directory as reference fasta).",
+        "subst_constructor":{ "vals":[ "-r", {"subst":"genome_reference_fasta"} ]
+                            }
+    },
+	  {"id":"stats_filter__F0x900","required":"no","default":"0x900"},
+	  {"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
+	  {"id":"stats_filter__F0x200","required":"no","default":"0x200"},
+	  {"id":"seqchksum_cmd","required":"no","default":"bamseqchksum"},
+	  {"id":"seqchksum_hash_type","required":"no","default":"sha512primesums512"},
+	  {
 		"id":"seqchksum_hash_flag",
 		"required":"yes",
 		"subst_constructor":{
@@ -50,6 +51,7 @@
 		}
 	},
 	{"id":"flagstats_filter_flag","required":"no","default":"0x900"},
+  {"id":"outirodsdir","required":"yes"},
 	{
 		"id":"cram_file",
 		"subst_constructor":{
