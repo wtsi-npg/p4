@@ -209,14 +209,14 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0x900"}, {"subst":"samtools_reference_flag"}, "-" ]
+		"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0x900"}, "-" ]
 	},
 	{
 		"id":"samtools_stats_F0xB00",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0xB00"}, {"subst":"samtools_reference_flag"}, "-" ]
+		"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0xB00"}, "-" ]
 	},
 	{
 		"id":"samtools_stats_F0x200",
