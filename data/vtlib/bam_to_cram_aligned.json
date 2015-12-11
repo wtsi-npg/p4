@@ -7,10 +7,7 @@
       "id":"fopid_tgt",
       "comment":"id passed to the final_output_prep template; used there to construct unique file names",
       "subst_constructor":{
-          "vals":[
-              {"subst":"rpt"},
-              {"subst":"target_indicator"}
-          ],
+          "vals":[ {"subst":"rpt"}, {"subst":"target_indicator"} ],
           "postproc":{"op":"concat", "pad":""}
       }
     },
@@ -28,12 +25,7 @@
       "id":"sam_headerRGfix",
       "required":"yes",
       "subst_constructor":{
-          "vals":[
-              {"subst":"samtools_executable"},
-              "view",
-              "-H",
-              "-"
-          ],
+          "vals":[ {"subst":"samtools_executable"}, "view", "-H", "-" ],
           "postproc":{"op":"pack","pad":" "}
       }
     },
@@ -41,12 +33,7 @@
       "id":"alterRG_headerRGfix",
       "required":"yes",
       "subst_constructor":{
-					"vals":[
-							"perl",
-							"/nfs/gapi/users/rb11/viv_reprocessing/bin/filter_header_r_v1.pl",
-							"-rpt",
-							{"subst": "rpt"}
-					],
+					"vals":[ "perl", "/nfs/gapi/users/rb11/viv_reprocessing/bin/filter_header_r_v1.pl", "-rpt", {"subst": "rpt"} ],
 					"postproc":{"op":"pack","pad":" "}
 				}
     },
@@ -54,30 +41,16 @@
       "id":"reheader_headerRGfix",
       "required":"yes",
       "subst_constructor":{
-          "vals":[
-              {"subst":"samtools_executable"},
-              "reheader",
-              "__IN_SAMHEADER__",
-              "-"
-          ],
+          "vals":[ {"subst":"samtools_executable"}, "reheader", "__IN_SAMHEADER__", "-" ],
           "postproc":{"op":"pack","pad":" "}
       }
     },
-    { "id":"phix_or_target", "required":"no", "default":""},
+    { "id":"phix_or_target", "required":"yes"},
     {
       "id":"bs_tmpfile_flag",
       "required":"no",
       "subst_constructor":{
-          "vals":[
-              "tmpfile=",
-              {"subst":"outdatadir"},
-              "/",
-              {"subst":"bstmp"},
-              "_",
-              {"subst":"rpt"},
-              {"subst":"phix_or_target"},
-              ".tmp"
-          ],
+          "vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bstmp"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
           "postproc":{"op":"concat", "pad":""}
       }
     },
@@ -85,16 +58,7 @@
       "id":"bmd_tmpfile_flag",
       "required":"no",
       "subst_constructor":{
-          "vals":[
-              "tmpfile=",
-              {"subst":"outdatadir"},
-              "/",
-              {"subst":"bmdtmp","required":"yes"},
-              "_",
-              {"subst":"rpt"},
-              {"subst":"phix_or_target"},
-              ".tmp"
-          ],
+          "vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bmdtmp","required":"yes"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
           "postproc":{"op":"concat", "pad":""}
       }
     },
@@ -102,14 +66,7 @@
       "id":"bmd_metrics_file_flag",
       "required":"no",
       "subst_constructor":{
-          "vals":[
-              "M=",
-              {"subst":"outdatadir"},
-              "/",
-              {"subst":"rpt"},
-              {"subst":"phix_or_target"},
-              ".markdups_metrics.txt"
-          ],
+          "vals":[ "M=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".markdups_metrics.txt" ],
           "postproc":{"op":"concat", "pad":""}
       }
     },
@@ -117,14 +74,7 @@
       "id":"bamsortcoord_markdup",
       "required":"yes",
       "subst_constructor":{
-          "vals":[
-              "bamsormadup",
-              "SO=coordinate",
-              "level=0",
-              "threads=2",
-              {"subst":"bmd_tmpfile_flag"},
-              {"subst":"bmd_metrics_file_flag"}
-          ],
+          "vals":[ "bamsormadup", "SO=coordinate", "level=0", "threads=2", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"} ],
           "postproc":{"op":"pack", "pad":" "}
       }
     },
@@ -133,12 +83,7 @@
       "id":"bam_to_cram_output_prep",
       "required":"yes",
       "subst_constructor":{
-          "vals":[
-              {"subst":"cfgdatadir"},
-              "/",
-              {"subst":"bam_to_cram_output_prep_name"},
-              ".json"
-          ],
+          "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"bam_to_cram_output_prep_name"}, ".json" ],
           "postproc":{"op":"concat", "pad":""}
       }
     },
@@ -147,12 +92,7 @@
       "id":"bam_to_cram_seqchksum",
       "required":"yes",
       "subst_constructor":{
-          "vals":[
-              {"subst":"cfgdatadir"},
-              "/",
-              {"subst":"seqchksum_vtf"},
-              ".json"
-          ],
+          "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"seqchksum_vtf"}, ".json" ],
           "postproc":{"op":"concat", "pad":""}
       }
     }
