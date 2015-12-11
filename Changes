@@ -1,8 +1,8 @@
 CHANGES LOG
 -----------
 
+ - use threaded bamsormadup in place of name bamsort
  - turn off compression of AlignmentFilter output
- - use threaded bamsormadup in place of bamsort
  - changes to merge_final_output_prep to use tears to stream data into iRODS, generate extra stats,
    use ref in stats file generation and minor tidy up.
 

@@ -24,13 +24,6 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{
-		"id":"bsmd_threads",
-		"subst_constructor":{
-			"vals":[ "threads", {"subst":"aligner_numthreads"} ],
-			"postproc":{"op":"concat", "pad":"="}
-		}
-	},
         {
                 "id":"scramble_reference_flag",
                 "required":"no",
@@ -210,7 +203,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ "bamsormadup", {"subst":"bsmd_threads"}, "SO=coordinate", "level=0", "verbose=0", "fixmate=1", "adddupmarksupport=1", {"subst":"bs_tmpfile_flag"} ]
+		"cmd": [ "bamsort", "SO=coordinate", "level=0", "verbose=0", "fixmate=1", "adddupmarksupport=1", {"subst":"bs_tmpfile_flag"} ]
 	},
 	{
 		"id":"bammarkduplicates",
