@@ -20,6 +20,13 @@
 		"name":{"subst":"basic_pipeline_params_file"},
                 "required": "no",
                 "comment":"this will expand to a set of subst_param elements"
+	},
+	{
+		"id":"bsmd_threads",
+		"subst_constructor":{
+			"vals":[ "threads", {"subst":"aligner_numthreads"} ],
+			"postproc":{"op":"concat", "pad":"="}
+		}
         }
 ],
 "nodes":[
@@ -73,7 +80,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamsort", "SO=queryname", "level=0"]
+		"cmd":["bamsormadup", {"subst":"bsmd_threads"},"SO=queryname", "level=0"]
 	},
 	{
 		"id":"bam12auxmerge",
