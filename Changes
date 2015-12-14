@@ -1,6 +1,7 @@
 CHANGES LOG
 -----------
 
+release 0.17.2
  - use threaded bamsormadup in place of name bamsort
  - turn off compression of AlignmentFilter output
  - changes to merge_final_output_prep to use tears to stream data into iRODS, generate extra stats,
