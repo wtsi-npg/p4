@@ -19,7 +19,7 @@
 	"required": "no",
 	"comment":"this will expand to a set of subst_param elements"
     },
-    {"id":"genome_reference_fasta","required":"yes"},
+    {"id":"genome_reference_fasta","required":"no"},
     {
 	"id":"scramble_reference_flag",
         "required":"no",
@@ -29,14 +29,13 @@
     },
     {
         "id":"samtools_reference_flag",
-        "required":"yes",
-	"comment":"Reference required for alts, GC-depth and mismatches-per-cycle calculation (if reference with alts, both .alt and .fai must exist in same directory as reference fasta).",
+        "required":"no",
+	"comment":"Reference required for alts, GC-depth and mismatches-per-cycle calculation.",
         "subst_constructor":{ "vals":[ "-r", {"subst":"genome_reference_fasta"} ]
                             }
     },
     {"id":"stats_filter__F0x900","required":"no","default":"0x900"},
     {"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
-    {"id":"stats_filter__F0x200","required":"no","default":"0x200"},
     {"id":"seqchksum_cmd","required":"no","default":"bamseqchksum"},
     {"id":"seqchksum_hash_type","required":"no","default":"sha512primesums512"},
     {
@@ -121,20 +120,6 @@
 	}
     },
     {
-	"id":"stats_F0x200_file",
-	"subst_constructor":{
-            "vals":[ {"subst":"outdatadir"}, "/", {"subst":"library"}, "_F0x200.stats" ],
-	    "postproc":{"op":"concat", "pad":""}
-	}
-    },
-    {
-	"id":"stats_file",
-	"subst_constructor":{
-            "vals":[ {"subst":"outdatadir"}, "/", {"subst":"library"}, ".stats" ],
-	    "postproc":{"op":"concat", "pad":""}
-	}
-    },
-    {
 	"id":"flagstat_file",
 	"required":"yes",
 	"subst_constructor":{
@@ -150,7 +135,7 @@
 	"use_STDIN": true,
 	"use_STDOUT": false,
 	"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
-	"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, {"subst":"teepot_tempdir_flag"}, "-w", {"subst":"fomw_teepot_wval", "ifnull":"7200"}, "__SCRAMBLE_OUT__", "__FLAGSTAT_OUT__", "__SAMTOOLS_STATS_F0x900_OUT__", "__SAMTOOLS_STATS_F0xB00_OUT__", "__SAMTOOLS_STATS_F0x200_OUT__", "__SAMTOOLS_STATS_OUT__","__SEQCHKSUM_OUT__", "__SEQCHKSUM_EXTRAHASH_OUT__" ]
+	"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, {"subst":"teepot_tempdir_flag"}, "-w", {"subst":"fomw_teepot_wval", "ifnull":"7200"}, "__SCRAMBLE_OUT__", "__FLAGSTAT_OUT__", "__SAMTOOLS_STATS_F0x900_OUT__", "__SAMTOOLS_STATS_F0xB00_OUT__", "__SEQCHKSUM_OUT__", "__SEQCHKSUM_EXTRAHASH_OUT__" ]
     },
     {
 	"id":"scramble",
@@ -209,28 +194,14 @@
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": true,
-	"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0x900"}, "-" ]
+	"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0x900"}, {"subst":"samtools_reference_flag"},"-" ]
     },
     {
 	"id":"samtools_stats_F0xB00",
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": true,
-	"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0xB00"}, "-" ]
-    },
-    {
-	"id":"samtools_stats_F0x200",
-	"type":"EXEC",
-	"use_STDIN": true,
-	"use_STDOUT": true,
-	"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0x200"}, {"subst":"samtools_reference_flag"}, "-" ]
-    },
-    {
-	"id":"samtools_stats",
-	"type":"EXEC",
-	"use_STDIN": true,
-	"use_STDOUT": true,
-	"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"samtools_reference_flag"}, "-" ]
+	"cmd": [ {"subst":"samtools_executable"}, "stats", "-F", {"subst":"stats_filter__F0xB00"}, {"subst":"samtools_reference_flag"},"-" ]
     },
     {
 	"id":"seqchksum",
@@ -269,8 +240,6 @@
     { "id":"seqchksum_extrahash_file", "type":"OUTFILE", "name":{"subst":"seqchksum_extrahash_file"} },
     { "id":"stats_F0x900_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_file"} },
     { "id":"stats_F0xB00_file", "type":"OUTFILE", "name":{"subst":"stats_F0xB00_file"} },
-    { "id":"stats_F0x200_file", "type":"OUTFILE", "name":{"subst":"stats_F0x200_file"} },
-    { "id":"stats_file", "type":"OUTFILE", "name":{"subst":"stats_file"} },
     { "id":"flagstat_file", "type":"OUTFILE", "name":{"subst":"flagstat_file"} },
     {
 	"id":"flagstat_filter",
@@ -304,8 +273,6 @@
     { "id":"md5_to_postprocess", "from":"scramble_md5", "to":"postprocess_md5" },
     { "id":"bmdmw_to_sts_F0x900", "from":"bmd_multiway:__SAMTOOLS_STATS_F0x900_OUT__", "to":"samtools_stats_F0x900" },
     { "id":"bmdmw_to_sts_F0xB00", "from":"bmd_multiway:__SAMTOOLS_STATS_F0xB00_OUT__", "to":"samtools_stats_F0xB00" },
-    { "id":"bmdmw_to_sts_F0x200", "from":"bmd_multiway:__SAMTOOLS_STATS_F0x200_OUT__", "to":"samtools_stats_F0x200" },
-    { "id":"bmdmw_to_sts", "from":"bmd_multiway:__SAMTOOLS_STATS_OUT__", "to":"samtools_stats" },
     { "id":"bmdmw_to_seqchksum", "from":"bmd_multiway:__SEQCHKSUM_OUT__", "to":"seqchksum" },
     { "id":"bmdmw_to_seqchksum_extrahash", "from":"bmd_multiway:__SEQCHKSUM_EXTRAHASH_OUT__", "to":"seqchksum_extrahash" },
     { "id":"bmdmw_to_flagstat", "from":"bmd_multiway:__FLAGSTAT_OUT__", "to":"flagstat_filter" },
@@ -318,8 +285,6 @@
     { "id":"scs_extrahash_to_file", "from":"seqchksum_extrahash", "to":"seqchksum_extrahash_file" },
     { "id":"samtools_stats_F0x900_to_file", "from":"samtools_stats_F0x900", "to":"stats_F0x900_file" },
     { "id":"samtools_stats_F0xB00_to_file", "from":"samtools_stats_F0xB00", "to":"stats_F0xB00_file" },
-    { "id":"samtools_stats_F0x200_to_file", "from":"samtools_stats_F0x200", "to":"stats_F0x200_file" },
-    { "id":"samtools_stats_to_file", "from":"samtools_stats", "to":"stats_file" },
     { "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" },
     { "id":"cscs_to_file", "from":"cram_seqchksum", "to":"seqchksum_file_cram" },
     { "id":"cscs_file_to_cmp", "from":"seqchksum_file_cram", "to":"cmp_seqchksum:__CRAM_SEQCHKSUM_IN__" }
