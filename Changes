@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+- changes to merge_final_output_prep to remove extra stats files and allow use of reference for existing stats files
+
 release 0.17.2
  - turn off compression of AlignmentFilter output
  - changes to merge_final_output_prep to use tears to stream data into iRODS, generate extra stats,
