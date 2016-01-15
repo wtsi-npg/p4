@@ -64,6 +64,7 @@ my $builder = $class->new(
   'test_requires' => {
     'Test::More'            => 0,
     'Test::Compile'         => 0,
+    'Test::Deep'            => 0,
     'Test::Cmd'             => 0,
     'Perl6::Slurp'          => 0,
   },
