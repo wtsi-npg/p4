@@ -209,8 +209,8 @@
         "id":"bam_stats",
         "type":"EXEC",
         "use_STDIN": true,
-        "use_STDOUT": true,
-        "cmd": [ {"subst":"bam_stats_executable"}, {"subst":"stats_reference_flag"} ],
+        "use_STDOUT": false,
+        "cmd": [ {"subst":"bam_stats_executable"}, {"subst":"stats_reference_flag"}, "-o", {"subst":"bam_stats_file"} ],
         "comment":"CGP bam_stats"
     },
 	{
@@ -347,7 +347,6 @@
 	{ "id":"seqchksum_extrahash_file", "type":"OUTFILE", "name":{"subst":"seqchksum_extrahash_file"} },
 	{ "id":"stats_F0x900_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_file"} },
 	{ "id":"stats_F0xB00_file", "type":"OUTFILE", "name":{"subst":"stats_F0xB00_file"} },
-    { "id":"bam_stats_file", "type":"OUTFILE", "name":{"subst":"bam_stats_file"} },
 	{ "id":"flagstat_file", "type":"OUTFILE", "name":{"subst":"flagstat_file"} },
 	{
 		"id":"flagstat_filter",
@@ -399,7 +398,6 @@
 	{ "id":"scs_extrahash_to_file", "from":"seqchksum_extrahash", "to":"seqchksum_extrahash_file" },
         { "id":"samtools_stats_F0x900_to_file", "from":"samtools_stats_F0x900", "to":"stats_F0x900_file" },
         { "id":"samtools_stats_F0xB00_to_file", "from":"samtools_stats_F0xB00", "to":"stats_F0xB00_file" },
-        { "id":"bam_stats_to_file", "from":"bam_stats", "to":"bam_stats_file" },
         { "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" },
         { "id":"cscs_to_file", "from":"cram_seqchksum", "to":"seqchksum_file_cram" },
         { "id":"cscsfile_to_cmp", "from":"seqchksum_file_cram", "to":"cmp_seqchksum:__CRAM_SEQCHKSUM_IN__" }
