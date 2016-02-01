@@ -36,7 +36,6 @@
 	{"id":"src_input_format","default":"cram"},
 	{
 		"id":"src_input_format_flag",
-		"default":"no_aln.bam",
 		"subst_constructor":{
 			"vals":[
 				"inputformat",
