@@ -1,0 +1,70 @@
+{
+"description":"final stage1 processing - recompress lane-level bam stream, deplex and final lane-level bamseqchksum",
+"version":"1.0",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamindexdecoder"
+		},
+		"outputs":{
+			"_stdout_":"bamindexdecoder"
+		}
+	}
+},
+"subst_params":[
+	{"id":"decoder_metrics_name","required":"no","default":"tag_decode.metrics"},
+	{
+		"id":"decoder_metrics",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"rpt"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"bamindexdecoder",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd": [
+			{"subst":"java_cmd","ifnull":"java","required":"yes"},
+			"-Xmx1024m",
+			"-jar", {"subst":"bamindexdecoder_jar", "required":"yes", "ifnull":{"subst_constructor":{"vals":[ {"subst":"i2b_jar_path"}, "/BamIndexDecoder.jar" ],"postproc":{"op":"concat","pad":""}}}},
+			"I=/dev/stdin",
+			"O=/dev/stdout",
+			"M=__METRICS_FILE_OUT__",
+			{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "BARCODE_FILE", {"subst":"barcode_file", "required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "MAX_NO_CALLS", {"subst":"bid_max_no_calls"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "CONVERT_LOW_QUALITY_TO_NO_CALL", {"subst":"bid_convert_low_quality_to_no_call"} ],"postproc":{"op":"concat","pad":"="}}}}
+		]
+	},
+	{
+		"id":"decoder_metrics",
+		"type":"OUTFILE",
+		"name":{"subst":"decoder_metrics"}
+	},
+	{
+		"id":"qc_tag_metrics_check",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
+		"comment":"This node is defined as reading stdin, even though this is not true. This bodge is to activate the RAFILE/OUTFILE behaviour and delay execution until after the decoder_metrics output is complete",
+		"cmd":[
+			"qc",
+			"--check=tag_metrics",
+			{"subst":"tmc_id_run_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--id_run", {"subst":"tmc_id_run", "ifnull":{"subst":"qc_check_id_run"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"tmc_position_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--position", {"subst":"tmc_position", "ifnull":{"subst":"qc_check_position"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"tmc_qc_in","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_in", {"subst":"tmc_qc_in_dir", "ifnull":{"subst":"qc_check_qc_in_dir"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"tmc_qc_out","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_out", {"subst":"tmc_qc_out_dir", "ifnull":{"subst":"qc_check_qc_out_dir"}} ],"postproc":{"op":"concat","pad":"="}}}}
+		],
+		"description":"run the qc tag_metrics check"
+	}
+],
+"edges":[
+	{ "id":"decoder_to_metrics", "from":"bamindexdecoder:__METRICS_FILE_OUT__", "to":"decoder_metrics" },
+	{ "id":"decoder_metrics_to_qc_tag_metrics", "from":"decoder_metrics", "to":"qc_tag_metrics_check" }
+]
+}
+
