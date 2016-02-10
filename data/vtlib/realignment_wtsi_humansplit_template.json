@@ -1,6 +1,6 @@
 {
 "version":"1.0",
-"description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output. This is the version that does human split",
+"description":"Realign data in CRAM/BAM/SAM files (default CRAM) producing WTSI DNAP Sequencing Informatics CRAM output: full PG history, complete SQ lines, adapter marking, recoding indexing sequence etc. This is the version that does human split",
 "subst_params":[
 	{
 		"id":"basic_pipeline_params_file",
@@ -178,7 +178,6 @@
 		}
 	},
 	{"id":"target_indicator","default":""},
-	{"id":"phix_indicator","default":"_phix"},
 	{"id":"hs_indicator","default":"_human"},
 	{
 		"id":"fopid_tgt",
@@ -205,12 +204,12 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"final_output_prep_phix_name","required":"no","default":"final_output_prep"},
+	{"id":"final_output_prep_hs_name","required":"no","default":"final_output_prep"},
 	{
-                "id":"final_output_prep_phix",
+                "id":"final_output_prep_hs",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_phix_name"}, ".json" ],
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_hs_name"}, ".json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -392,8 +391,8 @@
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
 		"node_prefix":"fophs_",
                 "subst_map":{"phix_or_target":{"subst":"hs_indicator"},"fopid":{"subst":"fopid_hs"},"bstmp":"bsfoph","brtmp":"brfoph","bmdtmp":"bmdfoph","scramble_reference_fasta":{"subst":"hs_reference_genome_fasta"}},
-                "name":{"subst":"final_output_prep_phix"},
-                "description":"subgraph containing post alignment_filter process (phix)"
+                "name":{"subst":"final_output_prep_hs"},
+                "description":"subgraph containing post alignment_filter process (hs)"
         },
         {
 		"id":"seqchksum",
