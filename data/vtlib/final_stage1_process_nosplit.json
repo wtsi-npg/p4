@@ -25,6 +25,8 @@
 				{"subst":"teepot_vflag", "ifnull":"-v"},
 				{"subst":"ts_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_split_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
 				{"subst":"ts_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_split_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"ts_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_split_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"ts_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
 				"__SEQCHKSUM_OUT__",
 				"__FILTERED_BAM_OUT__"
 			]

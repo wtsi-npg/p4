@@ -208,6 +208,8 @@
 				{"subst":"teepot_vflag", "ifnull":"-v"},
 				{"subst":"ti2b_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_i2b_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
 				{"subst":"ti2b_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_i2b_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"ti2b_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_i2b_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"ti2b_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
 				"__SCS_OUT__",
 				"__BAF_OUT__"
 			]
@@ -247,6 +249,8 @@
 				{"subst":"teepot_vflag", "ifnull":"-v"},
 				{"subst":"tctp_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_collated_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
 				{"subst":"tctp_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_collated_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"tctp_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_collated_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"tctp_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
 				"__TD1_OUT__",
 				"__TD2_OUT__"
 			]
@@ -291,6 +295,8 @@
 				{"subst":"teepot_vflag", "ifnull":"-v"},
 				{"subst":"tpf_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_prefilter_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
 				{"subst":"tpf_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_prefilter_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"tpf_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_prefilter_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"tpf_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
 				"__PF1_OUT__",
 				"__PF2_OUT__"
 			]
@@ -320,6 +326,8 @@
 				{"subst":"teepot_vflag", "ifnull":"-v"},
 				{"subst":"tpfc_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_postfilter_creation_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
 				{"subst":"tpfc_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_postfilter_creation_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"tpfc_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_postfilter_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"tpfc_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
 				"__FILE_OUT__",
 				"__APPLY_FILTER_OUT__"
 			],
