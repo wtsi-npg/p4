@@ -219,7 +219,7 @@
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":true,
-		"cmd":[ "bamadapterfind" ],
+		"cmd":[ "bamadapterfind", "level=0" ],
 		"description":"Find and mark the adaptors used by Illumina"
 	},
 	{
