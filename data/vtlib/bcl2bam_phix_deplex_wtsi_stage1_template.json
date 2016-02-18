@@ -141,6 +141,14 @@
 		}
 	},
 	{
+		"id":"spatial_filter_stats",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_spatial_filter.stats" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
 		"id":"filtered_bam",
 		"required":"yes",
 		"subst_constructor":{
@@ -357,19 +365,7 @@
 		"cmd":[ "spatial_filter", "-u", "-a", "-f", "-F", "__FILTER_IN__", "/dev/stdin", "-l", "__APPLY_STATS_OUT__" ],
 		"description":"Apply a spatial filter"
 	},
-	{
-		"id":"spatial_filter_qc",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":[
-			"qc", "--check", "spatial_filter",
-			{"subst":"sfq_id_run_flag","ifnull":{"subst_constructor":{"vals":[ "--id_run", {"subst":"sfq_id_run", "ifnull":{"subst":"qc_check_id_run"}} ]}}},
-			{"subst":"sfq_position_flag","ifnull":{"subst_constructor":{"vals":[ "--position", {"subst":"sfq_position", "ifnull":{"subst":"qc_check_position"}} ]}}},
-			{"subst":"sfq_qc_out_flag","ifnull":{"subst_constructor":{"vals":[ "--qc_out", {"subst":"sfq_qc_out", "ifnull":{"subst":"qc_check_qc_out_dir"}} ]}}}
-		],
-		"description":"spatial filter qc check"
-	},
+	{ "id":"spatial_filter_stats", "type":"OUTFILE", "name":{"subst":"spatial_filter_stats"} },
         {
                 "id":"final_stage1_process",
                 "type":"VTFILE",
@@ -413,7 +409,7 @@
 	{ "id":"prefilter_to_qnsort", "from":"tee_prefilter:__PF2_OUT__", "to":"queryname_sort" },
 	{ "id":"qnsort_to_apply", "from":"queryname_sort", "to":"apply_filter" },
 	{ "id":"apply_filter_to_fs1p", "from":"apply_filter", "to":"final_stage1_process" },
-	{ "id":"apply_filter_to_sfqc", "from":"apply_filter:__APPLY_STATS_OUT__", "to":"spatial_filter_qc" },
+	{ "id":"apply_filter_to_sfqc", "from":"apply_filter:__APPLY_STATS_OUT__", "to":"spatial_filter_stats" },
 	{ "id":"fs1p_to_tee", "from":"final_stage1_process", "to":"filtered_bam" },
 	{ "id":"fs1p_to_tee", "from":"final_stage1_process:__SEQCHKSUM_OUT__", "to":"seqchksum_file" },
 	{ "id":"fopt_to_scs", "from":"seqchksum_file", "to":"final_seqchksum:target_seqchksum" },
