@@ -150,16 +150,16 @@ function display_node(d) {
 	switch (d.type) {
 		case 'EXEC':
 			d3.select('#node_exec').style('display','block');
-			d3.selectAll('#node_cmd').text(d.cmd);
+			d3.selectAll('#node_cmd').text(parse_command(d.cmd));
 			break;
 		case 'VTFILE':
 			d3.select('#node_vt').style('display','block');
-			d3.selectAll('#node_filename').attr('value',d.filename);
+			d3.selectAll('#node_filename').attr('value',parse_command(d.filename));
 			d3.select('#vt_href').attr('href','edit.html?cfg_name='+d.filename);
 			break;
 		default:
 			d3.select('#node_file').style('display','block');
-			d3.selectAll('#node_filename').attr('value',d.filename);
+			d3.selectAll('#node_filename').attr('value',parse_command(d.filename));
 			break;
 	}
 }
@@ -185,6 +185,7 @@ function refresh_progress() {
 	while (intervalArray.length > 0) { intervalArray.pop(); }
 
 	d3.json("cgi-bin/getProgress", function(error, json) {
+        if (typeof json == 'undefined') return;
 		if (error) return console.warn(error);
 //		console.warn(json);
 		var circles = force.nodes();
@@ -234,6 +235,32 @@ function refresh_progress() {
 }
 
 });
+
+function parse_command(cmd) {
+    console.warn('#'+typeof(cmd)+'#');
+    console.warn(cmd.constructor)
+    if (cmd.constructor === Array) {
+        var str = '';
+        for (var n=0; n < cmd.length; n++) {
+            if (typeof cmd[n] == 'object') {
+                for (p in cmd[n]) {
+                    str += p + ':' + cmd[n][p] + ' ';
+                }
+            } else {
+                str += cmd[n] + ' ';
+            }
+        }
+        return str;
+    }
+    if (cmd.constructor === Object) {
+        var str = '';
+        for (p in cmd) {
+            str += p + ':' + cmd[p] + ' ';
+        }
+        return str;
+    }
+    return cmd;
+}
 
 function getUrlQueryStringValue(name) {
 	var cfg_name = '';
