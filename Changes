@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.17.3
+ - update Build.PL and tests to have correct and full set of requirements
+
 release 0.17.2
  - turn off compression of AlignmentFilter output
  - changes to merge_final_output_prep to use tears to stream data into iRODS, generate extra stats,
