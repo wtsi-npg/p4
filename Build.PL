@@ -60,8 +60,6 @@ my $builder = $class->new(
 
   'build_requires' => {
     'English'               => 0,
-  },
-  'test_requires' => {
     'Test::More'            => 0,
     'Test::Compile'         => 0,
     'Test::Cmd'             => 0,
@@ -72,7 +70,10 @@ my $builder = $class->new(
     'Carp'                  => 0,
     'Cwd'                   => 0,
     'Data::Dumper'          => 0,
+    'Fcntl'                 => 0,
+    'File::Basename'        => 0,
     'File::Slurp'           => 0,
+    'File::Spec'            => 0,
     'File::Temp'            => 0,
     'File::Which'           => 0,
     'Getopt::Long'          => 0,
