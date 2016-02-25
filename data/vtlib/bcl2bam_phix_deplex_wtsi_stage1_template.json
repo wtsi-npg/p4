@@ -350,6 +350,8 @@
 	{
 		"id":"queryname_sort",
 		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
 		"cmd":[
 			"bamsormadup",
 			"SO=queryname",
