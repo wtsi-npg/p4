@@ -647,16 +647,20 @@ sub resolve_subst_constructor {
 		return;
 	}
 
+	$vals = fetch_sp_value($vals, $params, $ewi, $irp);
+
+	if(not defined $vals) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[Error processing subst_constructor value, param_name: ], $id);
+		return;
+	}
+
 	unless(ref $vals eq q[ARRAY]) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[subst_constructor vals attribute must be array, param_name: ], $id);
 		return;
 	}
 
-	$vals = process_array($vals, $params, $ewi, $irp);
-	if(not defined $vals) {
-		$ewi->{additem}->($EWI_ERROR, 0, q[Error B processing subst_constructor, param_name: ], $id);
-		return;
-	}
+
+	$subst_constructor->{vals} = $vals;
 
 	return postprocess_subst_array($id, $subst_constructor, $ewi);
 }
