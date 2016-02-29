@@ -363,7 +363,7 @@
 	},
 	{
 		"id":"unfiltered_cram_file",
-		"type":"OUTFILE",
+		"type":"RAFILE",
 		"name":{"subst":"unfiltered_cram_file", "required":"yes", "ifnull":"unfiltered.cram"},
 		"description":"cram file (before spatial filter application)"
 	},
