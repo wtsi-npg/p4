@@ -348,16 +348,37 @@
 		"description":"spatial filter file"
 	},
 	{
-		"id":"queryname_sort",
+		"id":"bamtocram",
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"cmd":[
-			"bamsormadup",
-			"SO=queryname",
-			{"subst":"bamsormadup_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "threads", {"subst":"bamsormadup_numthreads","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}}
+			"scramble",
+			"-I", "bam",
+			"-O", "cram",
+			"-x",
+			{"subst":"b2c_compression", "ifnull":"-3"}
 		],
-		"description":"queryname sort before application of spatial filter file"
+		"description":"bam to cram conversion before application of spatial filter file"
+	},
+	{
+		"id":"unfiltered_cram_file",
+		"type":"OUTFILE",
+		"name":{"subst":"unfiltered_cram_file", "required":"yes", "ifnull":"unfiltered.cram"},
+		"description":"cram file (before spatial filter application)"
+	},
+	{
+		"id":"cramtobam",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+			"scramble",
+			"-I", "cram",
+			"-O", "bam",
+			{"subst":"c2b_compression", "ifnull":"-0"}
+		],
+		"description":"cram to bam conversion before application of spatial filter file"
 	},
 	{
 		"id":"apply_filter",
@@ -408,8 +429,10 @@
 	{ "id":"create_filter_to_tee", "from":"create_filter", "to":"tee_post_filter_creation" },
 	{ "id":"tee_filter_file", "from":"tee_post_filter_creation:__FILE_OUT__", "to":"spatial_filter_file" },
 	{ "id":"tee_to_apply_filter", "from":"tee_post_filter_creation:__APPLY_FILTER_OUT__", "to":"apply_filter:__FILTER_IN__" },
-	{ "id":"prefilter_to_qnsort", "from":"tee_prefilter:__PF2_OUT__", "to":"queryname_sort" },
-	{ "id":"qnsort_to_apply", "from":"queryname_sort", "to":"apply_filter" },
+	{ "id":"prefilter_to_b2c", "from":"tee_prefilter:__PF2_OUT__", "to":"bamtocram" },
+	{ "id":"b2c_to_ufc", "from":"bamtocram", "to":"unfiltered_cram_file" },
+	{ "id":"ufc_to_c2b", "from":"unfiltered_cram_file", "to":"cramtobam" },
+	{ "id":"c2b_to_apply", "from":"cramtobam", "to":"apply_filter" },
 	{ "id":"apply_filter_to_fs1p", "from":"apply_filter", "to":"final_stage1_process" },
 	{ "id":"apply_filter_to_sfqc", "from":"apply_filter:__APPLY_STATS_OUT__", "to":"spatial_filter_stats" },
 	{ "id":"fs1p_to_tee", "from":"final_stage1_process", "to":"filtered_bam" },
