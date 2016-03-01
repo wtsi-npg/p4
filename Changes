@@ -3,6 +3,7 @@ CHANGES LOG
 
 - stage1 analysis : update to bcl_phix_deplex_wtsi_stage1_template; addition of new subgraphs
 - added facility to allow splicing in of tee(pot) nodes at node outputs at viv.pl runtime
+- remove bamcheck and add bam_stats
 - added in realignment_wtsi_stage2_humansplit_template which was used to split existing target files from iRODS. Now renamed to realignment_wtsi_humansplit_template.
 - changes to merge_final_output_prep to remove extra stats files and allow use of reference for existing stats files
 - adding in realignment_wtsi_humansplit_notargetalign_template
