@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use open qw/:std :encoding(UTF-8)/;
 use Carp;
 use File::Slurp;
 use JSON;
@@ -41,7 +42,7 @@ my $raf_list = process_raf_list($opts{r});    # insert inline RAFILE nodes
 my $tee_list = process_raf_list($opts{t});    # insert tee with branch to RAFILE
 $tee_list ||= {};
 
-my $s = read_file($cfg_file_name);
+my $s = read_file($cfg_file_name, binmode => ':utf8' );
 
 my $cfg = from_json($s);
 
