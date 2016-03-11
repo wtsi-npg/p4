@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add new templates for converting files from bam format to cram
+
 release 0.17.3
  - update Build.PL and tests to have correct and full set of requirements
 

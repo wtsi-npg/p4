@@ -30,6 +30,8 @@ data/vtlib/seqchksum_hs.json
 data/vtlib/seqchksum_realign.json
 data/vtlib/split_by_chromosome.json
 data/vtlib/tophat2_alignment.json
+data/vtlib/bam_to_cram_aligned.json
+data/vtlib/bam_to_cram_unaligned.json
 examples/bwa_aln_cfg.png
 examples/bwa_mem/bwa_mem_alignment.vtf
 examples/bwa_mem/generic_alignment_with_phix.vtf
