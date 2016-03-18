@@ -2,21 +2,21 @@
 "description": "Read coordinate sorted ALIGNED data from a single CRAM file in iRODS. Call selected sites using mpileup and bcftools for use in downstream gtcheck library check",
 "version":"0.5",
 "subst_params": [
-	  {
-		    "id":"basic_pipeline_params_file",
-		    "required":"yes",
-		    "subst_constructor":{
-			      "vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
-			      "postproc":{"op":"concat", "pad":""}
-		    }
-	  },
-	  {
-		    "id": "basic_pipeline_params",
-		    "type":"SPFILE",
-		    "name":{"subst":"basic_pipeline_params_file"},
-		    "required": "no",
-		    "comment":"this will expand to a set of subst_param elements"
-	  }, 
+    {
+	"id":"basic_pipeline_params_file",
+	"required":"yes",
+	"subst_constructor":{
+	    "vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
+	    "postproc":{"op":"concat", "pad":""}
+	}
+    },
+    {
+	"id": "basic_pipeline_params",
+	"type":"SPFILE",
+	"name":{"subst":"basic_pipeline_params_file"},
+	"required": "no",
+	"comment":"this will expand to a set of subst_param elements"
+    }, 
     {
         "id":"src_input",
         "required":"yes",
@@ -34,69 +34,69 @@
         "comment":"reads filter for samtools mpileup"
     },
     {
-		    "id":"mpileup_filter_flag",
-		    "required":"no",
-		    "comment":"flag will disappear unless mpileup_filter value is given",
-		    "subst_constructor":{ "vals":[ "--ff", {"subst":"mpileup_filter"} ] }
-	  },
+	"id":"mpileup_filter_flag",
+	"required":"no",
+	"comment":"flag will disappear unless mpileup_filter value is given",
+	"subst_constructor":{ "vals":[ "--ff", {"subst":"mpileup_filter"} ] }
+    },
     {"id":"bcf_ext","required":"no","default":".vcf.gz"},
     {"id":"output_prefix_name","required":"yes"},
     {
-		    "id":"bcf_file",
-		    "subst_constructor":{
-			      "vals":[ {"subst":"outdatadir"}, "/", {"subst":"output_prefix_name"}, {"subst":"bcf_ext"} ],
-			      "postproc":{"op":"concat", "pad":""}
-		    }
-	  } ,
+	"id":"bcf_file",
+	"subst_constructor":{
+	    "vals":[ {"subst":"outdatadir"}, "/", {"subst":"output_prefix_name"}, {"subst":"bcf_ext"} ],
+	    "postproc":{"op":"concat", "pad":""}
+	}
+    } ,
     {"id":"bcftools_output_format","required":"no","default":"z"},
     {"id":"bcftools_index_option","required":"no","default":"-c"},
     {"id":"genome_reference_fasta","required":"no"},
     {
-		    "id":"mpileup_reference_flag",
-		    "required":"no",
-		    "comment":"flag will disappear unless genome_reference_fasta value is given",
-		    "subst_constructor":{ "vals":[ "-f", {"subst":"genome_reference_fasta"} ] }
-	  }
+	"id":"mpileup_reference_flag",
+	"required":"no",
+	"comment":"flag will disappear unless genome_reference_fasta value is given",
+	"subst_constructor":{ "vals":[ "-f", {"subst":"genome_reference_fasta"} ] }
+    }
 ],
 "nodes": [
-	  {
-      "id":"irods_tears",
-	      "type":"EXEC",
-	      "use_STDIN": false,
-	      "use_STDOUT": true,
-	      "cmd": [ "tears", "-r", {"subst":"src_input"} ],
-	      "description":"stream out of iRODS"
+    {
+	"id":"irods_tears",
+	"type":"EXEC",
+	"use_STDIN": false,
+	"use_STDOUT": true,
+	"cmd": [ "tears", "-r", {"subst":"src_input"} ],
+	"description":"stream out of iRODS"
     },
-	  {
-      "id":"samtools_mpileup",
-	      "type":"EXEC",
-	      "use_STDIN": true,
-	      "use_STDOUT": true,
-	      "cmd": [ {"subst":"samtools_executable"},"mpileup", {"subst":"mpileup_reference_flag"},{"subst":"mpileup_filter_flag"},"-t","DP","-l",{"subst":"genotype_positions"},"-u", "-"],
-	      "description":"run samtools mpileup at selected sites"
+    {
+	"id":"samtools_mpileup",
+	"type":"EXEC",
+	"use_STDIN": true,
+	"use_STDOUT": true,
+	"cmd": [ {"subst":"samtools_executable"},"mpileup", {"subst":"mpileup_reference_flag"},{"subst":"mpileup_filter_flag"},"-t","DP","-l",{"subst":"genotype_positions"},"-u", "-"],
+	"description":"run samtools mpileup at selected sites"
     },
-	  {
-      "id":"bcftools_genotype_call",
-	      "type":"EXEC",
-	      "use_STDIN": true,
-	      "use_STDOUT": true,
-	      "cmd": [ "bcftools","call","-c","-O",{"subst":"bcftools_output_format"},"-"],
-	      "description":"run bcftools call on output from samtools mpileup"
+    {
+	"id":"bcftools_genotype_call",
+	"type":"EXEC",
+	"use_STDIN": true,
+	"use_STDOUT": true,
+	"cmd": [ "bcftools","call","-c","-O",{"subst":"bcftools_output_format"},"-"],
+	"description":"run bcftools call on output from samtools mpileup"
     },
-
-	  {
-      "id":"bcftools_index",
-	      "type":"EXEC",
-	      "use_STDIN": false,
-	      "use_STDOUT": false,
-	      "cmd": [ "bcftools","index",{"subst":"bcftools_index_option"},"__BCFFILE_IN__"],
-	      "description":"run bcftools call on output from samtools mpileup"
+    
+    {
+	"id":"bcftools_index",
+	"type":"EXEC",
+	"use_STDIN": false,
+	"use_STDOUT": false,
+	"cmd": [ "bcftools","index",{"subst":"bcftools_index_option"},"__BCFFILE_IN__"],
+	"description":"run bcftools index on output from bcftools call"
     },	
     {
-		    "id":"bcf_file",
-		    "type":"OUTFILE",
-		    "name":{"subst":"bcf_file"}
-	  }
+	"id":"bcf_file",
+	"type":"OUTFILE",
+	"name":{"subst":"bcf_file"}
+    }
 ],
 "edges": [
     { "id":"tears_to_mpileup", "from":"irods_tears", "to":"samtools_mpileup" },
