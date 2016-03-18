@@ -56,7 +56,9 @@
 	"required":"no",
 	"comment":"flag will disappear unless genome_reference_fasta value is given",
 	"subst_constructor":{ "vals":[ "-f", {"subst":"genome_reference_fasta"} ] }
-    }
+    },
+    {"id":"bcftools_executable","required":"no","default":"bcftools"},
+    {"id":"tears_executable","required":"no","default":"tears"}
 ],
 "nodes": [
     {
@@ -64,7 +66,7 @@
 	"type":"EXEC",
 	"use_STDIN": false,
 	"use_STDOUT": true,
-	"cmd": [ "tears", "-r", {"subst":"src_input"} ],
+	"cmd": [ {"subst":"tears_executable"}, "-r", {"subst":"src_input"} ],
 	"description":"stream out of iRODS"
     },
     {
@@ -80,18 +82,17 @@
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": true,
-	"cmd": [ "bcftools","call","-c","-O",{"subst":"bcftools_output_format"},"-"],
+	"cmd": [ {"subst":"bcftools_executable"},"call","-c","-O",{"subst":"bcftools_output_format"},"-"],
 	"description":"run bcftools call on output from samtools mpileup"
-    },
-    
+    },    
     {
 	"id":"bcftools_index",
 	"type":"EXEC",
 	"use_STDIN": false,
 	"use_STDOUT": false,
-	"cmd": [ "bcftools","index",{"subst":"bcftools_index_option"},"__BCFFILE_IN__"],
+	"cmd": [ {"subst":"bcftools_executable"},"index",{"subst":"bcftools_index_option"},"__BCFFILE_IN__"],
 	"description":"run bcftools index on output from bcftools call"
-    },	
+    },
     {
 	"id":"bcf_file",
 	"type":"OUTFILE",
