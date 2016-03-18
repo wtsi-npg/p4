@@ -48,7 +48,7 @@
 	    "postproc":{"op":"concat", "pad":""}
 	}
     } ,
-    {"id":"bcftools_output_format","required":"no","default":"z"},
+    {"id":"bcftools_output_format","required":"yes","default":"z"},
     {"id":"bcftools_index_option","required":"no","default":"-c"},
     {"id":"genome_reference_fasta","required":"no"},
     {
