@@ -45,12 +45,12 @@ my $s = read_file($cfg_file_name);
 
 my $cfg = from_json($s);
 
-my %all_nodes = (map { $_->{id} => $_ } @{$cfg->{nodes}});
-
 ###############################################
 # insert any tees requested into the main graph
 ###############################################
 process_tee_list($tee_list, $cfg);
+
+my %all_nodes = (map { $_->{id} => $_ } @{$cfg->{nodes}});
 
 my $edges = $cfg->{edges};
 
