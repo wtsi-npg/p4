@@ -440,7 +440,7 @@ sub process_tee_list {
 			carp q[Failed to create id for tee node for port ], $outport;
 			next;
 		}
-		my $tee_node = { id => $tnid, type => q[EXEC], use_STDIN => q[JSON::XS::true], use_STDOUT => q[JSON::XS::true], cmd => [ 'tee', $tee_stream_outport_name, ], };
+		my $tee_node = { id => $tnid, type => q[EXEC], use_STDIN => JSON::true, use_STDOUT => JSON::true, cmd => [ 'tee', $tee_stream_outport_name, ], };
 
 		#########################
 		# create output file node
