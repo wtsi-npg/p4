@@ -46,12 +46,12 @@ my $s = read_file($cfg_file_name, binmode => ':utf8' );
 
 my $cfg = from_json($s);
 
-my %all_nodes = (map { $_->{id} => $_ } @{$cfg->{nodes}});
-
 ###############################################
 # insert any tees requested into the main graph
 ###############################################
 process_tee_list($tee_list, $cfg);
+
+my %all_nodes = (map { $_->{id} => $_ } @{$cfg->{nodes}});
 
 my $edges = $cfg->{edges};
 
@@ -436,13 +436,12 @@ sub process_tee_list {
 		# create tee node
 		#################
 		my $tee_stream_outport_name = (defined $tinput_edge)? q/__ORIG_OUT__/: q/-/; # name for the streamed output port of the new tee_node
-		my $tee_stream_to_stdout = (defined $tinput_edge)? 0: 1; # will the tee node be writing to stdout?
 		my $tnid=get_node_id(\%node_map, q[TEE_NODE]);
 		if(not defined $tnid) {
 			carp q[Failed to create id for tee node for port ], $outport;
 			next;
 		}
-		my $tee_node = { id => $tnid, type => q[EXEC], use_STDIN => 1, use_STDOUT => $tee_stream_to_stdout, cmd => [ 'teepot', $tee_stream_outport_name, '__FILE_OUT__', ], };
+		my $tee_node = { id => $tnid, type => q[EXEC], use_STDIN => JSON::true, use_STDOUT => JSON::true, cmd => [ 'tee', $tee_stream_outport_name, ], };
 
 		#########################
 		# create output file node
@@ -457,7 +456,7 @@ sub process_tee_list {
 		###########################################
 		# connect the tee node and output file node
 		###########################################
-		my $tfile_edge = { id => '___TFILE_EDGE___', from => "$tnid:__FILE_OUT__", to => $fnid };
+		my $tfile_edge = { id => '___TFILE_EDGE___', from => "$tnid", to => $fnid };
 
 		#########################################################################################
 		# create the edge which will link the new tee+outfile subgraph to the master graph ($cfg)
