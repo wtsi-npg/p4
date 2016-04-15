@@ -174,7 +174,7 @@
 		"id":"bsmd_threads",
 		"subst_constructor":{ "vals":[ "threads", {"subst":"aligner_numthreads"} ], "postproc":{"op":"concat", "pad":"="} }
 	},
-	{"id":"filter_header_script","required":"no","default":"filter_header.pl"}
+	{"id":"filter_header_script","required":"no","default":"npg_fix_sam_header"}
 ],
 "nodes":[
     {
@@ -196,7 +196,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ "perl", {"subst":"filter_header_script"}, "-rpt", {"subst": "rpt"} ],
+		"cmd": [ {"subst":"filter_header_script"}, "-rpt", {"subst": "rpt"} ],
 		"description": "update RG line"
     },
     {
