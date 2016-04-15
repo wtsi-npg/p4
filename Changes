@@ -1,8 +1,9 @@
 CHANGES LOG
 -----------
 
-- added bcftools_genotype_call template for library merge gtcheck qc test
+release 0.18.0
 - stage1 analysis : update to bcl_phix_deplex_wtsi_stage1_template; addition of new subgraphs
+- added bcftools_genotype_call template for library merge gtcheck qc test
 - added facility to allow splicing in of tee(pot) nodes at node outputs at viv.pl runtime
 - remove bamcheck and add bam_stats
 - added in realignment_wtsi_stage2_humansplit_template which was used to split existing target files from iRODS. Now renamed to realignment_wtsi_humansplit_template.
