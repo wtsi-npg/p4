@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use open qw/:std :encoding(UTF-8)/;
 use Carp;
 use File::Slurp;
 use JSON;
@@ -39,19 +40,26 @@ my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
 my $raf_list = process_raf_list($opts{r});    # insert inline RAFILE nodes
 my $tee_list = process_raf_list($opts{t});    # insert tee with branch to RAFILE
+$tee_list ||= {};
 
-my $s = read_file($cfg_file_name);
+my $s = read_file($cfg_file_name, binmode => ':utf8' );
 
 my $cfg = from_json($s);
 
+###############################################
+# insert any tees requested into the main graph
+###############################################
+process_tee_list($tee_list, $cfg);
+
 my %all_nodes = (map { $_->{id} => $_ } @{$cfg->{nodes}});
+
+my $edges = $cfg->{edges};
+
 my %exec_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[EXEC]; } @{$cfg->{nodes}}));
 my %filter_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[FILTER]; } @{$cfg->{nodes}}));
 my %infile_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[INFILE]; } @{$cfg->{nodes}}));
 my %outfile_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[OUTFILE]; } @{$cfg->{nodes}}));
 my %rafile_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[RAFILE]; } @{$cfg->{nodes}}));
-
-my $edges = $cfg->{edges};
 
 $logger->($VLMAX, "==================================\nEXEC nodes(0):\n==================================\n", Dumper(%exec_nodes), "\n");
 
@@ -319,6 +327,7 @@ sub _fork_off {
 			print STDERR ' fileno(STDOUT,'.(fileno STDOUT).') writing to '.($node->{'STDOUT'}?$node->{'STDOUT'}:'stdout') ."\n";
 			print STDERR ' select waiting on STDIN' ."\n";
 			my$rin="";vec($rin,fileno(STDIN),1)=1; select($rin,undef,undef,undef);
+			$logger->($VLMED, qq[Child $$ execing]);
 			print STDERR " execing....\n";
 			exec @cmd or croak qq[Failed to exec cmd: ], join " ", @cmd;
 		}
@@ -375,9 +384,115 @@ sub process_raf_list {
 	my $raf_map;
 
 	if($rafs) {
-		$raf_map = { (map {  (split '=', $_); } (split /;/, $rafs)) };
+		$raf_map = { (map { (split '=', $_); } (split /;/, $rafs)) };
 	}
 
 	return $raf_map;
+}
+
+###################################################################################################################
+# process tee_list, adding an EXEC (teepot) and an OUTFILE node and new edges to them from the specified node ports
+#  Note: this will modify the master graph if $tee_list is defined and not empty. It is intended to be a debugging
+#   utility
+###################################################################################################################
+sub process_tee_list {
+	my ($tee_list, $cfg) = @_;
+
+	unless(defined $tee_list) {
+		return;
+	}
+
+	my %node_map = (map { $_->{id} => $_ } @{$cfg->{nodes}});  # effectively, a local copy of %all_nodes
+	for my $outport (keys %{$tee_list}) {
+		##################################################################################
+		# confirm existence and validity of source port (e.g. that it is "of type output")
+		##################################################################################
+		my ($src_node_id, $port) = (split q[:], $outport);
+		if(not $src_node_id) { croak q[source node id specified as empty string]; }
+		if($port and $port !~ /OUT/) { croak q[source node port not specified as an output port (naming convention)]; }
+		my $src_node = $node_map{$src_node_id};
+		if(not defined $src_node
+			or $src_node->{type} ne q[EXEC]
+			or not defined $src_node->{cmd}
+			or ($port and ref $src_node->{cmd} eq q[ARRAY] and grep { $_ =~ /$port/; } @{$src_node->{cmd}} < 1)
+			or ($port and not ref $src_node->{cmd} and $src_node->{cmd} !~ /$port/)
+		) {
+			carp q[Invalid source node specified for tee_list: ], $src_node_id, q[ (], $outport, q[)];
+			next;
+		}
+
+		############################################################################################################################
+		# based on the existence of an edge in the master graph from the specified tee_list output:
+		#    EXISTS => standard case, redirect the "to" attribute to the new tee_node, tee_node's non-file output takes the original
+		#                "to" value of the retrieved edge, newly created edge links tee_node output to original downstream node
+		#    not EXISTS => output was originally to stdout (implicit edge), tee_node's non-file output goes to stdout, newly-created
+		#                    edge links source to tee_node 
+		############################################################################################################################
+
+		my ($tinput_edge) = grep { $_->{from} eq $outport} @{$cfg->{edges}};
+		if(not defined $tinput_edge and $port) { carp q[output port specified in tee list, but absence of edge implies stdout: ], $outport; next; }
+
+		#################
+		# create tee node
+		#################
+		my $tee_stream_outport_name = (defined $tinput_edge)? q/__ORIG_OUT__/: q/-/; # name for the streamed output port of the new tee_node
+		my $tnid=get_node_id(\%node_map, q[TEE_NODE]);
+		if(not defined $tnid) {
+			carp q[Failed to create id for tee node for port ], $outport;
+			next;
+		}
+		my $tee_node = { id => $tnid, type => q[EXEC], use_STDIN => JSON::true, use_STDOUT => JSON::true, cmd => [ 'tee', $tee_stream_outport_name, ], };
+
+		#########################
+		# create output file node
+		#########################
+		my $fnid=get_node_id(\%node_map, q[OF_NODE]);
+		if(not defined $fnid) {
+			carp q[Failed to create id for of node for output file ], $outport;
+			next;
+		}
+		my $of_node = { id => $fnid, type => q[OUTFILE], name => $tee_list->{$outport}, };
+
+		###########################################
+		# connect the tee node and output file node
+		###########################################
+		my $tfile_edge = { id => '___TFILE_EDGE___', from => "$tnid", to => $fnid };
+
+		#########################################################################################
+		# create the edge which will link the new tee+outfile subgraph to the master graph ($cfg)
+		#########################################################################################
+		my $tee_connect_edge = (defined $tinput_edge)? { id => '___TCONNECT_EDGE___', from => "$tnid:__ORIG_OUT__", to => $tinput_edge->{to} }: { id => '___TCONNECT_EDGE___', from => $outport, to => $tnid };
+
+		###########################################################################################
+		# everything looks valid, so modify the master graph (consider queuing these until the end)
+		###########################################################################################
+		push @{$cfg->{nodes}}, $tee_node, $of_node;
+		$node_map{$tnid} = $tee_node;
+		$node_map{$fnid} = $of_node;
+		push @{$cfg->{edges}}, $tee_connect_edge, $tfile_edge;
+		if(defined $tinput_edge) { $tinput_edge->{to} = $tnid }; # change to the master graph, so this change happens here
+	}
+
+	return;
+}
+
+###########################################################################
+# get_node_id:
+#  this should find an unused node id (unused in the set of nodes supplied)
+#  returns: id if successful, undef otherwise
+###########################################################################
+sub get_node_id {
+	my ($nodes, $label) = @_;
+	my $i=0;
+
+	$label ||= q[LABEL];
+	for my $i (0..9999) {
+		my $nid = sprintf "___%s_%04d___", $label, $i;
+		if(not exists $nodes->{$nid}) {
+			return $nid;
+		}
+	} 
+
+	return;
 }
 

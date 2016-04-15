@@ -59,11 +59,15 @@ my $builder = $class->new(
   },
 
   'build_requires' => {
+    'Carp'                  => 0,
+    'Cwd'                   => 0,
     'English'               => 0,
-    'Test::More'            => 0,
-    'Test::Compile'         => 0,
-    'Test::Cmd'             => 0,
+    'File::Temp'            => 0,
+    'JSON'                  => 0,
     'Perl6::Slurp'          => 0,
+    'Test::Cmd'             => 0,
+    'Test::Compile'         => 0,
+    'Test::More'            => 0,
   },
 
   'requires' => {

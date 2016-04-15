@@ -1,0 +1,69 @@
+{
+"description":"final stage1 processing - recompress lane-level bam stream, deplex and final lane-level bamseqchksum",
+"version":"1.0",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"tee_split"
+		},
+		"outputs":{
+			"_stdout_":"bamrecompress",
+			"__SEQCHKSUM_OUT__":"seqchksum"
+		}
+	}
+},
+"nodes":[
+	{
+		"id":"tee_split",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
+                "cmd":
+			[
+				{"subst":"teepot_executable", "ifnull":"teepot"},
+				{"subst":"ts_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_split_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
+				{"subst":"teepot_vflag", "ifnull":"-v"},
+				{"subst":"ts_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_split_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
+				{"subst":"ts_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_split_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"ts_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_split_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"ts_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
+				"__SEQCHKSUM_OUT__",
+				"__FILTERED_BAM_OUT__",
+				"__SPLIT_BAM_OUT__"
+			]
+	},
+	{
+		"id":"bamrecompress",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			"bamrecompress",
+			"verbose=0", 
+			"md5=1",
+			{"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}}
+		]
+	},
+	{
+		"id":"splitter",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":[ {"subst":"samtools_executable", "ifnull":"samtools1"}, "split", "-f", {"subst":"split_format"}, "-" ],
+		"description":"Split the BAM file into separate BAM files by Read Group"
+	},
+	{
+		"id":"seqchksum",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "bamseqchksum" ]
+	}
+],
+"edges":[
+	{ "id":"tee_to_recompress", "from":"tee_split:__FILTERED_BAM_OUT__", "to":"bamrecompress" },
+	{ "id":"tee_to_splitter", "from":"tee_split:__SPLIT_BAM_OUT__", "to":"splitter" },
+	{ "id":"tee_to_seqchksum", "from":"tee_split:__SEQCHKSUM_OUT__", "to":"seqchksum" }
+]
+}

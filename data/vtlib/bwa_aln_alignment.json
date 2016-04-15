@@ -25,7 +25,16 @@
 	{
 		"id":"tee4",
 		"type":"EXEC",
-		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-w", "300", "-m", "1G", "__ALN_1_OUT__", "__ALN_2_OUT__", "__SAMPE_1_OUT__", "__SAMPE_2_OUT__" ]
+		"cmd":[
+			"teepot",
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"bwa_aln_teepot_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"bwa_aln_teepot_wval", "ifnull":"300"} ]}}},
+			{"subst":"bwa_aln_teepot_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"bwa_aln_teepot_mval", "ifnull":"1G"} ]}}},
+			{"subst":"bwa_aln_teepot_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_split_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+			{"subst":"bwa_aln_teepot_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
+			"__ALN_1_OUT__", "__ALN_2_OUT__",
+			"__SAMPE_1_OUT__", "__SAMPE_2_OUT__"
+		]
 	},
 	{
 		"id":"bwa_aln_1",

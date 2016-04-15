@@ -1,0 +1,48 @@
+{
+"description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
+"version":"1.0",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+				"_stdin_":"seqchksum_input",
+				"target_seqchksum":"head_scs2_input"
+		}
+	}
+},
+"nodes":[
+        {
+                "id":"seqchksum_input",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":[ "bamseqchksum",{"subst":"src_input_format_flag"} ]
+        },
+        {
+                "id":"head_scs1_input",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":[ "head", "-2" ]
+        },
+        {
+                "id":"head_scs2_input",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":[ "head", "-2" ]
+        },
+        {
+                "id":"cmp_seqchksum",
+                "type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+                "cmd":[ "cmp", "__INPUTCHK_IN__", "__OUTPUTCHK_IN__" ],
+                "description":"check input primary/sequence data matches output"
+        }
+],
+"edges":[
+	{ "id":"input_chksum_to_scs1head", "from":"seqchksum_input", "to":"head_scs1_input" },
+	{ "id":"scs1head_to_cmp", "from":"head_scs1_input", "to":"cmp_seqchksum:__INPUTCHK_IN__" },
+	{ "id":"scs2head_to_cmp", "from":"head_scs2_input", "to":"cmp_seqchksum:__OUTPUTCHK_IN__" }
+]
+}
