@@ -20,6 +20,42 @@
 			"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"rpt"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
+	},
+	{"id":"bamindex_decoder_opt","required":"yes","default":{"subst_constructor":{"vals":[ "bamindexdecoder", {"subst":"bid_implementation", "ifnull":"samtools"}, "cmd" ],"postproc":{"op":"concat","pad":"_"}}}},
+	{"id":"bamindexdecoder_cmd", "default":{"subst":{"subst":"bamindex_decoder_opt","required":"yes"}}},
+	{
+		"id":"bamindexdecoder_java_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals": [
+				{"subst":"java_cmd","ifnull":"java","required":"yes"},
+				"-Xmx1024m",
+				"-jar", {"subst":"bamindexdecoder_jar", "required":"yes", "ifnull":{"subst_constructor":{"vals":[ {"subst":"i2b_jar_path"}, "/BamIndexDecoder.jar" ],"postproc":{"op":"concat","pad":""}}}},
+				"I=/dev/stdin",
+				"O=/dev/stdout",
+				"M=__METRICS_FILE_OUT__",
+				{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "BARCODE_FILE", {"subst":"barcode_file", "required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "MAX_NO_CALLS", {"subst":"bid_max_no_calls"} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "CONVERT_LOW_QUALITY_TO_NO_CALL", {"subst":"bid_convert_low_quality_to_no_call"} ],"postproc":{"op":"concat","pad":"="}}}}
+			]
+		}
+	},
+	{
+		"id":"bamindexdecoder_samtools_cmd",
+		"required":"yes",
+		"subst_constructor":{
+			"vals": [
+				{"subst":"bamindexdecoder_executable","ifnull":{"subst":"samtools_executable"},"required":"yes"},
+				"decode",
+				"--metrics-file", "__METRICS_FILE_OUT__",
+				{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--barcode-file", {"subst":"barcode_file", "required":"yes"} ]}}},
+				{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "--max-no-calls", {"subst":"bid_max_no_calls"} ]}}},
+				{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "--convert-low-quality", {"subst":"bid_convert_low_quality_to_no_call"} ]}}},
+				{"subst":"bid_compression_level_flag","ifnull":{"subst_constructor":{"vals":[ "--compression-level", {"subst":"bid_compression_level","ifnull":"0"} ]}}},
+				"-"
+			],
+			"postproc":{"op":"pack"}
+		}
 	}
 ],
 "nodes":[
@@ -28,17 +64,9 @@
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":true,
-		"cmd": [
-			{"subst":"java_cmd","ifnull":"java","required":"yes"},
-			"-Xmx1024m",
-			"-jar", {"subst":"bamindexdecoder_jar", "required":"yes", "ifnull":{"subst_constructor":{"vals":[ {"subst":"i2b_jar_path"}, "/BamIndexDecoder.jar" ],"postproc":{"op":"concat","pad":""}}}},
-			"I=/dev/stdin",
-			"O=/dev/stdout",
-			"M=__METRICS_FILE_OUT__",
-			{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "BARCODE_FILE", {"subst":"barcode_file", "required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
-			{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "MAX_NO_CALLS", {"subst":"bid_max_no_calls"} ],"postproc":{"op":"concat","pad":"="}}}},
-			{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "CONVERT_LOW_QUALITY_TO_NO_CALL", {"subst":"bid_convert_low_quality_to_no_call"} ],"postproc":{"op":"concat","pad":"="}}}}
-		]
+		"description":"assign RG values to reads based on index tag sequence (BC tag value)",
+		"comment":"Actual executable used depends on the value of the bid_implementation parameter: java - use illumina2bam BamIndexDecoder.jar; samtools (default) - use new decode function in samtools",
+		"cmd":{"subst":"bamindexdecoder_cmd","required":"yes"}
 	},
 	{
 		"id":"decoder_metrics",
