@@ -7,9 +7,7 @@ use JSON;
 use File::Temp qw(tempdir);
 
 my $tdir = tempdir(CLEANUP => 1);
-my $template = q[t/data/10-vtfp-pv.json];
 my $pv_file = $tdir.q[/10-vtfp-pv.pv];
-my $processed_template = $tdir.q[/10-vtfp-pv-processed.json];
 
 # just export and reimport parameter values for a template
 subtest 'spl0' => sub {
