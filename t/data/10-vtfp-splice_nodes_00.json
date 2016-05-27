@@ -1,0 +1,38 @@
+{
+"description":"test node splicing feature",
+"version":"1.0",
+"nodes":[
+	{
+		"id":"hello",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[ "echo", "Hello" ]
+	},
+	{
+		"id":"rev",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[ "rev" ]
+	},
+	{
+		"id":"uc",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[ "tr", "[:lower:]", "[:upper:]" ]
+	},
+	{
+		"id":"output",
+		"type":"OUTFILE",
+		"name":"tmp.xxx"
+	}
+],
+"edges":[
+	{ "id":"e0", "from":"hello", "to":"rev" },
+	{ "id":"e1", "from":"rev", "to":"uc" },
+	{ "id":"e2", "from":"uc", "to":"output" }
+]
+}
+
