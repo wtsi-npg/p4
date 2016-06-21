@@ -244,9 +244,9 @@
 				"MAX_RECORDS_IN_RAM=500000",
 				"CREATE_INDEX=false",
 				"IN=__PHIX_BAM_IN__",
-				"IN=__TARGET_BAM_IN__",
+				{"subst":"af_target_in_flag","ifnull":"IN=__TARGET_BAM_IN__"},
 				"OUT=__PHIX_BAM_OUT__",
-				"OUT=/dev/stdout",
+				{"subst":"af_target_out_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ {"subst":"af_target_out_flag_name", "ifnull":{"subst":"OUT"}}, "/dev/stdout" ],"postproc":{"op":"concat","pad":"="}}}},
 				"METRICS_FILE=__AF_METRICS_OUT__"
 		]
 	},

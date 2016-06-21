@@ -25,7 +25,13 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":[ "bamreset", "resetaux=0", "level=0", "verbose=0" ],
+		"cmd":[
+			"bamreset",
+			{"subst":"resetaux_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "resetaux", {"subst":"resetaux_val", "required":"no", "ifnull":"0"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"auxfilter_flag","required":"no"},
+			"level=0",
+			"verbose=0"
+		],
 		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{
