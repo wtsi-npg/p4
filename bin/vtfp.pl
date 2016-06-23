@@ -101,17 +101,16 @@ my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, 
 
 my $node_tree = process_vtnode(q[], $vtf_name, q[], $params, $globals);    # recursively generate the vtnode tree
 
-# if(report_pv_ewi($node_tree, $logger)) { croak qq[Exiting after process_vtnode...\n]; }
 
 my $flat_graph = flatten_tree($node_tree);
 
-my $cull_node_ids = []; # used to avoid reporting parameter substitution errors in pruned nodes
+my $cull_node_ids = []; # used to detect (and disregard) parameter substitution errors in nodes which have been removed
 if($splice_list or $prune_list) {
-#	$flat_graph = splice_nodes($flat_graph, $splice_list, $prune_list);
 	($flat_graph, $cull_node_ids) = splice_nodes($flat_graph, $splice_list, $prune_list);
 }
 
-if(report_pv_ewi($node_tree, $logger, $cull_node_ids)) { croak qq[Exiting after process_vtnode...\n]; }
+# parameter substitution errors are reported late, so errors in pruned or spliced nodes can be ignored
+if(report_pv_ewi($node_tree, $logger, $cull_node_ids)) { croak qq[Exiting after fatal error(s) detected...\n]; }
 
 foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
 
@@ -988,8 +987,7 @@ sub splice_nodes {
 	}
 
 	$splice_candidates = prepare_cull($flat_graph, $splice_candidates);
-#	my @cull_node_ids = (map { $_->{node}->{id} } @{$splice_candidates->{cull_nodes}});
-	my @cull_node_ids = keys %{$splice_candidates->{cull_nodes}};
+	my @cull_node_ids = keys %{$splice_candidates->{cull_nodes}}; # this list of removed nodes is used to suppress irrelevant error messages
 
 	if(validate_splice_candidates($splice_candidates)) {
 		$flat_graph = final_splice($flat_graph, $splice_candidates);
@@ -1007,12 +1005,12 @@ sub splice_nodes {
 #   be removed, and create new edges. The new edges will later be added to the graph (splice) or
 #   used to identify input/output node ports to be removed (prune).
 #
-#   splice_node entry: <src_node>[:src_port][-[dst_node[:dst_port]]]
-#    src_port
-#    dst_port (possibly null - if so, src_port should be removed)
+#   splice_nodes entry: [src_node[:src_port]][-[dst_node[:dst_port]]]
 ###################################################################################################
 sub register_splice_pairs {
 	my ($flat_graph, $splice_nodes, $splice_type, $splice_candidates) = @_;
+
+	# generators of new stdin or stdout nodes
 	my $stdin_node = $splice_candidates->{stdio_gen}->{in};
 	my $stdout_node = $splice_candidates->{stdio_gen}->{out};
 
@@ -1025,7 +1023,6 @@ sub register_splice_pairs {
 	my $preserve_nodes = $splice_candidates->{preserve_nodes};
 	my $cull_edges = $splice_candidates->{cull_edges};
 
-	my $traversal_idx = 0;
 	for my $splice_pair (@{$splice_nodes}) {
 		# resolve ports
 		my $frsp = resolve_ports($splice_pair, $flat_graph);
@@ -1060,8 +1057,7 @@ sub register_splice_pairs {
 		if(exists $frsp->{dst} and exists $frsp->{dst}->{node}) { $preserve_nodes->{$frsp->{dst}->{node}->{id}} = 1; }
 
 		if(not any { $_->{node_info}->{node}->{id} eq $frsp->{pioneer}->{node}->{id} } @{$frontier}) { # avoid duplicate node entries in frontier stack
-			### review traversal_params - maybe superfluous
-			push @{$frontier}, { node_info => $frsp->{pioneer}, traversal_params => { idx => $traversal_idx++, start_node => $frsp->{src}->{node}->{id}, end_node => $frsp->{dst}->{node}->{id}}, };
+			push @{$frontier}, { node_info => $frsp->{pioneer}, };
 		}
 
 		# the relevant input/output edge to/from each pioneer node should be marked for culling
@@ -1109,27 +1105,17 @@ sub mk_stdio_node_generator {
 #############################################################################################
 sub prepare_cull {
 	my ($flat_graph, $splice_candidates) = @_;
+
 	my @frontier = @{$splice_candidates->{frontier}}; # this sub consumes frontier
 	my $cull_nodes = $splice_candidates->{cull_nodes};
 	my $cull_edges = $splice_candidates->{cull_edges};
 	my $preserve_nodes = $splice_candidates->{preserve_nodes};
-	my @traversal_tracker = ();
 
 	while(@frontier) {
 		my $pioneer = pop @frontier;
-		### review traversal_params - maybe superfluous
-		my $traversal_params = $pioneer->{traversal_params};
-		my $traversal_start_node = $traversal_params->{start_node};
-		my $traversal_end_node = $traversal_params->{end_node};
-		$traversal_end_node //= q[];
-		my $traversal_idx = $traversal_params->{idx};
 
 		my $node_info = $pioneer->{node_info};
 		my $node_id = $node_info->{node}->{id};
-
-		### record visit to node to avoid backtracking and overshooting (review this - is this useful?)
-#		next if($traversal_tracker[$traversal_idx]->{$node_id});
-		$traversal_tracker[$traversal_idx]->{$node_id} = 1;
 
 		next if ($cull_nodes->{$node_id} or $preserve_nodes->{$node_id}); # this node already traversed or is marked for preservation
 
@@ -1143,8 +1129,7 @@ sub prepare_cull {
 
 			# add edge.to to frontier (if not in preserve_nodes [???])
 			my ($to_node) = (split q[:], $out_edge->{to});
-			### review traversal_params - maybe superfluous
-			push @frontier, { node_info => get_node_info($to_node, $flat_graph), traversal_params => $traversal_params, };
+			push @frontier, { node_info => get_node_info($to_node, $flat_graph), };
 		}
 
 		for my $in_edge (@{$node_info->{all_edges}->{in}}) {
@@ -1155,8 +1140,7 @@ sub prepare_cull {
 
 			# add edge.to to frontier (if not in preserve_nodes [???])
 			my ($from_node) = (split q[:], $in_edge->{from});
-			### review traversal_params - maybe superfluous
-			push @frontier, { node_info => get_node_info($from_node, $flat_graph), traversal_params => $traversal_params, };
+			push @frontier, { node_info => get_node_info($from_node, $flat_graph), };
 		}
 	}
 
@@ -1167,28 +1151,14 @@ sub validate_splice_candidates {
 	my ($splice_candidates) = @_;
 	my $valid = 1;
 
-	##############################################################################################################################
-	# TODO: postprocessing
-	#  replace unspecified "to" attributes in replacement edges with "cat" destinations, and create the "src" nodes; for starters,
-	#   detect this and croak (effectively disallowing -splice node[:port]-)
-	##############################################################################################################################
 	for my $edge (@{$splice_candidates->{replacement_edges}}) {
 		if(not $edge->{to}) { croak q[No to attribute for proposed replacement edge: ], $edge->{id}; }
 	}
-	############################################################################################################################
-	# TODO: Validate
-	#  1. all inports for nodes in cull_nodes originate in either cull_nodes or preserve_nodes
-	#  2. replacement edges have both or neither ends terminating in cull_nodes (both is maybe odd - they should be disregarded)
-	#     a. both - remove replacement edge
-	#     b. neither - leave it alone
-	#  3. the endpoints of culled edges must either refer to culled nodes or pruned ports
-	#  4. all edge termini are unique (over replacement and pruning edges)
-	############################################################################################################################
-	#  1. all inports for nodes in cull_nodes originate in either cull_nodes or preserve_nodes (instead of "preserve_nodes", shouldn't this be "has a replacement edge which starts there"?)
+
 	my $cull_nodes = $splice_candidates->{cull_nodes};
 	my $replacement_edges = $splice_candidates->{replacement_edges};
 	my $prune_edges = $splice_candidates->{prune_edges};
-	my $preserve_nodes = $splice_candidates->{preserve_nodes};
+
 	for my $node_info (values %{$cull_nodes}) {
 		for my $in_edge (@{$node_info->{all_edges}->{in}}) {
 			my ($src_node_id, $src_port) = split q{:}, $in_edge->{from};
@@ -1199,7 +1169,7 @@ sub validate_splice_candidates {
 			}
 		}
 	}
-	#  2. replacement edges have both or neither ends terminating in cull_nodes (both is maybe odd - they should be disregarded)
+	# replacement edges should have neither end terminating in cull_nodes
 	my @keep_edges = ();
 	for my $edge (@{$splice_candidates->{replacement_edges}}) {
 		my ($src_node_id, $src_port) = split q{:}, $edge->{from};
@@ -1208,19 +1178,19 @@ sub validate_splice_candidates {
 		my $cull_to = $cull_nodes->{$dst_node_id};
 
 		if(not $cull_from and not $cull_to) {
-#			carp q[INFO: keeping replacement edge ], $edge->{id}, q[ since it starts and ends in unculled nodes];
+			$logger->($VLMIN, q[INFO: keeping replacement edge ], $edge->{id}, q[ since it starts and ends in unculled nodes]);
 			push @keep_edges, $edge;
 		}
 		elsif($cull_from and $cull_to) {
-#			carp q[INFO: Removing replacement edge ], $edge->{id}, q[ since it starts and ends in culled nodes];
+			$logger->($VLMIN, q[INFO: Removing replacement edge ], $edge->{id}, q[ since it starts and ends in culled nodes]);
 		}
 		else { 
-#			carp q[WARN: Removing replacement edge ], $edge->{id}, q[ since it links a culled and unculled node];
+			$logger->($VLMED, q[Warning: Removing replacement edge ], $edge->{id}, q[ since it links a culled and unculled node]);
 		}
 	}
 	$splice_candidates->{replacement_edges} = \@keep_edges;
 
-	#  3. the endpoints of culled edges must either refer to culled nodes, pruned ports or endpoints of replacement edges
+	#  the endpoints of culled edges must either refer to culled nodes, pruned ports or endpoints of replacement edges
 	for my $edge (values %{$splice_candidates->{cull_edges}}) {
 		my ($src_node_id, $src_port) = split q{:}, $edge->{from};
 		my ($dst_node_id, $dst_port) = split q{:}, $edge->{to};
@@ -1228,19 +1198,19 @@ sub validate_splice_candidates {
 		if(not $cull_nodes->{$src_node_id}
 		   and not any { $_->{from} eq $edge->{from} } @{$replacement_edges}
 		   and not any { $_->{from} eq $edge->{from} } @{$prune_edges}) {
-			carp q[WARN: Culled edge "], $edge->{id}, q[" comes from "], $edge->{from}, q[", but the node is not culled and the port has no replacement];
+			$logger->($VLMED, q[Warning: Culled edge "], $edge->{id}, q[" comes from "], $edge->{from}, q[", but the node is not culled and the port has no replacement]);
 		}
 
 		if(not $cull_nodes->{$dst_node_id}
 		   and not any { $_->{to} eq $edge->{to} } @{$replacement_edges}
 		   and not any { $_->{to} eq $edge->{to} } @{$prune_edges}) {
-			carp q[WARN: Culled edge "], $edge->{id}, q[" goes to "], $edge->{to}, q[", but the node is not culled and the port has no replacement];
+			$logger->($VLMED, q[Warning: Culled edge "], $edge->{id}, q[" goes to "], $edge->{to}, q[", but the node is not culled and the port has no replacement]);
 		}
 	}
 
-	#  4. all edge termini are unique (over replacement and pruning edges)
+	#  all edge termini must be unique (over replacement and pruning edges)
 	my %endpoints;
-	for my $edge (@{$splice_candidates->{replacement_edges}}, @{$splice_candidates->{prune_edges}}) {
+	for my $edge (@{$splice_candidates->{replacement_edges}}, @{$prune_edges}) {
 		my $from_end = $edge->{from};
 		if($from_end !~ /:/) { $from_end .= q[:STDOUT] };
 		my $to_end = $edge->{to};
@@ -1250,11 +1220,10 @@ sub validate_splice_candidates {
 	}
 	for my $ep (keys %endpoints) {
 		if(@{$endpoints{$ep}} > 1) {
-			carp q[ERROR: Edge endpoint ], $ep, q[ appears in multiple edges: ], join q[;], @{$endpoints{$ep}};
+			$logger->($VLFATAL, q[ERROR: Edge endpoint ], $ep, q[ appears in multiple edges: ], join q[;], @{$endpoints{$ep}});
 			$valid = 0;
 		}
 	}
-	
 
 	return $valid;
 }
@@ -1278,9 +1247,10 @@ sub final_splice {
 	# remove from flat_graph the edges whose ids are in cull_edges
 	$flat_graph->{edges} = [ (grep { not $cull_edges->{$_->{id}} } @{$flat_graph->{edges}}) ];
 
-	# add new edges, remove pruned ports (don't forget the magic stdin src node)
+	# add new edges
 	push @{$flat_graph->{edges}}, @{$splice_candidates->{replacement_edges}};
-	# prune edges are not required to be two-ended; just disregard undefined to/from attributes
+
+	# remove pruned ports - prune edges are not required to be two-ended; just disregard undefined to/from attributes
 	for my $prune_edge (@{$splice_candidates->{prune_edges}}) {
 		if($prune_edge->{from}) { remove_port($prune_edge->{from}, $SRC, $flat_graph); }
 		if($prune_edge->{to}) { remove_port($prune_edge->{to}, $DST, $flat_graph); }
@@ -1291,8 +1261,8 @@ sub final_splice {
 
 ###############################################################################################################
 # resolve_ports:
-#  given a splice_pair specification (from command-line), fully determine the source port and (optionally?) the
-#  destination port, and confirm that they exist in the graph. Source node_id is the only required value, other
+#  given a splice_pair specification (from command-line), fully determine the source port and the destination
+#  port, and confirm that they exist in the graph. At least one of source and destination is required, other 
 #  values can be derived
 #
 #  Returns:
