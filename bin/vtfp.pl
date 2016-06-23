@@ -66,9 +66,6 @@ if($help) {
 }
 
 # allow multiple options to be separated by commas
-#@keys = split(/,/, join(',', @keys));
-#@vals = split(/,/, join(',', @vals));
-#@param_vals_fns = split(/,/, join(',', @param_vals_fns));
 @keys = map { split_csl($_); } @keys;
 @vals = map { split_csl($_); } @vals;
 @param_vals_fns = map { split_csl($_); } @param_vals_fns;
@@ -104,13 +101,17 @@ my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, 
 
 my $node_tree = process_vtnode(q[], $vtf_name, q[], $params, $globals);    # recursively generate the vtnode tree
 
-if(report_pv_ewi($node_tree, $logger)) { croak qq[Exiting after process_vtnode...\n]; }
+# if(report_pv_ewi($node_tree, $logger)) { croak qq[Exiting after process_vtnode...\n]; }
 
 my $flat_graph = flatten_tree($node_tree);
 
+my $cull_node_ids = []; # used to avoid reporting parameter substitution errors in pruned nodes
 if($splice_list or $prune_list) {
-	$flat_graph = splice_nodes($flat_graph, $splice_list, $prune_list);
+#	$flat_graph = splice_nodes($flat_graph, $splice_list, $prune_list);
+	($flat_graph, $cull_node_ids) = splice_nodes($flat_graph, $splice_list, $prune_list);
 }
+
+if(report_pv_ewi($node_tree, $logger, $cull_node_ids)) { croak qq[Exiting after process_vtnode...\n]; }
 
 foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
 
@@ -190,7 +191,7 @@ sub process_vtnode {
 	$vtnode->{cfg} = read_vtf_version_check($vtf_name, $MIN_TEMPLATE_VERSION, $globals->{template_path}, );
 	$params = process_subst_params($params, $vtnode->{cfg}->{subst_params}, [ $vtf_name ], $globals, $vtnode->{ewi});
 
-	apply_subst($vtnode->{cfg}, $params, $vtnode->{ewi});   # process any subst directives in cfg (just nodes and edges)
+	apply_subst($vtnode->{cfg}, $params, $vtnode->{ewi}, $vtnode->{node_prefix});   # process any subst directives in cfg (just nodes and edges)
 
 	my @vtf_nodes = ();
 	my @nonvtf_nodes = ();
@@ -403,9 +404,20 @@ sub in_param_store {
 #  replace subst directives with values
 #######################################
 sub apply_subst {
-	my ($cfg, $params, $ewi) = @_;   # process any subst directives in cfg (just nodes and edges?)
+	my ($cfg, $params, $ewi, $vtnode_prefix) = @_;   # process any subst directives in cfg (just nodes and edges?)
 
-	for my $elem (@{$cfg->{nodes}}, @{$cfg->{edges}}) {
+	for my $elem (@{$cfg->{nodes}}) {
+		my $id = $vtnode_prefix . ((ref $elem->{id} eq q[HASH] and exists $elem->{id}->{subst})? fetch_subst_value($elem->{id}, $params, $ewi): $elem->{id});
+		$ewi->{settag}->($id);
+
+		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
+		subst_walk($elem, $params, [], $ewi);
+		$ewi->{removelabel}->();
+
+	}
+	$ewi->{removetag}->();
+
+	for my $elem (@{$cfg->{edges}}) {
 		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
 		subst_walk($elem, $params, [], $ewi);
 		$ewi->{removelabel}->();
@@ -792,14 +804,14 @@ sub resolve_ifnull {
 
 
 sub report_pv_ewi {
-	my ($tree_node, $logger) = @_; 
+	my ($tree_node, $logger, $cull_node_ids) = @_; 
 	my $fatality = 0;
 
-	if($tree_node->{ewi}->{report}->(0, $logger)) { $fatality = 1; }
+	if($tree_node->{ewi}->{report}->(0, $logger, $cull_node_ids)) { $fatality = 1; }
 
 	# do the same recursively for any children
 	for my $tn (@{$tree_node->{children}}) {
-		if($tn->{ewi}->{report}->(0, $logger)) { $fatality = 1; }
+		if($tn->{ewi}->{report}->(0, $logger, $cull_node_ids)) { $fatality = 1; }
 	}
 
 	return $fatality; # should return some kind of error indicator, I think
@@ -976,6 +988,8 @@ sub splice_nodes {
 	}
 
 	$splice_candidates = prepare_cull($flat_graph, $splice_candidates);
+#	my @cull_node_ids = (map { $_->{node}->{id} } @{$splice_candidates->{cull_nodes}});
+	my @cull_node_ids = keys %{$splice_candidates->{cull_nodes}};
 
 	if(validate_splice_candidates($splice_candidates)) {
 		$flat_graph = final_splice($flat_graph, $splice_candidates);
@@ -984,7 +998,7 @@ sub splice_nodes {
 		croak q[proposed splicing was not valid];
 	}
 
-	return $flat_graph;
+	return ($flat_graph, \@cull_node_ids);
 }
 
 ###################################################################################################
@@ -1793,6 +1807,7 @@ sub mkewi {
 		push @labels, $init_label;
 	}
 	my @list = (); # list of messages
+	my $tag = q[];
 
 	return {
 		additem => sub {
@@ -1803,7 +1818,7 @@ sub mkewi {
 
 			my $full_ms = sprintf "(%s) - %s", $label, $ms;
 
-			push @list, { type => $type, subclass => $subclass, ms => $full_ms };
+			push @list, { type => $type, subclass => $subclass, ms => $full_ms, tag => $tag, };
 
 			return scalar @list;
 		},
@@ -1833,13 +1848,35 @@ sub mkewi {
 
 			return;
 		},
+		settag => sub {
+			my ($id) = @_;
+
+			my $ret = $tag;
+			$tag = $id;
+
+			return $ret;
+		},
+		removetag => sub {
+			my $ret = $tag;
+
+			$tag = q[];
+
+			return $ret;
+		},
 		report => sub {
-			my ($fatality_level, $logger) = @_;
+			my ($fatality_level, $logger, $exclude_list) = @_;
 			my $ewi_retstat = 0;
 			my %ewi_type_names = ( $EWI_ERROR => q[Error], $EWI_WARNING => q[Warning], $EWI_INFO => q[Info], );
 
 			for my $ewi_item (@list) {
-				if($ewi_item->{type} == $EWI_ERROR and $ewi_item->{subclass} <= $fatality_level) { $ewi_retstat = 1; }
+				if($ewi_item->{type} == $EWI_ERROR and $ewi_item->{subclass} <= $fatality_level) {
+					if($exclude_list and $ewi_item->{tag} and any { /$ewi_item->{tag}/ } @{$exclude_list}) {
+						return 0; # disregard this "error"
+					}
+					else {
+						$ewi_retstat = 1;
+					}
+				}
 
 				$logger->($VLMIN, join("\t", ($ewi_type_names{$ewi_item->{type}}, $ewi_item->{subclass}, $ewi_item->{ms},)));
 			}
