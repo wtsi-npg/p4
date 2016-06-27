@@ -21,7 +21,7 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"bamindex_decoder_opt","required":"yes","default":{"subst_constructor":{"vals":[ "bamindexdecoder", {"subst":"bid_implementation", "ifnull":"samtools"}, "cmd" ],"postproc":{"op":"concat","pad":"_"}}}},
+	{"id":"bamindex_decoder_opt","required":"yes","default":{"subst_constructor":{"vals":[ "bamindexdecoder", {"subst":"bid_implementation", "ifnull":"bambi"}, "cmd" ],"postproc":{"op":"concat","pad":"_"}}}},
 	{"id":"bamindexdecoder_cmd", "default":{"subst":{"subst":"bamindex_decoder_opt","required":"yes"}}},
 	{
 		"id":"bamindexdecoder_java_cmd",
@@ -41,11 +41,11 @@
 		}
 	},
 	{
-		"id":"bamindexdecoder_samtools_cmd",
+		"id":"bamindexdecoder_bambi_cmd",
 		"required":"yes",
 		"subst_constructor":{
 			"vals": [
-				{"subst":"bamindexdecoder_executable","ifnull":{"subst":"samtools_executable"},"required":"yes"},
+				{"subst":"bamindexdecoder_executable","ifnull":"bambi","required":"yes"},
 				"decode",
 				"--metrics-file", "__METRICS_FILE_OUT__",
 				{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--barcode-file", {"subst":"barcode_file", "required":"yes"} ]}}},
