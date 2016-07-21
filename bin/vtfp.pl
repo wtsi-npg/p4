@@ -1025,45 +1025,46 @@ sub register_splice_pairs {
 
 	for my $splice_pair (@{$splice_nodes}) {
 		# resolve ports
-		my $frsp = resolve_ports($splice_pair, $flat_graph);
+		my $frsps = resolve_ports($splice_pair, $flat_graph);
+		for my $frsp (@{$frsps}) {
 
-		# note: entries in splice_nodes should be fully resolved to port-level (for src at least)
+			# note: entries in splice_nodes should be fully resolved to port-level (for src at least)
 
-		# create candidate edge or pruning edge as appropriate
-		#  Note: we should never create replacement_edges with unclear "from" (pruning should cope by ignoring). If needed, create 
-		#   a new STDIN node and make it the data source (from)
-		my $from = q[];
-		if(exists $frsp->{src} and exists $frsp->{src}->{node}) {
-			$from = $frsp->{src}->{node}->{id} . ($frsp->{src}->{port} ? ":$frsp->{src}->{port}" : "");
+			# create candidate edge or pruning edge as appropriate
+			#  Note: we should never create replacement_edges with unclear "from" (pruning should cope by ignoring). If needed, create 
+			#   a new STDIN node and make it the data source (from)
+			my $from = q[];
+			if(exists $frsp->{src} and exists $frsp->{src}->{node}) {
+				$from = $frsp->{src}->{node}->{id} . ($frsp->{src}->{port} ? ":$frsp->{src}->{port}" : "");
+			}
+			my $to = q[];
+			if(exists $frsp->{dst} and exists $frsp->{dst}->{node}) {
+				$to = $frsp->{dst}->{node}->{id} . ($frsp->{dst}->{port} ? ":$frsp->{dst}->{port}" : "");
+			}
+
+			# if splicing, generate a STDIN node for an empty from, and a STDOUT node for an empty to
+			if($splice_type == $SPLICE) {
+				next if(any { $_->{from} eq $from and $_->{to} eq $to} @{$flat_graph->{edges}}); # NOOP request
+
+				if(not $from) { my $from_node = $stdin_node->($flat_graph); push @{$splice_candidates->{new_nodes}}, $from_node; $from = $from_node->{id}; }
+				if(not $to) { my $to_node = $stdout_node->($flat_graph); push @{$splice_candidates->{new_nodes}}, $to_node; $to = $to_node->{id}; }
+			}
+
+			my $eid = ((exists $frsp->{src} and exists $frsp->{src}->{node}->{id})? $frsp->{src}->{node}->{id}: q[STDIN]) . q[_to_] . ((exists $frsp->{dst} and exists $frsp->{dst}->{node}) ? $frsp->{dst}->{node}->{id} : q[STDOUT]);
+			push @{$edge_list}, { id => $eid, from => $from, to => $to};
+				
+			if(exists $frsp->{src} and exists $frsp->{src}->{node}) { $preserve_nodes->{$frsp->{src}->{node}->{id}} = 1; }
+			if(exists $frsp->{dst} and exists $frsp->{dst}->{node}) { $preserve_nodes->{$frsp->{dst}->{node}->{id}} = 1; }
+
+			if(not any { $_->{node_info}->{node}->{id} eq $frsp->{pioneer}->{node}->{id} } @{$frontier}) { # avoid duplicate node entries in frontier stack
+				push @{$frontier}, { node_info => $frsp->{pioneer}, };
+			}
+
+			# the relevant input/output edge to/from each pioneer node should be marked for culling
+			my $pioneer_edge = $frsp->{pioneer_edge};
+			my $edge_label = $pioneer_edge->{id} = join q/_/, ($pioneer_edge->{from}, $pioneer_edge->{to});
+			$cull_edges->{$edge_label} = $pioneer_edge;
 		}
-		my $to = q[];
-		if(exists $frsp->{dst} and exists $frsp->{dst}->{node}) {
-			$to = $frsp->{dst}->{node}->{id} . ($frsp->{dst}->{port} ? ":$frsp->{dst}->{port}" : "");
-		}
-
-		# if splicing, generate a STDIN node for an empty from, and a STDOUT node for an empty to
-		if($splice_type == $SPLICE) {
-			next if(any { $_->{from} eq $from and $_->{to} eq $to} @{$flat_graph->{edges}}); # NOOP request
-
-			if(not $from) { my $from_node = $stdin_node->($flat_graph); push @{$splice_candidates->{new_nodes}}, $from_node; $from = $from_node->{id}; }
-			if(not $to) { my $to_node = $stdout_node->($flat_graph); push @{$splice_candidates->{new_nodes}}, $to_node; $to = $to_node->{id}; }
-		}
-
-		my $eid = ((exists $frsp->{src} and exists $frsp->{src}->{node}->{id})? $frsp->{src}->{node}->{id}: q[STDIN]) . q[_to_] . ((exists $frsp->{dst} and exists $frsp->{dst}->{node}) ? $frsp->{dst}->{node}->{id} : q[STDOUT]);
-		my $new_edge = { id => $eid, from => $from, to => $to};
-		push @{$edge_list}, $new_edge;
-			
-		if(exists $frsp->{src} and exists $frsp->{src}->{node}) { $preserve_nodes->{$frsp->{src}->{node}->{id}} = 1; }
-		if(exists $frsp->{dst} and exists $frsp->{dst}->{node}) { $preserve_nodes->{$frsp->{dst}->{node}->{id}} = 1; }
-
-		if(not any { $_->{node_info}->{node}->{id} eq $frsp->{pioneer}->{node}->{id} } @{$frontier}) { # avoid duplicate node entries in frontier stack
-			push @{$frontier}, { node_info => $frsp->{pioneer}, };
-		}
-
-		# the relevant input/output edge to/from each pioneer node should be marked for culling
-		my $pioneer_edge = $frsp->{pioneer_edge};
-		my $edge_label = $pioneer_edge->{id} = join q/_/, ($pioneer_edge->{from}, $pioneer_edge->{to});
-		$cull_edges->{$edge_label} = $pioneer_edge;
 	}
 
 	return $splice_candidates;
@@ -1259,13 +1260,14 @@ sub final_splice {
 	return $flat_graph;
 }
 
-###############################################################################################################
+################################################################################################
 # resolve_ports:
-#  given a splice_pair specification (from command-line), fully determine the source port and the destination
-#  port, and confirm that they exist in the graph. At least one of source and destination is required, other 
-#  values can be derived
+#  given a splice_pair specification, fully determine the [set of] source and destination ports
+#  and confirm that they exist in the graph. At least one of source and destination is required,
+#  other values can be derived
 #
 #  Returns:
+#  [
 #   {
 #     src => {
 #       node => { # node info from graph # },
@@ -1285,53 +1287,133 @@ sub final_splice {
 #                  out => [ # list of outbound edges ],
 #       }
 #     },
-#   }
-###############################################################################################################
+#   },
+#   ...
+#  ]
+################################################################################################
 sub resolve_ports {
 	my ($splice_pair, $flat_graph) = @_;
-	my $ret = {};
+	my $retset = [];
 
 	# use -1 argument for split to distinguish between "a" (node a) and "a-" (a and downstream nodes)
 	my ($src_spec, $dst_spec) = (split q/-/, $splice_pair, -1);
 
 	my ($src, $dst);
 
-	$src = resolve_endpoint($src_spec, $SRC);
+	# TBD: find set of src, find set of dst, if both sets are not empty, produce Cartesian product; if one is empty, populate the other ends of the non-empty one; both empty croak
+
+	$src = resolve_endpoint($src_spec, $SRC, $flat_graph);
 	if(defined $dst_spec) {
-		$dst = resolve_endpoint($dst_spec, $DST);
-	}
-	else {
-		$dst = resolve_endpoint($src_spec, $DST);
+		$dst = resolve_endpoint($dst_spec, $DST, $flat_graph);
 	}
 
-	if($src) {
-		$ret->{src} = $src->{endpoint}->{node_info};
-		$ret->{src}->{port} = $src->{endpoint}->{port};
-	}
-	if($dst) {
-		$ret->{dst} = $dst->{endpoint}->{node_info};
-		$ret->{dst}->{port} = $dst->{endpoint}->{port};
+	if(not defined $src) {
+		croak q[badly specified splice/prune request: ], $splice_pair;
 	}
 
-	if(defined $src) {
-		$ret->{pioneer} = $src->{pioneer}->{node_info};
-		$ret->{pioneer_edge} = $src->{pioneer}->{edge};
-	}
-	elsif(defined $dst) {
-		$ret->{pioneer} = $dst->{pioneer}->{node_info};
-		$ret->{pioneer_edge} = $dst->{pioneer}->{edge};
+	if(@{$src} > 0) {
+		for my $src_entry (@{$src}) {
+			my $ret = {};
+
+			if(defined $dst) {
+				if(@{$dst} > 0) { # src X dst (Cartesian product)
+					for my $dst_entry (@{$src}) {
+						$ret->{src} = $src_entry->{endpoint}->{node_info};
+						$ret->{src}->{port} = $src_entry->{endpoint}->{port};
+						$ret->{dst} = $dst_entry->{endpoint}->{node_info};
+						$ret->{dst}->{port} = $dst_entry->{endpoint}->{port};
+						$ret->{pioneer} = $src_entry->{pioneer}->{node_info};
+						$ret->{pioneer_edge} = $src_entry->{pioneer}->{edge};
+
+						push @{$retset}, $ret;
+					}
+				}
+				else { # create one undef dst endpoint perl src entry
+					$ret->{src} = $src_entry->{endpoint}->{node_info};
+					$ret->{src}->{port} = $src_entry->{endpoint}->{port};
+					$ret->{pioneer} = $src_entry->{pioneer}->{node_info};
+					$ret->{pioneer_edge} = $src_entry->{pioneer}->{edge};
+
+					push @{$retset}, $ret;
+				}
+			}
+			else { # resolve one dst endpoint per src entry
+				# TBD: I think undefined $dst_spec (with resulting undefined $dst) doesn't makes sense if a port is specified in $src_spec. Detect this and croak.
+				my $dst_entry = _resolve_endpoint($src_entry->{endpoint_spec}, $DST, $flat_graph);
+
+				$ret->{src} = $src_entry->{endpoint}->{node_info};
+				$ret->{src}->{port} = $src_entry->{endpoint}->{port};
+				$ret->{dst} = $dst_entry->{endpoint}->{node_info};
+				$ret->{dst}->{port} = $dst_entry->{endpoint}->{port};
+				$ret->{pioneer} = $src_entry->{pioneer}->{node_info};
+				$ret->{pioneer_edge} = $src_entry->{pioneer}->{edge};
+
+				push @{$retset}, $ret;
+			}
+		}
 	}
 	else {
-		croak q[No src or dst spec identified in splice pair: ], $splice_pair;
+		my $ret = {};
+
+		unless($dst and @{$dst} > 0) {
+			croak q[badly specified splice/prune request: ], $splice_pair;
+		}
+
+		for my $dst_entry (@{$dst}) {
+			$ret->{src} = q[];
+			$ret->{dst} = $dst_entry->{endpoint}->{node_info};
+			$ret->{dst}->{port} = $dst_entry->{endpoint}->{port};
+			$ret->{pioneer} = $dst_entry->{pioneer}->{node_info};
+			$ret->{pioneer_edge} = $dst_entry->{pioneer}->{edge};
+
+			push @{$retset}, $ret;
+		}
 	}
 
 	unless($src or $dst) { croak q[No src or dst spec in splice pair: ], $splice_pair; }
 
-	return $ret;
+	return $retset;
 }
 
+####################################################################################
+# resolve_endpoint:
+#  expand possibly wildcarded endpoint_spec, then fully resolve individual endpoints
+####################################################################################
 sub resolve_endpoint {
-	my ($endpoint_spec, $which_end) = @_;
+	my ($endpoint_spec, $which_end, $flat_graph) = @_;
+
+	return [] unless($endpoint_spec);
+
+	my @ep_set = ();
+
+	my ($node_id, $port) = (split q/:/, $endpoint_spec, -1);
+	my $full_node_set = get_nodes_info($node_id, $flat_graph);
+	my $port_re;
+	if($port) { $port_re = qr/$port/; }
+	for my $node_info (@{$full_node_set}) {
+		# if the node has a port which matches the port value (which may be wildcarded) resolve
+		#  the node:port combination and add it to the list
+		my @all_edges = (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}});
+		my @port_ids = ();
+		if($port_re) {
+			push @port_ids, (map { $_->{from} } (grep { $_->{from} =~ /\A$port_re\z/smx } (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}})));
+			push @port_ids, (map { $_->{to} } (grep { $_->{to} =~ /\A$port_re\z/smx } (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}})));
+		}
+		else {
+			push @port_ids, $port;
+		}
+		for my $port_id (@port_ids) {
+			my $node_port = $node_info->{node}->{id} . ($port_id ? ":$port_id" : "");
+			my $rep = _resolve_endpoint($node_port, $which_end, $flat_graph);
+			push @ep_set, $rep;
+		}
+	}
+
+	return \@ep_set;
+}
+
+sub _resolve_endpoint {
+	my ($endpoint_spec, $which_end, $flat_graph) = @_;
 
 	my $ret = {};
 
@@ -1350,10 +1432,11 @@ sub resolve_endpoint {
 	my $node_info = get_node_info($node_id, $flat_graph); # fetch node and its in and out edges
 	if(not $node_info) { croak q[no node ], $node_id, q[ found when searching for ports info]; }
 
+	$ret->{endpoint_spec} = $endpoint_spec;
 	if(defined $port) {
 		my ($std_port_name, $in_out, $near_end, $far_end) = ($which_end == $SRC) ? qw/ use_STDOUT out from to / : qw/ use_STDIN in to from /;
 
-		# make sure the named port actually exists on this node (by checking the edges)
+		# make sure the named port actually exists on this node (by checking the edges) 
 		if($port and not any { $_ eq $port } map { (split q/:/, $_->{$near_end})[1] } @{$node_info->{all_edges}->{$in_out}}) { croak q[port ], $port, q[ is not a port of node ], $node_id; }
 		# if port name is q[], STD[IN|OUT] is implied. Is this possible for this node?
 		if(not $port and $node_info->{node}->{type} !~ /\A(IN|OUT|RA)FILE\Z/smx and not $node_info->{node}->{$std_port_name}) { croak q[port not specified by name, but ], $std_port_name, q[ is false for node ], $node_id; }
@@ -1383,6 +1466,7 @@ sub resolve_endpoint {
 		if($pioneer_edge) {
 			($node_id, $port) = split q/:/, $pioneer_edge->{$far_end}, -1;
 			$node_info = get_node_info($node_id, $flat_graph);
+
 		}
 		else { # endpoint is STDIN/STDOUT
 			return;
@@ -1409,6 +1493,30 @@ sub get_node_info {
 	my $out_edges = [ (grep { $_->{from} =~ /^$node_id(:|$)/; } @{$flat_graph->{edges}}) ];
 
 	return { node => $node, all_edges => { in => $in_edges, out => $out_edges } };
+}
+
+#####################################################
+# get_nodes_info:
+#  fetch nodes and their in and out edges. Allows use
+#   of regexp for id, so returns a set of nodes
+#####################################################
+sub get_nodes_info {
+	my ($node_id_re, $flat_graph) = @_;
+	my $ret = {};
+	my @retset = ();
+
+	my $re = qr/$node_id_re/;
+	my @nodes = (grep { $_->{id} =~ /\A$re\z/smx } @{$flat_graph->{nodes}});
+	return if(@nodes < 1);
+
+	for my $node (@nodes) {
+		my $in_edges = [ (grep { $_->{to} =~ /^$node->{id}(:|$)/; } @{$flat_graph->{edges}}) ];
+		my $out_edges = [ (grep { $_->{from} =~ /^$node->{id}(:|$)/; } @{$flat_graph->{edges}}) ];
+
+		push @retset, { node => $node, all_edges => { in => $in_edges, out => $out_edges } };
+	}
+
+	return \@retset;
 }
 
 sub remove_port {
