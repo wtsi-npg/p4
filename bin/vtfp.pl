@@ -1317,7 +1317,7 @@ sub resolve_ports {
 
 			if(defined $dst) {
 				if(@{$dst} > 0) { # src X dst (Cartesian product)
-					for my $dst_entry (@{$src}) {
+					for my $dst_entry (@{$dst}) {
 						$ret->{src} = $src_entry->{endpoint}->{node_info};
 						$ret->{src}->{port} = $src_entry->{endpoint}->{port};
 						$ret->{dst} = $dst_entry->{endpoint}->{node_info};
@@ -1389,22 +1389,23 @@ sub resolve_endpoint {
 	my ($node_id, $port) = (split q/:/, $endpoint_spec, -1);
 	my $full_node_set = get_nodes_info($node_id, $flat_graph);
 	my $port_re;
-	if($port) { $port_re = qr/$port/; }
+	if($port) { $port_re = qr/:$port/; } # this feels shaky
 	for my $node_info (@{$full_node_set}) {
 		# if the node has a port which matches the port value (which may be wildcarded) resolve
 		#  the node:port combination and add it to the list
 		my @all_edges = (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}});
-		my @port_ids = ();
+		my @endpoint_names = ();
 		if($port_re) {
-			push @port_ids, (map { $_->{from} } (grep { $_->{from} =~ /\A$port_re\z/smx } (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}})));
-			push @port_ids, (map { $_->{to} } (grep { $_->{to} =~ /\A$port_re\z/smx } (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}})));
+			push @endpoint_names, (map { $_->{from} } (grep { $_->{from} =~ /$port_re\z/smx } (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}})));
+			push @endpoint_names, (map { $_->{to} } (grep { $_->{to} =~ /$port_re\z/smx } (@{$node_info->{all_edges}->{in}}, @{$node_info->{all_edges}->{out}})));
 		}
 		else {
-			push @port_ids, $port;
+			push @endpoint_names, $node_info->{node}->{id} . (defined $port ? ":$port" : "");
 		}
-		for my $port_id (@port_ids) {
-			my $node_port = $node_info->{node}->{id} . ($port_id ? ":$port_id" : "");
-			my $rep = _resolve_endpoint($node_port, $which_end, $flat_graph);
+
+		# we have the names of the endpoints, now fetch more info
+		for my $endpoint_name (@endpoint_names) {
+			my $rep = _resolve_endpoint($endpoint_name, $which_end, $flat_graph);
 			push @ep_set, $rep;
 		}
 	}
