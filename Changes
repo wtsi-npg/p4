@@ -6,7 +6,7 @@ release 0.18.2
  - fix bamindexdecoder.json template: add pack option to bamindexdecoder_java_cmd array to handle undefined parameters; change default implementation from "samtools decode" to java BamIndexDecoder
 
 release 0.18.1
- - corrected mistyped attribute name additem which could cause compilation errors
+- corrected typo (add_item instead of additem) which can cause compilation failure
 
 release 0.18.0
 - stage1 analysis : update to bcl_phix_deplex_wtsi_stage1_template; addition of new subgraphs

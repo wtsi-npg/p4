@@ -470,7 +470,7 @@ sub subst_walk {
 	elsif(ref $elem eq q[JSON::XS::Boolean]) {
 	}
 	else {
-		$ewi->{add_item}->($EWI_WARNING, 2, "REF TYPE $r currently not processable");
+		$ewi->{additem}->($EWI_WARNING, 2, "REF TYPE $r currently not processable");
 	}
 
 	return;
