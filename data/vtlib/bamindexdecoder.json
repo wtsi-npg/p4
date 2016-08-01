@@ -21,7 +21,7 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"bamindex_decoder_opt","required":"yes","default":{"subst_constructor":{"vals":[ "bamindexdecoder", {"subst":"bid_implementation", "ifnull":"samtools"}, "cmd" ],"postproc":{"op":"concat","pad":"_"}}}},
+	{"id":"bamindex_decoder_opt","required":"yes","default":{"subst_constructor":{"vals":[ "bamindexdecoder", {"subst":"bid_implementation", "ifnull":"java"}, "cmd" ],"postproc":{"op":"concat","pad":"_"}}}},
 	{"id":"bamindexdecoder_cmd", "default":{"subst":{"subst":"bamindex_decoder_opt","required":"yes"}}},
 	{
 		"id":"bamindexdecoder_java_cmd",
@@ -37,7 +37,8 @@
 				{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "BARCODE_FILE", {"subst":"barcode_file", "required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "MAX_NO_CALLS", {"subst":"bid_max_no_calls"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "CONVERT_LOW_QUALITY_TO_NO_CALL", {"subst":"bid_convert_low_quality_to_no_call"} ],"postproc":{"op":"concat","pad":"="}}}}
-			]
+			],
+			"postproc":{"op":"pack"}
 		}
 	},
 	{
