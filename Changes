@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add parameters to allow selection of java or bambi (default) implementations of i2b and decode
+
 release 0.18.2
  - propagate any 'AH' fields provided by the aligner when providing full SQ headers (bwa0.7.15)
  - fix bamindexdecoder.json template: add pack option to bamindexdecoder_java_cmd array to handle undefined parameters; change default implementation from "samtools decode" to java BamIndexDecoder
