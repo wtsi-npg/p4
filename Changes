@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+- final_output_prep changes to support optional targeted stats files.
+
 release 0.18.0
 - stage1 analysis : update to bcl_phix_deplex_wtsi_stage1_template; addition of new subgraphs
 - added bcftools_genotype_call template for library merge gtcheck qc test
