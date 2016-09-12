@@ -993,7 +993,7 @@ sub splice_nodes {
 		$flat_graph = final_splice($flat_graph, $splice_candidates);
 	}
 	else {
-		croak q[proposed splicing was not valid];
+		$logger->($VLFATAL, q[ERROR: proposed splice/prune specification was not valid]);
 	}
 
 	return ($flat_graph, \@cull_node_ids);
@@ -1170,7 +1170,6 @@ sub validate_splice_candidates {
 			}
 		}
 	}
-	# replacement edges should have neither end terminating in cull_nodes
 	my @keep_edges = ();
 	for my $edge (@{$splice_candidates->{replacement_edges}}) {
 		my ($src_node_id, $src_port) = split q{:}, $edge->{from};
@@ -1178,6 +1177,7 @@ sub validate_splice_candidates {
 		my $cull_from = $cull_nodes->{$src_node_id};
 		my $cull_to = $cull_nodes->{$dst_node_id};
 
+		# replacement edges should have neither end terminating in cull_nodes
 		if(not $cull_from and not $cull_to) {
 			$logger->($VLMIN, q[INFO: keeping replacement edge ], $edge->{id}, q[ since it starts and ends in unculled nodes]);
 			push @keep_edges, $edge;
@@ -1185,8 +1185,18 @@ sub validate_splice_candidates {
 		elsif($cull_from and $cull_to) {
 			$logger->($VLMIN, q[INFO: Removing replacement edge ], $edge->{id}, q[ since it starts and ends in culled nodes]);
 		}
-		else { 
+		else {
 			$logger->($VLMED, q[Warning: Removing replacement edge ], $edge->{id}, q[ since it links a culled and unculled node]);
+		}
+
+		# replacement edges must also start and end in ports that appear in culled edges or new_nodes
+		if(not any { $_->{id} eq $edge->{from}} @{$splice_candidates->{new_nodes}} and not any { $_->{from} eq $edge->{from}} (values %{$splice_candidates->{cull_edges}})) {
+			$logger->($VLMIN, q[ERROR: Replacement edge ], $edge->{id}, q[ (from:], $edge->{from}, q[ to:], $edge->{to}, q[) starts in a port that does not appear in culled edges or new_nodes]);
+			$valid = 0;
+		}
+		if(not any { $_->{id} eq $edge->{to}} @{$splice_candidates->{new_nodes}} and not any { $_->{to} eq $edge->{to}} (values %{$splice_candidates->{cull_edges}})) {
+			$logger->($VLMIN, q[ERROR: Replacement edge ], $edge->{id}, q[ (from:], $edge->{from}, q[ to:], $edge->{to}, q[) ends in a port that does not appear in culled edges or new_nodes]);
+			$valid = 0;
 		}
 	}
 	$splice_candidates->{replacement_edges} = \@keep_edges;
@@ -1205,7 +1215,8 @@ sub validate_splice_candidates {
 		if(not $cull_nodes->{$dst_node_id}
 		   and not any { $_->{to} eq $edge->{to} } @{$replacement_edges}
 		   and not any { $_->{to} eq $edge->{to} } @{$prune_edges}) {
-			$logger->($VLMED, q[Warning: Culled edge "], $edge->{id}, q[" goes to "], $edge->{to}, q[", but the node is not culled and the port has no replacement]);
+			$logger->($VLMIN, q[ERROR: Culled edge "], $edge->{id}, q[" goes to "], $edge->{to}, q[", but the node is not culled and the port has no replacement]);
+			$valid = 0;
 		}
 	}
 
@@ -1221,7 +1232,7 @@ sub validate_splice_candidates {
 	}
 	for my $ep (keys %endpoints) {
 		if(@{$endpoints{$ep}} > 1) {
-			$logger->($VLFATAL, q[ERROR: Edge endpoint ], $ep, q[ appears in multiple edges: ], join q[;], @{$endpoints{$ep}});
+			$logger->($VLMED, q[ERROR: Edge endpoint ], $ep, q[ appears in multiple edges: ], join q[;], @{$endpoints{$ep}});
 			$valid = 0;
 		}
 	}
