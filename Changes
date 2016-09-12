@@ -1,7 +1,16 @@
 CHANGES LOG
 -----------
 
-- final_output_prep changes to support optional targeted stats files.
+ - add ability to splice and prune nodes from the final graph
+ - final_output_prep changes to support optional targeted stats files.
+ - use threaded bamsormadup in place of bamsort for coord sort
+
+release 0.18.2
+ - propagate any 'AH' fields provided by the aligner when providing full SQ headers (bwa0.7.15)
+ - fix bamindexdecoder.json template: add pack option to bamindexdecoder_java_cmd array to handle undefined parameters; change default implementation from "samtools decode" to java BamIndexDecoder
+
+release 0.18.1
+- corrected typo (add_item instead of additem) which can cause compilation failure
 
 release 0.18.0
 - stage1 analysis : update to bcl_phix_deplex_wtsi_stage1_template; addition of new subgraphs
