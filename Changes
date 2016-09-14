@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+ - bwa mem flags default changes and additions
+    don't use -T by default
+    [new flag] use -K 100000000 (reads per thread, large value to make alignment runs replicable)
+    [new flag] use -Y to soft clip supplementary alignments instead of hard clipping
  - use threaded bamsormadup in place of bamsort for coord sort
 
 release 0.18.2
