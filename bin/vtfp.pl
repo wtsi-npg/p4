@@ -989,7 +989,7 @@ sub splice_nodes {
 	$splice_candidates = prepare_cull($flat_graph, $splice_candidates);
 	my @cull_node_ids = keys %{$splice_candidates->{cull_nodes}}; # this list of removed nodes is used to suppress irrelevant error messages
 
-	if(validate_splice_candidates($splice_candidates)) {
+	if(validate_splice_candidates($splice_candidates, $flat_graph)) {
 		$flat_graph = final_splice($flat_graph, $splice_candidates);
 	}
 	else {
@@ -1149,7 +1149,7 @@ sub prepare_cull {
 }
 
 sub validate_splice_candidates {
-	my ($splice_candidates) = @_;
+	my ($splice_candidates, $flat_graph) = @_;
 	my $valid = 1;
 
 	for my $edge (@{$splice_candidates->{replacement_edges}}) {
@@ -1201,18 +1201,20 @@ sub validate_splice_candidates {
 	}
 	$splice_candidates->{replacement_edges} = \@keep_edges;
 
-	#  the endpoints of culled edges must either refer to culled nodes, pruned ports or endpoints of replacement edges
+	#  the endpoints of culled edges must either not appear in the flat_graph, or refer to culled nodes, pruned ports or endpoints of replacement edges
 	for my $edge (values %{$splice_candidates->{cull_edges}}) {
 		my ($src_node_id, $src_port) = split q{:}, $edge->{from};
 		my ($dst_node_id, $dst_port) = split q{:}, $edge->{to};
 
-		if(not $cull_nodes->{$src_node_id}
+		if(_port_in_graph($edge->{from}, $flat_graph)
+		   and not $cull_nodes->{$src_node_id}
 		   and not any { $_->{from} eq $edge->{from} } @{$replacement_edges}
 		   and not any { $_->{from} eq $edge->{from} } @{$prune_edges}) {
 			$logger->($VLMED, q[Warning: Culled edge "], $edge->{id}, q[" comes from "], $edge->{from}, q[", but the node is not culled and the port has no replacement]);
 		}
 
-		if(not $cull_nodes->{$dst_node_id}
+		if(_port_in_graph($edge->{to}, $flat_graph)
+		   and not $cull_nodes->{$dst_node_id}
 		   and not any { $_->{to} eq $edge->{to} } @{$replacement_edges}
 		   and not any { $_->{to} eq $edge->{to} } @{$prune_edges}) {
 			$logger->($VLMIN, q[ERROR: Culled edge "], $edge->{id}, q[" goes to "], $edge->{to}, q[", but the node is not culled and the port has no replacement]);
@@ -1238,6 +1240,20 @@ sub validate_splice_candidates {
 	}
 
 	return $valid;
+}
+
+sub _port_in_graph {
+	my ($edge_endpoint, $flat_graph) = @_;
+
+	return any
+               { /$edge_endpoint/ }
+               (
+                         map
+                         { ref $_->{cmd} eq q[ARRAY]?
+                             @{$_->{cmd}}[1..$#{$_->{cmd}}]:
+                             $_->{cmd} }
+                         (grep { $_->{type} eq q[EXEC] } @{$flat_graph->{nodes}})
+               );
 }
 
 ###########################################
