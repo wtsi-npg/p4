@@ -5,6 +5,8 @@ CHANGES LOG
     don't use -T by default
     [new flag] use -K 100000000 (reads per thread, large value to make alignment runs replicable)
     [new flag] use -Y to soft clip supplementary alignments instead of hard clipping
+ - add ability to splice and prune nodes from the final graph
+ - final_output_prep changes to support optional targeted stats files.
  - use threaded bamsormadup in place of bamsort for coord sort
 
 release 0.18.2

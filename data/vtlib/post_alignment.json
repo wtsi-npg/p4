@@ -87,7 +87,15 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bam12auxmerge", "level=0", "rankstrip=1", "ranksplit=0", "zztoname=0", "clipreinsert=1", "__NO_ALN_BAM_IN__"]
+		"cmd":[
+			"bam12auxmerge",
+			"level=0",
+			{"subst":"rankstrip_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "rankstrip", {"subst":"rankstrip_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			"ranksplit=0",
+			"zztoname=0",
+			{"subst":"clipreinsert_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "clipreinsert", {"subst":"clipreinsert_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			"__NO_ALN_BAM_IN__"
+		]
 	}
 ],
 "edges":[
