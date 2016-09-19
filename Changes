@@ -8,6 +8,7 @@ CHANGES LOG
  - add ability to splice and prune nodes from the final graph
  - final_output_prep changes to support optional targeted stats files.
  - use threaded bamsormadup in place of bamsort for coord sort
+ - add parameters to allow selection of java or bambi (default) implementations of i2b and decode
 
 release 0.18.2
  - propagate any 'AH' fields provided by the aligner when providing full SQ headers (bwa0.7.15)
