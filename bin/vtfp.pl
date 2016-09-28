@@ -1246,14 +1246,16 @@ sub _port_in_graph {
 	my ($edge_endpoint, $flat_graph) = @_;
 
 	return any
-               { /$edge_endpoint/ }
-               (
-                         map
-                         { ref $_->{cmd} eq q[ARRAY]?
-                             @{$_->{cmd}}[1..$#{$_->{cmd}}]:
-                             $_->{cmd} }
-                         (grep { $_->{type} eq q[EXEC] } @{$flat_graph->{nodes}})
-               );
+		{ defined and /$edge_endpoint/ }
+		(
+			map
+			{
+				ref $_->{cmd} eq q[ARRAY]?
+				@{$_->{cmd}}[1..$#{$_->{cmd}}]:
+				$_->{cmd}
+			}
+			(grep { $_->{type} eq q[EXEC] } @{$flat_graph->{nodes}})
+		);
 }
 
 ###########################################
