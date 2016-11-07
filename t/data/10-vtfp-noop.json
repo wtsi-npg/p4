@@ -1,0 +1,24 @@
+{
+"description":"template with nothing for vtfp to process (no parameter substition, for example); used to demonstrate that vtfp processing (without absolute_program_paths) will have no effect on the nodes and edges",
+"version":"1.0",
+"nodes":[
+	{
+		"id":"hello",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[ "echo", "Hello" ]
+	},
+	{
+		"id":"rev",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[ "rev" ]
+	}
+],
+"edges":[
+	{ "id":"e0", "from":"hello", "to":"rev" }
+]
+}
+
