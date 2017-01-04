@@ -1487,7 +1487,7 @@ sub _resolve_endpoint {
 
 		# if port in the endpoint_spec is not explicitly named, identify the appropriate up- or downstream edge and node, depending on which end of the splice pair we have. These must be unambiguous.
 		if(@{$node_info->{all_edges}->{$in_out}} > 1) { croak q[Splicing error, node ], $node_id, q[ node must have only one ], $in_out, q[ port when implicit, found ], $in_out, q[ports ], join q/,/, (map { q["] . $_->{$near_end} . q["] } @{$node_info->{all_edges}->{$in_out}}); }
-		if(@{$node_info->{all_edges}->{$in_out}} < 1 and $node_info->{node}->{type} !~ /\A(IN|OUT)FILE\Z/smx and not $node_info->{node}->{$std_port_name,}) {
+		if(@{$node_info->{all_edges}->{$in_out}} < 1 and $node_info->{node}->{type} !~ /\A(IN|OUT|RA)FILE\Z/smx and not $node_info->{node}->{$std_port_name,}) {
 			croak q[Splicing error, node ], $node_id, q[ node must have one ], $in_out, q[port (unless ], $std_port_name, q[ is true) when implicit, but no ], $in_out, q[ports found];
 		}
 
@@ -1562,12 +1562,12 @@ sub remove_port {
 		}
 		else {
 			if($type == $SRC) {
-				if(not $node->{use_STDOUT}) { carp q[Trying to switch off STDOUT in node ], $node_id, q[, but it is already off]; }
+				if(not $node->{use_STDOUT} and $node->{type} !~ /\A(IN|OUT|RA)FILE\Z/smx) { carp q[Trying to switch off STDOUT in node ], $node_id, q[, but it is already off]; }
 
 				$node->{use_STDOUT} = JSON::false;
 			}
 			elsif($type == $DST) {
-				if(not $node->{use_STDIN}) { carp q[Trying to switch off STDIN in node ], $node_id, q[, but it is already off]; }
+				if(not $node->{use_STDIN} and $node->{type} !~ /\A(IN|OUT|RA)FILE\Z/smx) { carp q[Trying to switch off STDIN in node ], $node_id, q[, but it is already off]; }
 
 				$node->{use_STDIN} = JSON::false;
 			}
