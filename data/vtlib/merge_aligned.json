@@ -97,7 +97,7 @@
 		"use_STDIN": false,
 		"use_STDOUT": true,
 		"orig_cmd":{"subst":"merge_seqchksum"},
-		"cmd":[ "seqchksum_merge.pl", "-n 1",{"subst":"incrams_seqchksum"} ],
+		"cmd":[ "seqchksum_merge.pl", {"subst":"incrams_seqchksum"} ],
 		"description": "merge individual cram seqchksum (crc32prod) files"
 	},
 	{
