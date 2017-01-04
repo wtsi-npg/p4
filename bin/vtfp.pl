@@ -417,7 +417,9 @@ sub apply_subst {
 	$ewi->{removetag}->();
 
 	for my $elem (@{$cfg->{edges}}) {
-		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
+		my $id = $elem->{id};
+		$id ||= q[NOID];
+		$ewi->{addlabel}->(q{assigning to id:[} . $id . q{]});
 		subst_walk($elem, $params, [], $ewi);
 		$ewi->{removelabel}->();
 	}
@@ -1275,7 +1277,7 @@ sub final_splice {
 	push @{$flat_graph->{nodes}}, @{$splice_candidates->{new_nodes}};
 
 	# remove from flat_graph the edges whose ids are in cull_edges
-	$flat_graph->{edges} = [ (grep { not $cull_edges->{$_->{id}} } @{$flat_graph->{edges}}) ];
+	$flat_graph->{edges} = [ (grep { $_->{id} and not $cull_edges->{$_->{id}} } @{$flat_graph->{edges}}) ];
 
 	# add new edges
 	push @{$flat_graph->{edges}}, @{$splice_candidates->{replacement_edges}};
