@@ -44,7 +44,7 @@ subtest 'test simple graph without using -t option' => sub {
     plan tests => 3;
 
     # create input data file
-    $test->write($infile, q[qwertyuiop]);
+    $test->write($infile, qq[qwertyuiop\n]);
     if($? != 0) { croak qq[Failed to create test input file $infile]; }
 
     my $exit_status = $test->run(chdir => $test->curdir, args => "-v 0 -s -x $graph_file");
@@ -62,7 +62,7 @@ subtest 'test simple graph siphoning off output from one node to a temporary fil
     my $teefile1 = q[teefile1.txt];
 
     # create input data file
-    $test->write($infile, q[qwertyuiop]);
+    $test->write($infile, qq[qwertyuiop\n]);
     if($? != 0) { croak qq[Failed to create test input file $infile]; }
 
     my $exit_status = $test->run(chdir => $test->curdir, args => "-v 0 -t cap=$teefile1 -s -x $graph_file");
@@ -77,7 +77,7 @@ subtest 'test simple graph siphoning off output from one node to a temporary fil
     $read_file = $test->read(\$outdata, $teefile1);
     ok($read_file, qq[read intermediate output from $teefile1]);
 
-    is($outdata,"QWERTYUIOP","expected intermediate post-cap output (QWERTYUIOP)");
+    is($outdata,"QWERTYUIOP\n","expected intermediate post-cap output (QWERTYUIOP)");
 };
 
 subtest 'test simple graph siphoning off output from two nodes to temporary files using the -t option' => sub {
@@ -86,7 +86,7 @@ subtest 'test simple graph siphoning off output from two nodes to temporary file
     my $teefile2 = q[teefile2.txt];
 
     # create input data file
-    $test->write($infile, q[qwertyuiop]);
+    $test->write($infile, qq[qwertyuiop\n]);
     if($? != 0) { croak qq[Failed to create test input file $infile]; }
 
     my $exit_status = $test->run(chdir => $test->curdir, args => qq[-v 0 -t "cap=$teefile1;rev=$teefile2" -s -x $graph_file]);
@@ -101,7 +101,7 @@ subtest 'test simple graph siphoning off output from two nodes to temporary file
     $read_file = $test->read(\$outdata, $teefile1);
     ok($read_file, "read intermediate output from $teefile1");
 
-    is($outdata,"QWERTYUIOP","expected intermediate post-cap output (QWERTYUIOP)");
+    is($outdata,"QWERTYUIOP\n","expected intermediate post-cap output (QWERTYUIOP)");
 
     $read_file = $test->read(\$outdata, $teefile2);
     ok($read_file, "read intermediate output from $teefile2");
