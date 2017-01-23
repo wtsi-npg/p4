@@ -1,14 +1,32 @@
 use strict;
 use warnings;
-use Test::More tests => 3;
+use Test::More tests => 4;
+use Test::Cmd;
 use Perl6::Slurp;
 use JSON;
+use Cwd;
 
 my $template = q[t/data/10-vtfp-param_ring.json];
 
-{
+
+# first, failure
 # the template contains a ring of parameter defaults p2->p3->p4->p5->p2. This will lead to an infinite recursion error
-#  unless the default ring is broken by giving one of the parameters a value (I arbitrarily selected p3). Parameters
+#  unless the default ring is broken by giving one of the parameters a value
+subtest 'irdetect' => sub {
+	plan tests => 2;
+
+	my $odir = getcwd();
+	my $template_full_path = $odir . q[/] . $template;
+
+	my $test = Test::Cmd->new( prog => $odir.'/bin/vtfp.pl', workdir => q());
+	ok($test, 'made test object');
+	my $test_result = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 1 $template_full_path]);
+	my $exit_status = $?;
+	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for splice fail test (infinite recursion detected in parameter substitution)");
+};
+
+{
+# Remove infinite recursion error  by giving one of the parameters a value (I arbitrarily selected p3). Parameters
 #  p1 - p4 will appear in the resulting cmd attribute (if they are set).
 
 my $vtfp_results = from_json(slurp "bin/vtfp.pl -keys p3 -vals break $template |");

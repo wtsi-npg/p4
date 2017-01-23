@@ -556,6 +556,8 @@ sub fetch_subst_value {
 		return;
 	}
 
+	push @{$irp}, $param_name;
+
 	my $param_store = $params->{param_store};
 
 	if(defined $param_store->[0]->{varnames}->{$param_name} and exists $param_store->[0]->{varnames}->{$param_name}->{_value}) { # allow undef value
