@@ -27,6 +27,8 @@ release 0.18.0
 - adding in realignment_wtsi_humansplit_notargetalign_template
 - updated bamindexdecoder template (stage1 analysis) to use samtools decode by default (java version still an option)
 
+ - add new templates for converting files from bam format to cram
+
 release 0.17.3
  - update Build.PL and tests to have correct and full set of requirements
 
