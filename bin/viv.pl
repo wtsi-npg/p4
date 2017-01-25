@@ -2,6 +2,9 @@
 
 use strict;
 use warnings;
+use FindBin qw($Bin);
+use lib ( -d "$Bin/../lib/perl5" ? "$Bin/../lib/perl5" : "$Bin/../lib" );
+
 use open qw/:std :encoding(UTF-8)/;
 use Carp;
 use File::Slurp;
