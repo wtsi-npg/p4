@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+- removal of -n 1 flag with seqchksum_merge.pl command in merge_aligned template to maintain current behaviour 
+
 release 0.18.3
  - bwa mem flags default changes and additions
     don't use -T by default
