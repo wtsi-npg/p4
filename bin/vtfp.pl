@@ -406,11 +406,15 @@ sub apply_subst {
 	my ($cfg, $params, $ewi, $vtnode_prefix) = @_;   # process any subst directives in cfg (just nodes and edges?)
 
 	for my $elem (@{$cfg->{nodes}}) {
-		my $id = $vtnode_prefix . ((ref $elem->{id} eq q[HASH] and exists $elem->{id}->{subst})? fetch_subst_value($elem->{id}, $params, $ewi): $elem->{id});
-		$ewi->{settag}->($id);
+		# it is possible that we can't determine the id value for the node until after parameter values are resolved. So a scalar ref is passed down via settag
+		#  and the id value is filled in after return from subst_walk. (the tag is attached to error/warning/info messages and is used to disregard errors connected
+		#  to elements which are later pruned/spliced away. See use of $cull_node_ids list returned by splice_nodes() in report_pv_ewi() for how this is done.)
+		my $id = q[PREID];
+		$ewi->{settag}->(\$id);
 
 		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
 		$elem = subst_walk($elem, $params, [], $ewi);
+		$id = $vtnode_prefix . (exists $elem->{id} and $elem->{id})? $elem->{id} : q[NOID];
 		$ewi->{removelabel}->();
 
 	}
@@ -1992,7 +1996,8 @@ sub mkewi {
 
 			for my $ewi_item (@list) {
 				if($ewi_item->{type} == $EWI_ERROR and $ewi_item->{subclass} <= $fatality_level) {
-					if($exclude_list and $ewi_item->{tag} and any { /$ewi_item->{tag}/ } @{$exclude_list}) {
+					my $tag = ${$ewi_item->{tag}};
+					if($exclude_list and $tag and any { /$tag/ } @{$exclude_list}) {
 						return 0; # disregard this "error"
 					}
 					else {
