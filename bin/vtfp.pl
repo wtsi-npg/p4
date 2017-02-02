@@ -445,7 +445,7 @@ sub subst_walk {
 		# hit the bottom, nothing to do
 	}
 	elsif(ref $elem eq q[HASH]) {
-		# first check if elem is itelf a subst or select directive
+		# first check if elem is itself a subst or select directive
 		if($elem->{subst}) {
 			$elem = fetch_subst_value($elem, $params, $ewi);
 		}
