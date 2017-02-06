@@ -1,7 +1,13 @@
 CHANGES LOG
 -----------
 
-- removal of -n 1 flag with seqchksum_merge.pl command in merge_aligned template to maintain current behaviour 
+release 0.18.4
+ - removal of -n 1 flag with seqchksum_merge.pl command in merge_aligned template to maintain current behaviour 
+ - logging changes
+    correct unneeded warnings about changing use_STDIN/use_STDOUT values for INFILE/OUTFILE/RAFILE node
+    recognise JSON::PP:Boolean type (remove warning from log)
+    allow edges to have no id values (warnings about undefined values in log files should no longer appear)
+ - cope with differing line return behaviour of versions of rev utility (test fix)
 
 release 0.18.3
  - bwa mem flags default changes and additions
