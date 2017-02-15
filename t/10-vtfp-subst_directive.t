@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 4;
+use Test::More tests => 8;
 use Test::Cmd;
 use File::Slurp;
 use Perl6::Slurp;
@@ -10,6 +10,7 @@ use File::Temp qw(tempdir);
 use Cwd;
 
 my $tdir = tempdir(CLEANUP => 1);
+
 my $odir = getcwd();
 my $test = Test::Cmd->new( prog => $odir.'/bin/vtfp.pl', workdir => q());
 ok($test, 'made test object');
@@ -222,6 +223,303 @@ subtest 'full_node_subst' => sub {
         };
 
 	is_deeply ($vtfp_results, $expected_result, 'entire node is subst directive results comparison');
+};
+
+# confirm that nested subst directives work
+subtest 'subst_containing_subst' => sub {
+	plan tests => 2;
+
+	my $nested_subst_template = {
+		version => '1.0',
+		description => 'subst nesting',
+		subst_params => [
+			{ id => 'node0_cmd', default => [ 'echo', 'Hello from node0', { subst => 'node0_extra_ms', }, ],
+			},
+			{ id => "node0_extra_ms", default => ' plus something extra' },
+		],
+		nodes => [
+			{
+				id => 'node0',
+				type => 'EXEC',
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => { subst => 'node0_cmd' }
+			},
+		],
+	};
+
+	my $template = $tdir.q[/10-vtfp-nested_subst_template.json];
+	my $template_contents = to_json($nested_subst_template);
+	write_file($template, $template_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for test1: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		nodes => [
+                       {
+                         id => 'node0',
+                         type => 'EXEC',
+                         use_STDIN => JSON::false,
+                         use_STDOUT => JSON::true,
+                         cmd => [
+                                    'echo',
+                                    'Hello from node0',
+                                    ' plus something extra',
+			],
+                       },
+                     ],
+		edges => [],
+        };
+
+	is_deeply ($vtfp_results, $expected_result, 'entire node is subst directive results comparison');
+};
+
+# check behaviour of required attribute
+subtest 'required_subst' => sub {
+	plan tests => 3;
+
+	my $required_subst_template = {
+		version => '1.0',
+		description => 'subst: required attrib testing',
+		nodes => [
+			{
+				id => 'node0',
+				type => 'EXEC',
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => [ "echo", {subst => 'alice', required => JSON::true, }, {subst => 'bob', ifnull => 'Robert' }, {subst => 'carol', required => 'no', },]
+			},
+		],
+	};
+
+	my $template = $tdir.q[/10-vtfp-required_subst_template.json];
+	my $template_contents = to_json($required_subst_template);
+	write_file($template, $template_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for missing required test");
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys alice -vals Albert $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for test1: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		nodes => [
+                       {
+                         id => 'node0',
+                         type => 'EXEC',
+                         use_STDIN => JSON::false,
+                         use_STDOUT => JSON::true,
+                         cmd => [
+                                    'echo',
+                                    'Albert',
+                                    'Robert',
+			],
+                       },
+                     ],
+		edges => [],
+        };
+
+	is_deeply ($vtfp_results, $expected_result, 'required subst directive');
+};
+
+# confirm local effect of subst directive
+subtest 'subst_locality' => sub {
+	plan tests => 4;
+
+	my $subst_locality_template = {
+		version => '1.0',
+		description => 'subst: locality testing',
+		subst_params => [
+			{ id => 'cartoon', default => 'Flintstone'} ,
+		],
+		nodes => [
+			{
+				id => 'node0',
+				type => 'EXEC',
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => [ 'echo',
+                                          'Four substs of one fred parameter',
+                                          '1:', {subst => 'fred', ifnull => 'Bloggs', },
+                                          '2:', {subst => 'fred', },
+                                          '3:', {subst => 'fred', required => JSON::true, ifnull => {subst => 'cartoon'}, },
+                                          '4:', {subst => 'fred', required => JSON::true, ifnull => {subst => 'cartoon'}, },
+                                          '5:', {subst => 'fred', ifnull => 'V', }, ]
+			},
+		],
+	};
+
+	my $template = $tdir.q[/10-vtfp-subst_locality_template.json];
+	my $template_contents = to_json($subst_locality_template);
+	write_file($template, $template_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for test1: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		nodes => [
+                       {
+                         id => 'node0',
+                         type => 'EXEC',
+                         use_STDIN => JSON::false,
+                         use_STDOUT => JSON::true,
+                         cmd => [
+                                    'echo',
+                                    'Four substs of one fred parameter',
+                                    '1:',
+                                    'Bloggs',
+                                    '2:',
+                                    '3:',
+                                    'Flintstone',
+                                    '4:',
+                                    'Flintstone',
+                                    '5:',
+                                    'V',
+			],
+                       },
+                     ],
+		edges => [],
+        };
+
+	is_deeply ($vtfp_results, $expected_result, 'subst locality');
+
+        # now set a parameter from the command line
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys cartoon -vals Jetson $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for test1: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes => [
+                       {
+                         id => 'node0',
+                         type => 'EXEC',
+                         use_STDIN => JSON::false,
+                         use_STDOUT => JSON::true,
+                         cmd => [
+                                    'echo',
+                                    'Four substs of one fred parameter',
+                                    '1:',
+                                    'Bloggs',
+                                    '2:',
+                                    '3:',
+                                    'Jetson',
+                                    '4:',
+                                    'Jetson',
+                                    '5:',
+                                    'V',
+			],
+                       },
+                     ],
+		edges => [],
+        };
+
+	is_deeply ($vtfp_results, $expected_result, 'subst locality');
+};
+
+# cmd strings postprocessing produces a string or an array of strings
+subtest 'cmd_pp' => sub {
+	plan tests => 4;
+
+	my $cmd_pps_template = {
+		version => '1.0',
+		description => 'subst: cmd postprocessing (string)',
+		nodes => [
+			{
+				id => 'node0',
+				type => 'EXEC',
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => 'echo simple string',
+			},
+		],
+	};
+
+	my $cmd_ppa_template = {
+		version => '1.0',
+		description => 'subst: cmd postprocessing (array)',
+		subst_params => [
+			{ id => 'nest', default => [ 'makers', 'of', {subst => 'product'}, ] } ,
+			{ id => 'product', default => [ 'the', 'very', 'best', 'chocolate', ] } ,
+			{ id => 'list', default => [ 'one', 'two', 'three', ], } ,
+		],
+		nodes => [
+			{
+				id => 'node0',
+				type => 'EXEC',
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+                                cmd => [
+                                    'echo',
+                                    'wheels within wheels',
+                                    {subst => 'nest'},
+                                    {subst => 'list'}
+			],
+			},
+		],
+	};
+
+	my $template = $tdir.q[/10-vtfp-cmd_pps_template.json];
+	my $template_contents = to_json($cmd_pps_template);
+	write_file($template, $template_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for test1: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		nodes => [
+                       {
+                         id => 'node0',
+                         type => 'EXEC',
+                         use_STDIN => JSON::false,
+                         use_STDOUT => JSON::true,
+                         cmd => 'echo simple string',
+                       },
+                     ],
+		edges => [],
+        };
+
+	is_deeply ($vtfp_results, $expected_result, 'subst locality');
+
+        # now cmd as a nest of arrays that should resolve to an array of strings
+	$template = $tdir.q[/10-vtfp-cmd_ppa_template.json];
+	$template_contents = to_json($cmd_ppa_template);
+	write_file($template, $template_contents);
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for test1: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes => [
+                       {
+                         id => 'node0',
+                         type => 'EXEC',
+                         use_STDIN => JSON::false,
+                         use_STDOUT => JSON::true,
+                         cmd => [
+                                    'echo',
+                                    'wheels within wheels',
+                                    'makers',
+                                    'of',
+                                    'the',
+                                    'very',
+                                    'best',
+                                    'chocolate',
+                                    'one',
+                                    'two',
+                                    'three',
+			],
+                       },
+                     ],
+		edges => [],
+        };
+
+	is_deeply ($vtfp_results, $expected_result, 'subst locality');
 };
 
 1;
