@@ -9,7 +9,7 @@ use JSON;
 use File::Temp qw(tempdir);
 use Cwd;
 
-my $tdir = tempdir(CLEANUP => 0);
+my $tdir = tempdir(CLEANUP => 1);
 print q[tdir: ], $tdir, "\n";
 
 my $basic_linear_template = {

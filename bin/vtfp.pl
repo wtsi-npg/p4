@@ -172,7 +172,7 @@ sub process_vtnode {
 		name => $vtf_name,
 		cfg => {},
 		children => [],
-		ewi => mkewi(q[node:] . ($vtnode_id? $vtnode_id: q[TOP]) . q[ (name: ] . ($vtf_name? $vtf_name: q[unspec]) . q[)]) };
+		ewi => mkewi(q[vtnode:] . ($vtnode_id? $vtnode_id: q[TOP]) . q[ (name: ] . ($vtf_name? $vtf_name: q[unspec]) . q[)]) };
 
 	unless(is_valid_name($vtf_name)) {
 		$vtnode->{ewi}->{additem}->($EWI_ERROR, 0, q[Missing or invalid name for VTFILE element id: ], $vtnode_id, q[ (], , join(q[->], @{$globals->{vt_file_stack}}), q[)]);
@@ -343,10 +343,10 @@ sub process_subst_params {
 	################################
 	for my $spfile (@spfile_node_queue) {
 		my $ewi = mkewi(q[SPF]);
-		subst_walk($spfile, $params, [], $ewi);
+		$spfile = subst_walk($spfile, $params, [], $ewi);
 		my $spname = is_valid_name($spfile->{name});
 		if(not $spname) {
-			# it would be better to cache these errors and report as many as possible before exit (TBI)
+			# cache these errors and report as many as possible before exit
 			$ewi->{additem}->($EWI_ERROR, 0, q[Missing or invalid name for SPFILE element id], $spfile->{id}, q[ (], , join(q[->], @$sp_file_stack), q[)]);
 		}
 		elsif(not $globals->{processed_sp_files}->{$spname}) { # but only process a given SPFILE once
@@ -406,11 +406,15 @@ sub apply_subst {
 	my ($cfg, $params, $ewi, $vtnode_prefix) = @_;   # process any subst directives in cfg (just nodes and edges?)
 
 	for my $elem (@{$cfg->{nodes}}) {
-		my $id = $vtnode_prefix . ((ref $elem->{id} eq q[HASH] and exists $elem->{id}->{subst})? fetch_subst_value($elem->{id}, $params, $ewi): $elem->{id});
-		$ewi->{settag}->($id);
+		# it is possible that we can't determine the id value for the node until after parameter values are resolved. So a scalar ref is passed down via settag
+		#  and the id value is filled in after return from subst_walk. (the tag is attached to error/warning/info messages and is used to disregard errors connected
+		#  to elements which are later pruned/spliced away. See use of $cull_node_ids list returned by splice_nodes() in report_pv_ewi() for how this is done.)
+		my $id = q[PREID];
+		$ewi->{settag}->(\$id);
 
 		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
-		subst_walk($elem, $params, [], $ewi);
+		$elem = subst_walk($elem, $params, [], $ewi);
+		$id = $vtnode_prefix . (exists $elem->{id} and $elem->{id})? $elem->{id} : q[NOID];
 		$ewi->{removelabel}->();
 
 	}
@@ -420,7 +424,7 @@ sub apply_subst {
 		my $id = $elem->{id};
 		$id ||= q[NOID];
 		$ewi->{addlabel}->(q{assigning to id:[} . $id . q{]});
-		subst_walk($elem, $params, [], $ewi);
+		$elem = subst_walk($elem, $params, [], $ewi);
 		$ewi->{removelabel}->();
 	}
 
@@ -429,67 +433,40 @@ sub apply_subst {
 
 ##############################################################################################
 # subst_walk:
-#  walk the given element, looking for "subst" directives. When found search params for value.
+#  walk the given element, looking for "subst" or "select" directives. When found, resolve
+#   the value(s) and perform any necessary substitutions. Return the (possibly) updated
+#   element to caller
 ##############################################################################################
 sub subst_walk {
 	my ($elem, $params, $labels, $ewi) = @_;
 
+	# first check if elem itself needs resolution (is itself a subst, subst_constructor or select directive)
+	$elem = fetch_sp_value($elem, $params, $ewi);
+
 	my $r = ref $elem;
 	if(!$r) {
-		next;	# hit the bottom
+		# hit the bottom, nothing to do
 	}
 	elsif(ref $elem eq q[HASH]) {
-		for my $k (keys %$elem) {
+			for my $k (keys %$elem) {
+				$elem->{$k} = fetch_sp_value($elem->{$k}, $params, $ewi);
 
-			if(ref $elem->{$k} eq q[HASH] and my $param_name = $elem->{$k}->{subst}) {
-				# value for a "subst" key must always be the name of a parameter
-				if(ref $param_name) {
-					$ewi->{additem}->($EWI_ERROR, 0, q[value for a subst directive must be a param (not a reference), key for subst is: ], $k);
+				if(defined $elem->{$k}) {
+					push @$labels, $k;
+					$elem->{$k} = subst_walk($elem->{$k}, $params, $labels, $ewi);
+					pop @$labels;
 				}
-
-				$elem->{$k} = fetch_subst_value($elem->{$k}, $params, $ewi);
-
-				unless(defined $elem->{$k}) { # this has been changed to INFO. If ERROR is wanted, required attribute should be set so that fetch_subst_value() flags it
-					$ewi->{additem}->($EWI_INFO, 1, q[Failed to fetch subst value for parameter ], $param_name, q[ (key was ], $k, q[)]);
-				}
-
-				next;
 			}
-
-			if(ref $elem->{$k}) {
-				push @$labels, $k;
-				subst_walk($elem->{$k}, $params, $labels, $ewi);
-				pop @$labels;
-			}
-		}
 	}
 	elsif(ref $elem eq q[ARRAY]) {
 		for my $i (reverse (0 .. $#{$elem})) {
-			# if one of the elements is a subst_param hash,
-			if(ref $elem->[$i] eq q[HASH] and my $param_name = $elem->[$i]->{subst}) {
-				# value for a "subst" key must always be the name of a parameter
-				if(ref $param_name) {
-					$ewi->{additem}->($EWI_ERROR, 0, q[value for a subst directive must be a param name (not a reference), index for subst is: ], $i);
-				}
+			my $sval = fetch_sp_value($elem->[$i], $params, $ewi);
 
-				my $sval = fetch_subst_value($elem->[$i], $params, $ewi);
-				if(ref $sval eq q[ARRAY]) {
-					splice @$elem, $i, 1, @$sval;
-				}
-				else {
-					$elem->[$i] = $sval;
-				}
+			$elem->[$i] = $sval;
 
-				unless(defined $elem->[$i]) { # this has been changed to INFO. If ERROR is wanted, required attribute should be set so that fetch_subst_value() flags it
-					$ewi->{additem}->($EWI_INFO, 1, q[Failed to fetch subst value for parameter ], $param_name, q[ (element index was ], $i, q[)],);
-				}
-
-				next;
-			}
-
-			if(ref $elem->[$i]) {
+			if(defined $elem->[$i]) {
 				push @$labels, sprintf(q[ArrayElem%03d], $i);
-				subst_walk($elem->[$i], $params, $labels, $ewi);
+				$elem->[$i] = subst_walk($elem->[$i], $params, $labels, $ewi);
 				pop @$labels;
 			}
 		}
@@ -500,7 +477,50 @@ sub subst_walk {
 		$ewi->{additem}->($EWI_WARNING, 2, "REF TYPE $r currently not processable");
 	}
 
-	return;
+	return $elem;
+}
+
+#############################################################################################
+# fetch_sp_value:
+#  determine if $element requires resolution (i.e, it is a subst, subst_constructor or select
+#   directive). If so pass it to the appropriate resolver and return the result
+#############################################################################################
+sub fetch_sp_value {
+	my ($elem, $params, $ewi, $irp) = @_;
+	my $retval;
+
+	my $ref_type = ref $elem;
+	if($ref_type) {
+		if($ref_type eq q[HASH]) {
+			if($elem->{subst}) {
+				# subst directive
+				$retval = fetch_subst_value($elem, $params, $ewi, $irp);
+			}
+			elsif($elem->{subst_constructor}) {
+				# solo subst_constructor
+				$retval = resolve_subst_constructor(q[ANON], $elem->{subst_constructor}, $params, $ewi);
+			}
+			else {
+				$retval = $elem;
+			}
+		}
+		elsif($ref_type eq q[ARRAY]) {
+			$retval = process_array($elem, $params, $ewi, $irp);
+		}
+		elsif($ref_type eq q[JSON::XS::Boolean] or $ref_type eq q[JSON::PP::Boolean]) {
+			$retval = $elem;
+		}
+		else {
+			# ERROR - unrecognised ref type
+			$ewi->{additem}->($EWI_INFO, 1, q[unrecognised ref type ], $ref_type, q[ (not HASH or ARRAY) when seeking parameter value; unable to resolve to string ],);
+			$retval = $elem; # caller's responsibility to determine seriousness of this
+		}
+	}
+	else {
+		$retval = $elem;
+	}
+
+	return $retval;
 }
 
 ##################################################################
@@ -555,6 +575,8 @@ sub fetch_subst_value {
 		$ewi->{additem}->($EWI_ERROR, 0, q[infinite recursion detected resolving parameter ], $param_name, q[ (], join(q/=>/, (@{$irp}, $param_name)), q[)]);
 		return;
 	}
+
+	push @{$irp}, $param_name;
 
 	my $param_store = $params->{param_store};
 
@@ -613,7 +635,7 @@ sub fetch_subst_value {
 		if($retval = resolve_ifnull($param_name, $subst->{ifnull}, $params, $ewi, $irp)) {
 			return $retval; # note: result of ifnull evaluation not assigned to variable
 		}
-		elsif($subst->{required} and ($subst->{required} eq q[yes])) {
+		elsif($subst->{required} and $subst->{required} and $subst->{required} !~ /\A(false|no|off)\Z/i) {
 			$ewi->{additem}->($EWI_ERROR, 0, q[No value found for required subst (param_name: ], $param_name, q[)]);
 			return;
 		}
@@ -621,7 +643,7 @@ sub fetch_subst_value {
 
 	if(not defined $retval) {
 		# caller should decide if undef is allowed, unless required is true
-		my $severity = (defined $param_entry->{required} and $param_entry->{required} eq q[yes])? $EWI_ERROR: $EWI_INFO;
+		my $severity = (defined $param_entry->{required} and $param_entry->{required} and $param_entry->{required} !~ /\A(false|no|off)\Z/i)? $EWI_ERROR: $EWI_INFO;
 		$ewi->{additem}->($severity, 0, q[No value found for param_entry ], $param_name);
 		return;
 	}
@@ -629,38 +651,6 @@ sub fetch_subst_value {
 	$param_entry->{_value} = $retval;
 
 	return $retval;
-}
-
-sub fetch_sp_value {
-	my ($sp_expr, $params, $ewi, $irp) = @_;
-	my $param_entry;
-	my $retval;
-
-	my $sper = ref $sp_expr;
-	if($sper) {
-		if($sper eq q[HASH]) {
-			if($sp_expr->{subst}) {
-				# subst directive
-				$retval = fetch_subst_value($sp_expr, $params, $ewi, $irp);
-			}
-			elsif($sp_expr->{subst_constructor}) {
-				# solo subst_constructor
-				$retval = resolve_subst_constructor(q[ID], $sp_expr->{subst_constructor}, $params, $ewi);
-			}
-			else {
-				# ERROR - unrecognised hash ref type
-			}
-		}
-		elsif($sper eq q[ARRAY]) {
-			process_array($sp_expr, $params, $ewi, $irp);
-		}
-		else {
-			# ERROR - unrecognised ref type
-		}
-	}
-	else {
-		return $sp_expr;
-	}
 }
 
 sub resolve_subst_constructor {
@@ -694,26 +684,13 @@ sub resolve_subst_constructor {
 
 ##################################
 # process_array
-#  flatten any non-scalar elements
+#  resolve any non-scalar elements
 ##################################
 sub process_array {
 	my ($arr, $params, $ewi, $irp) = @_;
 
 	for my $i (reverse (0..$#$arr)) {
-		if(ref $arr->[$i] eq q[HASH]) {
-			if($arr->[$i]->{subst}) {
-				$arr->[$i] = fetch_subst_value($arr->[$i], $params, $ewi, $irp);
-			}
-			else {
-				$ewi->{additem}->($EWI_ERROR, 0, q[Non-subst hash ref not permitted in array, element ], $i);
-				return;
-			}
-		}
-
-		if(ref $arr->[$i] eq q[ARRAY]) {
-			$arr->[$i] = process_array($arr->[$i], $params, $ewi, $irp); # in case the element was a simple array ref, not a subst directive
-			splice(@$arr, $i, 1, (@{$arr->[$i]}));
-		}
+		$arr->[$i] = fetch_sp_value($arr->[$i], $params, $ewi, $irp);
 	}
 
 	return $arr;
@@ -1838,25 +1815,25 @@ sub find_vtf {
 	$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_fullname, q[ locally or on template_path: ], join q[:], @$template_path);
 }
 
-###############################################################
+##############################################################
 # finalise_cmd: the value of the cmd attribute of an EXEC node
-#  must be either a string or an array ref of strings (no undef
-#  elements). Convert an array of strings and array refs to an
-#  array of strings using splice.
-###############################################################
+#  must be either:
+#    i) a string - return it
+#    ii) or a ref to an array of (possibly undef) scalars or
+#      similar array refs - convert this an array of strings
+##############################################################
 sub finalise_cmd {
 	my ($cmd) = @_;
 
 	if(ref $cmd eq q[ARRAY]) {
-		$cmd = [ (grep { defined($_) } @$cmd) ]; # first remove any undefined elements
+		while(any { not defined($_) or ref $_ eq q[ARRAY] } @{$cmd}) {
+			$cmd = [ (grep { defined($_) } @$cmd) ]; # first remove any undefined elements
 
-		for my $i (reverse (0..$#{$cmd})) {
-			if(not defined $cmd->[$i]) {
-				splice @{$cmd}, $i, 1;
-			}
-			elsif(ref $cmd->[$i] eq q[ARRAY]) {
-				$cmd->[$i] = finalise_cmd($cmd->[$i]);
-				splice @{$cmd}, $i, 1, @{$cmd->[$i]};
+			for my $i (reverse (0..$#{$cmd})) {
+				if(ref $cmd->[$i] eq q[ARRAY]) {
+					$cmd->[$i] = finalise_cmd($cmd->[$i]);
+					splice @{$cmd}, $i, 1, @{$cmd->[$i]};
+				}
 			}
 		}
 	}
@@ -1980,7 +1957,8 @@ sub mkewi {
 
 			for my $ewi_item (@list) {
 				if($ewi_item->{type} == $EWI_ERROR and $ewi_item->{subclass} <= $fatality_level) {
-					if($exclude_list and $ewi_item->{tag} and any { /$ewi_item->{tag}/ } @{$exclude_list}) {
+					my $tag = ${$ewi_item->{tag}};
+					if($exclude_list and $tag and any { /$tag/ } @{$exclude_list}) {
 						return 0; # disregard this "error"
 					}
 					else {
