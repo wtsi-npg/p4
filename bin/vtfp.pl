@@ -114,7 +114,7 @@ if(report_pv_ewi($node_tree, $logger, $cull_node_ids)) { croak qq[Exiting after 
 
 foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
 
-	$node_with_cmd->{cmd} = finalise_cmd($node_with_cmd->{cmd});
+	$node_with_cmd->{cmd} = finalise_array($node_with_cmd->{cmd});
 	if(not defined $node_with_cmd->{cmd} or (ref $node_with_cmd->{cmd} eq q[ARRAY] and @{$node_with_cmd->{cmd}} < 1)) {
 		croak "command ", ($node_with_cmd->{id}? $node_with_cmd->{id}: q[NO ID]), " either empty or undefined";
 	}
@@ -343,7 +343,7 @@ sub process_subst_params {
 	################################
 	for my $spfile (@spfile_node_queue) {
 		my $ewi = mkewi(q[SPF]);
-		$spfile = subst_walk($spfile, $params, [], $ewi);
+		$spfile = subst_walk($spfile, $params, $ewi, []);
 		my $spname = is_valid_name($spfile->{name});
 		if(not $spname) {
 			# cache these errors and report as many as possible before exit
@@ -398,10 +398,10 @@ sub in_param_store {
 	return { errnum => 0, ms => q[], };
 }
 
-#######################################
+#############################################################
 # apply_subst:
-#  replace subst directives with values
-#######################################
+#  replace subst/subst_constructor/... directives with values
+#############################################################
 sub apply_subst {
 	my ($cfg, $params, $ewi, $vtnode_prefix) = @_;   # process any subst directives in cfg (just nodes and edges?)
 
@@ -413,7 +413,7 @@ sub apply_subst {
 		$ewi->{settag}->(\$id);
 
 		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
-		$elem = subst_walk($elem, $params, [], $ewi);
+		$elem = subst_walk($elem, $params, $ewi, []);
 		$id = $vtnode_prefix . (exists $elem->{id} and $elem->{id})? $elem->{id} : q[NOID];
 		$ewi->{removelabel}->();
 
@@ -424,24 +424,24 @@ sub apply_subst {
 		my $id = $elem->{id};
 		$id ||= q[NOID];
 		$ewi->{addlabel}->(q{assigning to id:[} . $id . q{]});
-		$elem = subst_walk($elem, $params, [], $ewi);
+		$elem = subst_walk($elem, $params, $ewi, []);
 		$ewi->{removelabel}->();
 	}
 
 	return;
 }
 
-##############################################################################################
+##################################################################################################
 # subst_walk:
-#  walk the given element, looking for "subst" or "select" directives. When found, resolve
-#   the value(s) and perform any necessary substitutions. Return the (possibly) updated
-#   element to caller
-##############################################################################################
+#  walk the given element, looking for subst/subst_constructor/... directives. When found, resolve
+#   the value(s) and perform any necessary substitutions. Return the (possibly) updated element
+#   to caller
+##################################################################################################
 sub subst_walk {
-	my ($elem, $params, $labels, $ewi) = @_;
+	my ($elem, $params, $ewi, $irp) = @_;
 
 	# first check if elem itself needs resolution (is itself a subst, subst_constructor or select directive)
-	$elem = fetch_sp_value($elem, $params, $ewi);
+	$elem = fetch_sp_value($elem, $params, $ewi, $irp);
 
 	my $r = ref $elem;
 	if(!$r) {
@@ -449,25 +449,19 @@ sub subst_walk {
 	}
 	elsif(ref $elem eq q[HASH]) {
 			for my $k (keys %$elem) {
-				$elem->{$k} = fetch_sp_value($elem->{$k}, $params, $ewi);
+				$elem->{$k} = fetch_sp_value($elem->{$k}, $params, $ewi, $irp);
 
 				if(defined $elem->{$k}) {
-					push @$labels, $k;
-					$elem->{$k} = subst_walk($elem->{$k}, $params, $labels, $ewi);
-					pop @$labels;
+					$elem->{$k} = subst_walk($elem->{$k}, $params, $ewi, $irp);
 				}
 			}
 	}
 	elsif(ref $elem eq q[ARRAY]) {
 		for my $i (reverse (0 .. $#{$elem})) {
-			my $sval = fetch_sp_value($elem->[$i], $params, $ewi);
-
-			$elem->[$i] = $sval;
+			$elem->[$i] = fetch_sp_value($elem->[$i], $params, $ewi, $irp);
 
 			if(defined $elem->[$i]) {
-				push @$labels, sprintf(q[ArrayElem%03d], $i);
-				$elem->[$i] = subst_walk($elem->[$i], $params, $labels, $ewi);
-				pop @$labels;
+				$elem->[$i] = subst_walk($elem->[$i], $params, $ewi, $irp);
 			}
 		}
 	}
@@ -494,7 +488,7 @@ sub fetch_sp_value {
 		if($ref_type eq q[HASH]) {
 			if($elem->{subst}) {
 				# subst directive
-				$retval = fetch_subst_value($elem, $params, $ewi, $irp);
+				$retval = resolve_subst($elem, $params, $ewi, $irp);
 			}
 			elsif($elem->{subst_constructor}) {
 				# solo subst_constructor
@@ -505,7 +499,7 @@ sub fetch_sp_value {
 			}
 		}
 		elsif($ref_type eq q[ARRAY]) {
-			$retval = process_array($elem, $params, $ewi, $irp);
+			$retval = $elem;
 		}
 		elsif($ref_type eq q[JSON::XS::Boolean] or $ref_type eq q[JSON::PP::Boolean]) {
 			$retval = $elem;
@@ -523,45 +517,28 @@ sub fetch_sp_value {
 	return $retval;
 }
 
-##################################################################
-# fetch_subst_value:
-#  use the param_store and subst_requests to find or construct
-#  a value for the given param_name. The _value attribute of a
-#  param_entry caches successfully resolved values.
+############################################################
+# resolve_subst:
+#  determine the value of the given subst directive element.
+#  If no result can be obtained from parameter values in the
+#  param_store, resolve the ifnull attribute (if present).
+#  If still no result and the subst directive is flagged as
+#  required, flag an error.
 #
-#   1. If the value has already been resolved in the local
-#       param_store, return that value.
-#   2. Search the param_store stack for an entry for this
-#       param_name, working outwards from the local level0
-#       param_store
-#   3. if only a non-local entry is found, copy it to the local
-#       param_store; if no entry is found, create one in the
-#       local param_store
-#   4. search the assign/subst_requests stack (from local outward)
-#       for user-specified value assignment - these will override
-#       any other assignments (e.g. defaults, subst_maps or
-#       subst_constructors specified in the template). If a value
-#       is found, return it.
-#   5. If the parameter has a subst_constructor attribute, use
-#       that to construct the value [and return it].
-#   6. If the value is still undefined, evaluate the param_entry's
-#	default attribute (if any) 
-#   7. If the value is still undefined, evaluate the subst entry's
-#	ifnull attribute (if any). Note: this value should not
-#	be cached to the _value attribute of the param_entry.
-#   8. If the value is still undefined, flag an error if the
-#	substitution is flagged as required.
-#   9. If the value is still undefined, flag an error if the
-#	parameter is flagged as required.
-##################################################################
-sub fetch_subst_value {
+#  Note that results of subst directive resolution are local:
+#  that is, subst directives in the same (set of) template(s)
+#  referring to the same parameter name may be assigned
+#  different values (as opposed to assignment of values to
+#  parameters via the parameter default values, keys/vals
+#  flags or import_params mechanism).
+############################################################
+sub resolve_subst {
 	my ($subst, $params, $ewi, $irp) = @_;
-	my $param_entry;
 	my $retval;
 
 	# check to see if an sp_expr needs evaluating
 	if(ref $subst->{subst}) { # subst name is itself an expression which needs evaluation
-		$subst->{subst} = fetch_sp_value($subst->{subst}, $params, $ewi, $irp);
+		$subst->{subst} = subst_walk($subst->{subst}, $params, $ewi, $irp);
 	}
 
 	if(ref $subst->{subst}) { # TODO - consider implications of allowing an array here
@@ -571,22 +548,62 @@ sub fetch_subst_value {
 
 	my $param_name = $subst->{subst};
 
+	##################################################
+	# fetch the param_store element for the param_name
+	##################################################
+	my $param_entry = fetch_param_entry($param_name, $params, $ewi, $irp);
+	if(exists $param_entry->{_value}) { # allow undef value
+		if(not defined $param_entry->{_value} and $subst->{required} and $subst->{required} !~ /\A(false|no|off)\Z/i) { # explicitly set to undef
+			$ewi->{additem}->($EWI_ERROR, 0, q[Undef value specified for required subst (param_name: ], $param_name, q[)]);
+		}
+		return $param_entry->{_value};
+	}
+
+	#######################################################################################################
+	# no value retrieved from param_store, try to construct one from the subst directive's ifnull attribute
+	#######################################################################################################
+	if($retval = resolve_ifnull($param_name, $subst->{ifnull}, $params, $ewi, $irp)) {
+		return $retval; # note: result of ifnull evaluation not assigned to variable
+	}
+	elsif($subst->{required} and $subst->{required} and $subst->{required} !~ /\A(false|no|off)\Z/i) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[No value found for required subst (param_name: ], $param_name, q[)]);
+		return;
+	}
+
+	$param_entry->{_value} = $retval;
+
+	return $retval;
+}
+
+########################################A##########################
+# fetch_param_entry:
+#  search param_store stack for an existing entry for the given 
+#   parameter name. If found in a param_store other than the local
+#   one (zero-level), make a copy to zero-level (i.e. inherit it,
+#   but avoid writing to another level's param_entry). If no value
+#   found, resolve the subst_constructor attribute (if present);
+#   if still no value, resolve the default attribute (if present).
+#   If still no value, flag an error if the required attribute is
+#   set.
+#   Cache a resolved value to the parameter_entry.
+#
+#   Returns: the param_entry in the local param_store for the
+#   requested param_name.
+###################################################################
+sub fetch_param_entry {
+	my ($param_name, $params, $ewi, $irp) = @_;
+	my $param_entry;
+	my $retval;
+
 	if(defined $irp and any { $_ eq $param_name} @{$irp}) { # infinite recursion prevention
 		$ewi->{additem}->($EWI_ERROR, 0, q[infinite recursion detected resolving parameter ], $param_name, q[ (], join(q/=>/, (@{$irp}, $param_name)), q[)]);
 		return;
 	}
 
-	push @{$irp}, $param_name;
-
 	my $param_store = $params->{param_store};
 
 	if(defined $param_store->[0]->{varnames}->{$param_name} and exists $param_store->[0]->{varnames}->{$param_name}->{_value}) { # allow undef value
-
-		if(not defined $param_store->[0]->{varnames}->{$param_name}->{_value} and defined $subst->{required} and $subst->{required} eq q[yes]) {
-			$ewi->{additem}->($EWI_ERROR, 0, q[Undef value specified for required subst (param_name: ], $param_name, q[)]);
-		}
-
-		return $param_store->[0]->{varnames}->{$param_name}->{_value}; # already evaluated, return cached value
+		return $param_store->[0]->{varnames}->{$param_name}; # already evaluated, return cached value
 	}
 
 	for my $ps (@$param_store) {
@@ -596,7 +613,10 @@ sub fetch_subst_value {
 		}
 	}
 
-	if(not defined $param_store->[0]->{varnames}->{$param_name}) {	# create a "writeable" param_store entry at local level
+	#####################################################################
+	# if necessary, create a "writeable" param_store entry at local level
+	#####################################################################
+	if(not defined $param_store->[0]->{varnames}->{$param_name}) {
 		my $new_param_entry = (not defined $param_entry)? { id => $param_name, _declared_by => [], }: dclone $param_entry;
 
 		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
@@ -607,39 +627,35 @@ sub fetch_subst_value {
 	# at this point, we have either found or created the param_entry in the local param_store. (We don't want to write to
 	#  a higher-level param_store entry)
 
-	# before checking for a cached _value, see if there are local overrides (either via subst_map or from command-line)
+	###########################################################################################################################
+	# search the assign/subst_requests stack (from local outward) for user-specified value assignment (from either command-line
+	#  keys/vals or flags/import_params mechanism) - these will override any other assignments (e.g. defaults, subst_maps
+	#  or subst_constructors specified in the template).
+	###########################################################################################################################
 	my $subst_requests = $params->{assign};
 	for my $sr (@$subst_requests) {
 		if(exists $sr->{$param_name}) { # allow undef value
 			$param_entry->{_value} = $sr->{$param_name};
-
-			if(not defined $param_entry->{_value} and defined $subst->{required} and $subst->{required} eq q[yes]) {
-				$ewi->{additem}->($EWI_ERROR, 0, q[Undef value specified for required subst (param_name: ], $param_name, q[)]);
-			}
-
-			return $sr->{$param_name};
 		}
 	}
 
-	if(defined $param_entry->{_value}) {
-		return $param_entry->{_value};   # already evaluated, return cached value
+	if(exists $param_entry->{_value}) {
+		return $param_entry;   # already evaluated, return cached value (allowing undef)
 	}
 
+	push @{$irp}, $param_name;
 	$retval = resolve_subst_constructor($param_name, $param_entry->{subst_constructor}, $params, $ewi, $irp);
 		
-	if(not defined $retval) {
+	if(defined $retval) {
+		$param_entry->{_value} = $retval;
+	}
+	else {
 		$retval = resolve_param_default($param_name, $param_entry->{default}, $params, $ewi, $irp);
-	}
-
-	if(not defined $retval) {
-		if($retval = resolve_ifnull($param_name, $subst->{ifnull}, $params, $ewi, $irp)) {
-			return $retval; # note: result of ifnull evaluation not assigned to variable
-		}
-		elsif($subst->{required} and $subst->{required} and $subst->{required} !~ /\A(false|no|off)\Z/i) {
-			$ewi->{additem}->($EWI_ERROR, 0, q[No value found for required subst (param_name: ], $param_name, q[)]);
-			return;
+		if(defined $retval) {
+			$param_entry->{_value} = $retval;
 		}
 	}
+	pop @{$irp};
 
 	if(not defined $retval) {
 		# caller should decide if undef is allowed, unless required is true
@@ -648,9 +664,7 @@ sub fetch_subst_value {
 		return;
 	}
 
-	$param_entry->{_value} = $retval;
-
-	return $retval;
+	return $param_entry;
 }
 
 sub resolve_subst_constructor {
@@ -664,7 +678,7 @@ sub resolve_subst_constructor {
 		return;
 	}
 
-	$vals = fetch_sp_value($vals, $params, $ewi, $irp);
+	$vals = subst_walk($vals, $params, $ewi, $irp);
 
 	if(not defined $vals) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[Error processing subst_constructor value, param_name: ], $id);
@@ -680,20 +694,6 @@ sub resolve_subst_constructor {
 	$subst_constructor->{vals} = $vals;
 
 	return postprocess_subst_array($id, $subst_constructor, $ewi);
-}
-
-##################################
-# process_array
-#  resolve any non-scalar elements
-##################################
-sub process_array {
-	my ($arr, $params, $ewi, $irp) = @_;
-
-	for my $i (reverse (0..$#$arr)) {
-		$arr->[$i] = fetch_sp_value($arr->[$i], $params, $ewi, $irp);
-	}
-
-	return $arr;
 }
 
 ##################################################################################################
@@ -769,7 +769,7 @@ sub resolve_param_default {
 
 	if(not defined $default) { return; }
 
-	return fetch_sp_value($default, $params, $ewi, $irp);
+	return subst_walk($default, $params, $ewi, $irp);
 }
 
 sub resolve_ifnull {
@@ -777,7 +777,7 @@ sub resolve_ifnull {
 
 	if(not defined $ifnull) { return; }
 
-	return fetch_sp_value($ifnull, $params, $ewi, $irp);
+	return subst_walk($ifnull, $params, $ewi, $irp);
 }
 
 
@@ -1816,29 +1816,31 @@ sub find_vtf {
 }
 
 ##############################################################
-# finalise_cmd: the value of the cmd attribute of an EXEC node
-#  must be either:
+# finalise_array: used to postprocess arrays (e.g. cmd attribs
+#   of EXEC nodes). Input is either:
 #    i) a string - return it
 #    ii) or a ref to an array of (possibly undef) scalars or
 #      similar array refs - convert this an array of strings
+# Note: tree input assumed; don't apply this to anything with
+#  referential cycles
 ##############################################################
-sub finalise_cmd {
-	my ($cmd) = @_;
+sub finalise_array {
+	my ($arr) = @_;
 
-	if(ref $cmd eq q[ARRAY]) {
-		while(any { not defined($_) or ref $_ eq q[ARRAY] } @{$cmd}) {
-			$cmd = [ (grep { defined($_) } @$cmd) ]; # first remove any undefined elements
+	if(ref $arr eq q[ARRAY]) {
+		while(any { not defined($_) or ref $_ eq q[ARRAY] } @{$arr}) {
+			$arr = [ (grep { defined($_) } @{$arr}) ]; # first remove any undefined elements
 
-			for my $i (reverse (0..$#{$cmd})) {
-				if(ref $cmd->[$i] eq q[ARRAY]) {
-					$cmd->[$i] = finalise_cmd($cmd->[$i]);
-					splice @{$cmd}, $i, 1, @{$cmd->[$i]};
+			for my $i (reverse (0..$#{$arr})) {
+				if(ref $arr->[$i] eq q[ARRAY]) {
+					$arr->[$i] = finalise_array($arr->[$i]);
+					splice @{$arr}, $i, 1, @{$arr->[$i]};
 				}
 			}
 		}
 	}
 
-	return $cmd;
+	return $arr;
 }
 
 sub mklogger {
