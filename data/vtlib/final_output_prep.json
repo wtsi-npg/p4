@@ -15,12 +15,11 @@
 		"required": "no",
 		"comment":"this will expand to a set of subst_param elements"
 	},
-	{"id":"phix_or_target","required":"yes"},
 	{
 		"id":"bs_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bstmp"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bstmp"}, "_", {"subst":"fopid"}, ".tmp" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -47,7 +46,7 @@
 		"id":"bmd_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bmdtmp","required":"yes"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bmdtmp","required":"yes"}, "_", {"subst":"fopid"}, ".tmp" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -55,7 +54,7 @@
 		"id":"bmd_metrics_file_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "M=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".markdups_metrics.txt" ],
+			"vals":[ "M=", {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".markdups_metrics.txt" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -78,7 +77,7 @@
 		"id":"calibration_pu_prefix",
 		"required":"yes",
 		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"} ],
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -95,7 +94,7 @@
 		"id":"br_indexfile_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "indexfilename=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".bai" ],
+			"vals":[ "indexfilename=", {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".bai" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -103,7 +102,7 @@
 		"id":"br_md5file_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "md5filename=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".bam.md5" ],
+			"vals":[ "md5filename=", {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".bam.md5" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -119,12 +118,12 @@
 		"id":"br_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"brtmp"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"brtmp"}, "_", {"subst":"fopid"}, ".tmp" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
 	{"id":"flagstats_filter_flag","required":"no","default":"0x900"},
-	{"id":"fopid","default":{"subst":"phix_or_target"}},
+	{"id":"fopid","required":"yes"},
 	{
 		"id":"bam_file",
 		"required":"yes",
