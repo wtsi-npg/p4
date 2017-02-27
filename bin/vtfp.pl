@@ -9,6 +9,9 @@
 
 use strict;
 use warnings;
+use FindBin qw($Bin);
+use lib ( -d "$Bin/../lib/perl5" ? "$Bin/../lib/perl5" : "$Bin/../lib" );
+
 use Carp;
 use Readonly;
 use Getopt::Long;
