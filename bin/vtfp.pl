@@ -1013,7 +1013,7 @@ sub register_splice_pairs {
 			#  Note: we should never create replacement_edges with unclear "from" (pruning should cope by ignoring). If needed, create 
 			#   a new STDIN node and make it the data source (from)
 			my $from = q[];
-			if(exists $frsp->{src} and exists $frsp->{src}->{node}) {
+			if($frsp->{src} and exists $frsp->{src}->{node}) {
 				$from = $frsp->{src}->{node}->{id} . ($frsp->{src}->{port} ? ":$frsp->{src}->{port}" : "");
 			}
 			my $to = q[];
@@ -1029,11 +1029,11 @@ sub register_splice_pairs {
 				if(not $to) { my $to_node = $stdout_node->($flat_graph); push @{$splice_candidates->{new_nodes}}, $to_node; $to = $to_node->{id}; }
 			}
 
-			my $eid = ((exists $frsp->{src} and exists $frsp->{src}->{node}->{id})? $frsp->{src}->{node}->{id}: q[STDIN]) . q[_to_] . ((exists $frsp->{dst} and exists $frsp->{dst}->{node}) ? $frsp->{dst}->{node}->{id} : q[STDOUT]);
+			my $eid = (($frsp->{src} and exists $frsp->{src}->{node}->{id})? $frsp->{src}->{node}->{id}: q[STDIN]) . q[_to_] . (($frsp->{dst} and exists $frsp->{dst}->{node}) ? $frsp->{dst}->{node}->{id} : q[STDOUT]);
 			push @{$edge_list}, { id => $eid, from => $from, to => $to};
 				
-			if(exists $frsp->{src} and exists $frsp->{src}->{node}) { $preserve_nodes->{$frsp->{src}->{node}->{id}} = 1; }
-			if(exists $frsp->{dst} and exists $frsp->{dst}->{node}) { $preserve_nodes->{$frsp->{dst}->{node}->{id}} = 1; }
+			if($frsp->{src} and exists $frsp->{src}->{node}) { $preserve_nodes->{$frsp->{src}->{node}->{id}} = 1; }
+			if($frsp->{dst} and exists $frsp->{dst}->{node}) { $preserve_nodes->{$frsp->{dst}->{node}->{id}} = 1; }
 
 			if(not any { $_->{node_info}->{node}->{id} eq $frsp->{pioneer}->{node}->{id} } @{$frontier}) { # avoid duplicate node entries in frontier stack
 				push @{$frontier}, { node_info => $frsp->{pioneer}, };
@@ -1201,19 +1201,21 @@ sub validate_splice_candidates {
 		}
 	}
 
-	#  all edge termini must be unique (over replacement and pruning edges)
+	#  all edge termini must be unique (over replacement and pruning edges) except for STDIN/STDOUT
 	my %endpoints;
 	for my $edge (@{$splice_candidates->{replacement_edges}}, @{$prune_edges}) {
 		my $from_end = $edge->{from};
-		if($from_end !~ /:/) { $from_end .= q[:STDOUT] };
+		if($from_end and $from_end !~ /:/) { $from_end .= q[:STDOUT] };
+
 		my $to_end = $edge->{to};
-		if($to_end !~ /:/) { $to_end .= q[:STDIN] };
-		push @{$endpoints{$from_end}}, $edge->{id};
+		if($to_end and $to_end !~ /:/) { $to_end .= q[:STDIN] };
+
+		if($edge->{from}) { push @{$endpoints{$from_end}}, $edge->{id}; }
 		if($edge->{to}) { push @{$endpoints{$to_end}}, $edge->{id}; }
 	}
 	for my $ep (keys %endpoints) {
 		if(@{$endpoints{$ep}} > 1) {
-			$logger->($VLMED, q[ERROR: Edge endpoint ], $ep, q[ appears in multiple edges: ], join q[;], @{$endpoints{$ep}});
+			$logger->($VLMIN, q[ERROR: Edge endpoint ], $ep, q[ appears in multiple edges: ], join q[;], @{$endpoints{$ep}});
 			$valid = 0;
 		}
 	}
@@ -1361,13 +1363,13 @@ sub resolve_ports {
 		}
 	}
 	else {
-		my $ret = {};
-
 		unless($dst and @{$dst} > 0) {
 			croak q[badly specified splice/prune request: ], $splice_pair;
 		}
 
 		for my $dst_entry (@{$dst}) {
+			my $ret = {};
+
 			$ret->{src} = q[];
 			$ret->{dst} = $dst_entry->{endpoint}->{node_info};
 			$ret->{dst}->{port} = $dst_entry->{endpoint}->{port};
