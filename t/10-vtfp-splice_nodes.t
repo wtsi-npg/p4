@@ -381,12 +381,12 @@ subtest 'pru0' => sub {
 
 	is_deeply ($vtfp_results, $expected, '(pru0.2) remove two branches specified using implied STDIN src in prune spec (pru0.1 with regexp prune spec)');
 
-	my $template = $tdir.q[/10-vtfp-prune_nodes_03.json];
-	my $template_contents = to_json($basic_linear_template);
+	$template = $tdir.q[/10-vtfp-prune_nodes_03.json];
+	$template_contents = to_json($basic_linear_template);
 	write_file($template, $template_contents);
 
-	my $vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes output $template |");
-	my $expected = {
+	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes output $template |");
+	$expected = {
 			nodes =>
 			[
 				{
