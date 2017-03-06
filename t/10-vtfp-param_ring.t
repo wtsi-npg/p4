@@ -20,7 +20,7 @@ subtest 'irdetect' => sub {
 
 	my $test = Test::Cmd->new( prog => $odir.'/bin/vtfp.pl', workdir => q());
 	ok($test, 'made test object');
-	my $test_result = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 1 $template_full_path]);
+	my $test_result = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template_full_path]);
 	my $exit_status = $?;
 	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for splice fail test (infinite recursion detected in parameter substitution)");
 };

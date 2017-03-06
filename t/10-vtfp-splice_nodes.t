@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::Cmd;
 use File::Slurp;
 use Perl6::Slurp;
@@ -58,7 +58,7 @@ my $basic_linear_template = {
 			{ id => q[e2], from => q[uc], to => q[disemvowel] },
 			{ id => q[e3], from => q[disemvowel], to => q[output] }
 		]
-	};
+};
 
 my $basic_multipath_template = {
 		description => q[graph with some branching],
@@ -148,9 +148,51 @@ my $basic_multipath_template = {
 			{ id => q[e7], from => q[tee3:__MID3_OUT__], to => q[Bmid] },
 			{ id => q[e8], from => q[tee3:__RIGHT3_OUT__], to => q[Bright] },
 		]
-	};
+};
 
-# just export and reimport parameter values for a template
+my $multi_src_template = {
+	version => q[1.0],
+	description => q[graph with multiple sources],
+	nodes =>
+	[
+		{
+			id => q[A],
+			type => q[EXEC],
+			use_STDIN => JSON::false,
+			use_STDOUT => JSON::true,
+			cmd => [ 'echo', 'A', ],
+		},
+		{
+			id => q[B],
+			type => q[EXEC],
+			use_STDIN => JSON::false,
+			use_STDOUT => JSON::true,
+			cmd => [ 'echo', 'B', ],
+		},
+		{
+			id => q[C],
+			type => q[EXEC],
+			use_STDIN => JSON::false,
+			use_STDOUT => JSON::true,
+			cmd => [ 'echo', 'C', ],
+		},
+		{
+			id => q[P],
+			type => q[EXEC],
+			use_STDIN => JSON::false,
+			use_STDOUT => JSON::true,
+			cmd => [ 'paste', '__A_IN__', '__B_IN__', '__C_IN__', ],
+		}
+	],
+	edges =>
+	[
+		{ id => q/AP/, from => q/A/, to => q/P:__A_IN__/, },
+		{ id => q/BP/, from => q/B/, to => q/P:__B_IN__/, },
+		{ id => q/CP/, from => q/C/, to => q/P:__C_IN__/, },
+	],
+};
+
+# splice tests
 subtest 'spl0' => sub {
 	plan tests => 2;
 
@@ -228,7 +270,163 @@ subtest 'spl0' => sub {
 			]
 		};
 
-	is_deeply ($vtfp_results, $expected, '(spl0) remove last two nodes in the chain');
+	is_deeply ($vtfp_results, $expected, '(spl0) remove all nodes from uc node downstream in the chain (output to STDIN');
+
+};
+
+# prune tests
+subtest 'pru0' => sub {
+	plan tests => 4;
+
+	my $template = $tdir.q[/10-vtfp-prune_nodes_00.json];
+	my $template_contents = to_json($basic_linear_template);
+	write_file($template, $template_contents);
+
+	my $vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes disemvowel- $template |");
+	my $expected = {
+			nodes =>
+			[
+				{
+					id => q[hello],
+					type => q[EXEC],
+					use_STDIN => JSON::false,
+					use_STDOUT => JSON::true,
+					cmd => [ q/echo/, q/Hello/ ],
+				},
+				{
+					id => q[rev],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::true,
+					cmd => [ q/rev/ ],
+				},
+				{
+					id => q[uc],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::false,
+					cmd => [ q/tr/, q/[:lower:]/, q/[:upper:]/ ],
+				},
+			],
+			edges =>
+			[
+				{ id => q/e0/, from => q/hello/, to => q/rev/ },
+				{ id => q/e1/, from => q/rev/, to => q/uc/ },
+			]
+		};
+
+	is_deeply ($vtfp_results, $expected, '(pru0.0) prune final two nodes in a chain (output to STDOUT switched off)');
+
+	$template = $tdir.q[/10-vtfp-prune_nodes_01.json];
+	$template_contents = to_json($multi_src_template);
+	write_file($template, $template_contents);
+
+	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes \'-P:__A_IN__;-P:__C_IN__\' $template |");
+	$expected = {
+			nodes =>
+			[
+				{
+					id => q[B],
+					type => q[EXEC],
+					use_STDOUT => JSON::true,
+					use_STDIN => JSON::false,
+					cmd => [ 'echo', 'B', ],
+				},
+				{
+					id => q[P],
+					type => q[EXEC],
+					use_STDOUT => JSON::true,
+					use_STDIN => JSON::false,
+					cmd => [ 'paste', '__B_IN__', ],
+				},
+			],
+			edges =>
+			[
+			    { id => 'BP', from => 'B', to => 'P:__B_IN__' }
+
+			]
+		};
+
+	is_deeply ($vtfp_results, $expected, '(pru0.1) remove two branches specified using implied STDIN src in prune spec');
+
+	$template = $tdir.q[/10-vtfp-prune_nodes_02.json];
+	$template_contents = to_json($multi_src_template);
+	write_file($template, $template_contents);
+
+	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes \'-P:__(A|C)_IN__\' $template |");
+	$expected = {
+			nodes =>
+			[
+				{
+					id => q[B],
+					type => q[EXEC],
+					use_STDOUT => JSON::true,
+					use_STDIN => JSON::false,
+					cmd => [ 'echo', 'B', ],
+				},
+				{
+					id => q[P],
+					type => q[EXEC],
+					use_STDOUT => JSON::true,
+					use_STDIN => JSON::false,
+					cmd => [ 'paste', '__B_IN__', ],
+				},
+			],
+			edges =>
+			[
+			    { id => 'BP', from => 'B', to => 'P:__B_IN__' }
+
+			]
+		};
+
+	is_deeply ($vtfp_results, $expected, '(pru0.2) remove two branches specified using implied STDIN src in prune spec (pru0.1 with regexp prune spec)');
+
+	$template = $tdir.q[/10-vtfp-prune_nodes_03.json];
+	$template_contents = to_json($basic_linear_template);
+	write_file($template, $template_contents);
+
+	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes output $template |");
+	$expected = {
+			nodes =>
+			[
+				{
+					id => q[hello],
+					type => q[EXEC],
+					use_STDIN => JSON::false,
+					use_STDOUT => JSON::true,
+					cmd => [ q/echo/, q/Hello/ ],
+				},
+				{
+					id => q[rev],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::true,
+					cmd => [ q/rev/ ],
+				},
+				{
+					id => q[uc],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::true,
+					cmd => [ q/tr/, q/[:lower:]/, q/[:upper:]/ ],
+				},
+				{
+					id => q[disemvowel],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::false,
+					cmd => [ q/tr/, q/-d/, q/[aeiouAEIOU]/ ],
+				},
+			],
+			edges =>
+			[
+				{ id => q/e0/, from => q/hello/, to => q/rev/ },
+				{ id => q/e1/, from => q/rev/, to => q/uc/ },
+				{ id => q[e2], from => q[uc], to => q[disemvowel] },
+			]
+		};
+
+	is_deeply ($vtfp_results, $expected, '(pru0.3) prune final file output node (no range specified; output to STDOUT switched off)');
 
 };
 
@@ -271,7 +469,7 @@ subtest 'spl1' => sub {
 			]
 		};
 
-	is_deeply ($vtfp_results, $expected, '(spl1) spliced out nodes selected with wildcard');
+	is_deeply ($vtfp_results, $expected, '(spl1) prune two (non-sequential) nodes using wildcard');
 
 	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes \'disemv.*-\' $template |");
 	$expected = {
@@ -306,7 +504,7 @@ subtest 'spl1' => sub {
 			]
 		};
 
-	is_deeply ($vtfp_results, $expected, '(spl1) prune two (non-sequential) nodes using wildcard');
+	is_deeply ($vtfp_results, $expected, '(spl1) spliced out nodes selected with wildcard and their downstream node(s)');
 
 	$template = $tdir.q[/10-vtfp-splice_nodes_01a.json];
 	$template_contents = to_json($basic_multipath_template);
@@ -435,7 +633,7 @@ subtest 'spl2' => sub {
 	my $test = Test::Cmd->new( prog => $odir.'/bin/vtfp.pl', workdir => q());
 	ok($test, 'made test object');
 	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -splice_nodes \'rev;uc\' $template]);
-	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for splice fail test (two sequential nodes without port spec)");
+	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for splice fail test. Two sequential nodes (without port spec). An error because the first splice implies preservation of the second node to be splice out");
 };
 
 1;
