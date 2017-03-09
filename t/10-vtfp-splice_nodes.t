@@ -60,6 +60,54 @@ my $basic_linear_template = {
 		]
 };
 
+my $basic_linear_template_missing_edge_ids = {
+		description => q[simple linear chain (stdin->stdout) of nodes],
+		version => q[1.0],
+		nodes =>
+		[
+			{
+				id => q[hello],
+				type => q[EXEC],
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => [ q/echo/, q/Hello/ ],
+			},
+			{
+				id => q[rev],
+				type => q[EXEC],
+				use_STDIN => JSON::true,
+				use_STDOUT => JSON::true,
+				cmd => [ q/rev/ ]
+			},
+			{
+				id => q[uc],
+				type => q[EXEC],
+				use_STDIN => JSON::true,
+				use_STDOUT => JSON::true,
+				cmd => [ q/tr/, q/[:lower:]/, q/[:upper:]/ ],
+			},
+			{
+				id => q[disemvowel],
+				type => q[EXEC],
+				use_STDIN => JSON::true,
+				use_STDOUT => JSON::true,
+				cmd => [ q/tr/, q/-d/, q/[aeiouAEIOU]/ ],
+			},
+			{
+				id => q[output],
+				type => q[OUTFILE],
+				name => q/tmp.xxx/,
+			},
+		],
+		edges =>
+		[
+			{ id => q[e0], from => q[hello], to => q[rev] },
+			{ from => q[rev], to => q[uc] },
+			{ id => q[e2], from => q[uc], to => q[disemvowel] },
+			{ from => q[disemvowel], to => q[output] }
+		]
+};
+
 my $basic_multipath_template = {
 		description => q[graph with some branching],
 		version => q[1.0],
@@ -194,7 +242,7 @@ my $multi_src_template = {
 
 # splice tests
 subtest 'spl0' => sub {
-	plan tests => 2;
+	plan tests => 4;
 
 	my $template = $tdir.q[/10-vtfp-splice_nodes_00.json];
 	my $template_contents = to_json($basic_linear_template);
@@ -272,11 +320,86 @@ subtest 'spl0' => sub {
 
 	is_deeply ($vtfp_results, $expected, '(spl0) remove all nodes from uc node downstream in the chain (output to STDIN');
 
+	$template = $tdir.q[/10-vtfp-splice_nodes_01.json];
+	$template_contents = to_json($basic_linear_template_missing_edge_ids);
+	write_file($template, $template_contents);
+
+	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -splice_nodes rev $template |");
+	$expected = { nodes =>
+			[
+				{
+					id => q[hello],
+					type => q[EXEC],
+					use_STDIN => JSON::false,
+					use_STDOUT => JSON::true,
+					cmd => [ q/echo/, q/Hello/ ],
+				},
+				{
+					id => q[uc],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::true,
+					cmd => [ q/tr/, q/[:lower:]/, q/[:upper:]/ ],
+				},
+				{
+					id => q[disemvowel],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::true,
+					cmd => [ q/tr/, q/-d/, q/[aeiouAEIOU]/ ],
+				},
+				{
+					id => q[output],
+					type => q[OUTFILE],
+					name => q/tmp.xxx/,
+				},
+			],
+			edges =>
+			[
+				{ id => q/e2/, from => q/uc/, to => q/disemvowel/ },
+				{ from => q/disemvowel/, to => q/output/ },
+				{ id => q/hello_to_uc/, from => q/hello/, to => q/uc/ },
+			]
+		};
+
+	is_deeply ($vtfp_results, $expected, '(spl0) one node in a chain (including edges with no ids) spliced out');
+
+	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -splice_nodes \'uc-\' $template |");
+	$expected = { nodes =>
+			[
+				{
+					id => q[hello],
+					type => q[EXEC],
+					use_STDIN => JSON::false,
+					use_STDOUT => JSON::true,
+					cmd => [ q/echo/, q/Hello/ ],
+				},
+				{
+					id => q[rev],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::true,
+					cmd => [ q/rev/ ],
+				},
+				{
+					id => q[STDOUT_00000],
+					name => q[/dev/stdout],
+					type => q[OUTFILE],
+				},
+			],
+			edges =>
+			[
+				{ id => q/e0/, from => q/hello/, to => q/rev/ },
+				{ id => q/rev_to_STDOUT/, from => q/rev/, to => q/STDOUT_00000/ },
+			]
+		};
+
+	is_deeply ($vtfp_results, $expected, '(spl0) remove all nodes from uc node downstream in a chain including edges with no ids (output to STDIN');
 };
 
 # prune tests
 subtest 'pru0' => sub {
-	plan tests => 4;
+	plan tests => 5;
 
 	my $template = $tdir.q[/10-vtfp-prune_nodes_00.json];
 	my $template_contents = to_json($basic_linear_template);
@@ -318,6 +441,45 @@ subtest 'pru0' => sub {
 	is_deeply ($vtfp_results, $expected, '(pru0.0) prune final two nodes in a chain (output to STDOUT switched off)');
 
 	$template = $tdir.q[/10-vtfp-prune_nodes_01.json];
+	$template_contents = to_json($basic_linear_template_missing_edge_ids);
+	write_file($template, $template_contents);
+
+	$vtfp_results = from_json(slurp "bin/vtfp.pl -no-absolute_program_paths -verbosity_level 0 -prune_nodes disemvowel- $template |");
+	$expected = {
+			nodes =>
+			[
+				{
+					id => q[hello],
+					type => q[EXEC],
+					use_STDIN => JSON::false,
+					use_STDOUT => JSON::true,
+					cmd => [ q/echo/, q/Hello/ ],
+				},
+				{
+					id => q[rev],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::true,
+					cmd => [ q/rev/ ],
+				},
+				{
+					id => q[uc],
+					type => q[EXEC],
+					use_STDIN => JSON::true,
+					use_STDOUT => JSON::false,
+					cmd => [ q/tr/, q/[:lower:]/, q/[:upper:]/ ],
+				},
+			],
+			edges =>
+			[
+				{ id => q/e0/, from => q/hello/, to => q/rev/ },
+				{ from => q/rev/, to => q/uc/ },
+			]
+		};
+
+	is_deeply ($vtfp_results, $expected, '(pru0.0) prune final two nodes in a chain including edge elements with no id (output to STDOUT switched off)');
+
+	$template = $tdir.q[/10-vtfp-prune_nodes_02.json];
 	$template_contents = to_json($multi_src_template);
 	write_file($template, $template_contents);
 
@@ -349,7 +511,7 @@ subtest 'pru0' => sub {
 
 	is_deeply ($vtfp_results, $expected, '(pru0.1) remove two branches specified using implied STDIN src in prune spec');
 
-	$template = $tdir.q[/10-vtfp-prune_nodes_02.json];
+	$template = $tdir.q[/10-vtfp-prune_nodes_03.json];
 	$template_contents = to_json($multi_src_template);
 	write_file($template, $template_contents);
 
@@ -381,7 +543,7 @@ subtest 'pru0' => sub {
 
 	is_deeply ($vtfp_results, $expected, '(pru0.2) remove two branches specified using implied STDIN src in prune spec (pru0.1 with regexp prune spec)');
 
-	$template = $tdir.q[/10-vtfp-prune_nodes_03.json];
+	$template = $tdir.q[/10-vtfp-prune_nodes_04.json];
 	$template_contents = to_json($basic_linear_template);
 	write_file($template, $template_contents);
 
