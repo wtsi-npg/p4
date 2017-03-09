@@ -1259,7 +1259,7 @@ sub final_splice {
 	push @{$flat_graph->{nodes}}, @{$splice_candidates->{new_nodes}};
 
 	# remove from flat_graph the edges whose ids are in cull_edges
-	$flat_graph->{edges} = [ (grep { $_->{id} and not $cull_edges->{$_->{id}} } @{$flat_graph->{edges}}) ];
+	$flat_graph->{edges} = [ (grep { not ($_->{id} and $cull_edges->{$_->{id}}) } @{$flat_graph->{edges}}) ];
 
 	# add new edges
 	push @{$flat_graph->{edges}}, @{$splice_candidates->{replacement_edges}};
