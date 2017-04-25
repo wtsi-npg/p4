@@ -1,6 +1,11 @@
 CHANGES LOG
 -----------
 
+release 0.18.5
+ - Correct logic in vftp.pl for allowing edges without id attributes
+ - Reduce verbosity in vtfp.pl
+ - Fix handling of splice/prune in vftp.pl where source/destination is STDIN/STOUT
+ - Use fopid in place of other substitutions
  - use FindBin in vtfp.pl and viv.pl
 
 release 0.18.4
