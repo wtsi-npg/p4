@@ -305,9 +305,9 @@ sub process_subst_params {
 	for my $i (0..$#{$unprocessed_subst_params}) {
 
 		my $sps = $unprocessed_subst_params->[$i];
-#		$sp = fetch_sp_value($sp, $params, $ewi, []); # EXPERIMENTAL (and broken)
-		$sps = subst_walk($sps, $params, $ewi, { irp => [], select_opts => { select => 1, }, } ); # EXPERIMENTAL (and broken)
+		$sps = subst_walk($sps, $params, $ewi, { irp => [], select_opts => { select => 1, }, } ); # preprocess any select directives in the subst_params section
 
+		if(not defined $sps) { next; }
 		# subst_walk may return an array of entries, so make that always the case.
 		if(ref $sps ne q[ARRAY]) {
 			$sps = [ $sps ];
@@ -791,10 +791,6 @@ sub postprocess_subst_array {
 	return $subst_value;
 }
 
-##########################
-# WIP START
-##########################
-
 sub resolve_select_value {
 	my ($select, $params, $ewi, $aux) = @_;
 	my $param_entry;
@@ -803,7 +799,7 @@ sub resolve_select_value {
 	# check to see if select value is an expression which needs evaluating
 	my $indexes = subst_walk($select->{select}, $params, $ewi, $aux);
 	if(ref $indexes and ref $indexes ne q[ARRAY]) { # only scalar or array (of scalars) allowed here
-		$ewi->{additem}->($EWI_ERROR, 0, q[select key can only be a string or array, not ref (type: ], ref $indexes, q[)]);
+		$ewi->{additem}->($EWI_ERROR, 0, q[select key can only be a scalar or array, not ref (type: ], ref $indexes, q[)]);
 		return;
 	}
 	if(not ref $indexes) { $indexes = [ $indexes ]; }
@@ -818,6 +814,20 @@ sub resolve_select_value {
 		return;
 	}
 
+	# this approach means that default will always apply when no select indexes are found (so cannot be switched off using -nullkeys)
+	if(scalar @{$indexes} == 0) {
+		# all valid but nothing selected - evaluate default attribute (if exists), revalidate as select_range
+		my $default;
+		if(defined $select->{default}) {
+			$default = subst_walk($select->{default}, $params, $ewi, $aux);
+		}
+
+		if(not $default or (ref $default eq q[ARRAY] and not @{$default})) { return; }
+
+		$indexes = $default;
+		if(not ref $indexes) { $indexes = [ $indexes ]; }
+	}
+
 	# validate indices - numerics for array cases, existing keys for hash cases
 	if(not defined ($indexes = _validate_indexes($indexes, $select->{cases}, $params, $ewi))) { # array indices numeric and in range? hash keys exist in hash?
 		$ewi->{additem}->($EWI_ERROR, 0, q[select directive without valid indexes (select on: ], $id_string, q[)]);
@@ -828,17 +838,6 @@ sub resolve_select_value {
 		return;
 	}
 
-	if(scalar @{$indexes} == 0) {
-		# all valid but nothing selected - evaluate default attribute (if exists), revalidate as select_range
-		my $default;
-		if(defined $select->{default}) {
-			$default = subst_walk($select->{default}, $params, $ewi, $aux);
-		}
-
-		if(not defined $default or not _valid_select_range($default, $indexes, $ewi, $id_string, q[select default])) {
-			return;
-		}
-	}
 
 	if(ref $cases eq q[ARRAY]) {
 		if(@{$indexes} > 1) {
@@ -871,13 +870,6 @@ sub _resolve_indexes {
 	for my $i (0 .. $#{$indexes}) {
 		my $param_entry = fetch_param_entry($indexes->[$i], $params, $ewi, $aux);
 		$indexes->[$i] = $param_entry->{_value};
-#		if($param_entry and defined $param_entry->{_value}) {
-#			$indexes->[$i] = $param_entry->{_value};
-#		}
-#		else {
-#			# ERROR? (probably a bad idea to muddle parameter names and values)
-#			return;
-#		}
 	}
 
 	return $indexes;
@@ -961,10 +953,6 @@ sub _valid_select_range {
 
 	return $select_range;
 }
-
-##########################
-# WIP END
-##########################
 
 sub resolve_param_default {
 	my ($id, $default, $params, $ewi, $aux) = @_;
