@@ -72,9 +72,9 @@
 	{
 		"id":"split",
 		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": false,
-		"cmd":[{"subst":"split_bam_by_chromosomes_cmd"}, "I=__IN__", "TARGET_PATH=__TARGET_OUT__", "EXCLUDED_PATH=__SPLIT_OUT__"]
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bambi", "chrsplit", "--exclude", "__SPLIT_OUT__", "--input", "__IN__", "--output", "__TARGET_OUT__", {"subst":"chrsplit_subset_flag"}, {"subst":"chrsplit_invert_flag"}]
 	},
 	{
 		"id":"target_final",

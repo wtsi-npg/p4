@@ -598,7 +598,7 @@ sub fetch_param_entry {
 	my $param_entry;
 	my $retval;
 
-	if(defined $irp and any { $_ eq $param_name} @{$irp}) { # infinite recursion prevention
+	if(defined $irp and any { $_ eq $param_name } @{$irp}) { # infinite recursion prevention
 		$ewi->{additem}->($EWI_ERROR, 0, q[infinite recursion detected resolving parameter ], $param_name, q[ (], join(q/=>/, (@{$irp}, $param_name)), q[)]);
 		return;
 	}
@@ -636,19 +636,30 @@ sub fetch_param_entry {
 	#  or subst_constructors specified in the template).
 	###########################################################################################################################
 	my $subst_requests = $params->{assign};
+	if(exists $subst_requests->[0]->{$param_name}) { # this local assignment will override anything else, so return
+		$param_entry->{_value} = $subst_requests->[0]->{$param_name};
+		return $param_entry;
+		
+	}
 	for my $sr (@$subst_requests) {
 		if(exists $sr->{$param_name}) { # allow undef value
 			$param_entry->{_value} = $sr->{$param_name};
+			last;
 		}
 	}
 
+	my $candidate;
 	if(exists $param_entry->{_value}) {
-		return $param_entry;   # already evaluated, return cached value (allowing undef)
+		$candidate = $param_entry;   # already evaluated, return cached value (allowing undef)
 	}
 
 	push @{$irp}, $param_name;
 	$retval = resolve_subst_constructor($param_name, $param_entry->{subst_constructor}, $params, $ewi, $irp);
-		
+
+	if(not $retval and $candidate) {
+		$retval = $candidate->{_value};
+	}
+
 	if(defined $retval) {
 		$param_entry->{_value} = $retval;
 	}
