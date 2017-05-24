@@ -33,40 +33,14 @@
 		}
 	},
 	{"id":"split_indicator"},
-	{
-		"id":"fopid_split",
-		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
-		"subst_constructor":{
-			"vals":[ {"subst":"rpt"}, {"subst":"split_indicator"} ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{"id":"split_bam_by_chromosomes_jar_path","required":"no","default":"/software/npg/java_jars"},
-	{"id":"java_cmd","required":"no","default":"java"},
-	{
-		"id":"split_bam_by_chromosomes_jar","required":"no",
-		"subst_constructor":{
-			"vals":[ {"subst":"split_bam_by_chromosomes_jar_path"}, "/", "SplitBamByChromosomes.jar" ],
-			"postproc":{"op":"concat","pad":""}
-		}
-	},
-	{ "id":"split_bam_by_chromosome_flags","comment":"specify as [S=Y,V=true] if ysplit" },
-	{
-		"id":"split_bam_by_chromosomes_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"java_cmd"},
-				"-Xmx1000m",
-				"-jar", {"subst":"split_bam_by_chromosomes_jar"},
-				"VALIDATION_STRINGENCY=SILENT",
-				"COMPRESSION_LEVEL=0",
-				"MAX_RECORDS_IN_RAM=500000",
-				{"subst":"split_bam_by_chromosome_flags"}
-			],
-			"postproc":{"op":"pack"}
-		}
-	}
+ 	{
+ 		"id":"fopid_split",
+ 		"comment":"id passed to the final_output_prep template; used there to construct unique file names",
+ 		"subst_constructor":{
+ 			"vals":[ {"subst":"rpt"}, {"subst":"split_indicator"} ],
+ 			"postproc":{"op":"concat", "pad":""}
+ 		}
+ 	}
 ],
 "nodes":[
 	{
