@@ -621,6 +621,7 @@ sub fetch_param_entry {
 	#####################################################################
 	if(not defined $param_store->[0]->{varnames}->{$param_name}) {
 		my $new_param_entry = (not defined $param_entry)? { id => $param_name, _declared_by => [], }: dclone $param_entry;
+		delete $new_param_entry->{_value}; # force re-evaluation at this level
 
 		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
 
@@ -686,26 +687,26 @@ sub resolve_subst_constructor {
 
 	if(not defined $subst_constructor) { return; }
 
-	my $vals;
-	unless($vals = $subst_constructor->{vals}) {
+	my $value = (ref $subst_constructor->{vals})? dclone $subst_constructor->{vals} : $subst_constructor->{vals};
+	unless($value) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[subst_constructor attribute requires a vals attribute, param_name: ], $id);
 		return;
 	}
 
-	$vals = subst_walk($vals, $params, $ewi, $irp);
+	$value = subst_walk($value, $params, $ewi, $irp);
 
-	if(not defined $vals) {
+	if(not defined $value) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[Error processing subst_constructor value, param_name: ], $id);
 		return;
 	}
 
-	unless(ref $vals eq q[ARRAY]) {
+	unless(ref $value eq q[ARRAY]) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[subst_constructor vals attribute must be array, param_name: ], $id);
 		return;
 	}
 
 
-	$subst_constructor->{vals} = $vals;
+	$subst_constructor->{_value} = $value;
 
 	return postprocess_subst_array($id, $subst_constructor, $ewi);
 }
@@ -720,7 +721,7 @@ sub resolve_subst_constructor {
 sub postprocess_subst_array {
 	my ($param_id, $subst_constructor, $ewi) = @_;
 
-	my $subst_value=$subst_constructor->{vals};
+	my $subst_value=$subst_constructor->{_value};
 	if(ref $subst_value ne q[ARRAY]) {
 		$ewi->{additem}->($EWI_INFO, 0, q[vals attribute must be an array ref (param: ], $param_id, q[)]);
 		return;
