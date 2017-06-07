@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::Cmd;
 use File::Slurp;
 use Perl6::Slurp;
@@ -273,6 +273,138 @@ subtest 'multilevel_vtf' => sub {
 	};
 
 	is_deeply ($vtfp_results, $expected_result, 'multilevel VTFILE nodes - two level (split)');
+};
+
+subtest 'multilevel_local_param_reeval' => sub {
+	plan tests => 2;
+
+	my $basic_container = {
+		description => 'top template containing a VTFILE node',
+		version => '1.0',
+		nodes => [
+			{
+				id => 'n1',
+				type => 'EXEC',
+				cmd => [ 'echo', 'aeronautics']
+			},
+			{
+				id => 'v1',
+				type => 'VTFILE',
+				node_prefix => 'vtf11_',
+				name => "$tdir/10-vtfp-vtfile_vtf11.json",
+				subst_map => { component => 'xy' }
+			}
+		],
+		edges => [
+			{ id => 'e1', from => 'n1', to => 'v1'}
+		]
+	};
+
+	my $vtf11 = {
+		description => 'mid',
+		version => '1.0',
+		subgraph_io => {
+			ports => {
+				inputs => {
+					_stdin_ => 'tee',
+				}
+			}
+		},
+		subst_params => [
+			{ id => 'ext', subst_constructor => {vals => [ 'w', {subst => 'component'}, 'z' ], postproc => { op => 'concat', pad => ''}} }
+		],
+		nodes => [
+			{
+				id => 'tee',
+				type => 'EXEC',
+				cmd => [ 'tee', '__A_OUT__', '__B_OUT__' ]
+			},
+			{
+				id => 'file',
+				type => 'OUTFILE',
+				name => { subst_constructor => { vals => [ 'tmp.', {subst => 'ext', ifnull => 'tat', }], postproc => { op => 'concat', pad => ''} }, }
+			},
+			{
+				id => 'vfile',
+				type => 'VTFILE',
+				node_prefix => 'vtf12_',
+				name => "$tdir/10-vtfp-vtfile_vtf12.json",
+				subst_map => { component => 'ee' }
+			},
+		],
+		edges => [
+			{ id => 'e2', from => 'tee:__A_OUT__', to => 'file'},
+			{ id => 'e3', from => 'tee:__B_OUT__', to => 'vfile'},
+		]
+	};
+
+	my $vtf12 = {
+		description => 'bottom',
+		comment => 'the value of param ext should not be inherited from the cache of the parent, since the passed component value should force local reevaluation',
+		version => '1.0',
+		subgraph_io => {
+			ports => {
+				inputs => {
+					_stdin_ => 'vfile',
+				}
+			}
+		},
+		nodes => [
+			{
+				id => 'vfile',
+				type => 'OUTFILE',
+				name => { subst_constructor => { vals => [ 'tmp.', {subst => 'ext'} ], postproc => { op => 'concat', pad => ''} }, }
+			},
+		]
+	};
+
+	my $template = $tdir.q[/10-vtfp-vtfile_multilevel1.json];
+	my $template_contents = to_json($basic_container);
+	write_file($template, $template_contents);
+
+	my $vtfile11 = $tdir.q[/10-vtfp-vtfile_vtf11.json];
+	my $vtfile_contents = to_json($vtf11);
+	write_file($vtfile11, $vtfile_contents);
+
+	my $vtfile12 = $tdir.q[/10-vtfp-vtfile_vtf12.json];
+	$vtfile_contents = to_json($vtf12);
+	write_file($vtfile12, $vtfile_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for test1: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		nodes => [
+			{
+				id => 'n1',
+				type => 'EXEC',
+				cmd => ['echo', 'aeronautics']
+			},
+			{
+				id => 'vtf11_tee',
+				type => 'EXEC',
+				cmd => [ 'tee', '__A_OUT__', '__B_OUT__' ]
+			},
+			{
+				id => 'vtf11_file',
+				type => 'OUTFILE',
+				name => 'tmp.wxyz',
+			},
+			{
+				id => 'vtf12_vfile',
+				type => 'OUTFILE',
+				name => 'tmp.weez',
+			},
+		],
+		edges=> [
+			{ id => 'e1', from => 'n1', to => 'vtf11_tee'},
+			{ id => 'e2', from => 'vtf11_tee:__A_OUT__', to => 'vtf11_file'},
+			{ id => 'e3', from => 'vtf11_tee:__B_OUT__', to => 'vtf12_vfile'}
+		]
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'multilevel local param reeval');
 };
 
 1;
