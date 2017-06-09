@@ -598,7 +598,7 @@ sub fetch_param_entry {
 	my $param_entry;
 	my $retval;
 
-	if(defined $irp and any { $_ eq $param_name} @{$irp}) { # infinite recursion prevention
+	if(defined $irp and any { $_ eq $param_name } @{$irp}) { # infinite recursion prevention
 		$ewi->{additem}->($EWI_ERROR, 0, q[infinite recursion detected resolving parameter ], $param_name, q[ (], join(q/=>/, (@{$irp}, $param_name)), q[)]);
 		return;
 	}
@@ -621,6 +621,7 @@ sub fetch_param_entry {
 	#####################################################################
 	if(not defined $param_store->[0]->{varnames}->{$param_name}) {
 		my $new_param_entry = (not defined $param_entry)? { id => $param_name, _declared_by => [], }: dclone $param_entry;
+		delete $new_param_entry->{_value}; # force re-evaluation at this level
 
 		$param_store->[0]->{varnames}->{$param_name} = $new_param_entry; # adding to the "local" variable store
 
@@ -636,19 +637,30 @@ sub fetch_param_entry {
 	#  or subst_constructors specified in the template).
 	###########################################################################################################################
 	my $subst_requests = $params->{assign};
+	if(exists $subst_requests->[0]->{$param_name}) { # this local assignment will override anything else, so return
+		$param_entry->{_value} = $subst_requests->[0]->{$param_name};
+		return $param_entry;
+		
+	}
 	for my $sr (@$subst_requests) {
 		if(exists $sr->{$param_name}) { # allow undef value
 			$param_entry->{_value} = $sr->{$param_name};
+			last;
 		}
 	}
 
+	my $candidate;
 	if(exists $param_entry->{_value}) {
-		return $param_entry;   # already evaluated, return cached value (allowing undef)
+		$candidate = $param_entry;   # already evaluated, return cached value (allowing undef)
 	}
 
 	push @{$irp}, $param_name;
 	$retval = resolve_subst_constructor($param_name, $param_entry->{subst_constructor}, $params, $ewi, $irp);
-		
+
+	if(not $retval and $candidate) {
+		$retval = $candidate->{_value};
+	}
+
 	if(defined $retval) {
 		$param_entry->{_value} = $retval;
 	}
@@ -675,26 +687,26 @@ sub resolve_subst_constructor {
 
 	if(not defined $subst_constructor) { return; }
 
-	my $vals;
-	unless($vals = $subst_constructor->{vals}) {
+	my $value = (ref $subst_constructor->{vals})? dclone $subst_constructor->{vals} : $subst_constructor->{vals};
+	unless($value) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[subst_constructor attribute requires a vals attribute, param_name: ], $id);
 		return;
 	}
 
-	$vals = subst_walk($vals, $params, $ewi, $irp);
+	$value = subst_walk($value, $params, $ewi, $irp);
 
-	if(not defined $vals) {
+	if(not defined $value) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[Error processing subst_constructor value, param_name: ], $id);
 		return;
 	}
 
-	unless(ref $vals eq q[ARRAY]) {
+	unless(ref $value eq q[ARRAY]) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[subst_constructor vals attribute must be array, param_name: ], $id);
 		return;
 	}
 
 
-	$subst_constructor->{vals} = $vals;
+	$subst_constructor->{_value} = $value;
 
 	return postprocess_subst_array($id, $subst_constructor, $ewi);
 }
@@ -709,7 +721,7 @@ sub resolve_subst_constructor {
 sub postprocess_subst_array {
 	my ($param_id, $subst_constructor, $ewi) = @_;
 
-	my $subst_value=$subst_constructor->{vals};
+	my $subst_value=$subst_constructor->{_value};
 	if(ref $subst_value ne q[ARRAY]) {
 		$ewi->{additem}->($EWI_INFO, 0, q[vals attribute must be an array ref (param: ], $param_id, q[)]);
 		return;
