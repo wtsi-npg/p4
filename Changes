@@ -1,6 +1,13 @@
 CHANGES LOG
 -----------
 
+release 0.18.6
+ - Y-split fixes
+     When processing VTFILE nodes, make sure that parameters are reevaluated locally instead of naively inheriting values
+         from the enclosing template (otherwise local changes in values of components of a parameter value may be ignored).
+     use bambi for split by chromosome (remove java)
+     10-vtfp-vtfile.t - add tests for VTFILE functionality
+
 release 0.18.5
  - Correct logic in vftp.pl for allowing edges without id attributes
  - Reduce verbosity in vtfp.pl
