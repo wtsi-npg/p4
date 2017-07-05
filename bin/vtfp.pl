@@ -595,8 +595,6 @@ sub resolve_subst {
 		return;
 	}
 
-	$param_entry->{_value} = $retval;
-
 	return $retval;
 }
 
@@ -688,7 +686,6 @@ sub fetch_param_entry {
 		# caller should decide if undef is allowed, unless required is true
 		my $severity = (defined $param_entry->{required} and $param_entry->{required} and $param_entry->{required} !~ /\A(false|no|off)\Z/i)? $EWI_ERROR: $EWI_INFO;
 		$ewi->{additem}->($severity, 0, q[No value found for param_entry ], $param_name);
-		return;
 	}
 
 	return $param_entry;
@@ -807,7 +804,6 @@ sub resolve_select_value {
 	if(not defined ($indexes = _resolve_indexes($indexes, $params, $ewi, $aux))) {
 		return;
 	}
-	$indexes = finalise_array($indexes);
 
 	my $cases = _preproc_cases($select->{cases}, $id_string, $params, $ewi, $aux);
 	if(not $cases) {
@@ -828,6 +824,8 @@ sub resolve_select_value {
 		if(not ref $indexes) { $indexes = [ $indexes ]; }
 	}
 
+	$indexes = finalise_array($indexes); # do this after default check
+
 	# validate indices - numerics for array cases, existing keys for hash cases
 	if(not defined ($indexes = _validate_indexes($indexes, $select->{cases}, $params, $ewi))) { # array indices numeric and in range? hash keys exist in hash?
 		$ewi->{additem}->($EWI_ERROR, 0, q[select directive without valid indexes (select on: ], $id_string, q[)]);
@@ -838,6 +836,9 @@ sub resolve_select_value {
 		return;
 	}
 
+	if(@{$indexes} == 0) { # check again, maybe only an array of undefs before
+		return;
+	}
 
 	if(ref $cases eq q[ARRAY]) {
 		if(@{$indexes} > 1) {
@@ -869,7 +870,12 @@ sub _resolve_indexes {
 
 	for my $i (0 .. $#{$indexes}) {
 		my $param_entry = fetch_param_entry($indexes->[$i], $params, $ewi, $aux);
-		$indexes->[$i] = $param_entry->{_value};
+		if(exists $param_entry->{_value}) {
+			$indexes->[$i] = $param_entry->{_value};
+		}
+		else {
+			splice @{$indexes}, $i, 1;
+		}
 	}
 
 	return $indexes;
@@ -903,24 +909,25 @@ sub _validate_indexes {
 		return; # should this be fatal or just informational?
 	}
 
+	my $def_indexes = [ (grep { defined } @{$indexes}) ]; # undefined values are allowed
 	my $cases_type = ref $cases;
 	my @outsiders;
 	if($cases_type eq q[ARRAY]) {
 		my $maxidx = scalar @{$cases};
 
-		@outsiders = grep { $_ > $maxidx; } @{$indexes};
+		@outsiders = grep { $_ > $maxidx; } @{$def_indexes};
 		if(@outsiders) {
 			$ewi->{additem}->($EWI_ERROR, 0, q[index values out of range for array of cases: ], join(',', @outsiders));
 			return; # should this be fatal or just informational?
 		}
-		@outsiders = grep { /\D/ } @{$indexes};
+		@outsiders = grep { /\D/ } @{$def_indexes};
 		if(@outsiders) {
 			$ewi->{additem}->($EWI_ERROR, 0, q[non-numeric index values for array of cases: ], join(',', @outsiders));
 			return; # should this be fatal or just informational?
 		}
 	}
 	elsif($cases_type eq q[HASH]) {
-		@outsiders = grep { not exists $cases->{$_} } @{$indexes};
+		@outsiders = grep { not exists $cases->{$_} } @{$def_indexes};
 		if(@outsiders) {
 			$ewi->{additem}->($EWI_ERROR, 0, q[keys don't exist in cases: ], join(',', @outsiders));
 			return; # should this be fatal or just informational?
