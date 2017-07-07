@@ -73,7 +73,7 @@ if($help) {
 @vals = map { split_csl($_); } @vals;
 @param_vals_fns = map { split_csl($_); } @param_vals_fns;
 
-my $params = initialise_params(\@keys, \@vals, \@nullkeys, \@param_vals_fns);
+my $params = initialise_params(\@keys, \@vals, \@nullkeys, $splice_list, $prune_list, \@param_vals_fns);
 
 if($export_param_vals) {
 	open my $epv, ">$export_param_vals" or croak "Failed to open $export_param_vals for export of param_vals";
@@ -107,8 +107,8 @@ my $node_tree = process_vtnode(q[], $vtf_name, q[], $params, $globals);    # rec
 my $flat_graph = flatten_tree($node_tree);
 
 my $cull_node_ids = []; # used to detect (and disregard) parameter substitution errors in nodes which have been removed
-if($splice_list or $prune_list) {
-	($flat_graph, $cull_node_ids) = splice_nodes($flat_graph, $splice_list, $prune_list);
+if(@{$params->{ops}->{splice}} or @{$params->{ops}->{prune}}) {
+	($flat_graph, $cull_node_ids) = splice_nodes($flat_graph, $params->{ops});
 }
 
 # parameter substitution errors are reported late, so errors in pruned or spliced nodes can be ignored
@@ -595,8 +595,6 @@ sub resolve_subst {
 		return;
 	}
 
-	$param_entry->{_value} = $retval;
-
 	return $retval;
 }
 
@@ -700,7 +698,6 @@ sub fetch_param_entry {
 		# caller should decide if undef is allowed, unless required is true
 		my $severity = (defined $param_entry->{required} and $param_entry->{required} and $param_entry->{required} !~ /\A(false|no|off)\Z/i)? $EWI_ERROR: $EWI_INFO;
 		$ewi->{additem}->($severity, 0, q[No value found for param_entry ], $param_name);
-		return;
 	}
 
 	return $param_entry;
@@ -819,7 +816,6 @@ sub resolve_select_value {
 	if(not defined ($indexes = _resolve_indexes($indexes, $params, $ewi, $aux))) {
 		return;
 	}
-	$indexes = finalise_array($indexes);
 
 	my $cases = _preproc_cases($select->{cases}, $id_string, $params, $ewi, $aux);
 	if(not $cases) {
@@ -840,6 +836,8 @@ sub resolve_select_value {
 		if(not ref $indexes) { $indexes = [ $indexes ]; }
 	}
 
+	$indexes = finalise_array($indexes); # do this after default check
+
 	# validate indices - numerics for array cases, existing keys for hash cases
 	if(not defined ($indexes = _validate_indexes($indexes, $select->{cases}, $params, $ewi))) { # array indices numeric and in range? hash keys exist in hash?
 		$ewi->{additem}->($EWI_ERROR, 0, q[select directive without valid indexes (select on: ], $id_string, q[)]);
@@ -850,6 +848,9 @@ sub resolve_select_value {
 		return;
 	}
 
+	if(@{$indexes} == 0) { # check again, maybe only an array of undefs before
+		return;
+	}
 
 	if(ref $cases eq q[ARRAY]) {
 		if(@{$indexes} > 1) {
@@ -881,7 +882,12 @@ sub _resolve_indexes {
 
 	for my $i (0 .. $#{$indexes}) {
 		my $param_entry = fetch_param_entry($indexes->[$i], $params, $ewi, $aux);
-		$indexes->[$i] = $param_entry->{_value};
+		if(exists $param_entry->{_value}) {
+			$indexes->[$i] = $param_entry->{_value};
+		}
+		else {
+			splice @{$indexes}, $i, 1;
+		}
 	}
 
 	return $indexes;
@@ -915,24 +921,25 @@ sub _validate_indexes {
 		return; # should this be fatal or just informational?
 	}
 
+	my $def_indexes = [ (grep { defined } @{$indexes}) ]; # undefined values are allowed
 	my $cases_type = ref $cases;
 	my @outsiders;
 	if($cases_type eq q[ARRAY]) {
 		my $maxidx = scalar @{$cases};
 
-		@outsiders = grep { $_ > $maxidx; } @{$indexes};
+		@outsiders = grep { $_ > $maxidx; } @{$def_indexes};
 		if(@outsiders) {
 			$ewi->{additem}->($EWI_ERROR, 0, q[index values out of range for array of cases: ], join(',', @outsiders));
 			return; # should this be fatal or just informational?
 		}
-		@outsiders = grep { /\D/ } @{$indexes};
+		@outsiders = grep { /\D/ } @{$def_indexes};
 		if(@outsiders) {
 			$ewi->{additem}->($EWI_ERROR, 0, q[non-numeric index values for array of cases: ], join(',', @outsiders));
 			return; # should this be fatal or just informational?
 		}
 	}
 	elsif($cases_type eq q[HASH]) {
-		@outsiders = grep { not exists $cases->{$_} } @{$indexes};
+		@outsiders = grep { not exists $cases->{$_} } @{$def_indexes};
 		if(@outsiders) {
 			$ewi->{additem}->($EWI_ERROR, 0, q[keys don't exist in cases: ], join(',', @outsiders));
 			return; # should this be fatal or just informational?
@@ -1152,13 +1159,12 @@ sub get_child_prefix {
 
 
 sub splice_nodes {
-	my ($flat_graph, $splice_list, $prune_list) = @_;
-	my $splice_candidates = { cull_nodes => {}, cull_edges => {}, preserve_nodes => {}, replacement_edges => [], prune_edges => [], frontier => [], new_nodes => [], stdio_gen => { in => mk_stdio_node_generator($SRC), out => mk_stdio_node_generator($DST), }, };
+	my ($flat_graph, $ops) = @_;
+	my ($splice_nodes, $prune_nodes);
+	$splice_nodes = $ops->{splice};
+	$prune_nodes = $ops->{prune};
 
-	$splice_list ||= q[];
-	$prune_list ||= q[];
-	my $splice_nodes = [ (split q{;}, $splice_list) ];
-	my $prune_nodes = [ (split q{;}, $prune_list) ];
+	my $splice_candidates = { cull_nodes => {}, cull_edges => {}, preserve_nodes => {}, replacement_edges => [], prune_edges => [], frontier => [], new_nodes => [], stdio_gen => { in => mk_stdio_node_generator($SRC), out => mk_stdio_node_generator($DST), }, };
 
 	if(@{$splice_nodes}) {
 		$splice_candidates = register_splice_pairs($flat_graph, $splice_nodes, $SPLICE, $splice_candidates);
@@ -1650,7 +1656,7 @@ sub _resolve_endpoint {
 		my ($std_port_name, $in_out, $near_end, $far_end) = ($which_end == $SRC) ? qw/ use_STDOUT out from to / : qw/ use_STDIN in to from /;
 
 		# make sure the named port actually exists on this node (by checking the edges) 
-		if($port and not any { $_ eq $port } map { (split q/:/, $_->{$near_end})[1] } @{$node_info->{all_edges}->{$in_out}}) { croak q[port ], $port, q[ is not a port of node ], $node_id; }
+		if($port and not any { defined $_ and $_ eq $port } map { (split q/:/, $_->{$near_end})[1] } @{$node_info->{all_edges}->{$in_out}}) { croak q[port ], $port, q[ is not a port of node ], $node_id; }
 		# if port name is q[], STD[IN|OUT] is implied. Is this possible for this node?
 		if(not $port and $node_info->{node}->{type} !~ /\A(IN|OUT|RA)FILE\Z/smx and not $node_info->{node}->{$std_port_name}) { croak q[port not specified by name, but ], $std_port_name, q[ is false for node ], $node_id; }
 
@@ -1808,23 +1814,31 @@ sub split_csl {
 #  an empty initial param_store is added.
 ######################################################################
 sub initialise_params {
-	my ($keys, $vals, $nullkeys, $param_vals_fns) = @_;
+	my ($keys, $vals, $nullkeys, $splice_list, $prune_list, $param_vals_fns) = @_;
 
 	my $pv = {};
 
 	$pv = construct_pv($keys, $vals, $nullkeys);
 
-	return combine_pvs($param_vals_fns, $pv);
+	$pv = combine_pvs($param_vals_fns, $pv);
+
+	$pv = add_ops($pv, $splice_list, $prune_list);
+
+	return $pv;
 }
 
 sub construct_pv {
 	my ($keys, $vals, $nullkeys) = @_;
-	my $pv;
-	my $subst_requests = {};
-	my $subst_map_overrides = {};
+	my $pv = { param_store =>  [], assign => [], assign_local => {}, ops => { splice => [], prune => [], }, };;
+	my $subst_requests;
+	my $subst_map_overrides;
 
 	if(@$keys != @$vals) {
 		croak q[Mismatch between keys and vals];
+	}
+
+	if(@{$keys} == 0 and @{$nullkeys} == 0) {
+		return;
 	}
 
 	for my $nullkey (@$nullkeys) {
@@ -1860,9 +1874,10 @@ sub construct_pv {
 				$subst_requests->{$param_name} = $param_value;
 			}
 		}
-
-		$pv = { param_store =>  [], assign => [ $subst_requests ], assign_local => $subst_map_overrides, };
 	}
+
+	if(defined $subst_requests) { $pv->{assign} = [ $subst_requests ]; };
+	if(defined $subst_map_overrides) { $pv->{assign_local} = $subst_map_overrides; };
 
 	return $pv;
 }
@@ -1877,7 +1892,15 @@ sub construct_pv {
 ###################################################################################
 sub combine_pvs {
 	my ($param_vals_fns, $clpv) = @_;
-	my $target = {};
+	my $target = {
+			assign => [],
+			assign_local => {},
+			param_store => [],
+			ops => {
+				splice => [],
+				prune => [],
+			}
+		};
 	my @all_pvs = ();
 
 	# read the pv data from files, add to list
@@ -1921,12 +1944,28 @@ sub combine_pvs {
 
 		$target->{assign} = [ merge($target->{assign}->[0], $pv->{assign}->[0]) ];
 		$target->{assign_local} = merge($target->{assign_local}, $pv->{assign_local});
+
+		if($pv->{ops}->{splice} and ref $pv->{ops}->{splice} eq q[ARRAY]) { push @{$target->{ops}->{splice}}, @{$pv->{ops}->{splice}}; }
+		if($pv->{ops}->{prune} and ref $pv->{ops}->{prune} eq q[ARRAY]) { push @{$target->{ops}->{prune}}, @{$pv->{ops}->{prune}}; }
 	}
 
-	$target->{assign} ||= [];
-	$target->{assign_local} ||= {};
-	$target->{param_store} ||= [];
 	return $target;
+}
+
+######################################################################
+# add_ops:
+# lightly parse any splice or prune from the command line and add them
+#  to the ops section of the param_vals hash
+######################################################################
+sub add_ops {
+	my ($pv, $splice_list, $prune_list) = @_;
+
+	$pv->{ops}->{splice} ||= [];
+	$pv->{ops}->{prune} ||= [];
+	if($splice_list) { push @{$pv->{ops}->{splice}}, ( (split q{;}, $splice_list) ) };
+	if($prune_list) { push @{$pv->{ops}->{prune}}, ( (split q{;}, $prune_list) ) };
+
+	return $pv;
 }
 
 #########################################################

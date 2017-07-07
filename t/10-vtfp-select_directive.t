@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Test::Cmd;
 use File::Slurp;
 use Perl6::Slurp;
@@ -9,10 +9,7 @@ use JSON;
 use File::Temp qw(tempdir);
 use Cwd;
 
-use Data::Dumper;
-
 my $tdir = tempdir(CLEANUP => 1);
-print q[tdir: ], $tdir, "\n";
 
 my $odir = getcwd();
 my $test = Test::Cmd->new( prog => $odir.'/bin/vtfp.pl', workdir => q());
@@ -523,9 +520,9 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 	is_deeply ($vtfp_results, $expected_result, 'single switch/batch of values without default');
 };
 
-# multisel
+# multisel 
 subtest 'select_directive_multi_sel' => sub {
-	plan tests => 10;
+	plan tests => 16;
 
 	my $select_cmd_template = {
 		version => "1.0",
@@ -641,10 +638,7 @@ subtest 'select_directive_multi_sel' => sub {
 		],
 	};
 
-	print "vtfp_results: ", Dumper($vtfp_results), "\n";
-
 	is_deeply ($vtfp_results, $expected_result, 'valid select with select_range (2 with 2-3)');
-
 
 	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys wordsel,wordsel,wordsel -vals 0,1,2 $template]);
 	cmp_ok($exit_status>>8, q(==), 0, "expected exit status of 0 for select with select range - acceptable number of index keys (3, must be between 2 and 3)");
@@ -667,6 +661,224 @@ subtest 'select_directive_multi_sel' => sub {
 
 	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys wordsel,wordsel,wordsel,wordsel -vals 0,1,2,3 $template]);
 	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for select with select range - too few index keys (4, must be between 2 and 3)");
+
+	$select_cmd_template = {
+		version => "1.0",
+		description => "select multiple non-unique values from cases (array)",
+		subst_params => [
+			{
+				id => "notes",
+				default => {
+					select => "tune",
+					cases => {
+						happybirthday => [ 4, 4, 5, 4, 0, 6, 4, 4, 5, 4, 1, 0, 4, 4, 4, 2, 1, 0, 6, 2, 2, 1, 0, 1, 0 ],
+						scale => [ 0, 1, 2, 3, 4, 5, 6 ]
+					}
+				}
+			}
+		],
+		nodes => [
+			{
+				id => "A",
+				type => "EXEC",
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => [ "echo",
+					{ 	select => "notes",
+						cases => [ "do", "re", "mi", "fa", "so", "la", "ti" ],
+						default => [ 0, 2, 2, 2, 4, 4, 1, 3, 3, 5, 6, 6 ]
+					}
+				],
+			},
+		],
+	};
+
+	$template = $tdir.q[/10-vtfp-select_cmd_3_3.json];
+	$template_contents = to_json($select_cmd_template);
+	write_file($template, $template_contents);
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo", "do", "mi", "mi", "mi", "so", "so", "re", "fa", "fa", "la", "ti", "ti" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select multiple non-unique values from cases (array)');
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys tune -vals happybirthday $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo", "so", "so", "la", "so", "do", "ti", "so", "so", "la", "so", "re", "do", "so", "so", "so", "mi", "re", "do", "ti", "mi", "mi", "re", "do", "re", "do" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select multiple non-unique values from cases (array) (hb)');
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys tune -vals scale $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo", "do", "re", "mi", "fa", "so", "la", "ti" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select multiple non-unique values from cases (array) (scale)');
+};
+
+### no_sel - explicitly switch off
+subtest 'select_directive_no_sel' => sub {
+	plan tests => 8;
+
+	# with array cases
+	my $select_cmd_template = {
+		version => "1.0",
+		description => "select multiple values from cases (array)",
+		nodes => [
+			{
+				id => "A",
+				type => "EXEC",
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => [ "echo", {select => "wordsel", "default" => 3, cases => [ "one", "two", "three", "four" ]} ]
+			},
+		],
+	};
+
+	my $template = $tdir.q[/10-vtfp-select_cmd_4_0.json];
+	my $template_contents = to_json($select_cmd_template);
+	write_file($template, $template_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo", "four" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select value using default from cases (array)');
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys fred -vals bloggs -nullkeys wordsel $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select no values from cases (array), overriding default with nullkeys');
+
+	# now the same but with hash cases
+	$select_cmd_template = {
+		version => "1.0",
+		description => "select multiple values from cases (array)",
+		nodes => [
+			{
+				id => "A",
+				type => "EXEC",
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => [ "echo", {select => "wordsel", "default" => "fourth", cases => { first => "one", second => "two", third => "three", fourth => "four" }} ]
+			},
+		],
+	};
+
+	$template = $tdir.q[/10-vtfp-select_cmd_4_1.json];
+	$template_contents = to_json($select_cmd_template);
+	write_file($template, $template_contents);
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo", "four" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select value using default from cases (hash)');
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -keys fred -vals bloggs -nullkeys wordsel $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select no values from cases (hash), overriding default with nullkeys');
 };
 
 1;

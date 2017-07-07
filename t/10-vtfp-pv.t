@@ -17,7 +17,7 @@ subtest 'pv0' => sub {
 
 	system(qq[bin/vtfp.pl -verbosity_level 0 -o $processed_template -export_param_vals $pv_file $template]) == 0 or croak q[Failed to export params];
 	my $pv_data = from_json(slurp $pv_file);
-	my $expected = {assign_local => {} ,param_store => [], assign => []};
+	my $expected = {assign_local => {} ,param_store => [], assign => [], ops => { splice => [], prune => [], }};
 	is_deeply ($pv_data, $expected, '(ts1) exported parameter values as expected');
 
 	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
@@ -33,7 +33,7 @@ subtest 'pv1' => sub {
 
 	system(qq[bin/vtfp.pl -verbosity_level 0 -o $processed_template -export_param_vals $pv_file -keys subject,adj -vals party,deafening $template]) == 0 or croak q[Failed to export params];
 	my $pv_data = from_json(slurp $pv_file);
-	my $expected = {assign_local => {} ,param_store => [], assign => [ {subject => q~party~, adj =>q~deafening~, }]};
+	my $expected = {assign_local => {} ,param_store => [], assign => [ {subject => q~party~, adj =>q~deafening~, }], ops => { splice => [], prune => [], }};
 	is_deeply ($pv_data, $expected, '(ts2) exported parameter values as expected');
 
 	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
@@ -49,7 +49,7 @@ subtest 'pv2' => sub {
 
 	system(qq[bin/vtfp.pl -verbosity_level 0 -o $processed_template -export_param_vals $pv_file -keys subject,prepobj -vals world,whimper -nullkeys adj $template]) == 0 or croak q[Failed to export params];
 	my $pv_data = from_json(slurp $pv_file);
-	my $expected = {assign_local => {} ,param_store => [], assign => [ {subject => q~world~, prepobj => q~whimper~, adj => undef}]};
+	my $expected = {assign_local => {} ,param_store => [], assign => [ {subject => q~world~, prepobj => q~whimper~, adj => undef}], ops => { splice => [], prune => [], }};
 	is_deeply ($pv_data, $expected, '(ts3) exported parameter values as expected');
 
 	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
