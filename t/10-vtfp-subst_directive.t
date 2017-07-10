@@ -39,7 +39,7 @@ subtest 'flat_array_param_names' => sub {
 		]
 	};
 
-	my $template = $tdir.q[/10-vtfp-lat_array_param_names.json];
+	my $template = $tdir.q[/10-vtfp-select_0_0.json];
 	my $template_contents = to_json($flat_array_param_names_template);
 	write_file($template, $template_contents);
 
@@ -93,7 +93,7 @@ subtest 'indirect_param_names' => sub {
 		],
 	};
 
-	my $template = $tdir.q[/10-vtfp-indirect_param_names.json];
+	my $template = $tdir.q[/10-vtfp-select_1_0.json];
 	my $template_contents = to_json($indirect_param_names_template);
 	write_file($template, $template_contents);
 
@@ -183,7 +183,7 @@ subtest 'full_node_subst' => sub {
 		],
 	};
 
-	my $template = $tdir.q[/10-vtfp-full_nodes_as_subst_template.json];
+	my $template = $tdir.q[/10-vtfp-select_2_0.json];
 	my $template_contents = to_json($full_nodes_as_subst_template);
 	write_file($template, $template_contents);
 

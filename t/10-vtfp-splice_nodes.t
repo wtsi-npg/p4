@@ -10,7 +10,6 @@ use File::Temp qw(tempdir);
 use Cwd;
 
 my $tdir = tempdir(CLEANUP => 1);
-print q[tdir: ], $tdir, "\n";
 
 my $basic_linear_template = {
 		description => q[simple linear chain (stdin->stdout) of nodes],
@@ -783,6 +782,7 @@ subtest 'spl1' => sub {
 	is_deeply ($vtfp_results, $expected, '(spl1) prune ends of two branches using wildcard');
 };
 
+
 # exec failures
 subtest 'spl2' => sub {
 	plan tests => 2;
@@ -797,5 +797,6 @@ subtest 'spl2' => sub {
 	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -splice_nodes \'rev;uc\' $template]);
 	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for splice fail test. Two sequential nodes (without port spec). An error because the first splice implies preservation of the second node to be splice out");
 };
+
 
 1;

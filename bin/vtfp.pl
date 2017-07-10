@@ -73,7 +73,7 @@ if($help) {
 @vals = map { split_csl($_); } @vals;
 @param_vals_fns = map { split_csl($_); } @param_vals_fns;
 
-my $params = initialise_params(\@keys, \@vals, \@nullkeys, \@param_vals_fns);
+my $params = initialise_params(\@keys, \@vals, \@nullkeys, $splice_list, $prune_list, \@param_vals_fns);
 
 if($export_param_vals) {
 	open my $epv, ">$export_param_vals" or croak "Failed to open $export_param_vals for export of param_vals";
@@ -104,12 +104,11 @@ my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, 
 
 my $node_tree = process_vtnode(q[], $vtf_name, q[], $params, $globals);    # recursively generate the vtnode tree
 
-
 my $flat_graph = flatten_tree($node_tree);
 
 my $cull_node_ids = []; # used to detect (and disregard) parameter substitution errors in nodes which have been removed
-if($splice_list or $prune_list) {
-	($flat_graph, $cull_node_ids) = splice_nodes($flat_graph, $splice_list, $prune_list);
+if(@{$params->{ops}->{splice}} or @{$params->{ops}->{prune}}) {
+	($flat_graph, $cull_node_ids) = splice_nodes($flat_graph, $params->{ops});
 }
 
 # parameter substitution errors are reported late, so errors in pruned or spliced nodes can be ignored
@@ -305,39 +304,53 @@ sub process_subst_params {
 
 	for my $i (0..$#{$unprocessed_subst_params}) {
 
-		my $sp = $unprocessed_subst_params->[$i];
-		my $spid = $sp->{id}; 
-		my $sptype = $sp->{type}; 
-		$sptype ||= q[PARAM];
+		my $sps = $unprocessed_subst_params->[$i];
+		$sps = subst_walk($sps, $params, $ewi, { irp => [], select_opts => { select => 1, }, } ); # preprocess any select directives in the subst_params section
 
-		if($sptype eq q[SPFILE]) { # process recursively
-			# SPFILE entries will be processed after all PARAM-type entries have been processed (for consistency in redeclaration behaviour)
-			push @spfile_node_queue, $sp;
+		if(not defined $sps) { next; }
+		# subst_walk may return an array of entries, so make that always the case.
+		if(ref $sps ne q[ARRAY]) {
+			$sps = [ $sps ];
 		}
-		elsif($sptype eq q[PARAM]) {
-			# all unprocessed_subst_params elements of type PARAM must have an id
-			if(not $spid) {
-				# cache errors so we can report as many as possible before exit
-				$ewi->{additem}->($EWI_ERROR, 0, q[No id for PARAM element, entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
-			}
 
-			my $ips = in_param_store($param_store, $spid);
-			if($ips->{errnum} != 0) { # multiply defined - OK unless explicitly declared multiple times at this level
-				if($ips->{errnum} > 0) { # a previous declaration was made by an ancestor of the current vtnode
-					$ewi->{additem}->($EWI_INFO, 2, qq[INFO: Duplicate subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
-				}
-				else {
+		for my $sp (@{$sps}) {
+			if(not $sp or ref $sp ne q[HASH] or not $sp->{id}) {
+				$ewi->{additem}->($EWI_ERROR, 0, q[Failed to resolve subst_params element ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
+				next;
+			}
+			my $spid = $sp->{id}; 
+			my $sptype = $sp->{type}; 
+			$sptype ||= q[PARAM];
+
+			if($sptype eq q[SPFILE]) { # process recursively
+				# SPFILE entries will be processed after all PARAM-type entries have been processed (for consistency in redeclaration behaviour)
+				push @spfile_node_queue, $sp;
+			}
+			elsif($sptype eq q[PARAM]) {
+				# all unprocessed_subst_params elements of type PARAM must have an id
+				if(not $spid) {
 					# cache errors so we can report as many as possible before exit
-					$ewi->{additem}->($EWI_ERROR, 0, qq[Fatal error: Duplicate (local) subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
+					$ewi->{additem}->($EWI_ERROR, 0, q[No id for PARAM element, entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
 				}
-			}
 
-			$sp->{_declared_by} ||= [];
-			push @{$sp->{_declared_by}}, join q[->], @$sp_file_stack;
-			$param_store->[0]->{varnames}->{$spid} = $sp; # adding to the "local" variable store
-		}
-		else {
-			$ewi->{additem}->($EWI_ERROR, 0, q[Unrecognised type for subst_param element: ], $sptype, q[; entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
+				my $ips = in_param_store($param_store, $spid);
+				if($ips->{errnum} != 0) { # multiply defined - OK unless explicitly declared multiple times at this level
+					if($ips->{errnum} > 0) { # a previous declaration was made by an ancestor of the current vtnode
+						$ewi->{additem}->($EWI_INFO, 2, qq[INFO: Duplicate subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
+					}
+					else {
+						# cache errors so we can report as many as possible before exit
+						$ewi->{additem}->($EWI_ERROR, 0, qq[Fatal error: Duplicate (local) subst_param definition for $spid (], join(q[->], @$sp_file_stack), q[); ], $ips->{ms});
+					}
+				}
+
+				$sp->{_declared_by} ||= [];
+				push @{$sp->{_declared_by}}, join q[->], @$sp_file_stack;
+				$param_store->[0]->{varnames}->{$spid} = $sp; # adding to the "local" variable store
+			}
+			else {
+				$ewi->{additem}->($EWI_ERROR, 0, q[Unrecognised type for subst_param element: ], $sptype, q[; entry ], $i, q[ (], , join(q[->], @$sp_file_stack), q[)]);
+			}
 		}
 	}
 
@@ -346,7 +359,7 @@ sub process_subst_params {
 	################################
 	for my $spfile (@spfile_node_queue) {
 		my $ewi = mkewi(q[SPF]);
-		$spfile = subst_walk($spfile, $params, $ewi, []);
+		$spfile = subst_walk($spfile, $params, $ewi);
 		my $spname = is_valid_name($spfile->{name});
 		if(not $spname) {
 			# cache these errors and report as many as possible before exit
@@ -416,7 +429,7 @@ sub apply_subst {
 		$ewi->{settag}->(\$id);
 
 		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
-		$elem = subst_walk($elem, $params, $ewi, []);
+		$elem = subst_walk($elem, $params, $ewi);
 		$id = $vtnode_prefix . (exists $elem->{id} and $elem->{id})? $elem->{id} : q[NOID];
 		$ewi->{removelabel}->();
 
@@ -427,7 +440,7 @@ sub apply_subst {
 		my $id = $elem->{id};
 		$id ||= q[NOID];
 		$ewi->{addlabel}->(q{assigning to id:[} . $id . q{]});
-		$elem = subst_walk($elem, $params, $ewi, []);
+		$elem = subst_walk($elem, $params, $ewi);
 		$ewi->{removelabel}->();
 	}
 
@@ -441,10 +454,10 @@ sub apply_subst {
 #   to caller
 ##################################################################################################
 sub subst_walk {
-	my ($elem, $params, $ewi, $irp) = @_;
+	my ($elem, $params, $ewi, $aux) = @_;
 
-	# first check if elem itself needs resolution (is itself a subst, subst_constructor or select directive)
-	$elem = fetch_sp_value($elem, $params, $ewi, $irp);
+	# first check if elem itself needs resolution (is itself a subst/subst_constructor/select directive)
+	$elem = fetch_sp_value($elem, $params, $ewi, $aux);
 
 	my $r = ref $elem;
 	if(!$r) {
@@ -452,19 +465,19 @@ sub subst_walk {
 	}
 	elsif(ref $elem eq q[HASH]) {
 			for my $k (keys %$elem) {
-				$elem->{$k} = fetch_sp_value($elem->{$k}, $params, $ewi, $irp);
+				$elem->{$k} = fetch_sp_value($elem->{$k}, $params, $ewi, $aux);
 
 				if(defined $elem->{$k}) {
-					$elem->{$k} = subst_walk($elem->{$k}, $params, $ewi, $irp);
+					$elem->{$k} = subst_walk($elem->{$k}, $params, $ewi, $aux);
 				}
 			}
 	}
 	elsif(ref $elem eq q[ARRAY]) {
 		for my $i (reverse (0 .. $#{$elem})) {
-			$elem->[$i] = fetch_sp_value($elem->[$i], $params, $ewi, $irp);
+			$elem->[$i] = fetch_sp_value($elem->[$i], $params, $ewi, $aux);
 
 			if(defined $elem->[$i]) {
-				$elem->[$i] = subst_walk($elem->[$i], $params, $ewi, $irp);
+				$elem->[$i] = subst_walk($elem->[$i], $params, $ewi, $aux);
 			}
 		}
 	}
@@ -483,19 +496,28 @@ sub subst_walk {
 #   directive). If so pass it to the appropriate resolver and return the result
 #############################################################################################
 sub fetch_sp_value {
-	my ($elem, $params, $ewi, $irp) = @_;
+	my ($elem, $params, $ewi, $aux) = @_;
 	my $retval;
+
+	my $select_opts = { subst =>1, subst_constructor => 1, select => 1, }; # default to parse all directives;
+	if($aux and defined $aux->{select_opts}) {
+		$select_opts = $aux->{select_opts}
+	}
 
 	my $ref_type = ref $elem;
 	if($ref_type) {
 		if($ref_type eq q[HASH]) {
-			if($elem->{subst}) {
+			if($select_opts->{subst} and $elem->{subst}) {
 				# subst directive
-				$retval = resolve_subst($elem, $params, $ewi, $irp);
+				$retval = resolve_subst($elem, $params, $ewi, $aux);
 			}
-			elsif($elem->{subst_constructor}) {
+			elsif($select_opts->{subst_constructor} and $elem->{subst_constructor}) {
 				# solo subst_constructor
-				$retval = resolve_subst_constructor(q[ANON], $elem->{subst_constructor}, $params, $ewi);
+				$retval = resolve_subst_constructor(q[ANON], $elem->{subst_constructor}, $params, $ewi, $aux);
+			}
+			elsif($select_opts->{select} and $elem->{select}) {
+				# select directive
+				$retval = resolve_select_value($elem, $params, $ewi, $aux);
 			}
 			else {
 				$retval = $elem;
@@ -536,12 +558,12 @@ sub fetch_sp_value {
 #  flags or import_params mechanism).
 ############################################################
 sub resolve_subst {
-	my ($subst, $params, $ewi, $irp) = @_;
+	my ($subst, $params, $ewi, $aux) = @_;
 	my $retval;
 
 	# check to see if an sp_expr needs evaluating
 	if(ref $subst->{subst}) { # subst name is itself an expression which needs evaluation
-		$subst->{subst} = subst_walk($subst->{subst}, $params, $ewi, $irp);
+		$subst->{subst} = subst_walk($subst->{subst}, $params, $ewi, $aux);
 	}
 
 	if(ref $subst->{subst}) { # TODO - consider implications of allowing an array here
@@ -554,7 +576,7 @@ sub resolve_subst {
 	##################################################
 	# fetch the param_store element for the param_name
 	##################################################
-	my $param_entry = fetch_param_entry($param_name, $params, $ewi, $irp);
+	my $param_entry = fetch_param_entry($param_name, $params, $ewi, $aux);
 	if(exists $param_entry->{_value}) { # allow undef value
 		if(not defined $param_entry->{_value} and $subst->{required} and $subst->{required} !~ /\A(false|no|off)\Z/i) { # explicitly set to undef
 			$ewi->{additem}->($EWI_ERROR, 0, q[Undef value specified for required subst (param_name: ], $param_name, q[)]);
@@ -565,15 +587,13 @@ sub resolve_subst {
 	#######################################################################################################
 	# no value retrieved from param_store, try to construct one from the subst directive's ifnull attribute
 	#######################################################################################################
-	if($retval = resolve_ifnull($param_name, $subst->{ifnull}, $params, $ewi, $irp)) {
+	if($retval = resolve_ifnull($param_name, $subst->{ifnull}, $params, $ewi, $aux)) {
 		return $retval; # note: result of ifnull evaluation not assigned to variable
 	}
 	elsif($subst->{required} and $subst->{required} and $subst->{required} !~ /\A(false|no|off)\Z/i) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[No value found for required subst (param_name: ], $param_name, q[)]);
 		return;
 	}
-
-	$param_entry->{_value} = $retval;
 
 	return $retval;
 }
@@ -594,12 +614,14 @@ sub resolve_subst {
 #   requested param_name.
 ###################################################################
 sub fetch_param_entry {
-	my ($param_name, $params, $ewi, $irp) = @_;
+	my ($param_name, $params, $ewi, $aux) = @_;
 	my $param_entry;
 	my $retval;
 
-	if(defined $irp and any { $_ eq $param_name } @{$irp}) { # infinite recursion prevention
-		$ewi->{additem}->($EWI_ERROR, 0, q[infinite recursion detected resolving parameter ], $param_name, q[ (], join(q/=>/, (@{$irp}, $param_name)), q[)]);
+	$aux ||= { irp => [], };
+	$aux->{irp} ||= [];
+	if(any { $_ eq $param_name} @{$aux->{irp}}) { # infinite recursion prevention
+		$ewi->{additem}->($EWI_ERROR, 0, q[infinite recursion detected resolving parameter ], $param_name, q[ (], join(q/=>/, (@{$aux->{irp}}, $param_name)), q[)]);
 		return;
 	}
 
@@ -654,8 +676,8 @@ sub fetch_param_entry {
 		$candidate = $param_entry;   # already evaluated, return cached value (allowing undef)
 	}
 
-	push @{$irp}, $param_name;
-	$retval = resolve_subst_constructor($param_name, $param_entry->{subst_constructor}, $params, $ewi, $irp);
+	push @{$aux->{irp}}, $param_name;
+	$retval = resolve_subst_constructor($param_name, $param_entry->{subst_constructor}, $params, $ewi, $aux);
 
 	if(not $retval and $candidate) {
 		$retval = $candidate->{_value};
@@ -665,25 +687,24 @@ sub fetch_param_entry {
 		$param_entry->{_value} = $retval;
 	}
 	else {
-		$retval = resolve_param_default($param_name, $param_entry->{default}, $params, $ewi, $irp);
+		$retval = resolve_param_default($param_name, $param_entry->{default}, $params, $ewi, $aux);
 		if(defined $retval) {
 			$param_entry->{_value} = $retval;
 		}
 	}
-	pop @{$irp};
+	pop @{$aux->{irp}};
 
 	if(not defined $retval) {
 		# caller should decide if undef is allowed, unless required is true
 		my $severity = (defined $param_entry->{required} and $param_entry->{required} and $param_entry->{required} !~ /\A(false|no|off)\Z/i)? $EWI_ERROR: $EWI_INFO;
 		$ewi->{additem}->($severity, 0, q[No value found for param_entry ], $param_name);
-		return;
 	}
 
 	return $param_entry;
 }
 
 sub resolve_subst_constructor {
-	my ($id, $subst_constructor, $params, $ewi, $irp) = @_;
+	my ($id, $subst_constructor, $params, $ewi, $aux) = @_;
 
 	if(not defined $subst_constructor) { return; }
 
@@ -693,7 +714,7 @@ sub resolve_subst_constructor {
 		return;
 	}
 
-	$value = subst_walk($value, $params, $ewi, $irp);
+	$value = subst_walk($value, $params, $ewi, $aux);
 
 	if(not defined $value) {
 		$ewi->{additem}->($EWI_ERROR, 0, q[Error processing subst_constructor value, param_name: ], $id);
@@ -779,20 +800,193 @@ sub postprocess_subst_array {
 	return $subst_value;
 }
 
+sub resolve_select_value {
+	my ($select, $params, $ewi, $aux) = @_;
+	my $param_entry;
+	my $retval;
+
+	# check to see if select value is an expression which needs evaluating
+	my $indexes = subst_walk($select->{select}, $params, $ewi, $aux);
+	if(ref $indexes and ref $indexes ne q[ARRAY]) { # only scalar or array (of scalars) allowed here
+		$ewi->{additem}->($EWI_ERROR, 0, q[select key can only be a scalar or array, not ref (type: ], ref $indexes, q[)]);
+		return;
+	}
+	if(not ref $indexes) { $indexes = [ $indexes ]; }
+	my $id_string = join(q/;/, @{$indexes}); # for error logging
+	if(not defined ($indexes = _resolve_indexes($indexes, $params, $ewi, $aux))) {
+		return;
+	}
+
+	my $cases = _preproc_cases($select->{cases}, $id_string, $params, $ewi, $aux);
+	if(not $cases) {
+		return;
+	}
+
+	# this approach means that default will always apply when no select indexes are found (so cannot be switched off using -nullkeys)
+	if(scalar @{$indexes} == 0) {
+		# all valid but nothing selected - evaluate default attribute (if exists), revalidate as select_range
+		my $default;
+		if(defined $select->{default}) {
+			$default = subst_walk($select->{default}, $params, $ewi, $aux);
+		}
+
+		if(not $default or (ref $default eq q[ARRAY] and not @{$default})) { return; }
+
+		$indexes = $default;
+		if(not ref $indexes) { $indexes = [ $indexes ]; }
+	}
+
+	$indexes = finalise_array($indexes); # do this after default check
+
+	# validate indices - numerics for array cases, existing keys for hash cases
+	if(not defined ($indexes = _validate_indexes($indexes, $select->{cases}, $params, $ewi))) { # array indices numeric and in range? hash keys exist in hash?
+		$ewi->{additem}->($EWI_ERROR, 0, q[select directive without valid indexes (select on: ], $id_string, q[)]);
+		return;
+	}
+
+	if(defined $select->{select_range} and not _valid_select_range($select->{select_range}, $indexes, $ewi, $id_string, q[select_range])) {
+		return;
+	}
+
+	if(@{$indexes} == 0) { # check again, maybe only an array of undefs before
+		return;
+	}
+
+	if(ref $cases eq q[ARRAY]) {
+		if(@{$indexes} > 1) {
+			$retval = [ @{$cases}[@{$indexes}] ];
+		}
+		else {
+			$retval = $cases->[$indexes->[0]];
+		}
+	}
+	else {
+		if(@{$indexes} > 1) {
+			$retval = [ @{$cases}{@{$indexes}} ]; # slice the hash
+		}
+		else {
+			$retval = $cases->{$indexes->[0]};
+		}
+	}
+
+	return $retval;
+}
+
+sub _resolve_indexes {
+	my ($indexes, $params, $ewi, $aux) = @_;
+
+	if(ref $indexes ne q[ARRAY]) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[indexes attribute must be array]);
+		return;
+	}
+
+	for my $i (0 .. $#{$indexes}) {
+		my $param_entry = fetch_param_entry($indexes->[$i], $params, $ewi, $aux);
+		if(exists $param_entry->{_value}) {
+			$indexes->[$i] = $param_entry->{_value};
+		}
+		else {
+			splice @{$indexes}, $i, 1;
+		}
+	}
+
+	return $indexes;
+}
+
+sub _preproc_cases {
+	my ($cases, $id_string, $params, $ewi, $aux) = @_;
+
+	if(not (defined $cases)) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[select directive with undefine or missing cases attribute (select on: ], $id_string, q[)]);
+		return;
+	}
+	if(not ($cases = subst_walk($cases, $params, $ewi, $aux))) { # resolve what needs to be resolved
+		$ewi->{additem}->($EWI_ERROR, 0, q[select directive case atttribute resolves to undef (select on: ], $id_string, q[)]);
+		return;
+	}
+	my $rt = ref $cases;
+	if(not any { /\A$rt\Z/ } qw(ARRAY HASH)) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[cases attribute must be array or hash (select on: ], $id_string, q[)]);
+		return;
+	}
+
+	return $cases;
+}
+
+sub _validate_indexes {
+	my ($indexes, $cases, $params, $ewi) = @_;
+
+	if(ref $indexes ne q[ARRAY]) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[indexes attribute must be array]);
+		return; # should this be fatal or just informational?
+	}
+
+	my $def_indexes = [ (grep { defined } @{$indexes}) ]; # undefined values are allowed
+	my $cases_type = ref $cases;
+	my @outsiders;
+	if($cases_type eq q[ARRAY]) {
+		my $maxidx = scalar @{$cases};
+
+		@outsiders = grep { $_ > $maxidx; } @{$def_indexes};
+		if(@outsiders) {
+			$ewi->{additem}->($EWI_ERROR, 0, q[index values out of range for array of cases: ], join(',', @outsiders));
+			return; # should this be fatal or just informational?
+		}
+		@outsiders = grep { /\D/ } @{$def_indexes};
+		if(@outsiders) {
+			$ewi->{additem}->($EWI_ERROR, 0, q[non-numeric index values for array of cases: ], join(',', @outsiders));
+			return; # should this be fatal or just informational?
+		}
+	}
+	elsif($cases_type eq q[HASH]) {
+		@outsiders = grep { not exists $cases->{$_} } @{$def_indexes};
+		if(@outsiders) {
+			$ewi->{additem}->($EWI_ERROR, 0, q[keys don't exist in cases: ], join(',', @outsiders));
+			return; # should this be fatal or just informational?
+		}
+	}
+	else {
+		$ewi->{additem}->($EWI_ERROR, 0, q[cases attribute must be array or hash, not ], ($cases_type)? $cases_type : q[scalar]);
+		return;
+	}
+
+	return $indexes;
+}
+
+sub _valid_select_range {
+	my ($select_range, $indexes, $ewi, $id_string, $type) = @_;
+
+	if(ref $select_range ne q[ARRAY] or @{$select_range} < 1 or @{$select_range} > 2) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[select_range attribute of a ], $type, q[ must be an array with one or two elements (select on: ], $id_string, q[)]);
+		return;
+	}
+
+	my ($min, $max) = sort { $a <=> $b }  @{$select_range};
+	$max ||= $min;
+
+	my $n = @{$indexes};
+	if($n < $min or $n > $max) {
+		$ewi->{additem}->($EWI_ERROR, 0, q[number of indexes in ], $type , q[ is incorrect, should be >= ], $min, q[ and <= ], $max, q[, is ], $n, q[ (select on: ], $id_string, q[)]);
+		return;
+	}
+
+	return $select_range;
+}
+
 sub resolve_param_default {
-	my ($id, $default, $params, $ewi, $irp) = @_;
+	my ($id, $default, $params, $ewi, $aux) = @_;
 
 	if(not defined $default) { return; }
 
-	return subst_walk($default, $params, $ewi, $irp);
+	return subst_walk($default, $params, $ewi, $aux);
 }
 
 sub resolve_ifnull {
-	my ($id, $ifnull, $params, $ewi, $irp) = @_;
+	my ($id, $ifnull, $params, $ewi, $aux) = @_;
 
 	if(not defined $ifnull) { return; }
 
-	return subst_walk($ifnull, $params, $ewi, $irp);
+	return subst_walk($ifnull, $params, $ewi, $aux);
 }
 
 
@@ -965,13 +1159,12 @@ sub get_child_prefix {
 
 
 sub splice_nodes {
-	my ($flat_graph, $splice_list, $prune_list) = @_;
-	my $splice_candidates = { cull_nodes => {}, cull_edges => {}, preserve_nodes => {}, replacement_edges => [], prune_edges => [], frontier => [], new_nodes => [], stdio_gen => { in => mk_stdio_node_generator($SRC), out => mk_stdio_node_generator($DST), }, };
+	my ($flat_graph, $ops) = @_;
+	my ($splice_nodes, $prune_nodes);
+	$splice_nodes = $ops->{splice};
+	$prune_nodes = $ops->{prune};
 
-	$splice_list ||= q[];
-	$prune_list ||= q[];
-	my $splice_nodes = [ (split q{;}, $splice_list) ];
-	my $prune_nodes = [ (split q{;}, $prune_list) ];
+	my $splice_candidates = { cull_nodes => {}, cull_edges => {}, preserve_nodes => {}, replacement_edges => [], prune_edges => [], frontier => [], new_nodes => [], stdio_gen => { in => mk_stdio_node_generator($SRC), out => mk_stdio_node_generator($DST), }, };
 
 	if(@{$splice_nodes}) {
 		$splice_candidates = register_splice_pairs($flat_graph, $splice_nodes, $SPLICE, $splice_candidates);
@@ -1463,7 +1656,7 @@ sub _resolve_endpoint {
 		my ($std_port_name, $in_out, $near_end, $far_end) = ($which_end == $SRC) ? qw/ use_STDOUT out from to / : qw/ use_STDIN in to from /;
 
 		# make sure the named port actually exists on this node (by checking the edges) 
-		if($port and not any { $_ eq $port } map { (split q/:/, $_->{$near_end})[1] } @{$node_info->{all_edges}->{$in_out}}) { croak q[port ], $port, q[ is not a port of node ], $node_id; }
+		if($port and not any { defined $_ and $_ eq $port } map { (split q/:/, $_->{$near_end})[1] } @{$node_info->{all_edges}->{$in_out}}) { croak q[port ], $port, q[ is not a port of node ], $node_id; }
 		# if port name is q[], STD[IN|OUT] is implied. Is this possible for this node?
 		if(not $port and $node_info->{node}->{type} !~ /\A(IN|OUT|RA)FILE\Z/smx and not $node_info->{node}->{$std_port_name}) { croak q[port not specified by name, but ], $std_port_name, q[ is false for node ], $node_id; }
 
@@ -1621,23 +1814,31 @@ sub split_csl {
 #  an empty initial param_store is added.
 ######################################################################
 sub initialise_params {
-	my ($keys, $vals, $nullkeys, $param_vals_fns) = @_;
+	my ($keys, $vals, $nullkeys, $splice_list, $prune_list, $param_vals_fns) = @_;
 
 	my $pv = {};
 
 	$pv = construct_pv($keys, $vals, $nullkeys);
 
-	return combine_pvs($param_vals_fns, $pv);
+	$pv = combine_pvs($param_vals_fns, $pv);
+
+	$pv = add_ops($pv, $splice_list, $prune_list);
+
+	return $pv;
 }
 
 sub construct_pv {
 	my ($keys, $vals, $nullkeys) = @_;
-	my $pv;
-	my $subst_requests = {};
-	my $subst_map_overrides = {};
+	my $pv = { param_store =>  [], assign => [], assign_local => {}, ops => { splice => [], prune => [], }, };;
+	my $subst_requests;
+	my $subst_map_overrides;
 
 	if(@$keys != @$vals) {
 		croak q[Mismatch between keys and vals];
+	}
+
+	if(@{$keys} == 0 and @{$nullkeys} == 0) {
+		return;
 	}
 
 	for my $nullkey (@$nullkeys) {
@@ -1673,9 +1874,10 @@ sub construct_pv {
 				$subst_requests->{$param_name} = $param_value;
 			}
 		}
-
-		$pv = { param_store =>  [], assign => [ $subst_requests ], assign_local => $subst_map_overrides, };
 	}
+
+	if(defined $subst_requests) { $pv->{assign} = [ $subst_requests ]; };
+	if(defined $subst_map_overrides) { $pv->{assign_local} = $subst_map_overrides; };
 
 	return $pv;
 }
@@ -1690,7 +1892,15 @@ sub construct_pv {
 ###################################################################################
 sub combine_pvs {
 	my ($param_vals_fns, $clpv) = @_;
-	my $target = {};
+	my $target = {
+			assign => [],
+			assign_local => {},
+			param_store => [],
+			ops => {
+				splice => [],
+				prune => [],
+			}
+		};
 	my @all_pvs = ();
 
 	# read the pv data from files, add to list
@@ -1734,12 +1944,28 @@ sub combine_pvs {
 
 		$target->{assign} = [ merge($target->{assign}->[0], $pv->{assign}->[0]) ];
 		$target->{assign_local} = merge($target->{assign_local}, $pv->{assign_local});
+
+		if($pv->{ops}->{splice} and ref $pv->{ops}->{splice} eq q[ARRAY]) { push @{$target->{ops}->{splice}}, @{$pv->{ops}->{splice}}; }
+		if($pv->{ops}->{prune} and ref $pv->{ops}->{prune} eq q[ARRAY]) { push @{$target->{ops}->{prune}}, @{$pv->{ops}->{prune}}; }
 	}
 
-	$target->{assign} ||= [];
-	$target->{assign_local} ||= {};
-	$target->{param_store} ||= [];
 	return $target;
+}
+
+######################################################################
+# add_ops:
+# lightly parse any splice or prune from the command line and add them
+#  to the ops section of the param_vals hash
+######################################################################
+sub add_ops {
+	my ($pv, $splice_list, $prune_list) = @_;
+
+	$pv->{ops}->{splice} ||= [];
+	$pv->{ops}->{prune} ||= [];
+	if($splice_list) { push @{$pv->{ops}->{splice}}, ( (split q{;}, $splice_list) ) };
+	if($prune_list) { push @{$pv->{ops}->{prune}}, ( (split q{;}, $prune_list) ) };
+
+	return $pv;
 }
 
 #########################################################
@@ -1976,7 +2202,7 @@ sub mkewi {
 
 			for my $ewi_item (@list) {
 				if($ewi_item->{type} == $EWI_ERROR and $ewi_item->{subclass} <= $fatality_level) {
-					my $tag = ${$ewi_item->{tag}};
+					my $tag = (defined $ewi_item->{tag} and ref $ewi_item->{tag} eq q[SCALAR] and ${$ewi_item->{tag}});
 					if($exclude_list and $tag and any { /$tag/ } @{$exclude_list}) {
 						return 0; # disregard this "error"
 					}
