@@ -55,19 +55,19 @@
                             }
     },
     {
-        "id":"star_dir","required":"no","default":"star_out"
+        "id":"star_dir","required":"no","default":"."
     },
     {
         "id":"star_out",
         "required":"no",
-        "default": "star_out",
         "subst_constructor":{
-                                "vals":[ {"subst":"star_dir"}, "_", {"subst":"rpt"}, "/" ],
+                                "vals":[ {"subst":"star_dir"}, "/", "_", {"subst":"rpt"}, "_" ],
                                 "postproc":{"op":"concat","pad":""}
                             }
     },
     {
-        "id":"transcriptome_subpath","required":"no"
+        "id":"transcriptome_subpath",
+        "required":"no"
     },
     {
         "id":"sjdb_annotation_val",
@@ -108,36 +108,32 @@
     {
         "id":"junctions_tab",
         "required":"no",
-        "default":"star_out/SJ.out.tab",
         "subst_constructor":{
-                                "vals":[ {"subst":"star_dir"}, "_", {"subst":"rpt"}, "/SJ.out.tab" ],
+                                "vals":[ {"subst":"star_out"}, "SJ.out.tab" ],
                                 "postproc":{"op":"concat","pad":""}
                             }
     },
     {
         "id":"totranscriptome_bam",
         "required":"no",
-        "default":"star_out/Aligned.toTranscriptome.out.bam",
         "subst_constructor":{
-                                "vals":[ {"subst":"star_dir"}, "_", {"subst":"rpt"}, "/Aligned.toTranscriptome.out.bam" ],
+                                "vals":[ {"subst":"star_out"}, "Aligned.toTranscriptome.out.bam" ],
                                 "postproc":{"op":"concat","pad":""}
                             }
     },
     {
         "id":"chimeric_sam",
         "required":"no",
-        "default":"star_out/Chimeric.out.sam",
         "subst_constructor":{
-                                "vals":[ {"subst":"star_dir"}, "_", {"subst":"rpt"}, "/Chimeric.out.sam" ],
+                                "vals":[ {"subst":"star_out"}, "Chimeric.out.sam" ],
                                 "postproc":{"op":"concat","pad":""}
                             }
     },
     {
         "id":"readspergene_tab",
         "required":"no",
-        "default":"star_out/ReadsPerGene.out.tab",
         "subst_constructor":{
-                                "vals":[ {"subst":"star_dir"}, "_", {"subst":"rpt"}, "/ReadsPerGene.out.tab" ],
+                                "vals":[ {"subst":"star_out"}, "ReadsPerGene.out.tab" ],
                                 "postproc":{"op":"concat","pad":""}
                             }
     },
@@ -182,6 +178,11 @@
                                 "vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".readspergene.tab" ],
                                 "postproc":{"op":"concat","pad":""}
                             }
+    },
+    {
+        "id":"star_executable",
+        "required":"no",
+        "default":"STAR"
     }
 ],
 "nodes":[
@@ -208,13 +209,13 @@
         "use_STDIN": false,
         "use_STDOUT": true,
         "cmd": [
-                "STAR",
+                {"subst":"star_executable"},
                 "--runMode", "alignReads",
                 "--outFileNamePrefix", {"subst":"star_out"},
                 {"subst":"aligner_numthreads_flag"},
                 "--genomeLoad", "NoSharedMemory",
-                {"subst":"sjdb_annotation_flag"} ,
-                {"subst":"sjdb_overhang_flag"} ,
+                {"subst":"sjdb_annotation_flag"},
+                {"subst":"sjdb_overhang_flag"},
                 "--outSAMstrandField", "intronMotif",
                 "--outSAMattributes", "NH", "HI", "NM", "MD", "AS", "XS",
                 "--outSAMunmapped", "Within", "KeepPairs",
