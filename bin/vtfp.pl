@@ -43,6 +43,7 @@ Readonly::Scalar my $SRC => 0;
 Readonly::Scalar my $DST => 1;
 
 Readonly::Scalar my $MIN_TEMPLATE_VERSION => 1;
+my $TEMPLATE_VERSION_DEFAULT = 2;
 
 my $progname = (fileparse($0))[0];
 my %opts;
@@ -104,7 +105,9 @@ my $globals = { node_prefixes => { auto_node_prefix => 0, used_prefixes => {}}, 
 
 my $node_tree = process_vtnode(q[], $vtf_name, q[], $params, $globals);    # recursively generate the vtnode tree
 
-my $flat_graph = flatten_tree($node_tree);
+my $tver_default = ($node_tree->{cfg}->{version} or $TEMPLATE_VERSION_DEFAULT);
+my $flat_graph = flatten_tree($node_tree, $tver_default);
+$flat_graph->{version} = $tver_default;
 
 my $cull_node_ids = []; # used to detect (and disregard) parameter substitution errors in nodes which have been removed
 if(@{$params->{ops}->{splice}} or @{$params->{ops}->{prune}}) {
@@ -116,7 +119,7 @@ if(report_pv_ewi($node_tree, $logger, $cull_node_ids)) { croak qq[Exiting after 
 
 foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
 
-	$node_with_cmd->{cmd} = finalise_array($node_with_cmd->{cmd});
+	$node_with_cmd = finalise_cmd($node_with_cmd);
 	if(not defined $node_with_cmd->{cmd} or (ref $node_with_cmd->{cmd} eq q[ARRAY] and @{$node_with_cmd->{cmd}} < 1)) {
 		croak "command ", ($node_with_cmd->{id}? $node_with_cmd->{id}: q[NO ID]), " either empty or undefined";
 	}
@@ -1017,16 +1020,16 @@ sub report_pv_ewi {
 #         the resulting graph with one of the visualisation tools.)
 #######################################################################################
 sub flatten_tree {
-	my ($tree_node, $flat_graph) = @_; 
+	my ($tree_node, $tver_default, $flat_graph) = @_; 
 
 	$flat_graph ||= {};
 
 	# insert edges and nodes from current tree_node to $flat_graph
-	subgraph_to_flat_graph($tree_node, $flat_graph);
+	subgraph_to_flat_graph($tree_node, $tver_default, $flat_graph);
 
 	# do the same recursively for any children
 	for my $tn (@{$tree_node->{children}}) {
-		flatten_tree($tn, $flat_graph);
+		flatten_tree($tn, $tver_default, $flat_graph);
 	}
 
 	return $flat_graph;
@@ -1037,7 +1040,7 @@ sub flatten_tree {
 #  losing everything except nodes and edges is a possibly undesirable side-effect of this
 #########################################################################################
 sub subgraph_to_flat_graph {
-	my ($tree_node, $flat_graph) = @_;
+	my ($tree_node, $tver_default, $flat_graph) = @_;
 
 	my $vtnode_id = $tree_node->{id};
 	my $vt_name = $tree_node->{name};
@@ -1047,7 +1050,8 @@ sub subgraph_to_flat_graph {
 	###################################################################################
 	# prefix the nodes in this subgraph with a prefix to ensure uniqueness of id values
 	###################################################################################
-	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{id}; $_; } @{$subcfg->{nodes}}) ];
+	my $tver = ($subcfg->{version} or $tver_default);
+	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{id}; if($_->{type} eq q[EXEC] and not $_->{tver} and $tver ne $tver_default) { $_->{tver} = $tver; }  $_; } @{$subcfg->{nodes}}) ];
 
 	########################################################################
 	# any edges which refer to nodes in this subgraph should also be updated
@@ -1644,8 +1648,15 @@ sub _resolve_endpoint {
 	# use -1 argument for split to distinguish between "a" (node a) and "a:" (STDOUT of node a)
 	my ($node_id, $port) = (split q/:/, $endpoint_spec, -1);
 
-	unless(not $port or ($which_end == $SRC and ($port=~/_OUT__\z/smx or $port=~/\A__OUT_/smx)) or ($which_end == $DST and ($port=~/_IN__\z/smx or $port=~/\A__IN_/smx))) {
-		croak q[port name ], $port, q[: naming convention incorrect for ], (($which_end == $SRC)? q[out] : q[in]), q[port];
+	if($tver_default < 2) {
+		unless(not $port
+			or ($which_end == $SRC
+				and ($port=~/_OUT__\z/smx or $port=~/\A__OUT_/smx))
+			or ($which_end == $DST
+				and ($port=~/_IN__\z/smx or $port=~/\A__IN_/smx))
+		) {
+			croak q[port name ], $port, q[: naming convention incorrect for ], (($which_end == $SRC)? q[out] : q[in]), q[port];
+		}
 	}
 
 	my $node_info = get_node_info($node_id, $flat_graph); # fetch node and its in and out edges
@@ -1776,10 +1787,22 @@ sub delete_port {
 	my ($port_name, $node) = @_;
 
 	if(ref $node->{cmd} eq 'ARRAY') {
-		# this sweeping approach should be replaced when syntax for port specification is improved
-		if(any { $_ =~ /$port_name/ } @{$node->{cmd}}) {
-			$node->{cmd} = [ (grep { $_ !~ /$port_name/ } @{$node->{cmd}}) ];
+		if($tver_default >= 2 and (not exists $node->{tver} or $node->{tver} >= 2)) {
+			# remove any references from $node->{ports} section
+			if(exists $node->{ports}->{$port_name}) { delete $node->{ports}->{$port_name}; }
+			my $port_locs = _extract_ports($node->{cmd}, $node->{id});
+			for my $occ (sort { $b->{idx} <=> $a->{idx} } @{$port_locs->{$port_name}->{occurrences}}) {
+				splice @{$occ->{arr}}, $occ->{idx}, 1;
+			}
+
 			return;
+		}
+		else {
+			# this sweeping approach should be replaced when syntax for port specification is improved
+			if(any { $_ =~ /$port_name/ } @{$node->{cmd}}) {
+				$node->{cmd} = [ (grep { $_ !~ /$port_name/ } @{$node->{cmd}}) ];
+				return;
+			}
 		}
 	}
 	else {
@@ -1789,6 +1812,69 @@ sub delete_port {
 	carp 'delete_port: node '.($node->{id})." has no port $port_name";
 
 	return;
+}
+
+sub _extract_ports {
+	my ($cmd, $id) = @_;
+	my %ports;
+
+	unless($cmd and ref $cmd eq q[ARRAY]) {
+		return;
+	}
+
+	for my $i (0..$#{$cmd}) {
+		my $elem = $cmd->[$i];
+		if(ref $elem eq q[HASH]) {
+			if($elem->{port}) {
+				$ports{$elem->{port}}->{attribs} = reconcile_port_info($elem, $ports{$elem->{port}}->{attribs});
+				$ports{$elem->{port}}->{occurrences} ||= [];
+				push @{$ports{$elem->{port}}->{occurrences}}, {arr => $cmd, idx => $i}; # note location for later substitution
+			}
+			elsif($elem->{packflag}) {
+				if(ref $elem->{packflag} eq q[ARRAY]) {
+					for my $j (0..$#{$elem->{packflag}}) {
+						my $pf_elem = $elem->{packflag}->[$j];
+						if(ref $pf_elem eq q[HASH] and $pf_elem->{port}) {
+							$ports{$pf_elem->{port}}->{attribs} = reconcile_port_info($pf_elem, $ports{$pf_elem->{port}}->{attribs});
+							$ports{$pf_elem->{port}}->{occurrences} ||= [];
+							push @{$ports{$pf_elem->{port}}->{occurrences}}, {arr => $elem->{packflag}, idx => $j}; # note location for later substitution
+						}
+					}
+				}
+				else {
+					$logger->($VLMIN, "WARN: packflag with non-array value, node id: ", $id);
+				}
+			}	
+		}
+	}
+
+	return \%ports;
+}
+
+sub reconcile_port_info {
+	my ($port_elem, $current_attribs) = @_;
+	my $attribs;
+
+	if($current_attribs) { # multiple occurrences of this port in the node
+		if($current_attribs->{direction} and $current_attribs->{direction} ne $port_elem->{direction}) {
+			$attribs->{direction} = q[bi];
+		}
+		else {
+			$attribs->{direction} = $port_elem->{direction};
+		}
+		if($current_attribs->{type} and $current_attribs->{type} ne $port_elem->{type}) {
+			$attribs->{type} = q[seekable]; # use the more restrictive option
+		}
+		else {
+			$attribs->{type} = $port_elem->{type};
+		}
+	}
+	else {
+		$attribs->{direction} = $port_elem->{direction};
+		$attribs->{type} = $port_elem->{type};
+	}
+
+	return $attribs;
 }
 
 ###########################################################################
@@ -2056,6 +2142,51 @@ sub find_vtf {
 
 	# if we haven't found this file anywhere on the path, bomb out
 	$logger->($VLFATAL, q[Failed to find vtf file: ], $vtf_fullname, q[ locally or on template_path: ], join q[:], @$template_path);
+}
+
+########################################################
+# finalise_cmd: postprocess EXEC nodes
+#    flatten cmd element to array ref, transfer any port
+#    attributes from node to cmd level
+########################################################
+sub finalise_cmd {
+	my ($cmd_node) = @_;
+
+	$cmd_node->{cmd} = finalise_array($cmd_node->{cmd});
+
+	my $cmd = $cmd_node->{cmd};
+	my $r=ref $cmd;
+	if(not $r) {
+		$cmd = [ $cmd ];
+	}
+	elsif($r ne q[ARRAY]) {
+		$logger->($VLMAX, q[Cannot post-process node cmd element unless it is scalar or array ref (node id: ], $cmd_node->{id}, q[ ; type: ], $r, q[)] );
+		return $cmd_node;
+	}
+
+	if(not defined $cmd_node->{tver} or $cmd_node->{tver} >= 2) {
+		my $node_ports = $cmd_node->{ports};
+		if(defined $node_ports) {
+			my %ports_seen;
+			for my $e (@{$cmd}) {
+				if(ref $e eq q[HASH] and $e->{port} and $node_ports->{$e->{port}}) {
+					# move all key/val pairs from node ports section to cmd port element
+					@{$e}{keys %{$node_ports->{$e->{port}}}} = @{$node_ports->{$e->{port}}}{keys %{$node_ports->{$e->{port}}}};
+					$ports_seen{$e->{port}} = 1;
+				}
+			}
+
+			for my $k (keys %{$node_ports}) {
+				if(not exists $ports_seen{$k} and defined $node_ports->{$k}->{required} and not $node_ports->{$k}->{required}) { # unless explicitly flagged as unrequired
+					$logger->($VLFATAL, q[Unused node port: ], $k, q[ ; node id: ], $cmd_node->{id}, q[ ; cmd: ], join q[ ], @{$cmd} );
+				}
+			}
+
+			delete $cmd_node->{ports};
+		}
+	}
+
+	return $cmd_node;
 }
 
 ##############################################################

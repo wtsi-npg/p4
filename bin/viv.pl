@@ -25,6 +25,8 @@ Readonly::Scalar my $VLMIN => 1;
 Readonly::Scalar my $VLMED => 2;
 Readonly::Scalar my $VLMAX => 3;
 
+my $TEMPLATE_VERSION = 1;
+
 my %opts;
 getopts('xshv:o:r:t:', \%opts);
 
@@ -48,6 +50,8 @@ $tee_list ||= {};
 my $s = read_file($cfg_file_name, binmode => ':utf8' );
 
 my $cfg = from_json($s);
+
+if($cfg->{version}) { $TEMPLATE_VERSION = $cfg->{version}; }
 
 ###############################################
 # insert any tees requested into the main graph
@@ -98,37 +102,78 @@ for my $from_id (keys %deps) {
 
 $logger->($VLMAX, "\n==================================\nEXEC nodes(post RAFILE processing):\n==================================\n", Dumper(%exec_nodes), "\n");
 
-# For each edge:
-#  If both "from" and "to" nodes are of type EXEC, data transfer will be done via a named pipe,
-#  otherwise via file whose name is determined by the non-EXEC node's name attribute (communication
-#  between two non-EXEC nodes is of questionable value and is currently considered an error).
+my %port_list;
+#######################################################
+# examine all the EXEC nodes for I/O ports and add them
+#  to a port list indexed by node name, port name
+#######################################################
+for my $node (values %exec_nodes) {
+	$port_list{$node->{id}} = _extract_ports($node->{cmd}, $node->{id}, $node->{tver});
+	if($node->{use_STDIN}) { $port_list{$node->{id}}->{__stdin__} =  {attribs => { direction => q[in], type => q[stream] } }; }
+	if($node->{use_STDOUT}) { $port_list{$node->{id}}->{__stdout__} = {attribs => { direction => q[out], type => q[stream] } }; }
+}
+for my $node (values %outfile_nodes, values %rafile_nodes) {
+	$port_list{$node->{id}}->{__stdin__} =  {attribs => { direction => q[in], type => q[stream] } };
+}
+for my $node (values %infile_nodes, values %rafile_nodes) {
+	$port_list{$node->{id}}->{__stdout__} = {attribs => { direction => q[out], type => q[stream] } };
+}
+
+###########################################################
+# run through the edges, generate and record data_xfer_name
+# and connection type in the port list
+###########################################################
+my $ms_stack;
 for my $edge (@{$edges}) {
-	my ($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
-	my ($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
-	my $data_xfer_name;
+	$ms_stack = _process_edge($edge, \%port_list, $ms_stack);
+}
+if($ms_stack and @{$ms_stack}) { # if any messages in @fatal_error_stack, report them and croak
+	my $fatal_seen = 0;
+	for my $ms (@{$ms_stack}) {
+		carp(($ms->{severity}? q[ERROR]: q[WARNING]), q[: ], $ms->{text});
+		$fatal_seen ||= $ms->{severity};
+	}
+	if($fatal_seen) { croak q[Terminating after fatal errors detected in edge processing]; }
+}
 
-	if($from_node->{type} eq q[EXEC]) {
-		if($to_node->{type} eq q[EXEC]) {
-			$data_xfer_name = _create_fifo($edge->{from});
-		}
-		elsif(defined $to_node->{subtype} and $to_node->{subtype} eq q[DUMMY]) {
-			$data_xfer_name = q[];
-		}
-		else {
-			$data_xfer_name = $to_node->{name};
+######################################################################
+# go through the port list, verify connections requested by edges were
+#  valid (number and type), identify any unused ports, and perform
+#  substitution of data_xfer_names for ports in the EXEC nodes
+######################################################################
+for my $node_id (keys %port_list) {
+	for my $port_name (keys %{$port_list{$node_id}}) {
+		if($port_list{$node_id}->{$port_name}) {
+
+			my $data_xfer_name = $port_list{$node_id}->{$port_name}->{data_xfer_name};
+			if(not defined $data_xfer_name or $data_xfer_name eq q[]) { next; }
+			if($port_name eq q[__stdin__] or $port_name eq q[__stdout__]) {
+				my $node_edge_std = $port_name eq q[__stdout__]? q[STDOUT]: q[STDIN];
+				my $node = $exec_nodes{$node_id};
+				if($node->{$node_edge_std}){
+					croak "Cannot use $node_edge_std for node ".($node->{'id'}).' more than once';
+					#TODO: allow multiple STDOUT with dup?
+				}
+				$node->{$node_edge_std} = $data_xfer_name;
+			}
+			else {
+				my $tver = $port_list{$node_id}->{$port_name}->{tver};
+				$tver ||= $TEMPLATE_VERSION;
+				if($tver < 2) {
+					my $node = $port_list{$node_id}->{$port_name}->{node};
+					for my $cmd_part (ref $node->{cmd} eq 'ARRAY' ? @{$node->{cmd}}: $node->{cmd}) {
+						$cmd_part =~ s/\Q$port_name\E/$data_xfer_name/smx;
+					}
+					my $xxx = q[nothing];
+				}
+				else {
+					for my $loc (@{$port_list{$node_id}->{$port_name}->{occurrences}}) {
+						splice @{$loc->{arr}}, $loc->{idx}, 1, $data_xfer_name;
+					}
+				}
+			}
 		}
 	}
-	else {
-		if($to_node->{type} eq q[EXEC]) {
-			$data_xfer_name = $from_node->{name};
-		}
-		else {
-			croak q[Edges must start or terminate in an EXEC node; from: ], $from_node->{id}, q[, to: ], $to_node->{id};
-		}
-	}
-
-	_update_node_data_xfer($from_node, $from_port, $data_xfer_name, $FROM);
-	_update_node_data_xfer($to_node, $to_port, $data_xfer_name, $TO);
 }
 
 $logger->($VLMAX, "\n==================================\nEXEC nodes(post edges preprocessing):\n==================================\n", Dumper(%exec_nodes), "\n");
@@ -242,40 +287,209 @@ sub _create_fifo {
 	return $output_name;
 }
 
-sub _update_node_data_xfer {
-	my ($node, $port, $data_xfer_name, $edge_side) = @_;
+######################################################
+# _process_edge:
+#   use edge to generate and record data_xfer_name and
+#   connection type in port_list
+######################################################
+sub _process_edge {
+	my ($edge, $port_list, $ms_stack) = @_;
+	my ($from_node, $from_id, $from_port) = _get_node_info($edge->{from}, \%all_nodes);
+	my ($to_node, $to_id, $to_port) = _get_node_info($edge->{to}, \%all_nodes);
+	my $severity;
 
-	if($node->{type} eq q[EXEC] and $data_xfer_name ne q[]) {
-		if(defined $port) {
-			if(my($inout) = grep {$_} $port=~/_(IN|OUT)__\z/smx , $port=~/\A__(IN|OUT)_/smx ){ # if port has _{IN,OUT}_ {suf,pre}fix convention
-				#ensure port is connected to in manner suggested by naming convention
-				croak 'Node '.($node->{'id'})." port $port connected as ".($edge_side == $FROM?q("from"):q("to")) if (($inout eq q(OUT))^($edge_side == $FROM));
-			} else {
-				croak 'Node '.($node->{'id'})." has poorly described port $port (no _{IN,OUT}__ {suf,pre}fix)\n";
-			}
-			my $cmd = $node->{'cmd'};
-			for my$cmd_part ( ref $cmd eq 'ARRAY' ? @{$cmd}[1..$#{$cmd}] : ($node->{'cmd'}) ){
-				return if ($cmd_part =~ s/\Q$port\E/$data_xfer_name/smx);
-			} #if link for port has not been made (port never defined, or already substituted, in node cmd) bail out
-			croak 'Node '.($node->{'id'})." has no port $port";
+	$from_port ||= q[__stdout__];
+	$to_port ||= q[__stdin__];
+
+	$ms_stack ||= [];
+	if(not $port_list{$from_id}->{$from_port}) {
+		push @{$ms_stack}, {severity => 1, text => qq[from port $from_id:$from_port referenced in edge, but no corresponding port found in nodes\n]};
+	}
+	if(not $port_list{$to_id}->{$to_port}) {
+		push @{$ms_stack}, {severity => 1, text => qq[to port $to_id:$to_port referenced in edge, but no corresponding port found in nodes\n]};
+	}
+	if($port_list{$from_id}->{$from_port}->{attribs}->{direction} and $port_list{$from_id}->{$from_port}->{attribs}->{direction} eq q[in]) {
+		push @{$ms_stack}, {severity => 1, text => qq[from port $from_id:$from_port refers to input port in node\n]};
+	}
+	if($port_list{$to_id}->{$to_port}->{attribs}->{direction} and $port_list{$to_id}->{$to_port}->{attribs}->{direction} eq q[out]) {
+		push @{$ms_stack}, {severity => 1, text => qq[to port to_id:$to_port refers to output port in node\n]};
+	}
+
+	# determine connection type, generate appropriate data transfer name
+	my ($data_xfer_name, $connection_type);
+	if($from_node->{type} eq q[EXEC]) {
+		if($to_node->{type} eq q[EXEC]) {
+			$data_xfer_name = _create_fifo($edge->{from});
+			$connection_type = q[pipe];
+		}
+		elsif(defined $to_node->{subtype} and $to_node->{subtype} eq q[DUMMY]) {
+			$data_xfer_name = q[];
+			$connection_type = q[file];
 		}
 		else {
-			my $node_edge_std = $edge_side == $FROM? q[STDOUT]: q[STDIN];
-			if($node->{$node_edge_std}){
-				croak "Cannot use $node_edge_std for node ".($node->{'id'}).' more than once';
-				#TODO: allow multiple STDOUT with dup?
-			}
-			if(exists $node->{"use_$node_edge_std"}){
-				croak 'Node '.($node->{'id'})." configured not to use $node_edge_std" unless $node->{"use_$node_edge_std"};
-			}
-			$node->{$node_edge_std} = $data_xfer_name;
+			$data_xfer_name = $to_node->{name};
+			$connection_type = q[file];
 		}
 	}
 	else {
-		# do nothing
+		if($to_node->{type} eq q[EXEC]) {
+			$data_xfer_name = $from_node->{name};
+			$connection_type = q[file];
+		}
+		else {
+			push @{$ms_stack}, {severity => 1, text => qq[Edges must start or terminate in an EXEC node; from: $from_node->{id}, to: $to_node->{id}\n]};
+		}
 	}
 
-	return;
+	# from port - check validity: previous edges? if so, compatible type (fifo/file)? if one, check other end of previous edge to make sure not many:many creation
+	if(exists $port_list{$from_id}->{$from_port}->{dst} and @{$port_list{$from_id}->{$from_port}->{dst}} > 0) { # an edge from this port already added
+
+		$data_xfer_name = $port_list{$from_id}->{$from_port}->{data_xfer_name};
+
+		# confirm connection type match
+		if($connection_type ne $port_list{$from_id}->{$from_port}->{connection_type}) {
+			$severity = ($TEMPLATE_VERSION>=2 and (not $from_node->{tver} or $from_node->{tver} >=2))?1:0;
+			push @{$ms_stack}, {severity => $severity, text => qq[multiple edges from port have inconsistent connection types (pipe/file); from: $from_node->{id}, to: $to_node->{id}\n]};
+		}
+
+		# check for many:many creation
+		my $src_count = $port_list{$from_id}->{$from_port}->{src}? @{$port_list{$from_id}->{$from_port}->{src}}: 0;
+		my $dst_count = $port_list{$from_id}->{$from_port}->{dst}? @{$port_list{$from_id}->{$from_port}->{dst}}: 0;
+		if($dst_count == 1) {
+			my ($other_dst_id, $other_dst_port) = ($port_list{$from_id}->{$from_port}->{dst}->[0]->{id}, $port_list{$from_id}->{$from_port}->{dst}->[0]->{port});
+			my $other_dst = $port_list{$other_dst_id}->{$other_dst_port};
+			if(@{$other_dst->{src}} > 1) {
+				$severity = ($TEMPLATE_VERSION>=2 and (not $from_node->{tver} or $from_node->{tver} >=2))?1:0;
+				push @{$ms_stack}, {severity => $severity, text => qq[processing edge from $from_id:$from_port to $to_id:$to_port: illegal many:many creation\n]};
+			} 
+		}
+	}
+
+	# to port - check validity: previous edges? if so, compatible type (fifo/file)? if one, check other end of previous edge to make sure not many:many creation
+	if(exists $port_list{$to_id}->{$to_port}->{src} and @{$port_list{$to_id}->{$to_port}->{src}} > 0) { # an edge to this port already added
+
+		# confirm connection type match
+		if($connection_type ne $port_list{$to_id}->{$to_port}->{connection_type}) {
+			$severity = ($TEMPLATE_VERSION>=2 and (not $to_node->{tver} or $to_node->{tver} >=2))?1:0;
+			push @{$ms_stack}, {severity => $severity, text => qq[multiple edges to port have inconsistent connection types (pipe/file); from: $from_node->{id}, to: $to_node->{id}\n]};
+		}
+
+		# check for many:many creation
+		my $src_count = $port_list{$to_id}->{$to_port}->{src}? @{$port_list{$to_id}->{$to_port}->{src}}: 0;
+		my $dst_count = $port_list{$to_id}->{$to_port}->{dst}? @{$port_list{$to_id}->{$to_port}->{dst}}: 0;
+		if($src_count == 1) {
+			my ($other_src_id, $other_src_port) = ($port_list{$to_id}->{$to_port}->{src}->[0]->{id}, $port_list{$to_id}->{$to_port}->{src}->[0]->{port});
+			my $other_src = $port_list{$other_src_id}->{$other_src_port};
+			if(@{$other_src->{dst}} > 1) {
+				$severity = ($TEMPLATE_VERSION>=2 and (not $to_node->{tver} or $to_node->{tver} >=2))?1:0;
+				push @{$ms_stack}, {severity => $severity, text => qq[processing edge from $from_id:$from_port to $to_id:$to_port: illegal many:many creation\n]};
+			} 
+		}
+	}
+
+	$port_list{$from_id}->{$from_port}->{connection_type} = $connection_type;
+	$port_list{$from_id}->{$from_port}->{dst} ||= [];
+	push @{$port_list{$from_id}->{$from_port}->{dst}}, { id => $to_id , port => $to_port};
+
+	$port_list{$to_id}->{$to_port}->{connection_type} = $connection_type;
+	$port_list{$to_id}->{$to_port}->{src} ||= [];
+	push @{$port_list{$to_id}->{$to_port}->{src}}, { id => $from_id , port => $from_port};
+
+	$port_list{$from_id}->{$from_port}->{data_xfer_name} = $data_xfer_name;
+	$port_list{$to_id}->{$to_port}->{data_xfer_name} = $data_xfer_name;
+
+	return $ms_stack;
+}
+
+sub _extract_ports {
+	my ($cmd, $id, $tver) = @_;
+	my %ports;
+
+	$tver ||= $TEMPLATE_VERSION;
+
+	if(not $cmd) { return; }
+
+	if($tver < 2) {
+		my $r = ref $cmd;
+		if($r and $r ne q[ARRAY]) {
+			carp qq[Unsupported ref type $r for cmd of node $id\n];
+			return;
+		}
+
+		for my $elem (ref $cmd eq q[ARRAY]? @{$cmd}: ($cmd)) {
+			for my $port ($elem =~ /(__\S*_IN__)/gsmx, $elem=~/(__IN_\S*__)/gsmx) {
+				$ports{$port}->{tver} = 1;
+				$ports{$port}->{attribs}->{direction} = q[in];
+				$ports{$port}->{attribs}->{type} = q[stream];
+				$ports{$port}->{node} = $exec_nodes{$id};
+			}
+			for my $port ($elem =~ /(__\S*_OUT__)/gsmx, $elem=~/(__OUT_\S*__)/gsmx) {
+				$ports{$port}->{tver} = 1;
+				$ports{$port}->{attribs}->{direction} = q[out];
+				$ports{$port}->{attribs}->{type} = q[stream];
+				$ports{$port}->{node} = $exec_nodes{$id};
+			}
+		}
+	}
+	else {
+		if(ref $cmd ne q[ARRAY]) { return; }
+
+		for my $i (0..$#{$cmd}) {
+			my $elem = $cmd->[$i];
+			if(ref $elem eq q[HASH]) {
+				if($elem->{port}) {
+					$ports{$elem->{port}}->{tver} = 2;
+					$ports{$elem->{port}}->{attribs} = reconcile_port_info($elem, $ports{$elem->{port}}->{attribs});
+					$ports{$elem->{port}}->{occurrences} ||= [];
+					push @{$ports{$elem->{port}}->{occurrences}}, {arr => $cmd, idx => $i}; # note location for later substitution
+				}
+				elsif($elem->{packflag}) {
+					if(ref $elem->{packflag} eq q[ARRAY]) {
+						for my $j (0..$#{$elem->{packflag}}) {
+							my $pf_elem = $elem->{packflag}->[$j];
+							if(ref $pf_elem eq q[HASH] and $pf_elem->{port}) {
+								$ports{$pf_elem->{port}}->{tver} = 2;
+								$ports{$pf_elem->{port}}->{attribs} = reconcile_port_info($pf_elem, $ports{$pf_elem->{port}}->{attribs});
+								$ports{$pf_elem->{port}}->{occurrences} ||= [];
+								push @{$ports{$pf_elem->{port}}->{occurrences}}, {arr => $elem->{packflag}, idx => $j}; # note location for later substitution
+							}
+						}
+					}
+					else {
+						$logger->($VLMIN, "WARN: packflag with non-array value, node id: ", $id);
+					}
+				}	
+			}
+		}
+	}
+
+	return \%ports;
+}
+
+sub reconcile_port_info {
+	my ($port_elem, $current_attribs) = @_;
+	my $attribs;
+
+	if($current_attribs) { # multiple occurrences of this port in the node
+		if($current_attribs->{direction} and $current_attribs->{direction} ne $port_elem->{direction}) {
+			$attribs->{direction} = q[bi];
+		}
+		else {
+			$attribs->{direction} = $port_elem->{direction};
+		}
+		if($current_attribs->{type} and $current_attribs->{type} ne $port_elem->{type}) {
+			$attribs->{type} = q[seekable]; # use the more restrictive option
+		}
+		else {
+			$attribs->{type} = $port_elem->{type};
+		}
+	}
+	else {
+		$attribs->{direction} = $port_elem->{direction};
+		$attribs->{type} = $port_elem->{type};
+	}
+
+	return $attribs;
 }
 
 sub _get_from_edges {
@@ -298,9 +512,23 @@ sub _fork_off {
 	my ($node, $do_exec) = @_;
 	my $cmd = $node->{'cmd'};
 	my @cmd = ($cmd);
-	if ( ref $cmd eq 'ARRAY' ){
+
+	my $r = ref $cmd;
+	if($r eq q[ARRAY]) {
 		@cmd = @{$cmd};
-		$cmd = '[' . (join ',',@cmd)  . ']';
+
+		# handle any packflag elements
+		@cmd = map { (ref $_ eq q[HASH] and $_->{packflag} and ref $_->{packflag} eq q[ARRAY])? join q//, @{$_->{packflag}} : $_ } @cmd;
+
+		# if subtype is "stringify", then join elements into a space-separated string before exec (forces execution via comand shell interpreter when shell metacharacters are present)
+		if($node->{subtype} and $node->{subtype} eq q[STRINGIFY]) {
+			@cmd = (join ' ', @cmd);
+		}
+		# construct cmd for debug/error messages
+		$cmd = '[' . (join ' ',@cmd)  . ']';
+	}
+	elsif($r) {
+		croak q[command for node ], $node->{id}, q[ is an unsupported ref type: ], $r;
 	}
 
 	if(my $pid=fork) {     # parent - record the child's departure
@@ -317,6 +545,7 @@ sub _fork_off {
 			select(STDERR);$|=1;
 			print STDERR "Process $$ for cmd $cmd:\n";
 			print STDERR ' fileno(STDERR,'.(fileno STDERR).")\n";
+
 			if(not $node->{use_STDIN}) { $node->{'STDIN'} ||= '/dev/null'; }
 			if($node->{'STDIN'}) {
 				sysopen STDIN, $node->{'STDIN'}, O_RDONLY|O_NONBLOCK or croak "Failed to reset STDIN, pid $$ with cmd: $cmd\n$!";
@@ -444,7 +673,7 @@ sub process_tee_list {
 			carp q[Failed to create id for tee node for port ], $outport;
 			next;
 		}
-		my $tee_node = { id => $tnid, type => q[EXEC], use_STDIN => JSON::true, use_STDOUT => JSON::true, cmd => [ 'tee', $tee_stream_outport_name, ], };
+		my $tee_node = { id => $tnid, type => q[EXEC], use_STDIN => JSON::true, use_STDOUT => JSON::true, tver => 2, cmd => [ 'tee', {port => $tee_stream_outport_name}, ], };
 
 		#########################
 		# create output file node
