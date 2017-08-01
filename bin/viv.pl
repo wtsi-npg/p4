@@ -303,10 +303,10 @@ sub _process_edge {
 
 	$ms_stack ||= [];
 	if(not $port_list{$from_id}->{$from_port}) {
-		push @{$ms_stack}, {severity => 1, text => qq[from port $from_id:$from_port referenced in edge, but no corresponding port found in nodes\n]};
+		push @{$ms_stack}, {severity => 1, text => qq[from port $from_id:$from_port referenced in edge ($from_id:$from_port => $to_id:$to_port), but no corresponding port found in nodes\n]};
 	}
 	if(not $port_list{$to_id}->{$to_port}) {
-		push @{$ms_stack}, {severity => 1, text => qq[to port $to_id:$to_port referenced in edge, but no corresponding port found in nodes\n]};
+		push @{$ms_stack}, {severity => 1, text => qq[to port $to_id:$to_port referenced in edge ($from_id:$from_port => $to_id:$to_port), but no corresponding port found in nodes\n]};
 	}
 	if($port_list{$from_id}->{$from_port}->{attribs}->{direction} and $port_list{$from_id}->{$from_port}->{attribs}->{direction} eq q[in]) {
 		push @{$ms_stack}, {severity => 1, text => qq[from port $from_id:$from_port refers to input port in node\n]};
