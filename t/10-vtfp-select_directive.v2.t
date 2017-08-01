@@ -21,7 +21,7 @@ subtest 'select_directive_array' => sub {
 
 	my $select_cmd_template = {
 		description => 'Test select option, allowing default them explicitly setting the select value',
-		version => '1.0',
+		version => '2.0',
 		subst_params => [
 			{ id =>  'happy', default => 0 },
 		],
@@ -50,7 +50,7 @@ subtest 'select_directive_array' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -68,7 +68,7 @@ subtest 'select_directive_array' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -86,7 +86,7 @@ subtest 'select_directive_array' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -112,7 +112,7 @@ subtest 'select_directive_hash' => sub {
 
 	my $select_cmd_template = {
 		description => 'Test select option, allowing default them explicitly setting the select value',
-		version => '1.0',
+		version => '2.0',
 		subst_params => [
 			{ id =>  'mood', default => 'indifferent' },
 		],
@@ -142,7 +142,7 @@ subtest 'select_directive_hash' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -160,7 +160,7 @@ subtest 'select_directive_hash' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -178,7 +178,7 @@ subtest 'select_directive_hash' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -196,7 +196,7 @@ subtest 'select_directive_hash' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -218,7 +218,7 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 	plan tests => 8;
 
 	my $select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "batch of values assigned using one select value",
 		subst_params => [
 			{
@@ -269,13 +269,13 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 				type => "EXEC",
 				use_STDIN => JSON::false,
 				use_STDOUT => JSON::true,
-				cmd => ["paste", "__A_IN__", "__B_IN__", "__C_IN__" ]
+				cmd => [ "paste", {"port" => "A", "direction" => "in"}, {"port" => "B", "direction" => "in"}, {"port" => "C", "direction" => "in"} ]
 			}
 		],
 		edges => [
-			{ id => "AP", from => "A", to => "P:__A_IN__" },
-			{ id => "BP", from => "B", to => "P:__B_IN__" },
-			{ id => "CP", from => "C", to => "P:__C_IN__" }
+			{ id => "AP", from => "A", to => "P:A" },
+			{ id => "BP", from => "B", to => "P:B" },
+			{ id => "CP", from => "C", to => "P:C" }
 		]
 	};
 
@@ -288,7 +288,7 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -314,15 +314,15 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 			{
 				id =>  "P",
 				use_STDIN =>  JSON::false,
-				cmd =>  [ "paste", "__A_IN__", "__B_IN__", "__C_IN__" ],
+				cmd =>  [ "paste", {"port" => "A", "direction" => "in"}, {"port" => "B", "direction" => "in"}, {"port" => "C","direction" => "in"} ],
 				use_STDOUT =>  JSON::true,
 				type =>  "EXEC"
 			}
 		],
 		edges =>  [
-			{ from =>  "A", to =>  "P:__A_IN__", id =>  "AP" },
-			{ from =>  "B", id =>  "BP", to =>  "P:__B_IN__" },
-			{ from =>  "C", id =>  "CP", to =>  "P:__C_IN__" }
+			{ from =>  "A", to =>  "P:A", id =>  "AP" },
+			{ from =>  "B", id =>  "BP", to =>  "P:B" },
+			{ from =>  "C", id =>  "CP", to =>  "P:C" }
 		]
 	};
 
@@ -333,7 +333,7 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -359,15 +359,15 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 			{
 				id =>  "P",
 				use_STDIN =>  JSON::false,
-				cmd =>  [ "paste", "__A_IN__", "__B_IN__", "__C_IN__" ],
+				cmd =>  [ "paste", {"port" => "A", "direction" => "in"}, {"port" => "B","direction" => "in"}, {"port" => "C","direction" => "in"} ],
 				use_STDOUT =>  JSON::true,
 				type =>  "EXEC"
 			}
 		],
 		edges =>  [
-			{ from =>  "A", to =>  "P:__A_IN__", id =>  "AP" },
-			{ from =>  "B", id =>  "BP", to =>  "P:__B_IN__" },
-			{ from =>  "C", id =>  "CP", to =>  "P:__C_IN__" }
+			{ from =>  "A", to =>  "P:A", id =>  "AP" },
+			{ from =>  "B", id =>  "BP", to =>  "P:B" },
+			{ from =>  "C", id =>  "CP", to =>  "P:C" }
 		]
 	};
 
@@ -378,7 +378,7 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -404,15 +404,15 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 			{
 				id =>  "P",
 				use_STDIN =>  JSON::false,
-				cmd =>  [ "paste", "__A_IN__", "__B_IN__", "__C_IN__" ],
+				cmd =>  [ "paste", {"port" => "A", "direction" => "in"}, {"port" => "B","direction" => "in"}, {"port" => "C","direction" => "in"} ],
 				use_STDOUT =>  JSON::true,
 				type =>  "EXEC"
 			}
 		],
 		edges =>  [
-			{ from =>  "A", to =>  "P:__A_IN__", id =>  "AP" },
-			{ from =>  "B", id =>  "BP", to =>  "P:__B_IN__" },
-			{ from =>  "C", id =>  "CP", to =>  "P:__C_IN__" }
+			{ from =>  "A", to =>  "P:A", id =>  "AP" },
+			{ from =>  "B", id =>  "BP", to =>  "P:B" },
+			{ from =>  "C", id =>  "CP", to =>  "P:C" }
 		]
 	};
 
@@ -420,7 +420,7 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 
 	# same basic template as above, but without a default value for the select
 	$select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "batch of values assigned using one select value (no default)",
 		subst_params => [
 			{
@@ -471,13 +471,13 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 				type => "EXEC",
 				use_STDIN => JSON::false,
 				use_STDOUT => JSON::true,
-				cmd => ["paste", "__A_IN__", "__B_IN__", "__C_IN__" ]
+				cmd => ["paste", {"port" => "A","direction" => "in"}, {"port" => "B", "direction" => "in"}, {"port" => "C","direction" => "in"} ]
 			}
 		],
 		edges => [
-			{ id => "AP", from => "A", to => "P:__A_IN__" },
-			{ id => "BP", from => "B", to => "P:__B_IN__" },
-			{ id => "CP", from => "C", to => "P:__C_IN__" }
+			{ id => "AP", from => "A", to => "P:A" },
+			{ id => "BP", from => "B", to => "P:B" },
+			{ id => "CP", from => "C", to => "P:C" }
 		]
 	};
 
@@ -490,7 +490,7 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -516,15 +516,15 @@ subtest 'select_directive_single_switch_batch_values' => sub {
 			{
 				id =>  "P",
 				use_STDIN =>  JSON::false,
-				cmd =>  [ "paste", "__A_IN__", "__B_IN__", "__C_IN__" ],
+				cmd =>  [ "paste", {"port" => "A","direction" => "in"}, {"port" => "B","direction" => "in"}, {"port" => "C", "direction" => "in"} ],
 				use_STDOUT =>  JSON::true,
 				type =>  "EXEC"
 			}
 		],
 		edges =>  [
-			{ from =>  "A", to =>  "P:__A_IN__", id =>  "AP" },
-			{ from =>  "B", id =>  "BP", to =>  "P:__B_IN__" },
-			{ from =>  "C", id =>  "CP", to =>  "P:__C_IN__" }
+			{ from =>  "A", to =>  "P:A", id =>  "AP" },
+			{ from =>  "B", id =>  "BP", to =>  "P:B" },
+			{ from =>  "C", id =>  "CP", to =>  "P:C" }
 		]
 	};
 
@@ -536,7 +536,7 @@ subtest 'select_directive_multi_sel' => sub {
 	plan tests => 16;
 
 	my $select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "select multiple values from cases (array)",
 		nodes => [
 			{
@@ -558,7 +558,7 @@ subtest 'select_directive_multi_sel' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -575,7 +575,7 @@ subtest 'select_directive_multi_sel' => sub {
 	is_deeply ($vtfp_results, $expected_result, 'select multiple values from cases (array)');
 
 	$select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "select multiple values from cases (hash)",
 		nodes => [
 			{
@@ -597,7 +597,7 @@ subtest 'select_directive_multi_sel' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -614,7 +614,7 @@ subtest 'select_directive_multi_sel' => sub {
 	is_deeply ($vtfp_results, $expected_result, 'select multiple values from cases (hash)');
 
 	$select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "select multiple values from cases (array)",
 		nodes => [
 			{
@@ -638,7 +638,7 @@ subtest 'select_directive_multi_sel' => sub {
 	cmp_ok($exit_status>>8, q(==), 0, "expected exit status of 0 for select with select range - acceptable number of index keys (2, must be between 2 and 3)");
 	$vtfp_results = from_json($test->stdout);
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -658,7 +658,7 @@ subtest 'select_directive_multi_sel' => sub {
 	cmp_ok($exit_status>>8, q(==), 0, "expected exit status of 0 for select with select range - acceptable number of index keys (3, must be between 2 and 3)");
 	$vtfp_results = from_json($test->stdout);
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -678,7 +678,7 @@ subtest 'select_directive_multi_sel' => sub {
 	cmp_ok($exit_status>>8, q(==), 255, "expected exit status of 255 for select with select range - too few index keys (4, must be between 2 and 3)");
 
 	$select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "select multiple non-unique values from cases (array)",
 		subst_params => [
 			{
@@ -717,7 +717,7 @@ subtest 'select_directive_multi_sel' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -738,7 +738,7 @@ subtest 'select_directive_multi_sel' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -759,7 +759,7 @@ subtest 'select_directive_multi_sel' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -782,7 +782,7 @@ subtest 'select_directive_no_sel' => sub {
 
 	# with array cases
 	my $select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "select multiple values from cases (array)",
 		nodes => [
 			{
@@ -804,7 +804,7 @@ subtest 'select_directive_no_sel' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -825,7 +825,7 @@ subtest 'select_directive_no_sel' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -843,7 +843,7 @@ subtest 'select_directive_no_sel' => sub {
 
 	# now the same but with hash cases
 	$select_cmd_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "select multiple values from cases (array)",
 		nodes => [
 			{
@@ -865,7 +865,7 @@ subtest 'select_directive_no_sel' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",
@@ -886,7 +886,7 @@ subtest 'select_directive_no_sel' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes =>  [
 			{
 				type =>  "EXEC",

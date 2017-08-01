@@ -23,7 +23,7 @@ subtest 'basic_checks' => sub {
 
 	my $basic_container = {
 		description => 'basic template containing a VTFILE node',
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -44,7 +44,7 @@ subtest 'basic_checks' => sub {
 
 	my $vtf0 = {
 		description => 'basic VTFILE',
-		version => '1.0',
+		version => '2.0',
 		subgraph_io => {
 			ports => {
 				inputs => {
@@ -74,7 +74,7 @@ subtest 'basic_checks' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -100,7 +100,7 @@ subtest 'multilevel_vtf' => sub {
 
 	my $basic_container = {
 		description => 'basic template containing a VTFILE node',
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -121,7 +121,7 @@ subtest 'multilevel_vtf' => sub {
 
 	my $vtf1 = {
 		description => 'unary',
-		version => '1.0',
+		version => '2.0',
 		subgraph_io => {
 			ports => {
 				inputs => {
@@ -148,7 +148,7 @@ subtest 'multilevel_vtf' => sub {
 
 	my $vtf2 = {
 		description => 'binary',
-		version => '1.0',
+		version => '2.0',
 		subgraph_io => {
 			ports => {
 				inputs => {
@@ -160,7 +160,7 @@ subtest 'multilevel_vtf' => sub {
 			{
 				id => 'tee',
 				type => 'EXEC',
-				cmd => [ 'tee', '__A_OUT__', '__B_OUT__' ]
+				cmd => [ 'tee', {'port' => 'a'} , {'port' => 'b'}, ]
 			},
 			{
 				id => 'aout',
@@ -178,8 +178,8 @@ subtest 'multilevel_vtf' => sub {
 			},
 		],
 		edges => [
-			{ id => 'e3', from => 'tee:__A_OUT__', to => 'aout'},
-			{ id => 'e4', from => 'tee:__B_OUT__', to => 'bout'},
+			{ id => 'e3', from => 'tee:a', to => 'aout'},
+			{ id => 'e4', from => 'tee:b', to => 'bout'},
 		]
 	};
 
@@ -200,7 +200,7 @@ subtest 'multilevel_vtf' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -231,7 +231,7 @@ subtest 'multilevel_vtf' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -241,7 +241,7 @@ subtest 'multilevel_vtf' => sub {
 			{
 				id => 'vtf1_tee',
 				type => 'EXEC',
-				cmd => [ 'tee', '__A_OUT__', '__B_OUT__' ]
+				cmd => [ 'tee', {'port' => 'a'} , {'port' => 'b'}, ]
 			},
 			{
 				id => 'aout_rev',
@@ -266,8 +266,8 @@ subtest 'multilevel_vtf' => sub {
 		],
 		edges=> [
 			{ id => 'e1', from => 'n1', to => 'vtf1_tee'},
-			{ id => 'e3', from => 'vtf1_tee:__A_OUT__', to => 'aout_rev'},
-			{ id => 'e4', from => 'vtf1_tee:__B_OUT__', to => 'bout_rev'},
+			{ id => 'e3', from => 'vtf1_tee:a', to => 'aout_rev'},
+			{ id => 'e4', from => 'vtf1_tee:b', to => 'bout_rev'},
 			{ id => 'e2', from => 'aout_rev', to => 'aout_file'},
 			{ id => 'e2', from => 'bout_rev', to => 'bout_file'}
 		]
@@ -281,7 +281,7 @@ subtest 'multilevel_local_param_reeval' => sub {
 
 	my $basic_container = {
 		description => 'top template containing a VTFILE node',
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -303,7 +303,7 @@ subtest 'multilevel_local_param_reeval' => sub {
 
 	my $vtf11 = {
 		description => 'mid',
-		version => '1.0',
+		version => '2.0',
 		subgraph_io => {
 			ports => {
 				inputs => {
@@ -342,7 +342,7 @@ subtest 'multilevel_local_param_reeval' => sub {
 	my $vtf12 = {
 		description => 'bottom',
 		comment => 'the value of param ext should not be inherited from the cache of the parent, since the passed component value should force local reevaluation',
-		version => '1.0',
+		version => '2.0',
 		subgraph_io => {
 			ports => {
 				inputs => {
@@ -376,7 +376,7 @@ subtest 'multilevel_local_param_reeval' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',

@@ -1,6 +1,6 @@
 {
 	"description":	"minimal failing test pipeline. Fails because of false in cmd",
-	"version":1.0,
+	"version":2.0,
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",
@@ -21,7 +21,7 @@
 	},
 	{	"id": "d",
 		"type": "EXEC",
-		"cmd": "diff __IN_1__ __IN_2__"
+		"cmd": ["diff", {"port":"__IN_1__"}, {"port":"__IN_2__"}]
 	}
 	],
 	"edges":[
