@@ -190,7 +190,7 @@
 		"id":"tophat2",
 		"type":"EXEC",
 		"use_STDIN": false,
-		"use_STDOUT": false,
+		"use_STDOUT": true,
 		"cmd": [
 				"tophat2",
 				"--keep-fasta-order",
@@ -241,6 +241,8 @@
 	{
 		"id":"bamcat",
 		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
 		"cmd":[ "bamcat", "I=__IN_BAM1__", "I=__IN_BAM2__", "level=0" ]
 	},
 	{

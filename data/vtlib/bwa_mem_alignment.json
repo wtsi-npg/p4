@@ -39,17 +39,23 @@
 	{
 		"id":"bamtofastq",
 		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
 		"cmd":["bamtofastq"]
 	},
 	{
 		"id":"bwa_mem",
 		"comment":"presuming interleaved FR fastq records (-p flag), output all records (-T 0)",
 		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
 		"cmd":[ {"subst":"bwa_executable"}, "mem", "-t", {"subst":"aligner_numthreads"}, {"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"}, {"subst":"bwa_mem_T_flag"}, {"subst":"bwa_mem_K_flag"}, "__DB_PREFIX_REFERENCE_GENOME_IN__", "__FQ_IN__" ]
 	},
         {
                 "id":"samtobam",
                 "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
 		"cmd":[
 			"scramble",
 			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
