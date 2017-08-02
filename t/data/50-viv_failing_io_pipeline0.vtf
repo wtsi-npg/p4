@@ -1,5 +1,6 @@
 {
 	"description":	"minimal failing test pipeline - fails as I/O port names are poorly named",
+	"version": "1.0",
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",

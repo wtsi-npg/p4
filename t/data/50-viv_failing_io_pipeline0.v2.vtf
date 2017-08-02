@@ -1,6 +1,6 @@
 {
-	"description":	"minimal failing test pipeline. Port name in edge does not match one in node definition",
-	"version":1.0,
+	"description":	"minimal failing test pipeline - fails as I/O port names are poorly named",
+	"version":2.0,
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",
@@ -22,7 +22,7 @@
 	},
 	{	"id": "d",
 		"type": "EXEC",
-		"cmd": "diff __IN_1__ __IN_2__",
+		"cmd": [ "diff", {"port":"__IN1__", "direction":"out"}, {"port":"__IN2__"} ],
 		"use_STDIN": 0,
 		"use_STDOUT": 0
 	}
@@ -32,10 +32,10 @@
 		"to": "n2"
 	},
 	{	"from": "n2",
-		"to": "d:__IN_1__"
+		"to": "d:__IN1__"
 	},
 	{	"from": "m",
-		"to": "d:__IN_N2__"
+		"to": "d:__IN2__"
 	}
 	]
 }

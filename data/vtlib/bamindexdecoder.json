@@ -70,7 +70,7 @@
 	},
 	{
 		"id":"decoder_metrics",
-		"type":"OUTFILE",
+		"type":"RAFILE",
 		"name":{"subst":"decoder_metrics"}
 	},
 	{

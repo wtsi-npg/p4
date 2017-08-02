@@ -436,7 +436,7 @@
                 "name":{"subst":"seqchksum","required":"yes","ifnull":{"subst_constructor":{ "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"fs1p","required":"yes", "ifnull": "final_stage1_process.json"} ], "postproc":{"op":"concat", "pad":""} }}},
                 "description":"subgraph containing final stage1 processing"
         },
-	{ "id":"seqchksum_file", "type":"OUTFILE", "name":{"subst":"seqchksum_file"} },
+	{ "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
 	{
 		"id":"filtered_bam",
 		"type":"OUTFILE",
