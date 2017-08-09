@@ -13,13 +13,13 @@
 	}
 },
 "subst_params":[
-        {
-                "id": "basic_pipeline_params",
-                "type":"SPFILE",
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
 		"name":{"subst":"basic_pipeline_params_file"},
-                "required": "no",
-                "comment":"this will expand to a set of subst_param elements"
-        },
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
 	{
 		"id":"fastq1_name",
 		"required":"no",
@@ -166,6 +166,84 @@
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".junctions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		}
+	},
+	{
+		"id":"salmon_dir",
+		"required":"no",
+		"default":"salmon_quant"
+	},
+	{
+		"id":"salmon_out",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"} ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"salmon_quant",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/quant.sf"
+	},
+	{
+		"id":"salmon_quant_genes",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.genes.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/quant.genes.sf"
+	},
+	{
+		"id":"salmon_lib_format_counts",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/lib_format_counts.json" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/lib_format_counts.json"
+	},
+	{
+		"id":"salmon_libparams",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/libParams" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/libParams"
+	},
+	{
+		"id":"salmon_cmd_info",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/cmd_info.json" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/cmd_info.json"
+	},
+	{
+		"id":"zip_salmon_quant_target",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".salmon_quant.zip" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"gene_mapping_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "--geneMap=", {"subst":"annotation_val"} ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"salmon_transcriptome_val",
+		"required":"yes"
 	}
 ],
 "nodes":[
@@ -265,6 +343,39 @@
 		"use_STDIN": false,
 		"use_STDOUT": false,
 		"cmd":[ "cp", "__SRC_JUNCTIONS_BED_IN__", {"subst":"cp_junctions_bed_target"} ]
+	},
+	{
+		"id":"salmon",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":[
+				"salmon",
+				"--no-version-check",
+				"quant",
+				"--index", {"subst":"salmon_transcriptome_val"},
+				"--libType", "A",
+				"--mates1", "__FQ1_IN__",
+				"--mates2", "__FQ2_IN__",
+				{"subst":"gene_mapping_flag"},
+				{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
+				"--output", {"subst":"salmon_out"}
+		]
+	},
+	{
+		"id":"zip_salmon_quant",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":[ 
+				"zip", "-r",
+				{"subst":"zip_salmon_quant_target"},
+				{"subst":"salmon_quant"},
+				{"subst":"salmon_quant_genes"},
+				{"subst":"salmon_lib_format_counts"},
+				{"subst":"salmon_libparams"},
+				{"subst":"salmon_cmd_info"}
+			  ]
 	}
 ],
 "edges":[
@@ -281,6 +392,9 @@
 	{ "id":"tophat2_to_junctions_bed", "from":"tophat2", "to":"junctions_bed" },
 	{ "id":"cp_junctions_bed", "from":"junctions_bed", "to":"cp_junctions_bed:__SRC_JUNCTIONS_BED_IN__" },
 	{ "id":"accepted_hits_bam_to_bamcat", "from":"accepted_hits_bam", "to":"bamcat:__IN_BAM1__" },
-	{ "id":"unmapped_bam_to_bamcat", "from":"unmapped_bam", "to":"bamcat:__IN_BAM2__" }
+	{ "id":"unmapped_bam_to_bamcat", "from":"unmapped_bam", "to":"bamcat:__IN_BAM2__" },
+	{ "id":"fq1_to_salmon", "from":"fq1", "to":"salmon:__FQ1_IN__" },
+	{ "id":"fq2_to_salmon", "from":"fq2", "to":"salmon:__FQ2_IN__" },
+	{ "id":"salmon_to_zip_salmon_quant", "from":"salmon", "to":"zip_salmon_quant"}
 ]
 }
