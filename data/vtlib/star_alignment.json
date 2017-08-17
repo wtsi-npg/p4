@@ -181,62 +181,12 @@
         "default":"STAR"
     },
     {
-        "id":"salmon_dir",
-        "required":"no",
-        "default":"salmon_quant"
-    },
-    {
-        "id":"salmon_out",
-        "required":"no",
-        "subst_constructor":{ "vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"} ], "postproc":{"op":"concat","pad":""} }
-    },
-    {
-        "id":"salmon_quant",
-        "required":"no",
-        "subst_constructor":{ "vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.sf" ], "postproc":{"op":"concat","pad":""} },
-        "default":"salmon_quant/quant.sf"
-    },
-    {
-        "id":"salmon_quant_genes",
-        "required":"no",
-        "subst_constructor":{ "vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.genes.sf" ], "postproc":{"op":"concat","pad":""} },
-        "default":"salmon_quant/quant.genes.sf"
-    },
-    {
-        "id":"salmon_lib_format_counts",
-        "required":"no",
-        "subst_constructor":{ "vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/lib_format_counts.json" ], "postproc":{"op":"concat","pad":""} },
-        "default":"salmon_quant/lib_format_counts.json"
-    },
-    {
-        "id":"salmon_libparams",
-        "required":"no",
-        "subst_constructor":{ "vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/libParams" ], "postproc":{"op":"concat","pad":""} },
-        "default":"salmon_quant/libParams"
-    },
-    {
-        "id":"salmon_cmd_info",
-        "required":"no",
-        "subst_constructor":{ "vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/cmd_info.json" ], "postproc":{"op":"concat","pad":""} },
-        "default":"salmon_quant/cmd_info.json"
-    },
-    {
-        "id":"zip_salmon_quant_target",
-        "required":"no",
-        "subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".salmon_quant.zip" ], "postproc":{"op":"concat","pad":""} }
-    },
-    {
-        "id":"transcriptome_subpath",
-        "required":"no"
-    },
-    {
-        "id":"transcriptome_val",
-        "subst_constructor":{ "vals":[ {"subst":"reposdir"}, "/transcriptomes/", {"subst":"transcriptome_subpath"} ], "postproc":{"op":"concat","pad":""} }
-    },
-    {
-        "id":"gene_mapping_flag",
-        "required":"no",
-        "subst_constructor":{ "vals":[ "--geneMap=", {"subst":"annotation_val"} ], "postproc":{"op":"concat","pad":""} }
+        "id":"quant_vtf",
+        "required":"yes",
+        "subst_constructor":{
+                                "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"quant_method"}, "_alignment.json" ],
+                                "postproc":{"op":"concat", "pad":""}
+                            }
     }
 ],
 "nodes":[
@@ -357,37 +307,14 @@
         "cmd":[ "cp", "__SRC_READSPERGENE_TAB_IN__", {"subst":"cp_readspergene_tab_target"} ]
     },
     {
-        "id":"salmon",
-        "type":"EXEC",
+        "id":"quantify",
+        "type":"VTFILE",
         "use_STDIN": false,
         "use_STDOUT": true,
-        "cmd":[
-                "salmon",
-                "--no-version-check",
-                "quant",
-                "--index", {"subst":"transcriptome_val"},
-                "--libType", "A",
-                "--mates1", "__FQ1_IN__",
-                "--mates2", "__FQ2_IN__",
-                {"subst":"gene_mapping_flag"},
-                {"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
-                "--output", {"subst":"salmon_out"}
-        ]
-    },
-    {
-        "id":"zip_salmon_quant",
-        "type":"EXEC",
-        "use_STDIN": true,
-        "use_STDOUT": false,
-        "cmd":[ 
-                "zip", "-r",
-                {"subst":"zip_salmon_quant_target"},
-                {"subst":"salmon_quant"},
-                {"subst":"salmon_quant_genes"},
-                {"subst":"salmon_lib_format_counts"},
-                {"subst":"salmon_libparams"},
-                {"subst":"salmon_cmd_info"}
-              ]
+        "comment":"inputs: fq1, fq2; outputs: NONE",
+        "node_prefix":"quant_",
+        "name":{"subst":"quant_vtf"},
+        "description":"subgraph containing salmon quantification of transcripts"
     }
 ],
 "edges":[
@@ -404,8 +331,7 @@
     { "id":"cp_junctions_tab", "from":"junctions_tab", "to":"cp_junctions_tab:__SRC_JUNCTIONS_TAB_IN__" },
     { "id":"star_to_readspergene_tab", "from":"star", "to":"readspergene_tab" },
     { "id":"cp_readspergene_tab", "from":"readspergene_tab", "to":"cp_readspergene_tab:__SRC_READSPERGENE_TAB_IN__" },
-    { "id":"fq1_to_salmon", "from":"fq1", "to":"salmon:__FQ1_IN__" },
-    { "id":"fq2_to_salmon", "from":"fq2", "to":"salmon:__FQ2_IN__" },
-    { "id":"salmon_to_zip_salmon_quant", "from":"salmon", "to":"zip_salmon_quant"}
+	{ "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fq1" },
+	{ "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fq2" }
 ]
 }
