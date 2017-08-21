@@ -4,8 +4,8 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-				"fq1":"salmon:__FQ1_IN__",
-				"fq2":"salmon:__FQ2_IN__"
+				"fastq1":"salmon:__FQ1_IN__",
+				"fastq2":"salmon:__FQ2_IN__"
 		}
 	}
 },

@@ -150,9 +150,9 @@
                             }
     },
     {
-        "id":"scramble_genome_reference_flag",
+        "id":"scramble_chimeric_reference_flag",
         "required":"no",
-        "subst_constructor":{ "vals":[ "-r", {"subst":"reference_genome_fasta"} ] }
+        "subst_constructor":{ "vals":[ "-r", {"subst":"scramble_reference_fasta"} ] }
     },
     {
         "id":"scramble_transcriptome_reference_flag",
@@ -270,7 +270,7 @@
                 {"subst":"b2c_compress_level", "ifnull":"-7"},
                 "-I", "sam",
                 "-O", "cram",
-                {"subst":"scramble_genome_reference_flag"},
+                {"subst":"scramble_chimeric_reference_flag"},
                 "__SRC_CHIMERIC_SAM_IN__",
                 {"subst":"scramble_chimeric_sam_target"}
         ]
@@ -322,7 +322,6 @@
     { "id":"bamtofastq_to_fq2", "from":"bamtofastq:__FQ2_OUT__", "to":"fq2" },
     { "id":"fq1_to_star", "from":"fq1", "to":"star:__FQ1_IN__" },
     { "id":"fq2_to_star", "from":"fq2", "to":"star:__FQ2_IN__" },
-    { "id":"star_to_readspergene_tab", "from":"star", "to":"readspergene_tab" },
     { "id":"star_to_chimeric_sam", "from":"star", "to":"chimeric_sam" },
     { "id":"scramble_chimeric_sam", "from":"chimeric_sam", "to":"scramble_chimeric_sam:__SRC_CHIMERIC_SAM_IN__"},
     { "id":"star_to_totranscriptome_bam", "from":"star", "to":"totranscriptome_bam" },
@@ -331,7 +330,7 @@
     { "id":"cp_junctions_tab", "from":"junctions_tab", "to":"cp_junctions_tab:__SRC_JUNCTIONS_TAB_IN__" },
     { "id":"star_to_readspergene_tab", "from":"star", "to":"readspergene_tab" },
     { "id":"cp_readspergene_tab", "from":"readspergene_tab", "to":"cp_readspergene_tab:__SRC_READSPERGENE_TAB_IN__" },
-	{ "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fq1" },
-	{ "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fq2" }
+    { "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1" },
+    { "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2" }
 ]
 }
