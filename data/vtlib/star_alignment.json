@@ -150,14 +150,24 @@
                             }
     },
     {
-        "id":"scramble_chimeric_reference_flag",
-        "required":"no",
-        "subst_constructor":{ "vals":[ "-r", {"subst":"scramble_reference_fasta"} ] }
+        "id":"reference_genome_fasta_name","required":"no"},
+    {
+        "id":"reference_genome_fasta",
+        "required":"yes",
+        "subst_constructor":{
+                                "vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_genome_fasta_name"} ],
+                                "postproc":{"op":"concat", "pad":""}
+                            }
     },
     {
-        "id":"scramble_transcriptome_reference_flag",
-        "required":"no",
-        "subst_constructor":{ "vals":[ "-r", {"subst":"reference_transcriptome_fasta"} ] }
+        "id":"reference_transcriptome_fasta_name","required":"no"},
+    {
+        "id":"reference_transcriptome_fasta",
+        "required":"yes",
+        "subst_constructor":{
+                                "vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_transcriptome_fasta_name"} ],
+                                "postproc":{"op":"concat", "pad":""}
+                            }
     },
     {
         "id":"cp_junctions_tab_target",
@@ -270,7 +280,7 @@
                 {"subst":"b2c_compress_level", "ifnull":"-7"},
                 "-I", "sam",
                 "-O", "cram",
-                {"subst":"scramble_chimeric_reference_flag"},
+                 "-r", {"subst":"reference_genome_fasta"},
                 "__SRC_CHIMERIC_SAM_IN__",
                 {"subst":"scramble_chimeric_sam_target"}
         ]
@@ -287,7 +297,7 @@
                 {"subst":"b2c_compress_level", "ifnull":"-7"},
                 "-I", "bam",
                 "-O", "cram",
-                {"subst":"scramble_transcriptome_reference_flag"},
+                "-r", {"subst":"reference_transcriptome_fasta"},
                 "__SRC_TOTRANSCRIPTOME_BAM_IN__",
                 {"subst":"scramble_totranscriptome_bam_target"}
         ]
