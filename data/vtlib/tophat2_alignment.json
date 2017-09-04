@@ -81,6 +81,13 @@
 		}
 	},
 	{
+		"id":"annotation_val",
+		"subst_constructor":{
+			"vals":[ {"subst":"reposdir"}, "/transcriptomes/", {"subst":"transcriptome_subpath"} ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
 		"id":"aligner_numthreads_flag",
 		"required":"no",
 		"subst_constructor":{
@@ -93,6 +100,14 @@
 		"required":"no",
 		"subst_constructor":{
 			"vals":[ "--library-type", {"subst":"library_type"} ],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"id":"annotation_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "--GTF", {"subst":"annotation_val"} ],
 			"postproc":{"op":"concat","pad":"="}
 		}
 	},
@@ -208,9 +223,9 @@
 				"--mate-inner-dist","100",
 				{"subst":"aligner_numthreads_flag"},
 				{"subst":"library_type_flag"},
+				{"subst":"transcriptome_flag", "ifnull":{"subst":"annotation_flag"}},
 				"--no-coverage-search",
 				"--microexon-search",
-				{"subst":"transcriptome_flag"} ,
 				"__REFERENCE_GENOME_IN__",
 				"__FQ1_IN__",
 				"__FQ2_IN__"
