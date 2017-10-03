@@ -268,7 +268,14 @@
 			{"subst":"b2c_compress_level", "ifnull":"-7"},
 			"-I", "bam",
 			"-O", "cram",
-			{"subst":"scramble_reference_flag"} ]
+			{"subst":"scramble_reference_flag"},
+			{"select":"scramble_embed_reference","default":0,"select_range":[0,1],
+				"cases":[
+					[],
+					"-e"
+				]
+			}
+		]	
 	},
 	{
 		"id":"scramble_tee",
