@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 6;
+use Test::More tests => 7;
 use Test::Cmd;
 use File::Slurp;
 use Perl6::Slurp;
@@ -901,6 +901,72 @@ subtest 'select_directive_no_sel' => sub {
 	};
 
 	is_deeply ($vtfp_results, $expected_result, 'select no values from cases (hash), overriding default with nullkeys');
+};
+
+### confirm distinction between 0 and undef as default value in a select directive
+subtest 'select_directive_no_sel' => sub {
+	plan tests => 4;
+
+	# with array cases
+	my $select_cmd_template = {
+		version => "2.0",
+		description => "select multiple values from cases (array)",
+		nodes => [
+			{
+				id => "A",
+				type => "EXEC",
+				use_STDIN => JSON::false,
+				use_STDOUT => JSON::true,
+				cmd => [ "echo", {select => "wordsel", "default" => 0, cases => [ "one", "two", "three", "four" ]} ]
+			},
+		],
+	};
+
+	my $template = $tdir.q[/10-vtfp-select_cmd_5_0.json];
+	my $template_contents = to_json($select_cmd_template);
+	write_file($template, $template_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		version => '2.0',
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo", "one" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'select value using default from cases (array)');
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -nullkeys wordsel $template]);
+	ok($exit_status>>8 == 0, "zero exit for test run: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+
+	$expected_result = {
+		version => '2.0',
+		nodes =>  [
+			{
+				type =>  "EXEC",
+				use_STDOUT =>  JSON::true,
+				cmd =>  [ "echo" ],
+				use_STDIN =>  JSON::false,
+				id =>  "A"
+			},
+		],
+		edges =>  [
+		],
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'forcing undef value in select directive');
 };
 
 1;

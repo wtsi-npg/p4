@@ -833,7 +833,7 @@ sub resolve_select_value {
 			$default = subst_walk($select->{default}, $params, $ewi, $aux);
 		}
 
-		if(not $default or (ref $default eq q[ARRAY] and not @{$default})) { return; }
+		if(not defined $default or (ref $default eq q[ARRAY] and not @{$default})) { return; }
 
 		$indexes = $default;
 		if(not ref $indexes) { $indexes = [ $indexes ]; }
