@@ -1020,17 +1020,20 @@ sub report_pv_ewi {
 #         the resulting graph with one of the visualisation tools.)
 #######################################################################################
 sub flatten_tree {
-	my ($tree_node, $tver_default, $flat_graph) = @_; 
+	my ($tree_node, $tver_default, $flat_graph, $ancestor_prefixes) = @_; 
 
 	$flat_graph ||= {};
+	$ancestor_prefixes ||= [];
 
 	# insert edges and nodes from current tree_node to $flat_graph
-	subgraph_to_flat_graph($tree_node, $tver_default, $flat_graph);
+	subgraph_to_flat_graph($tree_node, $tver_default, $flat_graph, $ancestor_prefixes);
 
 	# do the same recursively for any children
+	push @{$ancestor_prefixes}, ($tree_node->{node_prefix} || q[]);
 	for my $tn (@{$tree_node->{children}}) {
-		flatten_tree($tn, $tver_default, $flat_graph);
+		flatten_tree($tn, $tver_default, $flat_graph, $ancestor_prefixes);
 	}
+	pop @{$ancestor_prefixes};
 
 	return $flat_graph;
 }
@@ -1040,29 +1043,27 @@ sub flatten_tree {
 #  losing everything except nodes and edges is a possibly undesirable side-effect of this
 #########################################################################################
 sub subgraph_to_flat_graph {
-	my ($tree_node, $tver_default, $flat_graph) = @_;
+	my ($tree_node, $tver_default, $flat_graph, $ancestor_prefixes) = @_;
 
 	my $vtnode_id = $tree_node->{id};
 	my $vt_name = $tree_node->{name};
 
 	my $subcfg = $tree_node->{cfg};
 
+	my $ancestor_prefix = join(q//, @{$ancestor_prefixes});
+
 	###################################################################################
 	# prefix the nodes in this subgraph with a prefix to ensure uniqueness of id values
 	###################################################################################
 	my $tver = ($subcfg->{version} or $tver_default);
-	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%s%s", $tree_node->{node_prefix}, $_->{id}; if($_->{type} eq q[EXEC] and not $_->{tver} and $tver ne $tver_default) { $_->{tver} = $tver; }  $_; } @{$subcfg->{nodes}}) ];
+	$subcfg->{nodes} = [ (map { $_->{id} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $_->{id}; if($_->{type} eq q[EXEC] and not $_->{tver} and $tver ne $tver_default) { $_->{tver} = $tver; }  $_; } @{$subcfg->{nodes}}) ];
 
 	########################################################################
 	# any edges which refer to nodes in this subgraph should also be updated
 	########################################################################
 	for my $edge (@{$subcfg->{edges}}) {
-		if(not get_child_prefix($tree_node->{children}, $edge->{from})) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
-			$edge->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $edge->{from};
-		}
-		if(not get_child_prefix($tree_node->{children}, $edge->{to})) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
-			$edge->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $edge->{to};
-		}
+		$edge->{from} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{from};
+		$edge->{to} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{to};
 	}
 
 	##########################################################
@@ -1078,10 +1079,10 @@ sub subgraph_to_flat_graph {
 	# now fiddle the edges in the flattened graph (maybe "fiddle" should be defined)
 
 	# first inputs to the subgraph... (identify edges in the flat graph which terminate in nodes of this subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
-	my $in_edges = [ (grep { $_->{to} =~ /^$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
+	my $in_edges = [ (grep { $_->{to} =~ /^$ancestor_prefix$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
 	if(@$in_edges and not $subgraph_nodes_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode_id, q[". No inputs specified in subgraph ], $vt_name); }
 	for my $edge (@$in_edges) {
-		if($edge->{to} =~ /^$vtnode_id:?(.*)$/) {
+		if($edge->{to} =~ /^$ancestor_prefix$vtnode_id:?(.*)$/) {
 			my $portkey = $1;
 			$portkey ||= q[_stdin_];
 
@@ -1109,12 +1110,7 @@ sub subgraph_to_flat_graph {
 				else {
 					$mod_edge = $edge;
 				}
-				if(get_child_prefix($tree_node->{children}, $ports->[$i])) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
-					$mod_edge->{to} = $ports->[$i];
-				}
-				else {
-					$mod_edge->{to} = sprintf "%s%s", $tree_node->{node_prefix}, $ports->[$i];
-				}
+				$mod_edge->{to} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $ports->[$i];
 			}
 		}
 		else {
@@ -1124,10 +1120,10 @@ sub subgraph_to_flat_graph {
 	}
 
 	#  ...then outputs from the subgraph (identify edges in the flat graph which originate in nodes of the subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
-	my $out_edges = [ (grep { $_->{from} =~ /^$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
+	my $out_edges = [ (grep { $_->{from} =~ /^$ancestor_prefix$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
 	if(@$out_edges and not $subgraph_nodes_out) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode_id, q[". No outputs specified in subgraph ], $vt_name); }
 	for my $edge (@$out_edges) {
-		if($edge->{from} =~ /^$vtnode_id:?(.*)$/) {
+		if($edge->{from} =~ /^$ancestor_prefix$vtnode_id:?(.*)$/) {
 			my $portkey = $1;
 			$portkey ||= q[_stdout_];
 
@@ -1136,13 +1132,7 @@ sub subgraph_to_flat_graph {
 				$logger->($VLFATAL, q[Failed to map port in subgraph: ], $vtnode_id, q[:], $portkey);
 			}
 
-			# do check for existence of port in 
-			if(get_child_prefix($tree_node->{children}, $port)) { # if there is a child prefix, this belongs to a subgraph - don't prefix it
-				$edge->{from} = $port;
-			}
-			else {
-				$edge->{from} = sprintf "%s%s", $tree_node->{node_prefix}, $port;
-			}
+			$edge->{from} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $port;
 		}
 		else {
 			$logger->($VLMIN, q[Currently only edges to stdin processed when remapping VTFILE edges. Not processing: ], $edge->{to}, q[ in edge: ], $edge->{id});

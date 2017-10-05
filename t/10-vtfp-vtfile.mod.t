@@ -244,32 +244,32 @@ subtest 'multilevel_vtf' => sub {
 				cmd => [ 'tee', '__A_OUT__', '__B_OUT__' ]
 			},
 			{
-				id => 'aout_rev',
+				id => 'vtf1_aout_rev',
 				type => 'EXEC',
 				cmd => [ 'rev' ]
 			},
 			{
-				id => 'aout_file',
+				id => 'vtf1_aout_file',
 				type => 'OUTFILE',
 				name => 'tmp.xxx'
 			},
 			{
-				id => 'bout_rev',
+				id => 'vtf1_bout_rev',
 				type => 'EXEC',
 				cmd => [ 'rev' ]
 			},
 			{
-				id => 'bout_file',
+				id => 'vtf1_bout_file',
 				type => 'OUTFILE',
 				name => 'tmp.yyy'
 			}
 		],
 		edges=> [
 			{ id => 'e1', from => 'n1', to => 'vtf1_tee'},
-			{ id => 'e3', from => 'vtf1_tee:__A_OUT__', to => 'aout_rev'},
-			{ id => 'e4', from => 'vtf1_tee:__B_OUT__', to => 'bout_rev'},
-			{ id => 'e2', from => 'aout_rev', to => 'aout_file'},
-			{ id => 'e2', from => 'bout_rev', to => 'bout_file'}
+			{ id => 'e3', from => 'vtf1_tee:__A_OUT__', to => 'vtf1_aout_rev'},
+			{ id => 'e4', from => 'vtf1_tee:__B_OUT__', to => 'vtf1_bout_rev'},
+			{ id => 'e2', from => 'vtf1_aout_rev', to => 'vtf1_aout_file'},
+			{ id => 'e2', from => 'vtf1_bout_rev', to => 'vtf1_bout_file'}
 		]
 	};
 
@@ -394,7 +394,7 @@ subtest 'multilevel_local_param_reeval' => sub {
 				name => 'tmp.wxyz',
 			},
 			{
-				id => 'vtf12_vfile',
+				id => 'vtf11_vtf12_vfile',
 				type => 'OUTFILE',
 				name => 'tmp.weez',
 			},
@@ -402,7 +402,7 @@ subtest 'multilevel_local_param_reeval' => sub {
 		edges=> [
 			{ id => 'e1', from => 'n1', to => 'vtf11_tee'},
 			{ id => 'e2', from => 'vtf11_tee:__A_OUT__', to => 'vtf11_file'},
-			{ id => 'e3', from => 'vtf11_tee:__B_OUT__', to => 'vtf12_vfile'}
+			{ id => 'e3', from => 'vtf11_tee:__B_OUT__', to => 'vtf11_vtf12_vfile'}
 		]
 	};
 
