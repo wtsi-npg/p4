@@ -12,6 +12,7 @@ use JSON;
 use POSIX;
 use Fcntl;
 use File::Temp qw/ tempdir /;
+use List::MoreUtils qw(any);
 use Getopt::Std;
 use Readonly;
 use Data::Dumper;
@@ -105,7 +106,8 @@ $logger->($VLMAX, "\n==================================\nEXEC nodes(post RAFILE 
 my %port_list;
 #######################################################
 # examine all the EXEC nodes for I/O ports and add them
-#  to a port list indexed by node name, port name
+#  to a port list indexed by node name, port name; add
+#  ports implied by FILE type nodes
 #######################################################
 for my $node (values %exec_nodes) {
 	$port_list{$node->{id}} = _extract_ports($node->{cmd}, $node->{id}, $node->{tver});
@@ -130,8 +132,8 @@ for my $edge (@{$edges}) {
 if($ms_stack and @{$ms_stack}) { # if any messages in @fatal_error_stack, report them and croak
 	my $fatal_seen = 0;
 	for my $ms (@{$ms_stack}) {
-		carp(($ms->{severity}? q[ERROR]: q[WARNING]), q[: ], $ms->{text});
-		$fatal_seen ||= $ms->{severity};
+		carp(($ms->{fatal_error}? q[ERROR]: q[WARNING]), q[: ], $ms->{text});
+		$fatal_seen ||= $ms->{fatal_error};
 	}
 	if($fatal_seen) { croak q[Terminating after fatal errors detected in edge processing]; }
 }
@@ -146,7 +148,7 @@ for my $node_id (keys %port_list) {
 		if($port_list{$node_id}->{$port_name}) {
 
 			my $data_xfer_name = $port_list{$node_id}->{$port_name}->{data_xfer_name};
-			if(not defined $data_xfer_name or $data_xfer_name eq q[]) { next; }
+			if(not defined $data_xfer_name or $data_xfer_name eq q[]) { next }
 			if($port_name eq q[__stdin__] or $port_name eq q[__stdout__]) {
 				my $node_edge_std = $port_name eq q[__stdout__]? q[STDOUT]: q[STDIN];
 				my $node = $exec_nodes{$node_id};
@@ -164,7 +166,6 @@ for my $node_id (keys %port_list) {
 					for my $cmd_part (ref $node->{cmd} eq 'ARRAY' ? @{$node->{cmd}}: $node->{cmd}) {
 						$cmd_part =~ s/\Q$port_name\E/$data_xfer_name/smx;
 					}
-					my $xxx = q[nothing];
 				}
 				else {
 					for my $loc (@{$port_list{$node_id}->{$port_name}->{occurrences}}) {
@@ -303,19 +304,22 @@ sub _process_edge {
 
 	$ms_stack ||= [];
 	if(not $port_list{$from_id}->{$from_port}) {
-		push @{$ms_stack}, {severity => 1, text => qq[from port $from_id:$from_port referenced in edge ($from_id:$from_port => $to_id:$to_port), but no corresponding port found in nodes\n]};
+		push @{$ms_stack}, {fatal_error => 1, text => qq[from port $from_id:$from_port referenced in edge ($from_id:$from_port => $to_id:$to_port), but no corresponding port found in nodes\n]};
 	}
 	if(not $port_list{$to_id}->{$to_port}) {
-		push @{$ms_stack}, {severity => 1, text => qq[to port $to_id:$to_port referenced in edge ($from_id:$from_port => $to_id:$to_port), but no corresponding port found in nodes\n]};
+		push @{$ms_stack}, {fatal_error => 1, text => qq[to port $to_id:$to_port referenced in edge ($from_id:$from_port => $to_id:$to_port), but no corresponding port found in nodes\n]};
 	}
 	if($port_list{$from_id}->{$from_port}->{attribs}->{direction} and $port_list{$from_id}->{$from_port}->{attribs}->{direction} eq q[in]) {
-		push @{$ms_stack}, {severity => 1, text => qq[from port $from_id:$from_port refers to input port in node\n]};
+		push @{$ms_stack}, {fatal_error => 1, text => qq[from port $from_id:$from_port refers to input port in node\n]};
 	}
 	if($port_list{$to_id}->{$to_port}->{attribs}->{direction} and $port_list{$to_id}->{$to_port}->{attribs}->{direction} eq q[out]) {
-		push @{$ms_stack}, {severity => 1, text => qq[to port to_id:$to_port refers to output port in node\n]};
+		push @{$ms_stack}, {fatal_error => 1, text => qq[to port to_id:$to_port refers to output port in node\n]};
 	}
 
 	# determine connection type, generate appropriate data transfer name
+	#  If both "from" and "to" nodes are of type EXEC, data transfer will be done via a named pipe,
+	#  otherwise via file whose name is determined by the non-EXEC node's name attribute (communication
+	#  between two non-EXEC nodes is of questionable value and is currently considered an error).
 	my ($data_xfer_name, $connection_type);
 	if($from_node->{type} eq q[EXEC]) {
 		if($to_node->{type} eq q[EXEC]) {
@@ -337,52 +341,52 @@ sub _process_edge {
 			$connection_type = q[file];
 		}
 		else {
-			push @{$ms_stack}, {severity => 1, text => qq[Edges must start or terminate in an EXEC node; from: $from_node->{id}, to: $to_node->{id}\n]};
+			push @{$ms_stack}, {fatal_error => 1, text => qq[Edges must start or terminate in an EXEC node; from: $from_node->{id}, to: $to_node->{id}\n]};
 		}
 	}
 
-	# from port - check validity: previous edges? if so, compatible type (fifo/file)? if one, check other end of previous edge to make sure not many:many creation
-	if(exists $port_list{$from_id}->{$from_port}->{dst} and @{$port_list{$from_id}->{$from_port}->{dst}} > 0) { # an edge from this port already added
+	# from port - check validity; previous edges? if so, compatible type (fifo/file)? check other end of previous edge to make sure not many:many creation
+	my $existing_from_edge = $port_list{$from_id}->{$from_port};
+	if(exists $existing_from_edge->{dst} and @{$existing_from_edge->{dst}} > 0) { # an edge from this port already added
 
-		$data_xfer_name = $port_list{$from_id}->{$from_port}->{data_xfer_name};
+		$data_xfer_name = $existing_from_edge->{data_xfer_name};
 
 		# confirm connection type match
-		if($connection_type ne $port_list{$from_id}->{$from_port}->{connection_type}) {
+		if($connection_type ne $existing_from_edge->{connection_type}) {
 			$severity = ($TEMPLATE_VERSION>=2 and (not $from_node->{tver} or $from_node->{tver} >=2))?1:0;
-			push @{$ms_stack}, {severity => $severity, text => qq[multiple edges from port have inconsistent connection types (pipe/file); from: $from_node->{id}, to: $to_node->{id}\n]};
+			push @{$ms_stack}, {fatal_error => $severity, text => qq[multiple edges from port have inconsistent connection types (pipe/file); from: $from_node->{id}, to: $to_node->{id}\n]};
 		}
 
 		# check for many:many creation
-		my $src_count = $port_list{$from_id}->{$from_port}->{src}? @{$port_list{$from_id}->{$from_port}->{src}}: 0;
-		my $dst_count = $port_list{$from_id}->{$from_port}->{dst}? @{$port_list{$from_id}->{$from_port}->{dst}}: 0;
+		my $dst_count = $existing_from_edge->{dst}? @{$existing_from_edge->{dst}}: 0;
 		if($dst_count == 1) {
-			my ($other_dst_id, $other_dst_port) = ($port_list{$from_id}->{$from_port}->{dst}->[0]->{id}, $port_list{$from_id}->{$from_port}->{dst}->[0]->{port});
+			my ($other_dst_id, $other_dst_port) = ($existing_from_edge->{dst}->[0]->{id}, $existing_from_edge->{dst}->[0]->{port});
 			my $other_dst = $port_list{$other_dst_id}->{$other_dst_port};
 			if(@{$other_dst->{src}} > 1) {
 				$severity = ($TEMPLATE_VERSION>=2 and (not $from_node->{tver} or $from_node->{tver} >=2))?1:0;
-				push @{$ms_stack}, {severity => $severity, text => qq[processing edge from $from_id:$from_port to $to_id:$to_port: illegal many:many creation\n]};
+				push @{$ms_stack}, {fatal_error => $severity, text => qq[processing edge from $from_id:$from_port to $to_id:$to_port: illegal many:many creation\n]};
 			} 
 		}
 	}
 
-	# to port - check validity: previous edges? if so, compatible type (fifo/file)? if one, check other end of previous edge to make sure not many:many creation
-	if(exists $port_list{$to_id}->{$to_port}->{src} and @{$port_list{$to_id}->{$to_port}->{src}} > 0) { # an edge to this port already added
+	# to port - check validity; previous edges? if so, compatible type (fifo/file)? check other end of previous edge to make sure not many:many creation
+	my $existing_to_edge = $port_list{$to_id}->{$to_port};
+	if(exists $existing_to_edge->{src} and @{$existing_to_edge->{src}} > 0) { # an edge to this port already added
 
 		# confirm connection type match
-		if($connection_type ne $port_list{$to_id}->{$to_port}->{connection_type}) {
+		if($connection_type ne $existing_to_edge->{connection_type}) {
 			$severity = ($TEMPLATE_VERSION>=2 and (not $to_node->{tver} or $to_node->{tver} >=2))?1:0;
-			push @{$ms_stack}, {severity => $severity, text => qq[multiple edges to port have inconsistent connection types (pipe/file); from: $from_node->{id}, to: $to_node->{id}\n]};
+			push @{$ms_stack}, {fatal_error => $severity, text => qq[multiple edges to port have inconsistent connection types (pipe/file); from: $from_node->{id}, to: $to_node->{id}\n]};
 		}
 
 		# check for many:many creation
-		my $src_count = $port_list{$to_id}->{$to_port}->{src}? @{$port_list{$to_id}->{$to_port}->{src}}: 0;
-		my $dst_count = $port_list{$to_id}->{$to_port}->{dst}? @{$port_list{$to_id}->{$to_port}->{dst}}: 0;
+		my $src_count = $existing_to_edge->{src}? @{$existing_to_edge->{src}}: 0;
 		if($src_count == 1) {
-			my ($other_src_id, $other_src_port) = ($port_list{$to_id}->{$to_port}->{src}->[0]->{id}, $port_list{$to_id}->{$to_port}->{src}->[0]->{port});
+			my ($other_src_id, $other_src_port) = ($existing_to_edge->{src}->[0]->{id}, $existing_to_edge->{src}->[0]->{port});
 			my $other_src = $port_list{$other_src_id}->{$other_src_port};
 			if(@{$other_src->{dst}} > 1) {
 				$severity = ($TEMPLATE_VERSION>=2 and (not $to_node->{tver} or $to_node->{tver} >=2))?1:0;
-				push @{$ms_stack}, {severity => $severity, text => qq[processing edge from $from_id:$from_port to $to_id:$to_port: illegal many:many creation\n]};
+				push @{$ms_stack}, {fatal_error => $severity, text => qq[processing edge from $from_id:$from_port to $to_id:$to_port: illegal many:many creation\n]};
 			} 
 		}
 	}
@@ -432,38 +436,53 @@ sub _extract_ports {
 		}
 	}
 	else {
-		if(ref $cmd ne q[ARRAY]) { return; }
-
-		for my $i (0..$#{$cmd}) {
-			my $elem = $cmd->[$i];
-			if(ref $elem eq q[HASH]) {
-				if($elem->{port}) {
-					$ports{$elem->{port}}->{tver} = 2;
-					$ports{$elem->{port}}->{attribs} = reconcile_port_info($elem, $ports{$elem->{port}}->{attribs});
-					$ports{$elem->{port}}->{occurrences} ||= [];
-					push @{$ports{$elem->{port}}->{occurrences}}, {arr => $cmd, idx => $i}; # note location for later substitution
-				}
-				elsif($elem->{packflag}) {
-					if(ref $elem->{packflag} eq q[ARRAY]) {
-						for my $j (0..$#{$elem->{packflag}}) {
-							my $pf_elem = $elem->{packflag}->[$j];
-							if(ref $pf_elem eq q[HASH] and $pf_elem->{port}) {
-								$ports{$pf_elem->{port}}->{tver} = 2;
-								$ports{$pf_elem->{port}}->{attribs} = reconcile_port_info($pf_elem, $ports{$pf_elem->{port}}->{attribs});
-								$ports{$pf_elem->{port}}->{occurrences} ||= [];
-								push @{$ports{$pf_elem->{port}}->{occurrences}}, {arr => $elem->{packflag}, idx => $j}; # note location for later substitution
-							}
-						}
-					}
-					else {
-						$logger->($VLMIN, "WARN: packflag with non-array value, node id: ", $id);
-					}
-				}	
-			}
-		}
+		_extract_ports_v2($cmd, \%ports, $id);
 	}
 
 	return \%ports;
+}
+
+sub _extract_ports_v2 {
+	my ($arr, $ports, $id) = @_;
+
+	if(ref $arr ne q[ARRAY]) { return; }
+
+	for my $i (0..$#{$arr}) {
+		my $elem = $arr->[$i];
+		if(ref $elem eq q[ARRAY]) {
+			_extract_ports_v2($arr->[$i], $ports, $id);
+		}
+		elsif(ref $elem eq q[HASH]) {
+			if($elem->{port}) {
+				$ports->{$elem->{port}}->{tver} = 2;
+				$ports->{$elem->{port}}->{attribs} = reconcile_port_info($elem, $ports->{$elem->{port}}->{attribs});
+				$ports->{$elem->{port}}->{occurrences} ||= [];
+				push @{$ports->{$elem->{port}}->{occurrences}}, {arr => $arr, idx => $i}; # note location for later substitution
+				carp q[extracted port ], $elem->{port};
+			}
+			elsif($elem->{packflag}) {
+				if(ref $elem->{packflag} eq q[ARRAY]) {
+					for my $j (0..$#{$elem->{packflag}}) {
+						my $pf_elem = $elem->{packflag}->[$j];
+						if(ref $pf_elem eq q[ARRAY]) {
+							_extract_ports_v2($pf_elem, $ports, $id);
+						}
+						elsif(ref $pf_elem eq q[HASH] and $pf_elem->{port}) {
+							$ports->{$pf_elem->{port}}->{tver} = 2;
+							$ports->{$pf_elem->{port}}->{attribs} = reconcile_port_info($pf_elem, $ports->{$pf_elem->{port}}->{attribs});
+							$ports->{$pf_elem->{port}}->{occurrences} ||= [];
+							push @{$ports->{$pf_elem->{port}}->{occurrences}}, {arr => $elem->{packflag}, idx => $j}; # note location for later substitution
+						}
+					}
+				}
+				else {
+					$logger->($VLMIN, "WARN: packflag with non-array value, node id: ", $id);
+				}
+			}	
+		}
+	}
+
+	return $ports;
 }
 
 sub reconcile_port_info {
@@ -515,10 +534,10 @@ sub _fork_off {
 
 	my $r = ref $cmd;
 	if($r eq q[ARRAY]) {
-		@cmd = @{$cmd};
 
-		# handle any packflag elements
-		@cmd = map { (ref $_ eq q[HASH] and $_->{packflag} and ref $_->{packflag} eq q[ARRAY])? join q//, @{$_->{packflag}} : $_ } @cmd;
+		$cmd = finalise_cmd($cmd); # process any packflag directives and flatten any embedded array ref elements
+
+		@cmd = @{$cmd};
 
 		# if subtype is "stringify", then join elements into a space-separated string before exec (forces execution via comand shell interpreter when shell metacharacters are present)
 		if($node->{subtype} and $node->{subtype} eq q[STRINGIFY]) {
@@ -571,6 +590,84 @@ sub _fork_off {
 		$logger->($VLMED, qq[*** Failed to fork off with cmd: $cmd\n]);
 		croak qq[Failed to fork off with cmd: $cmd\n];
 	}
+}
+
+###################################################
+# finalise_cmd:
+# process the command array before execution
+# Return: an array containing only scalar elements
+###################################################
+sub finalise_cmd {
+	my ($cmd) = @_;
+
+	for my $i (reverse (0..$#{$cmd})) {
+		my $elem = process_elem($cmd->[$i]);
+		my $r = ref $elem;
+		if($r) {
+			if($r eq q[ARRAY]) {
+				splice @{$cmd}, $i, 1, @{$elem};
+			}
+			else {
+				croak qq[Unsupported ref type $r for cmd element $i\n];
+			}
+		}
+		else {
+			$cmd->[$i] = $elem;
+		}
+	}
+
+	return $cmd;
+}
+###############
+# process supplied elem:
+# if it's an array, recursively process each element and splice it back in
+# if it's an packflag hash, recursively process each element of the packflag
+#  value array, splice it back in, then join elements into a string
+# otherwise, return the elem
+###############
+sub process_elem {
+	my ($elem) = @_;
+
+	if(ref $elem eq q[ARRAY]) {
+		$elem = finalise_array($elem);
+	}
+	elsif(ref $elem eq q[HASH]) {
+		if($elem->{packflag} and ref $elem->{packflag} eq q[ARRAY]) {
+			my $fa = finalise_array($elem->{packflag});
+			$elem = join q//, @{$fa};
+		}
+		else {
+			print q[elem: ], Dumper($elem), "\n";
+			croak qq[Error: cmd (sub)element is hash but not packflag directive\n];
+		}
+	}
+	else {
+		# scalar or unrecognised hash type, do nothing
+	}
+
+	return $elem;
+}
+
+sub finalise_array {
+	my ($arr) = @_;
+
+	for my $i (reverse (0..$#{$arr})) {
+		my $elem = process_elem($arr->[$i]);
+		my $r = ref $elem;
+		if($r) {
+			if($r eq q[ARRAY]) {
+				splice @{$arr}, $i, 1, @{$elem};
+			}
+			else {
+				croak qq[Unsupported ref type $r for cmd (sub)element $i\n];	# fix this
+			}
+		}
+		else {
+			$arr->[$i] = $elem;
+		}
+	}
+
+	return $arr;
 }
 
 sub mklogger {
