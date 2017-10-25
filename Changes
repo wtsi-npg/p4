@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add new templates for STAR alignment and Salmon
+
 release 0.18.6
  - Y-split fixes
      When processing VTFILE nodes, make sure that parameters are reevaluated locally instead of naively inheriting values

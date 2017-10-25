@@ -110,63 +110,11 @@
                             }
     },
     {
-        "id":"totranscriptome_bam",
-        "required":"no",
-        "subst_constructor":{
-                                "vals":[ {"subst":"star_out"}, "Aligned.toTranscriptome.out.bam" ],
-                                "postproc":{"op":"concat","pad":""}
-                            }
-    },
-    {
-        "id":"chimeric_sam",
-        "required":"no",
-        "subst_constructor":{
-                                "vals":[ {"subst":"star_out"}, "Chimeric.out.sam" ],
-                                "postproc":{"op":"concat","pad":""}
-                            }
-    },
-    {
         "id":"readspergene_tab",
         "required":"no",
         "subst_constructor":{
                                 "vals":[ {"subst":"star_out"}, "ReadsPerGene.out.tab" ],
                                 "postproc":{"op":"concat","pad":""}
-                            }
-    },
-    {
-        "id":"scramble_chimeric_sam_target",
-        "required":"no",
-        "subst_constructor":{
-                                "vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".chimeric.cram" ],
-                                "postproc":{"op":"concat","pad":""}
-                            }
-    },
-    {
-        "id":"scramble_totranscriptome_bam_target",
-        "required":"no",
-        "subst_constructor":{
-                                "vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".totranscriptome.cram" ],
-                                "postproc":{"op":"concat","pad":""}
-                            }
-    },
-    {
-        "id":"reference_genome_fasta_name","required":"no"},
-    {
-        "id":"reference_genome_fasta",
-        "required":"yes",
-        "subst_constructor":{
-                                "vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_genome_fasta_name"} ],
-                                "postproc":{"op":"concat", "pad":""}
-                            }
-    },
-    {
-        "id":"reference_transcriptome_fasta_name","required":"no"},
-    {
-        "id":"reference_transcriptome_fasta",
-        "required":"yes",
-        "subst_constructor":{
-                                "vals":[ {"subst":"reposdir"}, "/", {"subst":"reference_transcriptome_fasta_name"} ],
-                                "postproc":{"op":"concat", "pad":""}
                             }
     },
     {
@@ -235,10 +183,10 @@
                 "--outSAMunmapped", "Within", "KeepPairs",
                 "--outSAMtype", "BAM", "Unsorted",
                 "--outFilterIntronMotifs", "RemoveNoncanonicalUnannotated",
-                "--chimOutType", "SeparateSAMold",
+                "--chimOutType", "WithinBAM",
                 "--chimSegmentMin", "15",
                 "--chimJunctionOverhangMin", "15",
-                "--quantMode", "TranscriptomeSAM", "GeneCounts",
+                "--quantMode", "GeneCounts",
                 "--genomeDir", "__REFERENCE_GENOME_IN__",
                 "--readFilesIn", "__FQ1_IN__", "__FQ2_IN__",
                 "--outStd", "BAM_Unsorted"
@@ -251,56 +199,10 @@
         "name":{"subst":"junctions_tab"}
     },
     {
-        "id":"totranscriptome_bam",
-        "type":"RAFILE",
-        "subtype":"DUMMY",
-        "name":{"subst":"totranscriptome_bam"}
-    },
-    {
-        "id":"chimeric_sam",
-        "type":"RAFILE",
-        "subtype":"DUMMY",
-        "name":{"subst":"chimeric_sam"}
-    },
-    {
         "id":"readspergene_tab",
         "type":"RAFILE",
         "subtype":"DUMMY",
         "name":{"subst":"readspergene_tab"}
-    },
-    {
-        "id":"scramble_chimeric_sam",
-        "type":"EXEC",
-        "use_STDIN": false,
-        "use_STDOUT": false,
-        "cmd":[
-                "scramble",
-                {"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"b2c_mt_val"} ]}}},
-                {"subst":"b2c_fmtver", "ifnull":{"subst_constructor":{ "vals":[ "-V", {"subst":"b2c_format_version"} ]}}},
-                {"subst":"b2c_compress_level", "ifnull":"-7"},
-                "-I", "sam",
-                "-O", "cram",
-                 "-r", {"subst":"reference_genome_fasta"},
-                "__SRC_CHIMERIC_SAM_IN__",
-                {"subst":"scramble_chimeric_sam_target"}
-        ]
-    },
-    {
-        "id":"scramble_totranscriptome_bam",
-        "type":"EXEC",
-        "use_STDIN": false,
-        "use_STDOUT": false,
-        "cmd":[
-                "scramble",
-                {"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"b2c_mt_val"} ]}}},
-                {"subst":"b2c_fmtver", "ifnull":{"subst_constructor":{ "vals":[ "-V", {"subst":"b2c_format_version"} ]}}},
-                {"subst":"b2c_compress_level", "ifnull":"-7"},
-                "-I", "bam",
-                "-O", "cram",
-                "-r", {"subst":"reference_transcriptome_fasta"},
-                "__SRC_TOTRANSCRIPTOME_BAM_IN__",
-                {"subst":"scramble_totranscriptome_bam_target"}
-        ]
     },
     {
         "id":"cp_junctions_tab",
@@ -332,10 +234,6 @@
     { "id":"bamtofastq_to_fq2", "from":"bamtofastq:__FQ2_OUT__", "to":"fq2" },
     { "id":"fq1_to_star", "from":"fq1", "to":"star:__FQ1_IN__" },
     { "id":"fq2_to_star", "from":"fq2", "to":"star:__FQ2_IN__" },
-    { "id":"star_to_chimeric_sam", "from":"star", "to":"chimeric_sam" },
-    { "id":"scramble_chimeric_sam", "from":"chimeric_sam", "to":"scramble_chimeric_sam:__SRC_CHIMERIC_SAM_IN__"},
-    { "id":"star_to_totranscriptome_bam", "from":"star", "to":"totranscriptome_bam" },
-    { "id":"scramble_totranscriptome_bam", "from":"totranscriptome_bam", "to":"scramble_totranscriptome_bam:__SRC_TOTRANSCRIPTOME_BAM_IN__" },
     { "id":"star_to_junctions_tab", "from":"star", "to":"junctions_tab" },
     { "id":"cp_junctions_tab", "from":"junctions_tab", "to":"cp_junctions_tab:__SRC_JUNCTIONS_TAB_IN__" },
     { "id":"star_to_readspergene_tab", "from":"star", "to":"readspergene_tab" },
