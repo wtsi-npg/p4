@@ -13,13 +13,13 @@
 	}
 },
 "subst_params":[
-        {
-                "id": "basic_pipeline_params",
-                "type":"SPFILE",
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
 		"name":{"subst":"basic_pipeline_params_file"},
-                "required": "no",
-                "comment":"this will expand to a set of subst_param elements"
-        },
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
 	{
 		"id":"fastq1_name",
 		"required":"no",
@@ -81,6 +81,13 @@
 		}
 	},
 	{
+		"id":"annotation_val",
+		"subst_constructor":{
+			"vals":[ {"subst":"reposdir"}, "/transcriptomes/", {"subst":"transcriptome_subpath"} ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
 		"id":"aligner_numthreads_flag",
 		"required":"no",
 		"subst_constructor":{
@@ -93,6 +100,14 @@
 		"required":"no",
 		"subst_constructor":{
 			"vals":[ "--library-type", {"subst":"library_type"} ],
+			"postproc":{"op":"concat","pad":"="}
+		}
+	},
+	{
+		"id":"annotation_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "--GTF", {"subst":"annotation_val"} ],
 			"postproc":{"op":"concat","pad":"="}
 		}
 	},
@@ -166,6 +181,14 @@
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".junctions.bed" ],
 			"postproc":{"op":"concat","pad":""}
 		}
+	},
+	{
+		"id":"quant_vtf",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"quant_method"}, "_alignment.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
 	}
 ],
 "nodes":[
@@ -200,9 +223,9 @@
 				"--mate-inner-dist","100",
 				{"subst":"aligner_numthreads_flag"},
 				{"subst":"library_type_flag"},
+				{"subst":"transcriptome_flag", "ifnull":{"subst":"annotation_flag"}},
 				"--no-coverage-search",
 				"--microexon-search",
-				{"subst":"transcriptome_flag"} ,
 				"__REFERENCE_GENOME_IN__",
 				"__FQ1_IN__",
 				"__FQ2_IN__"
@@ -265,6 +288,16 @@
 		"use_STDIN": false,
 		"use_STDOUT": false,
 		"cmd":[ "cp", "__SRC_JUNCTIONS_BED_IN__", {"subst":"cp_junctions_bed_target"} ]
+	},
+	{
+		"id":"quantify",
+		"type":"VTFILE",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"comment":"inputs: fastq1, fastq2; outputs: NONE",
+		"node_prefix":"quant_",
+		"name":{"subst":"quant_vtf"},
+		"description":"subgraph containing salmon quantification of transcripts"
 	}
 ],
 "edges":[
@@ -281,6 +314,8 @@
 	{ "id":"tophat2_to_junctions_bed", "from":"tophat2", "to":"junctions_bed" },
 	{ "id":"cp_junctions_bed", "from":"junctions_bed", "to":"cp_junctions_bed:__SRC_JUNCTIONS_BED_IN__" },
 	{ "id":"accepted_hits_bam_to_bamcat", "from":"accepted_hits_bam", "to":"bamcat:__IN_BAM1__" },
-	{ "id":"unmapped_bam_to_bamcat", "from":"unmapped_bam", "to":"bamcat:__IN_BAM2__" }
+	{ "id":"unmapped_bam_to_bamcat", "from":"unmapped_bam", "to":"bamcat:__IN_BAM2__" },
+	{ "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1" },
+	{ "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2" }
 ]
 }
