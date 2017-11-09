@@ -102,6 +102,32 @@
                             }
     },
     {
+        "id":"chimSegmentMin_flag",
+        "required":"no",
+        "subst_constructor":{
+                                "vals":[ "--chimSegmentMin", {
+                                                                 "subst":"chimSegmentMin_val",
+                                                                 "inull":"0",
+                                                                 "comment":"unset this value to remove --chimSegmentMin flag"
+                                                             }
+                                ],
+                                "postproc":{"op":"concat","pad":" "}
+                            }
+    },
+    {
+        "id":"chimJunctionOverhangMin_flag",
+        "required":"no",
+        "subst_constructor":{
+                                "vals":[ "--chimJunctionOverhangMin", {
+                                                                          "subst":"chimJunctionOverhangMin_val", 
+                                                                          "ifnull":"20",
+                                                                          "comment":"unset this value to remove --chimJunctionOverhangMin flag"
+                                                                      }
+                                ],
+                                "postproc":{"op":"concat","pad":" "}
+                            }
+    },
+    {
         "id":"junctions_tab",
         "required":"no",
         "subst_constructor":{
@@ -184,8 +210,8 @@
                 "--outSAMtype", "BAM", "Unsorted",
                 "--outFilterIntronMotifs", "RemoveNoncanonicalUnannotated",
                 "--chimOutType", "WithinBAM",
-                "--chimSegmentMin", "15",
-                "--chimJunctionOverhangMin", "15",
+                {"subst":"chimSegmentMin_flag"},
+                {"subst":"chimJunctionOverhangMin_flag"},
                 "--quantMode", "GeneCounts",
                 "--genomeDir", "__REFERENCE_GENOME_IN__",
                 "--readFilesIn", "__FQ1_IN__", "__FQ2_IN__",
