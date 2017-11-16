@@ -107,7 +107,7 @@
         "subst_constructor":{
                                 "vals":[ "--chimSegmentMin", {
                                                                  "subst":"chimSegmentMin_val",
-                                                                 "inull":"0",
+                                                                 "ifnull":"0",
                                                                  "comment":"unset this value to remove --chimSegmentMin flag"
                                                              }
                                 ],
