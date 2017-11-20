@@ -1001,10 +1001,10 @@ sub report_pv_ewi {
 
 	# do the same recursively for any children
 	for my $tn (@{$tree_node->{children}}) {
-		if($tn->{ewi}->{report}->(0, $logger, $cull_node_ids)) { $fatality = 1; }
+		if(report_pv_ewi($tn, $logger, $cull_node_ids)) { $fatality = 1; }
 	}
 
-	return $fatality; # should return some kind of error indicator, I think
+	return $fatality;
 }
 
 #######################################################################################
