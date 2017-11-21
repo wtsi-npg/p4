@@ -25,10 +25,12 @@ data/vtlib/pre_alignment.json
 data/vtlib/pre_alignment_realign.json
 data/vtlib/README.vtlib
 data/vtlib/realignment_wtsi_template.json
+data/vtlib/salmon_alignment.json
 data/vtlib/seqchksum.json
 data/vtlib/seqchksum_hs.json
 data/vtlib/seqchksum_realign.json
 data/vtlib/split_by_chromosome.json
+data/vtlib/star_alignment.json
 data/vtlib/tophat2_alignment.json
 examples/bwa_aln_cfg.png
 examples/bwa_mem/bwa_mem_alignment.vtf
