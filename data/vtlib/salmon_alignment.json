@@ -72,7 +72,7 @@
 		"id":"zip_target",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".salmon_quant.zip" ],
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_salmon.quant.zip" ],
 			"postproc":{"op":"concat","pad":""}
 		}
 	},
