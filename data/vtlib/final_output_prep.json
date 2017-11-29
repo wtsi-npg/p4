@@ -238,7 +238,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ "bamsormadup", {"subst":"bsmd_threads"}, "SO=coordinate", "level=0", "verbose=0", "fixmate=1", "adddupmarksupport=1", {"subst":"bs_tmpfile_flag"} ]
+		"cmd": [ {"subst":"bsc_executable", "required":"yes", "ifnull":"bamsormadup"}, {"subst":"bsmd_threads"}, "SO=coordinate", "level=0", "verbose=0", "fixmate=1", "adddupmarksupport=1", {"subst":"bs_tmpfile_flag"} ]
 	},
 	{
 		"id":"bammarkduplicates",
@@ -268,7 +268,14 @@
 			{"subst":"b2c_compress_level", "ifnull":"-7"},
 			"-I", "bam",
 			"-O", "cram",
-			{"subst":"scramble_reference_flag"} ]
+			{"subst":"scramble_reference_flag"},
+			{"select":"scramble_embed_reference","default":0,"select_range":[0,1],
+				"cases":[
+					[],
+					"-e"
+				]
+			}
+		]	
 	},
 	{
 		"id":"scramble_tee",
@@ -376,7 +383,7 @@
 	{ "id":"bam_file", "type":"OUTFILE", "name":{"subst":"bam_file"} },
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
 	{ "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
-	{ "id":"seqchksum_file", "type":"OUTFILE", "name":{"subst":"seqchksum_file"} },
+	{ "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
 	{ "id":"seqchksum_file_cram", "type":"RAFILE", "name":{"subst":"seqchksum_file_cram"}, "comment":"this file is a temporary fix for blocking problems at the cmp_seqchksum node" },
 	{ "id":"seqchksum_extrahash_file", "type":"OUTFILE", "name":{"subst":"seqchksum_extrahash_file"} },
 	{ "id":"stats_F0x900_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_file"} },

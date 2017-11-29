@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+ - add new templates for STAR alignment and Salmon
+ - Small change in final_output_prep to allow bamsort_cmd to have configurable executable and scramble to have optional embed reference param.
+
 release 0.18.6
  - Y-split fixes
      When processing VTFILE nodes, make sure that parameters are reevaluated locally instead of naively inheriting values

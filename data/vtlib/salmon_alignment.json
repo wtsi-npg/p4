@@ -1,0 +1,130 @@
+{
+"version":"1.0",
+"description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+				"fastq1":"salmon:__FQ1_IN__",
+				"fastq2":"salmon:__FQ2_IN__"
+		}
+	}
+},
+"subst_params":[
+	{
+		"id":"salmon_dir",
+		"required":"no",
+		"default":"salmon_quant"
+	},
+	{
+		"id":"salmon_out",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"} ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"quant",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/quant.sf"
+	},
+	{
+		"id":"quant_genes",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.genes.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/quant.genes.sf"
+	},
+	{
+		"id":"lib_format_counts",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/lib_format_counts.json" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/lib_format_counts.json"
+	},
+	{
+		"id":"libparams",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/libParams" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/libParams"
+	},
+	{
+		"id":"cmd_info",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/cmd_info.json" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/cmd_info.json"
+	},
+	{
+		"id":"zip_target",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".salmon_quant.zip" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"gene_mapping_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "--geneMap=", {"subst":"annotation_val"} ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"salmon_transcriptome_val",
+		"required":"yes"
+	}
+],
+"nodes":[
+	{
+		"id":"salmon",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":[
+				"salmon",
+				"--no-version-check",
+				"quant",
+				"--index", {"subst":"salmon_transcriptome_val"},
+				"--libType", "A",
+				"--mates1", "__FQ1_IN__",
+				"--mates2", "__FQ2_IN__",
+				{"subst":"gene_mapping_flag"},
+				{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
+				"--output", {"subst":"salmon_out"}
+		]
+	},
+	{
+		"id":"zip_salmon_quant",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":[ 
+				"zip", "-r",
+				{"subst":"zip_target"},
+				{"subst":"quant"},
+				{"subst":"quant_genes"},
+				{"subst":"lib_format_counts"},
+				{"subst":"libparams"},
+				{"subst":"cmd_info"}
+			  ]
+	}
+],
+"edges":[
+	{ "id":"salmon_to_zip_salmon_quant", "from":"salmon", "to":"zip_salmon_quant"}
+]
+}

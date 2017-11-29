@@ -22,7 +22,7 @@ subtest 'flat_array_param_names' => sub {
 
 	my $flat_array_param_names_template = {
 		description => 'Test expansion of parameters, specifically cases where there are multiple instances of multi-valued parameters (arrays)',
-		version => '1.0',
+		version => '2.0',
 		subst_params => [
 			{ id =>  'p1', subst_constructor => { vals => [ '1A', '1B' ] } },
 			{ id =>  'p2', subst_constructor => { vals => [ '2A' ] } },
@@ -48,7 +48,7 @@ subtest 'flat_array_param_names' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
 			{
 				id => 'n1',
@@ -68,7 +68,7 @@ subtest 'indirect_param_names' => sub {
 
 	my $indirect_param_names_template = {
 		description => q/indirect parameter names examples/,
-		version => q/1.0/,
+		version => q/2.0/,
 		nodes =>
 		[
 			{
@@ -103,7 +103,7 @@ subtest 'indirect_param_names' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-			version => '1.0',
+			version => '2.0',
 			nodes => [
 					{
 						id => 'fred',
@@ -129,7 +129,7 @@ subtest 'indirect_param_names' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-			version => '1.0',
+			version => '2.0',
 			nodes => [
 					{
 						id => 'fred',
@@ -156,7 +156,7 @@ subtest 'full_node_subst' => sub {
 	plan tests => 2;
 
 	my $full_nodes_as_subst_template = {
-		version => "1.0",
+		version => "2.0",
 		description => "subst directive name requires evaluation (is not just a string)",
 		subst_params => [
 			{ id => "fred", default => "Bloggs" },
@@ -195,7 +195,7 @@ subtest 'full_node_subst' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
                        {
                          id => 'apn0',
@@ -234,7 +234,7 @@ subtest 'subst_containing_subst' => sub {
 	plan tests => 2;
 
 	my $nested_subst_template = {
-		version => '1.0',
+		version => '2.0',
 		description => 'subst nesting',
 		subst_params => [
 			{ id => 'node0_cmd', default => [ 'echo', 'Hello from node0', { subst => 'node0_extra_ms', }, ],
@@ -261,7 +261,7 @@ subtest 'subst_containing_subst' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
                        {
                          id => 'node0',
@@ -286,7 +286,7 @@ subtest 'required_subst' => sub {
 	plan tests => 3;
 
 	my $required_subst_template = {
-		version => '1.0',
+		version => '2.0',
 		description => 'subst: required attrib testing',
 		nodes => [
 			{
@@ -311,7 +311,7 @@ subtest 'required_subst' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
                        {
                          id => 'node0',
@@ -336,7 +336,7 @@ subtest 'subst_locality' => sub {
 	plan tests => 4;
 
 	my $subst_locality_template = {
-		version => '1.0',
+		version => '2.0',
 		description => 'subst: locality testing',
 		subst_params => [
 			{ id => 'cartoon', default => 'Flintstone'} ,
@@ -367,7 +367,7 @@ subtest 'subst_locality' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
                        {
                          id => 'node0',
@@ -400,7 +400,7 @@ subtest 'subst_locality' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
                        {
                          id => 'node0',
@@ -433,7 +433,7 @@ subtest 'cmd_pp' => sub {
 	plan tests => 4;
 
 	my $cmd_pps_template = {
-		version => '1.0',
+		version => '2.0',
 		description => 'subst: cmd postprocessing (string)',
 		nodes => [
 			{
@@ -447,7 +447,7 @@ subtest 'cmd_pp' => sub {
 	};
 
 	my $cmd_ppa_template = {
-		version => '1.0',
+		version => '2.0',
 		description => 'subst: cmd postprocessing (array)',
 		subst_params => [
 			{ id => 'nest', default => [ 'makers', 'of', {subst => 'product'}, ] } ,
@@ -479,7 +479,7 @@ subtest 'cmd_pp' => sub {
 	my $vtfp_results = from_json($test->stdout);
 
 	my $expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
                        {
                          id => 'node0',
@@ -504,7 +504,7 @@ subtest 'cmd_pp' => sub {
 	$vtfp_results = from_json($test->stdout);
 
 	$expected_result = {
-		version => '1.0',
+		version => '2.0',
 		nodes => [
                        {
                          id => 'node0',
