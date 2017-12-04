@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.19.1
+ - fix split_by_chromosome template (ysplit)
+
 release 0.19.0
  - add new templates for STAR alignment and Salmon
  - Small change in final_output_prep to allow bamsort_cmd to have configurable executable and scramble to have optional embed reference param.
