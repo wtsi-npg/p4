@@ -4,8 +4,7 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-			"_stdin_":"split:__IN__",
-			"reference_genome_fasta":["target_final:reference_genome_fasta", "split_final:reference_genome_fasta"]
+			"_stdin_":"split:__DATA_IN__"
 		},
 		"outputs":{
 			"_stdout_":"seqchksum_merge"
@@ -48,7 +47,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bambi", "chrsplit", "--exclude", "__SPLIT_OUT__", "--input", "__IN__", "--output", "__TARGET_OUT__", {"subst":"chrsplit_subset_flag"}, {"subst":"chrsplit_invert_flag"}]
+		"cmd":["bambi", "chrsplit", "--exclude", "__SPLIT_OUT__", "--input", "__DATA_IN__", "--output", "__TARGET_OUT__", {"subst":"chrsplit_subset_flag"}, {"subst":"chrsplit_invert_flag"}]
 	},
 	{
 		"id":"target_final",
