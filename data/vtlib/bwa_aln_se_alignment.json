@@ -25,6 +25,8 @@
 	{
 		"id":"tee2",
 		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
 		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"},
 			{"subst":"bwa_aln_teepot_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"bwa_aln_teepot_wval", "ifnull":"300"} ]}}},
 			{"subst":"bwa_aln_teepot_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"bwa_aln_teepot_mval", "ifnull":"1G"} ]}}},
@@ -36,6 +38,8 @@
 	{
 		"id":"bwa_aln",
 		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
 		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b", "__REFERENCE_GENOME_FASTA_IN__", "__BAM_IN__" ]
 	},
 	{
@@ -48,11 +52,15 @@
         {
                 "id":"bwa_samse",
                 "type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
 		"cmd":[ {"subst":"bwa_executable"}, "samse", "__REFERENCE_GENOME_FASTA_IN__", "__SAI_IN__", "__BAM_IN__" ]
         },
         {
                 "id":"samtobam",
                 "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
                 "cmd":[
 			"scramble",
 			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
