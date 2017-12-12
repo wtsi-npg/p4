@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.19.2
+ - fix for single-end alignments (bwa aln): specify use_STD[IN|OUT] attributes for EXEC nodes in bwa_aln_se_alignment
+
 release 0.19.1
  - fix split_by_chromosome template (ysplit)
 
