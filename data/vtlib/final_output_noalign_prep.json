@@ -280,7 +280,7 @@
 	{ "id":"bam_file", "type":"OUTFILE", "name":{"subst":"bam_file"} },
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
 	{ "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
-	{ "id":"seqchksum_file", "type":"OUTFILE", "name":{"subst":"seqchksum_file"} },
+	{ "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
 	{ "id":"seqchksum_file_cram", "type":"RAFILE", "name":{"subst":"seqchksum_file_cram"}, "comment":"this file is a temporary fix for blocking problems at the cmp_seqchksum node" },
 	{ "id":"seqchksum_extrahash_file", "type":"OUTFILE", "name":{"subst":"seqchksum_extrahash_file"} },
 	{ "id":"stats_F0x900_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_file"} },
