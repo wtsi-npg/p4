@@ -1,6 +1,11 @@
 CHANGES LOG
 -----------
 
+release 0.19.3
+ - fixes for nonconsented human split with no target alignment
+     change intermediate OUTFILE node to RAFILE
+     remove unneeded bammarkduplicates and parameters only used by sort and duplicate marking
+
 release 0.19.2
  - fix for single-end alignments (bwa aln): specify use_STD[IN|OUT] attributes for EXEC nodes in bwa_aln_se_alignment
 
