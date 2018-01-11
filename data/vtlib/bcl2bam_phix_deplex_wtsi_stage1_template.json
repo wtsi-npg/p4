@@ -354,8 +354,9 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"cmd":[
+			"bambi",
 			"spatial_filter",
-			"-c", "-q",
+			"-c",
 			{"subst":"sp_tvflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tileviz_dir"} ]}}},
 			"-F", "/dev/stdout", "/dev/stdin"
 		],
@@ -424,7 +425,7 @@
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":true,
-		"cmd":[ "spatial_filter", "-u", "-a", "-f", "-F", "__FILTER_IN__", "/dev/stdin", "-l", "__APPLY_STATS_OUT__" ],
+		"cmd":[ "bambi", "spatial_filter", "-a", "--compression-level", "0", "-f", "-F", "__FILTER_IN__", "-l", "__APPLY_STATS_OUT__", "/dev/stdin" ],
 		"description":"Apply a spatial filter"
 	},
 	{ "id":"spatial_filter_stats", "type":"OUTFILE", "name":{"subst":"spatial_filter_stats"} },
