@@ -18,7 +18,7 @@
 	{"id":"cram_ext","required":"no","default":".cram"},
 	{"id":"cram_idx_ext","required":"no","default":".cram.crai"},
         {"id":"alignment_method","required":"yes"},
-	{"id":"alignment_reference_genome_name","required":"yes"},
+	{"id":"alignment_reference_genome_name","required":"no"},
 	{
 		"id":"alignment_reference_genome",
 		"description":"full path to properly formatted reference genome data for the aligner",
@@ -46,10 +46,10 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"reference_genome_fasta_name","required":"yes"},
+	{"id":"reference_genome_fasta_name","required":"no"},
 	{
 		"id":"reference_genome_fasta",
-		"required":"yes",
+		"required":"no",
 		"subst_constructor":{
 			"vals":[
 				{"subst":"reposdir"},

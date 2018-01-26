@@ -1,11 +1,11 @@
 {
-"version":"1.0",
+"version":"2.0",
 "description":"run bwa mem to to align input bam to supplied reference genome",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
 			"_stdin_":"bamtofastq",
-			"reference":"bwa_mem:__DB_PREFIX_REFERENCE_GENOME_IN__"
+			"reference":"bwa_mem:db_prefix_reference_genome"
 		},
 		"outputs":{
 			"_stdout_":"samtobam"
@@ -49,7 +49,15 @@
 		"type":"EXEC",
 		"use_STDIN":false,
 		"use_STDOUT":true,
-		"cmd":[ {"subst":"bwa_executable"}, "mem", "-t", {"subst":"aligner_numthreads"}, {"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"}, {"subst":"bwa_mem_T_flag"}, {"subst":"bwa_mem_K_flag"}, "__DB_PREFIX_REFERENCE_GENOME_IN__", "__FQ_IN__" ]
+		"cmd":[
+			{"subst":"bwa_executable"}, "mem",
+			"-t", {"subst":"bwa_mem_numthreads", "ifnull":{"subst":"aligner_numthreads"}},
+			{"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"},
+			{"subst":"bwa_mem_T_flag"},
+			{"subst":"bwa_mem_K_flag"},
+			{"port":"db_prefix_reference_genome", "direction":"in"},
+			{"port":"fq","direction":"in"}
+		]
 	},
         {
                 "id":"samtobam",
@@ -66,7 +74,7 @@
         }
 ],
 "edges":[
-	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:__FQ_IN__" },
+	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:fq" },
 	{ "id":"bwa_mem_to_scramble", "from":"bwa_mem", "to":"samtobam" }
 ]
 }

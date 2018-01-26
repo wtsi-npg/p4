@@ -1,6 +1,6 @@
 {
 "description":"run tophat2 to to align input bam to supplied reference genome",
-"version":"1.0",
+"version":"2.0",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
@@ -197,7 +197,12 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":["bamtofastq", "gz=1", "F=__FQ1_OUT__", "F2=__FQ2_OUT__"]
+		"cmd":[
+			"bamtofastq",
+			"gz=1",
+			{"packflag":["F=", {"port":"__FQ1_OUT__", "direction":"out"}]},
+			{"packflag":["F2=", {"port":"__FQ2_OUT__", "direction":"out"}]}
+		]
 	},
 	{
 		"id":"fq1",
@@ -298,7 +303,39 @@
 		"node_prefix":"quant_",
 		"name":{"subst":"quant_vtf"},
 		"description":"subgraph containing salmon quantification of transcripts"
-	}
+	},
+	{
+		"id":"tee_fq1",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[
+			"teepot",
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"teepot_tempdir_flag"},
+			"-w", {"subst":"tee_fq1_wait", "ifnull":"30000"},
+			"-m", {"subst":"fq1_tee_bsize", "required":"yes", "ifnull":"1G"},
+			{"port":"tophat", "direction":"out"},
+			{"port":"salmon", "direction":"out"}
+		]
+	},
+	{
+		"id":"tee_fq2",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[
+			"teepot",
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"teepot_tempdir_flag"},
+			"-w", {"subst":"tee_fq1_wait", "ifnull":"30000"},
+			"-m", {"subst":"fq2_tee_bsize", "required":"yes", "ifnull":"1G"},
+			{"port":"tophat", "direction":"out"},
+			{"port":"salmon", "direction":"out"}
+		]
+	},
 ],
 "edges":[
 	{ "id":"bamtofastq_to_fq1", "from":"bamtofastq:__FQ1_OUT__", "to":"fq1" },
