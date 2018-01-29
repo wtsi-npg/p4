@@ -252,8 +252,8 @@
 			{"port":"scramble", "direction":"out"},
 			{"port":"flagstat", "direction":"out"},
 			{"port":"bam", "direction":"out"},
-			{"port":"samtools_stats_F0X900", "direction":"out"},
-			{"port":"samtools_stats_F0XB00", "direction":"out"},
+			{"port":"samtools_stats_F0x900", "direction":"out"},
+			{"port":"samtools_stats_F0xB00", "direction":"out"},
 			{"port":"bam_stats", "direction":"out"},
 			{"port":"seqchksum", "direction":"out"},
 			{"port":"seqchksum_extrahash", "direction":"out"},
@@ -374,7 +374,7 @@
 			{"subst":"teepot_tempdir_flag"},
 			"-w", "30000",
 			{"port":"file", "direction":"out"},
-			{"port":"final", "direction":"out"
+			{"port":"final", "direction":"out"}
 		],
 		"comment":"allow a generous 500 minutes for the teepot timeout; specify parameter value teepot_tempdir_value to specify teepot tempdir"
 	},
