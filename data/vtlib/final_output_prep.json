@@ -71,6 +71,16 @@
 	{"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
 	{"id":"bam_stats_executable","required":"no","default":"bam_stats"},
         {"id":"bait_regions_file","required":"yes","comment":"regions file for optional bait stats"},
+        {"id":"calibration_pu_executable","required":"no","default":"calibration_pu"},
+        {"id":"calibration_pu_bad_tiles_count","required":"no","default":"2"},
+        {
+                "id":"calibration_pu_prefix",
+                "required":"yes",
+                "subst_constructor":{
+                    "vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"} ],
+                    "postproc":{"op":"concat", "pad":""}
+                }
+        },
 	{"id":"seqchksum_hash_type","required":"no","default":"sha512primesums512"},
 	{
 		"id":"seqchksum_hash_flag",
@@ -251,6 +261,7 @@
 			"-w", {"subst":"fomw_teepot_wval", "ifnull":"300"},
 			{"port":"scramble", "direction":"out"},
 			{"port":"flagstat", "direction":"out"},
+			{"port":"calibration_pu", "direction":"out"},
 			{"port":"bam", "direction":"out"},
 			{"port":"samtools_stats_F0x900", "direction":"out"},
 			{"port":"samtools_stats_F0xB00", "direction":"out"},
@@ -387,6 +398,13 @@
 		"comment":"default hash type is currently sha512primesums512"
 	},
 	{
+		"id":"calibration_pu",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd": [ {"subst":"calibration_pu_executable"}, "-p", {"subst":"calibration_pu_prefix"}, "-filter-bad-tiles", {"subst":"calibration_pu_bad_tiles_count"}, "-" ]
+	},
+	{
 		"id":"bamrecompress",
 		"type":"EXEC",
 		"use_STDIN": true,
@@ -445,6 +463,7 @@
 	{ "id":"bmdmw_to_sts_F0x900_bait", "from":"bmd_multiway:samtools_stats_F0x900_bait", "to":"samtools_stats_F0x900_bait" },
 	{ "id":"bmdmw_to_sts_F0xB00_bait", "from":"bmd_multiway:samtools_stats_F0xB00_bait", "to":"samtools_stats_F0xB00_bait" },
 	{ "id":"bmdmw_to_bam_stats", "from":"bmd_multiway:bam_stats", "to":"bam_stats" },
+	{ "id":"bmdmw_to_calibration_pu", "from":"bmd_multiway:calibration_pu", "to":"calibration_pu" },
 	{ "id":"bmdmw_to_seqchksum", "from":"bmd_multiway:seqchksum", "to":"seqchksum" },
 	{ "id":"bmdmw_to_seqchksum_extrahash", "from":"bmd_multiway:seqchksum_extrahash", "to":"seqchksum_extrahash" },
 	{ "id":"bmdmw_to_flagstat", "from":"bmd_multiway:flagstat", "to":"flagstat_filter" },
