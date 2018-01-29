@@ -42,20 +42,10 @@
 	},
 	{
 		"id":"tee3",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": false,
-		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":[
-			"teepot",
-			{"subst":"teepot_vflag", "ifnull":"-v"},
-			{"subst":"teepot_tempdir_flag"},
-			"-w", {"subst":"target_align_tee_wait", "ifnull":"30000"},
-			"-m", "1G",
-			{"port":"phix_aln", "direction":"out"},
-			{"port":"prealn", "direction":"out"},
-			{"port":"amp", "direction":"out"}
-		]
+		"type":"VTFILE",
+		"node_prefix":"tee3_",
+		"name":{"subst":"target_align_tee3", "required":true, "ifnull":"unaln_tee3.json"},
+		"comment":"allow option to create an intermediate file for alignment methods which may require it (e.g. tophat2)"
 	},
 	{
 		"id":"auxmerge_prep",
