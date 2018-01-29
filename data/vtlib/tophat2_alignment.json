@@ -231,9 +231,9 @@
 				{"subst":"transcriptome_flag", "ifnull":{"subst":"annotation_flag"}},
 				"--no-coverage-search",
 				"--microexon-search",
-				"__REFERENCE_GENOME_IN__",
-				"__FQ1_IN__",
-				"__FQ2_IN__"
+				{"port":"__REFERENCE_GENOME_IN__", "direction":"in"},
+				{"port":"__FQ1_IN__", "direction":"in"},
+				{"port":"__FQ2_IN__", "direcion":"in"}
 		]
 	},
 	{
@@ -271,28 +271,45 @@
 		"type":"EXEC",
 		"use_STDIN":false,
 		"use_STDOUT":true,
-		"cmd":[ "bamcat", "I=__IN_BAM1__", "I=__IN_BAM2__", "level=0" ]
+		"cmd":[
+			"bamcat",
+			{"packflag":["I=", {"port":"__IN_BAM1__", "direction":"in"}]},
+			{"packflag":["I=", {"port":"__IN_BAM2__", "direction":"in"}]},
+			"level=0"
+		]
 	},
 	{
 		"id":"cp_deletions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[ "cp", "__SRC_DELETIONS_BED_IN__", {"subst":"cp_deletions_bed_target"} ]
+		"cmd":[
+			"cp",
+			{"port":"__SRC_DELETIONS_BED_IN__", "direction":"in"},
+			{"subst":"cp_deletions_bed_target"}
+		]
 	},
 	{
 		"id":"cp_insertions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[ "cp", "__SRC_INSERTIONS_BED_IN__", {"subst":"cp_insertions_bed_target"} ]
+		"cmd":[
+			"cp",
+			{"port":"__SRC_INSERTIONS_BED_IN__", "direction":"in"},
+			{"subst":"cp_insertions_bed_target"}
+		]
 	},
 	{
 		"id":"cp_junctions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[ "cp", "__SRC_JUNCTIONS_BED_IN__", {"subst":"cp_junctions_bed_target"} ]
+		"cmd":[
+			"cp",
+			{"port":"__SRC_JUNCTIONS_BED_IN__", "direction":"in"},
+			{"subst":"cp_junctions_bed_target"}
+		]
 	},
 	{
 		"id":"quantify",
@@ -303,39 +320,7 @@
 		"node_prefix":"quant_",
 		"name":{"subst":"quant_vtf"},
 		"description":"subgraph containing salmon quantification of transcripts"
-	},
-	{
-		"id":"tee_fq1",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": false,
-		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":[
-			"teepot",
-			{"subst":"teepot_vflag", "ifnull":"-v"},
-			{"subst":"teepot_tempdir_flag"},
-			"-w", {"subst":"tee_fq1_wait", "ifnull":"30000"},
-			"-m", {"subst":"fq1_tee_bsize", "required":"yes", "ifnull":"1G"},
-			{"port":"tophat", "direction":"out"},
-			{"port":"salmon", "direction":"out"}
-		]
-	},
-	{
-		"id":"tee_fq2",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": false,
-		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
-		"cmd":[
-			"teepot",
-			{"subst":"teepot_vflag", "ifnull":"-v"},
-			{"subst":"teepot_tempdir_flag"},
-			"-w", {"subst":"tee_fq1_wait", "ifnull":"30000"},
-			"-m", {"subst":"fq2_tee_bsize", "required":"yes", "ifnull":"1G"},
-			{"port":"tophat", "direction":"out"},
-			{"port":"salmon", "direction":"out"}
-		]
-	},
+	}
 ],
 "edges":[
 	{ "id":"bamtofastq_to_fq1", "from":"bamtofastq:__FQ1_OUT__", "to":"fq1" },
