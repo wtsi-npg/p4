@@ -8,7 +8,7 @@
 			"reference":"tophat2:__REFERENCE_GENOME_IN__"
 		},
 		"outputs":{
-			"_stdout_":"bamcat"
+			"_stdout_":"bamsort_qname"
 		}
 	}
 },
@@ -279,6 +279,13 @@
 		]
 	},
 	{
+		"id":"bamsort_qname",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bamsormadup", {"subst":"bsmd_threads"},"SO=queryname", "level=0"]
+	},
+	{
 		"id":"cp_deletions_bed",
 		"type":"EXEC",
 		"use_STDIN": false,
@@ -337,6 +344,7 @@
 	{ "id":"cp_junctions_bed", "from":"junctions_bed", "to":"cp_junctions_bed:__SRC_JUNCTIONS_BED_IN__" },
 	{ "id":"accepted_hits_bam_to_bamcat", "from":"accepted_hits_bam", "to":"bamcat:__IN_BAM1__" },
 	{ "id":"unmapped_bam_to_bamcat", "from":"unmapped_bam", "to":"bamcat:__IN_BAM2__" },
+	{ "id":"bamcat_to_qname_sort", "from":"bamcat", "to":"bamsort_qname" },
 	{ "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1" },
 	{ "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2" }
 ]
