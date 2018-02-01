@@ -12,16 +12,6 @@
 	}
 },
 "subst_params":[
-	{"id":"final_output_prep_no_y_target_name","required":"no","default":"final_output_prep"},
-	{
-		"id":"final_output_prep_no_y_target",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_no_y_target_name"}, ".json" ],
-			"comment":"we need a new subst here as final_output_prep_name will have been replaced in the template above by this template",
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
 	{"id":"final_output_prep_y_name","required":"no","default":"final_output_prep"},
 	{
                 "id":"final_output_prep_y",
@@ -54,7 +44,7 @@
 		"type":"VTFILE",
 		"node_prefix":"foptgnyt_",
 		"subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bspaft","brtmp":"brpaft","bmdtmp":"bmdpaft"},
-		"name":{"subst":"final_output_prep_no_y_target"},
+		"name":{"subst":"final_output_prep_no_y_target", "ifnull":"final_output_prep.json"},
 		"use_STDIN": true,
 		"use_STDOUT": true
 	},
@@ -76,9 +66,9 @@
 	}
 ],
 "edges":[
-	{ "from":"split:__TARGET_OUT__", "to":"target_final" },
-	{ "from":"split:__SPLIT_OUT__", "to":"split_final" },
-	{ "from":"target_final", "to":"seqchksum_merge:__TARGET_CHKSUM_IN__" },
-	{ "from":"split_final", "to":"seqchksum_merge:__SPLIT_CHKSUM_IN__" }
+	{ "id":"split_tgt_to_target_final", "from":"split:__TARGET_OUT__", "to":"target_final" },
+	{ "id":"split_tgt_to_split_final", "from":"split:__SPLIT_OUT__", "to":"split_final" },
+	{ "id":"target_final_to_scsm_tgt", "from":"target_final", "to":"seqchksum_merge:__TARGET_CHKSUM_IN__" },
+	{ "id":"target_final_to_scsm_split", "from":"split_final", "to":"seqchksum_merge:__SPLIT_CHKSUM_IN__" }
 ]
 }

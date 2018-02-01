@@ -1,0 +1,35 @@
+{
+"version":"2.0",
+"description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"tee3"
+		},
+		"outputs":{
+			"phix_aln":"tee3:to_phix_aln",
+			"amp":"tee3:to_amp",
+			"prealn":"tee3:to_tgtaln"
+		}
+	}
+},
+"nodes":[
+	{
+		"id":"tee3",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[
+			"teepot",
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"teepot_tempdir_flag"},
+			"-w", {"subst":"unaln_preproc_tee_wait", "ifnull":"30000"},
+			"-m", {"subst":"unaln_preproc_tee_bufsiz", "ifnull":"1G"},
+			{"port":"to_tgtaln", "direction":"out"},
+			{"port":"to_phix_aln", "direction":"out"},
+			{"port":"to_amp", "direction":"out"}
+		]
+	}
+]
+}
