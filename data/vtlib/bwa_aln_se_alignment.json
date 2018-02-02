@@ -41,7 +41,7 @@
 		"type":"EXEC",
 		"use_STDIN":false,
 		"use_STDOUT":true,
-		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b", {"port":"reference_genome_fasta", "direction":"in"}, {"port":"bam_in", "direction":"in"} ]
+		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b", {"port":"reference_genome_fasta", "direction":"in"}, {"port":"bam", "direction":"in"} ]
 	},
 	{
 		"id":"simple_cat",
