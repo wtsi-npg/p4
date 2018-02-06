@@ -1,0 +1,71 @@
+{
+"version":"2.0",
+"description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"tee3"
+		},
+		"outputs":{
+			"phix_aln":"initial_phix_aln_bam",
+			"amp":"initial_phix_aln_bam",
+			"target":"tee3:to_tgtaln",
+			"nchs":"tee3:to_tgtaln"
+		}
+	}
+},
+"subst_params":[
+	{
+		"id":"initial_phix_aln_bam_name",
+		"required":"no",
+		"default":"initial_phix_aln.bam",
+		"subst_constructor":{
+			"vals":[ "initial_phix_aln_", {"subst":"rpt"}, ".bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"initial_phix_aln_bam",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"initial_phix_aln_bam_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"tee3",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"comment":"large wait (500 minutes) to avoid unnecessary spill to disk; specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[
+			"teepot",
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"teepot_tempdir_flag"},
+			"-w", {"subst":"unaln_preproc_tee_wait", "ifnull":"30000"},
+			"-m", {"subst":"unaln_preproc_tee_bufsiz", "ifnull":"1G"},
+			{"port":"to_tgtaln", "direction":"out"},
+			{"port":"to_nchsaln", "direction":"out"},
+			{"port":"to_intfile", "direction":"out"}
+		]
+	},
+	{
+		"id":"bamrecompress_input",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "bamrecompress", "verbose=0", "numthreads=2" ]
+	},
+	{
+		"id":"initial_phix_aln_bam",
+		"type":"RAFILE",
+		"name":{"subst":"initial_phix_aln_bam"}
+	}
+],
+"edges":[
+	{ "id":"phixaln_to_amp", "from":"tee2:to_intfile", "to":"bamrecompress_input" },
+	{ "id":"amp_to_auxmrg", "from":"bamrecompress_input", "to":"initial_phix_aln_bam" }
+]
+}
