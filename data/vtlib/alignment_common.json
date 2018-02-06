@@ -32,11 +32,11 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"hs_alignment_reference_genome_name","required":"yes"},
+	{"id":"hs_alignment_reference_genome_name","required":"no"},
 	{
 		"id":"hs_alignment_reference_genome",
 		"description":"full path to properly formatted reference genome data for the aligner for human split",
-		"required":"yes",
+		"required":"no",
 		"subst_constructor":{
 			"vals":[
 				{"subst":"reposdir"},
