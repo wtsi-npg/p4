@@ -226,6 +226,9 @@
 				{"subst":"i2b_final_0_flag","ifnull":{"subst_constructor":{"vals":[ "--final-cycle", {"subst":"i2b_final_0"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"i2b_first_1_flag","ifnull":{"subst_constructor":{"vals":[ "--first-cycle", {"subst":"i2b_first_1"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"i2b_final_1_flag","ifnull":{"subst_constructor":{"vals":[ "--final-cycle", {"subst":"i2b_final_1"} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"i2b_thread_count_flag","ifnull":{"subst_constructor":{"vals":[ "--threads", {"subst":"i2b_thread_count"} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"i2b_tqlen_flag","ifnull":{"subst_constructor":{"vals":[ "--queue-len", {"subst":"i2b_tqlen"} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"i2b_arbitrary_flags", "comment":"this allows arbitrary sets of flag strings to be inserted in the command" },
 				"--output-file=-",
 				"--compression-level=0"
 			],
