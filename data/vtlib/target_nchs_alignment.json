@@ -45,7 +45,12 @@
 		"id":"tee4",
 		"type":"VTFILE",
 		"node_prefix":"tee4_",
-		"name":{"subst":"target_align_tee4", "required":true, "ifnull":"unaln_tee4.json"},
+		"name":{"select":"align_infile_opt", "default":0, "select_range":[0,1],
+				"cases":[
+					"unaln_tee4.json",
+					"unaln_intfile4.json"
+				]
+		},
 		"comment":"allow option to create an intermediate file for alignment methods which may require it (e.g. tophat2)"
 	},
 	{
