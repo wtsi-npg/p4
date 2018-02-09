@@ -71,7 +71,7 @@
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
-	{"id":"post_alignment_hs_name","required":"no","default":"post_alignment"},
+	{"id":"post_alignment_hs_name","required":"no","default":"post_alignment_realignment"},
 	{
 		"id":"post_alignment_hs",
 		"required":"yes",
