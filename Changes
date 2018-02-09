@@ -1,6 +1,11 @@
 CHANGES LOG
 -----------
 
+release 0.20.0
+ - phase 1 of new format templates (port spec)
+ - replacement of AlignmentFilter and spatial filter with bambi commands
+ - now handles XA/Y-split with no target alignment
+
 release 0.19.3
  - fixes for nonconsented human split with no target alignment
      change intermediate OUTFILE node to RAFILE
