@@ -5,7 +5,7 @@
     "ports":{
                 "inputs":{
                             "_stdin_":"bamtofastq",
-                            "reference":"star:__REFERENCE_GENOME_IN__"
+                            "reference":"star:reference_genome"
                          },
                 "outputs":{
                             "_stdout_":"star"
@@ -144,6 +144,14 @@
                             }
     },
     {
+        "id":"STARgenome_dir",
+        "required":"no",
+        "subst_constructor":{
+                                "vals":[ {"subst":"star_out"}, "_STARgenome" ],
+                                "postproc":{"op":"concat","pad":""}
+                            }
+    },
+    {
         "id":"cp_junctions_tab_target",
         "required":"no",
         "subst_constructor":{
@@ -179,7 +187,7 @@
         "type":"EXEC",
         "use_STDIN": true,
         "use_STDOUT": false,
-        "cmd":["bamtofastq", "gz=0", "F=__FQ1_OUT__", "F2=__FQ2_OUT__"]
+        "cmd":["bamtofastq", "gz=0", {"packflag":["F=", {"port":"fq1", "direction":"out"}]}, {"packflag":["F2=", {"port":"fq2", "direction":"out"}]}]
     },
     {
         "id":"fq1",
@@ -213,8 +221,8 @@
                 {"subst":"chimSegmentMin_flag"},
                 {"subst":"chimJunctionOverhangMin_flag"},
                 "--quantMode", "GeneCounts",
-                "--genomeDir", "__REFERENCE_GENOME_IN__",
-                "--readFilesIn", "__FQ1_IN__", "__FQ2_IN__",
+                "--genomeDir", {"port":"reference_genome", "direction":"in"},
+                "--readFilesIn", {"port":"fq1", "direction":"in"}, {"port":"fq2", "direction":"in"},
                 "--outStd", "BAM_Unsorted"
         ]
     },
@@ -231,18 +239,32 @@
         "name":{"subst":"readspergene_tab"}
     },
     {
+        "id":"STARgenome_dir",
+        "type":"RAFILE",
+        "subtype":"DUMMY",
+        "name":{"subst":"STARgenome_dir"}
+    },
+    {
         "id":"cp_junctions_tab",
         "type":"EXEC",
         "use_STDIN": false,
         "use_STDOUT": false,
-        "cmd":[ "cp", "__SRC_JUNCTIONS_TAB_IN__", {"subst":"cp_junctions_tab_target"} ]
+        "cmd":[ "cp", {"port":"src_junctions_tab", "direction":"in"}, {"subst":"cp_junctions_tab_target"} ]
     },
     {
         "id":"cp_readspergene_tab",
         "type":"EXEC",
         "use_STDIN": false,
         "use_STDOUT": false,
-        "cmd":[ "cp", "__SRC_READSPERGENE_TAB_IN__", {"subst":"cp_readspergene_tab_target"} ]
+        "cmd":[ "cp", {"port":"src_readspergene_tab", "direction":"in"}, {"subst":"cp_readspergene_tab_target"} ]
+    },
+    {
+        "id":"chmod_STARgenome_dir",
+        "type":"EXEC",
+        "use_STDIN": false,
+        "use_STDOUT": false,
+        "cmd":[ "chmod", "-R", "g+w", {"port":"src_stargenome_dir", "direction":"in"} ],
+        "comment":"This is necessary because STAR creates this transitional directory as group-read-only and cannot be deleted later"
     },
     {
         "id":"quantify",
@@ -256,14 +278,16 @@
     }
 ],
 "edges":[
-    { "id":"bamtofastq_to_fq1", "from":"bamtofastq:__FQ1_OUT__", "to":"fq1" },
-    { "id":"bamtofastq_to_fq2", "from":"bamtofastq:__FQ2_OUT__", "to":"fq2" },
-    { "id":"fq1_to_star", "from":"fq1", "to":"star:__FQ1_IN__" },
-    { "id":"fq2_to_star", "from":"fq2", "to":"star:__FQ2_IN__" },
+    { "id":"bamtofastq_to_fq1", "from":"bamtofastq:fq1", "to":"fq1" },
+    { "id":"bamtofastq_to_fq2", "from":"bamtofastq:fq2", "to":"fq2" },
+    { "id":"fq1_to_star", "from":"fq1", "to":"star:fq1" },
+    { "id":"fq2_to_star", "from":"fq2", "to":"star:fq2" },
     { "id":"star_to_junctions_tab", "from":"star", "to":"junctions_tab" },
-    { "id":"cp_junctions_tab", "from":"junctions_tab", "to":"cp_junctions_tab:__SRC_JUNCTIONS_TAB_IN__" },
+    { "id":"cp_junctions_tab", "from":"junctions_tab", "to":"cp_junctions_tab:src_junctions_tab" },
     { "id":"star_to_readspergene_tab", "from":"star", "to":"readspergene_tab" },
-    { "id":"cp_readspergene_tab", "from":"readspergene_tab", "to":"cp_readspergene_tab:__SRC_READSPERGENE_TAB_IN__" },
+    { "id":"cp_readspergene_tab", "from":"readspergene_tab", "to":"cp_readspergene_tab:src_readspergene_tab" },
+    { "id":"star_to_stargenome_dir", "from":"star", "to":"STARgenome_dir" },
+    { "id":"chmod_stargenome_dir", "from":"STARgenome_dir", "to":"chmod_STARgenome_dir:src_stargenome_dir" },
     { "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1" },
     { "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2" }
 ]

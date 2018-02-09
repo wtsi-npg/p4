@@ -1,6 +1,6 @@
 {
 "description":"final stage1 processing - recompress lane-level bam stream, deplex and final lane-level bamseqchksum",
-"version":"1.0",
+"version":"2.0",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
@@ -11,53 +11,6 @@
 		}
 	}
 },
-"subst_params":[
-	{"id":"decoder_metrics_name","required":"no","default":"tag_decode.metrics"},
-	{
-		"id":"decoder_metrics",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"rpt"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{"id":"bamindex_decoder_opt","required":"yes","default":{"subst_constructor":{"vals":[ "bamindexdecoder", {"subst":"bid_implementation", "ifnull":"bambi"}, "cmd" ],"postproc":{"op":"concat","pad":"_"}}}},
-	{"id":"bamindexdecoder_cmd", "default":{"subst":{"subst":"bamindex_decoder_opt","required":"yes"}}},
-	{
-		"id":"bamindexdecoder_java_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals": [
-				{"subst":"java_cmd","ifnull":"java","required":"yes"},
-				"-Xmx1024m",
-				"-jar", {"subst":"bamindexdecoder_jar", "required":"yes", "ifnull":{"subst_constructor":{"vals":[ {"subst":"i2b_jar_path"}, "/BamIndexDecoder.jar" ],"postproc":{"op":"concat","pad":""}}}},
-				"I=/dev/stdin",
-				"O=/dev/stdout",
-				"M=__METRICS_FILE_OUT__",
-				{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "BARCODE_FILE", {"subst":"barcode_file", "required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "MAX_NO_CALLS", {"subst":"bid_max_no_calls"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "CONVERT_LOW_QUALITY_TO_NO_CALL", {"subst":"bid_convert_low_quality_to_no_call"} ],"postproc":{"op":"concat","pad":"="}}}}
-			]
-		}
-	},
-	{
-		"id":"bamindexdecoder_bambi_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals": [
-				{"subst":"bamindexdecoder_executable","ifnull":"bambi","required":"yes"},
-				"decode",
-				"--metrics-file", "__METRICS_FILE_OUT__",
-				{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--barcode-file", {"subst":"barcode_file", "required":"yes"} ]}}},
-				{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "--max-no-calls", {"subst":"bid_max_no_calls"} ]}}},
-				{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "--convert-low-quality", {"subst":"bid_convert_low_quality_to_no_call"} ]}}},
-				{"subst":"bid_compression_level_flag","ifnull":{"subst_constructor":{"vals":[ "--compression-level", {"subst":"bid_compression_level","ifnull":"0"} ]}}},
-				"-"
-			],
-			"postproc":{"op":"pack"}
-		}
-	}
-],
 "nodes":[
 	{
 		"id":"bamindexdecoder",
@@ -66,12 +19,34 @@
 		"use_STDOUT":true,
 		"description":"assign RG values to reads based on index tag sequence (BC tag value)",
 		"comment":"Actual executable used depends on the value of the bid_implementation parameter: java - use illumina2bam BamIndexDecoder.jar; samtools (default) - use new decode function in samtools",
-		"cmd":{"subst":"bamindexdecoder_cmd","required":"yes"}
+		"cmd":[
+			"bambi", "decode",
+			"--metrics-file", {"port":"metrics_file", "direction":"out"},
+			{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--barcode-file", {"subst":"barcode_file", "required":"yes"} ]}}},
+			{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "--convert-low-quality", {"subst":"bid_convert_low_quality_to_no_call"} ]}}},
+			{"subst":"bid_max_low_quality_to_convert to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "--max-low-quality-to-convert", {"subst":"bid_max_low_quality_to_convert_to_no_call"} ]}}},
+			{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "--max-no-calls", {"subst":"bid_max_no_calls"} ]}}},
+			{"subst":"bid_max_mismatches_flag","ifnull":{"subst_constructor":{"vals":[ "--max-mismatches", {"subst":"bid_max_mismatches"} ]}}},
+			{"subst":"bid_min_mismatch_delta_flag","ifnull":{"subst_constructor":{"vals":[ "--min-mismatch-delta", {"subst":"bid_min_mismatch_delta"} ]}}},
+			{"subst":"bid_change_read_name_flag","ifnull":{"subst_constructor":{"vals":[ "--change-read-name", {"subst":"bid_change_read_name"} ]}}},
+			{"subst":"bid_barcode_tag_name_flag","ifnull":{"subst_constructor":{"vals":[ "--barcode-tag-name", {"subst":"bid_barcode_tag_name"} ]}}},
+			{"subst":"bid_quality_tag_name_flag","ifnull":{"subst_constructor":{"vals":[ "--quality-tag-name", {"subst":"bid_quality_tag_name"} ]}}},
+			{"subst":"bid_input_fmt_flag","ifnull":{"subst_constructor":{"vals":[ "--input-fmt", {"subst":"bid_input_fmt"} ]}}},
+			{"subst":"bid_output_fmt_flag","ifnull":{"subst_constructor":{"vals":[ "--output-fmt", {"subst":"bid_output_fmt"} ]}}},
+			{"subst":"bid_arbitrary_flags", "comment":"this allows arbitrary sets of flag strings to be inserted in the command" },
+			{"subst":"bid_compression_level_flag","ifnull":{"subst_constructor":{"vals":[ "--compression-level", {"subst":"bid_compression_level","ifnull":"0"} ]}}},
+			"-"
+		]
 	},
 	{
 		"id":"decoder_metrics",
 		"type":"RAFILE",
-		"name":{"subst":"decoder_metrics"}
+		"name":{"subst":"decoder_metrics", "required":"yes",
+			"subst_constructor":{
+			"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"rpt"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
+			"postproc":{"op":"concat", "pad":""}
+			}
+		}
 	},
 	{
 		"id":"qc_tag_metrics_check",
@@ -91,7 +66,7 @@
 	}
 ],
 "edges":[
-	{ "id":"decoder_to_metrics", "from":"bamindexdecoder:__METRICS_FILE_OUT__", "to":"decoder_metrics" },
+	{ "id":"decoder_to_metrics", "from":"bamindexdecoder:metrics_file", "to":"decoder_metrics" },
 	{ "id":"decoder_metrics_to_qc_tag_metrics", "from":"decoder_metrics", "to":"qc_tag_metrics_check" }
 ]
 }
