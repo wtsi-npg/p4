@@ -87,6 +87,14 @@
 	{
 		"id":"salmon_transcriptome_val",
 		"required":"yes"
+	},
+	{
+		"id":"cp_quant_genes_target",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".quant.genes.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		}
 	}
 ],
 "nodes":[
@@ -122,9 +130,24 @@
 				{"subst":"libparams"},
 				{"subst":"cmd_info"}
 			  ]
+	},
+	{
+		"id":"quant_genes",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst":"quant_genes"}
+	},
+	{
+		"id":"cp_quant_genes",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+		"cmd":[ "cp", {"port":"src_quant_genes", "direction":"in"}, {"subst":"cp_quant_genes_target"} ]
 	}
 ],
 "edges":[
-	{ "id":"salmon_to_zip_salmon_quant", "from":"salmon", "to":"zip_salmon_quant"}
+	{ "id":"salmon_to_zip_salmon_quant", "from":"salmon", "to":"zip_salmon_quant"},
+	{ "id":"salmon_to_quant_genes", "from":"salmon", "to":"quant_genes" },
+	{ "id":"cp_quant_genes", "from":"quant_genes", "to":"cp_quant_genes:src_quant_genes" }
 ]
 }
