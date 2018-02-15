@@ -1,6 +1,6 @@
 {
 "description":"run star to to align input bam to supplied reference genome",
-"version":"1.0",
+"version":"2.0",
 "subgraph_io":{
     "ports":{
                 "inputs":{
