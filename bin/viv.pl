@@ -39,7 +39,7 @@ my $do_exec = $opts{x};
 my $strict_status_checks = $opts{s};
 my $logfile = $opts{o};
 my $verbosity_level = $opts{v};
-$verbosity_level = 1 unless defined $verbosity_level;
+$verbosity_level = $VLMIN unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[viv]);
 $logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $cfg_file_name = $ARGV[0];
@@ -329,6 +329,8 @@ sub _process_edge {
 		elsif(defined $to_node->{subtype} and $to_node->{subtype} eq q[DUMMY]) {
 			$data_xfer_name = q[];
 			$connection_type = q[file];
+
+			return $ms_stack; # no further processing required if destination is a DUMMY file
 		}
 		else {
 			$data_xfer_name = $to_node->{name};
@@ -347,7 +349,7 @@ sub _process_edge {
 
 	# from port - check validity; previous edges? if so, compatible type (fifo/file)? check other end of previous edge to make sure not many:many creation
 	my $existing_from_edge = $port_list{$from_id}->{$from_port};
-	if(exists $existing_from_edge->{dst} and @{$existing_from_edge->{dst}} > 0) { # an edge from this port already added
+	if(exists $existing_from_edge->{dst} and @{$existing_from_edge->{dst}} > 0) { # an edge from this port already processed
 
 		$data_xfer_name = $existing_from_edge->{data_xfer_name};
 
@@ -371,7 +373,7 @@ sub _process_edge {
 
 	# to port - check validity; previous edges? if so, compatible type (fifo/file)? check other end of previous edge to make sure not many:many creation
 	my $existing_to_edge = $port_list{$to_id}->{$to_port};
-	if(exists $existing_to_edge->{src} and @{$existing_to_edge->{src}} > 0) { # an edge to this port already added
+	if(exists $existing_to_edge->{src} and @{$existing_to_edge->{src}} > 0) { # an edge to this port already processed
 
 		# confirm connection type match
 		if($connection_type ne $existing_to_edge->{connection_type}) {
@@ -458,7 +460,7 @@ sub _extract_ports_v2 {
 				$ports->{$elem->{port}}->{attribs} = reconcile_port_info($elem, $ports->{$elem->{port}}->{attribs});
 				$ports->{$elem->{port}}->{occurrences} ||= [];
 				push @{$ports->{$elem->{port}}->{occurrences}}, {arr => $arr, idx => $i}; # note location for later substitution
-				carp q[extracted port ], $elem->{port};
+				$logger->($VLMAX, 'INFO: extracted port ', $elem->{port});
 			}
 			elsif($elem->{packflag}) {
 				if(ref $elem->{packflag} eq q[ARRAY]) {
