@@ -44,7 +44,7 @@
 		"id":"tee3",
 		"type":"VTFILE",
 		"node_prefix":"tee3_",
-		"name":{"select":"align_infile_opt", "default":0, "select_range":[0,1],
+		"name":{"select":"align_intfile_opt", "default":0, "select_range":[0,1],
 				"cases":[
 					"unaln_tee3.json",
 					"unaln_intfile.json"
