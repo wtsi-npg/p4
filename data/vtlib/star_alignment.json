@@ -8,7 +8,7 @@
                             "reference":"star:reference_genome"
                          },
                 "outputs":{
-                            "_stdout_":"star"
+                            "_stdout_":"bamsort_qname"
                           }
             }
 },
@@ -227,6 +227,13 @@
         ]
     },
     {
+        "id":"bamsort_qname",
+        "type":"EXEC",
+        "use_STDIN": true,
+        "use_STDOUT": true,
+        "cmd":["bamsormadup", {"subst":"bsmd_threads"},"SO=queryname", "level=0"]
+    },
+    {
         "id":"junctions_tab",
         "type":"RAFILE",
         "subtype":"DUMMY",
@@ -289,6 +296,7 @@
     { "id":"star_to_stargenome_dir", "from":"star", "to":"STARgenome_dir" },
     { "id":"chmod_stargenome_dir", "from":"STARgenome_dir", "to":"chmod_STARgenome_dir:src_stargenome_dir" },
     { "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1" },
-    { "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2" }
+    { "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2" },
+    { "id":"star_to_qname_sort", "from":"star", "to":"bamsort_qname" }
 ]
 }
