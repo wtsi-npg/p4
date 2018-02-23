@@ -1,6 +1,13 @@
 CHANGES LOG
 -----------
 
+release 0.20.1
+ - star_alignment
+    correct version number (to 2.0)
+    do queryname sort after alignment
+ - upgrade realignment template to version 2
+ - viv.pl: loosen overly strict checks when using output file nodes with subtype dummy
+
 release 0.20.0
  - phase 1 of new format templates (port spec)
  - replacement of AlignmentFilter and spatial filter with bambi commands
