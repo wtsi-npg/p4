@@ -68,7 +68,8 @@
 	{"id":"qc_check_id_run","required":"yes"},
 	{"id":"qc_check_position","required":"yes","default":{"subst":"i2b_lane"}},
 	{"id":"qc_check_qc_in_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"i2b_runfolder_path"}, "Data/Intensities", {"subst":"i2b_bam_basecalls_dir"}],"postproc":{"op":"concat","pad":"/"}}}},
-	{"id":"qc_check_qc_out_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"qc_check_qc_in_dir"}, "no_cal/archive/qc"],"postproc":{"op":"concat","pad":"/"}}}}
+	{"id":"qc_check_qc_out_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"qc_check_qc_in_dir"}, "no_cal/archive/qc"],"postproc":{"op":"concat","pad":"/"}}}},
+	{"id":"run_lane_label", "description":"label constructed from id_run and position", "default":{"subst_constructor":{"vals":[{"subst":"qc_check_id_run"}, "_", {"subst":"i2b_lane"}],"postproc":{"op":"concat","pad":""}}}}
 ],
 "nodes":[
 	{
@@ -143,7 +144,7 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"description":"assign RG values to reads based on index tag sequence (BC tag value)",
-		"comment":"Actual executable used depends on the value of the bid_implementation parameter: java - use illumina2bam BamIndexDecoder.jar; samtools (default) - use new decode function in samtools",
+		"comment":"now uses bambi decode (formerly java, illumina2bam BamIndexDecoder.jar",
 		"cmd":[
 			"bambi", "decode",
 			"--metrics-file", {"port":"metrics_file", "direction":"out"},
@@ -169,7 +170,7 @@
 		"name":{
 			"subst":"decoder_metrics", "required":true,
 			"subst_constructor":{
-				"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"rpt"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
+				"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"run_lane_label"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
 				"postproc":{"op":"concat", "pad":""}
 			}
 		}
@@ -251,24 +252,6 @@
 		]
 	},
 	{
-		"id":"tee_prefilter",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":false,
-                "cmd":
-			[
-				{"subst":"teepot_executable", "ifnull":"teepot"},
-				{"subst":"tpf_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_prefilter_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
-				{"subst":"teepot_vflag", "ifnull":"-v"},
-				{"subst":"tpf_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_prefilter_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
-				{"subst":"tpf_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_prefilter_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
-				{"subst":"tpf_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_prefilter_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
-				{"subst":"tpf_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
-				{"port":"pf1", "direction":"out"},
-				{"port":"pf2", "direction":"out"}
-			]
-	},
-	{
 		"id":"create_filter",
 		"type":"EXEC",
 		"use_STDIN":true,
@@ -304,64 +287,8 @@
 	{
 		"id":"spatial_filter_file",
 		"type":"RAFILE",
-		"name":{"subst":"spatial_filter_file","required":true, "subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".bam.filter" ], "postproc":{"op":"concat","pad":""}}},
+		"name":{"subst":"spatial_filter_file","required":true, "subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam.filter" ], "postproc":{"op":"concat","pad":""}}},
 		"description":"spatial filter file"
-	},
-	{
-		"id":"bamtocram",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":[
-			"scramble",
-			"-I", "bam",
-			"-O", "cram",
-			"-x",
-			{"subst":"b2c_compression", "ifnull":"-3"}
-		],
-		"description":"bam to cram conversion before application of spatial filter file"
-	},
-	{
-		"id":"unfiltered_cram_file",
-		"type":"RAFILE",
-		"name":{"subst":"unfiltered_cram_file", "required":"yes", "ifnull":"unfiltered.cram"},
-		"description":"cram file (before spatial filter application)"
-	},
-	{
-		"id":"cramtobam",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":[
-			"scramble",
-			"-I", "cram",
-			"-O", "bam",
-			{"subst":"c2b_compression", "ifnull":"-0"}
-		],
-		"description":"cram to bam conversion before application of spatial filter file"
-	},
-	{
-		"id":"apply_filter",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":[
-			"bambi",
-			"spatial_filter",
-			"-a",
-			"--compression-level",
-			"0",
-			"-f",
-			"-F", {"port":"filter","direction":"in"},
-			"-l", {"port":"apply_stats", "direction":"out"},
-			"/dev/stdin"
-		],
-		"description":"Apply a spatial filter"
-	},
-	{
-		"id":"spatial_filter_stats",
-		"type":"OUTFILE",
-		"name":{"subst":"spatial_filter_stats", "required":true, "subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_spatial_filter.stats" ], "postproc":{"op":"concat","pad":""}}}
 	},
 	{
 		"id":"tee_split",
@@ -378,39 +305,11 @@
 				{"subst":"ts_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_split_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
 				{"subst":"ts_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
 				{"port":"seqchksum", "direction":"out"},
-				{"port":"filtered_bam", "direction":"out"},
+				{"port":"spatial_filter", "direction":"out"},
+				{"port":"subsample", "direction":"out"},
+				{"port":"fqc", "direction":"out"},
 				{"port":"split_bam", "direction":"out"}
 			]
-	},
-	{
-		"id":"bamrecompress",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd": [
-			"bamrecompress",
-			"verbose=0", 
-			"md5=1",
-			{
-				"subst":"br_md5file_flag",
-				"required":true,
-				"ifnull":{
-					"subst_constructor":{
-						"vals":[ "md5filename", {"subst":"md5filename", "subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".bam.md5" ],"postproc":{"op":"concat","pad":""}}} ],
-						"postproc":{"op":"concat","pad":"="}
-					}
-				}
-			},
-			{
-				"subst":"br_numthreads_flag",
-				"ifnull":{
-					"subst_constructor":{
-						"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],
-						"postproc":{"op":"concat", "pad":"="}
-					}
-				}
-			}
-		]
 	},
 	{
 		"id":"splitter",
@@ -422,9 +321,84 @@
 			{"subst":"samtools_executable", "ifnull":"samtools"},
 			"split",
 			"-f", {"subst":"split_format", "ifnull":{"subst_constructor":{"vals":[{"subst":"split_prefix","required":true,"ifnull":{"subst":"outdatadir"}}, "/", "%!.bam"], "postproc":{"op":"concat","pad":""}}}},
+			{"subst":"split_threads_flag", "ifnull":{"subst_constructor":{"vals":["--threads", {"subst":"split_threads_val","ifnull":0}],"postproc":{"op":"concat", "pad":" "}}}},
 			"-"
 		],
 		"description":"Split the BAM file into separate BAM files by Read Group"
+	},
+        {
+                "id":"subsample",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"view",
+			"-s", {"subst":"seed_frac", "required":true, "subst_constructor":{"vals":[ {"subst":"subsample_seed", "ifnull":""}, {"subst":"subsample_frac", "required":true} ],"postproc":{"op":"concat","pad":"."}}},
+			"-b",
+			"-"
+		]
+        },
+        {
+                "id":"bamtofastq_ss",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"fastq",
+			"-f", "0x200",
+			"-1", {"port":"ss_fq1", "direction":"out"},
+			"-2", {"port":"ss_fq2", "direction":"out"}
+		]
+        },
+	{
+		"id":"run_lane_ss_fq1",
+		"type":"OUTFILE",
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"npg_cache","required":true,"ifnull":"."}, "/", {"subst_constructor":{"vals":[ {"subst":"run_lane_label"}, "_1.fastq" ],"postproc":{"op":"concat","pad":"."}}}],"postproc":{"op":"concat","pad":"/"}}}},
+		"description":"lane-level fastqcheck output, read1"
+	},
+	{
+		"id":"run_lane_ss_fq2",
+		"type":"OUTFILE",
+		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"npg_cache","required":true,"ifnull":"."}, "/", {"subst_constructor":{"vals":[ {"subst":"run_lane_label"}, "_2.fastq" ],"postproc":{"op":"concat","pad":"."}}}],"postproc":{"op":"concat","pad":"/"}}}},
+		"description":"lane-level fastqcheck output, read2"
+	},
+        {
+                "id":"bamtofastq_fqc",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"fastq",
+			"-f", "0x200",
+			"-1", {"port":"fq1", "direction":"out"},
+			"-2", {"port":"fq2", "direction":"out"}
+		]
+        },
+        {
+                "id":"fastqcheck_r1",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "fastqcheck" ]
+        },
+        {
+                "id":"fastqcheck_r2",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "fastqcheck" ]
+        },
+	{
+		"id":"fqc1",
+		"type":"OUTFILE",
+		"name":{"subst":"fqc1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/lane", {"subst":"i2b_lane"}, "/", {"subst":"run_lane_label"}, ".fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane[1]-level fastqcheck output"
+	},
+	{
+		"id":"fqc2",
+		"type":"OUTFILE",
+		"name":{"subst":"fqc2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/lane", {"subst":"i2b_lane"}, "/", {"subst":"run_lane_label"}, ".fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane[2]-level fastqcheck output"
 	},
 	{
 		"id":"seqchksum",
@@ -436,12 +410,12 @@
 	{
 		"id":"seqchksum_file",
 		"type":"RAFILE",
-		"name":{"subst":"seqchksum_file", "required":true, "subst_constructor":{"vals":[ {"subst":"scs_outdir", "ifnull":{"subst":"outdatadir"}}, "/", {"subst":"rpt"}, ".post_i2b.seqchksum" ], "postproc":{"op":"concat", "pad":""}}}
+		"name":{"subst":"seqchksum_file", "required":true, "subst_constructor":{"vals":[ {"subst":"scs_outdir", "ifnull":{"subst":"outdatadir"}}, "/", {"subst":"run_lane_label"}, ".post_i2b.seqchksum" ], "postproc":{"op":"concat", "pad":""}}}
 	},
 	{
 		"id":"filtered_bam",
 		"type":"OUTFILE",
-		"name":{"subst":"filtered_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_filtered.bam" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"filtered_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".filtered.bam" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"BAM file after PhiX alignment and spatial filtering"
 	},
         {
@@ -492,21 +466,27 @@
 	{ "id":"tee_collated_to_alignment", "from":"tee_collated:td2", "to":"alignment_phix" },
 	{ "id":"ref_to_alignment", "from":"reference_phix", "to":"alignment_phix:reference" },
 	{ "id":"alignment_to_merge", "from":"alignment_phix", "to":"bammerge" },
-	{ "id":"merge_to_prefilter", "from":"bammerge", "to":"tee_prefilter" },
-	{ "id":"prefilter_to_create_filter", "from":"tee_prefilter:pf1", "to":"create_filter" },
-	{ "id":"create_filter_to_tee", "from":"create_filter", "to":"tee_post_filter_creation" },
-	{ "id":"tee_filter_file", "from":"tee_post_filter_creation:file", "to":"spatial_filter_file" },
-	{ "id":"tee_to_apply_filter", "from":"tee_post_filter_creation:apply_filter", "to":"apply_filter:filter" },
-	{ "id":"prefilter_to_b2c", "from":"tee_prefilter:pf2", "to":"bamtocram" },
-	{ "id":"b2c_to_ufc", "from":"bamtocram", "to":"unfiltered_cram_file" },
-	{ "id":"ufc_to_c2b", "from":"unfiltered_cram_file", "to":"cramtobam" },
-	{ "id":"c2b_to_apply", "from":"cramtobam", "to":"apply_filter" },
-	{ "id":"apply_filter_to_sfqc", "from":"apply_filter:apply_stats", "to":"spatial_filter_stats" },
-	{ "id":"apply_filter_to_fs1p", "from":"apply_filter", "to":"tee_split" },
-	{ "id":"tee_to_recompress", "from":"tee_split:filtered_bam", "to":"bamrecompress" },
+
+	{ "id":"merge_to_tee", "from":"bammerge", "to":"tee_split" },
+
+	{ "id":"tee_to_create_filter", "from":"tee_split:spatial_filter", "to":"create_filter" },
+	{ "id":"create_filter_to_file", "from":"create_filter", "to":"spatial_filter_file" },
+
+	{ "id":"tee_to_ss", "from":"tee_split:subsample", "to":"subsample" },
+	{ "id":"ss_to_b2fqss", "from":"subsample", "to":"bamtofastq_ss" },
+	{ "id":"b2fqss_to_fq1", "from":"bamtofastq_ss:ss_fq1", "to":"run_lane_ss_fq1" },
+	{ "id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2" },
+
+	{ "id":"tee_to_b2fqfqc", "from":"tee_split:fqc", "to":"bamtofastq_fqc" },
+	{ "id":"tee_to_splitter", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
+	{ "id":"tee_to_splitter", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
+	{ "id":"tee_to_splitter", "from":"fastqcheck_r1", "to":"fqc1" },
+	{ "id":"tee_to_splitter", "from":"fastqcheck_r2", "to":"fqc2" },
+
 	{ "id":"tee_to_splitter", "from":"tee_split:split_bam", "to":"splitter" },
+
 	{ "id":"tee_to_seqchksum", "from":"tee_split:seqchksum", "to":"seqchksum" },
-	{ "id":"fs1p_to_tee", "from":"bamrecompress", "to":"filtered_bam" },
+
 	{ "id":"fs1p_to_tee", "from":"seqchksum", "to":"seqchksum_file" },
 	{ "id":"fopt_to_scs", "from":"seqchksum_file", "to":"head_scs2_input" },
 	{ "id":"input_chksum_to_scs1head", "from":"seqchksum_input", "to":"head_scs1_input" },
