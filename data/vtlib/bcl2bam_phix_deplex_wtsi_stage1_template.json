@@ -1,4 +1,3 @@
-
 {
 "description":"This pipeline starts with Illumina2Bam, and ends by running SplitBamByReadGroup to create separate BAM files for each sample.",
 "version":"2.0",
@@ -169,10 +168,10 @@
 		"type":"RAFILE",
 		"name":{
 			"subst":"decoder_metrics", "required":true,
-			"subst_constructor":{
+			"ifnull":{"subst_constructor":{
 				"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"run_lane_label"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
 				"postproc":{"op":"concat", "pad":""}
-			}
+			}}
 		}
 	},
 	{
@@ -227,13 +226,13 @@
                 "type":"VTFILE",
                 "comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
                 "node_prefix":"alnphix_",
-                "name":{"subst":"alignment_vtf", "required":true, "subst_constructor":{"vals":[ {"subst":"phix_alignment_method", "required":true, "ifnull":"bwa_aln"}, "_alignment.json" ], "postproc":{"op":"concat", "pad":""}}},
+                "name":{"subst":"alignment_vtf", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"phix_alignment_method", "required":true, "ifnull":"bwa_aln"}, "_alignment.json" ], "postproc":{"op":"concat", "pad":""}}}},
                 "description":"subgraph containing alignment process"
         },
 	{
 		"id":"reference_phix",
 		"type":"INFILE",
-		"name":{"subst":"reference_phix", "required":true, "subst_constructor":{ "vals":[ {"subst":"reposdir"}, "/", {"subst":"refname_phix"} ], "postproc":{"op":"concat", "pad":""} } },
+		"name":{"subst":"reference_phix", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"reposdir"}, "/", {"subst":"refname_phix"} ], "postproc":{"op":"concat", "pad":""} } } },
 		"description":"Prefix for Phix reference"
 	},
 	{
@@ -266,28 +265,9 @@
 		"description":"Create a spatial filter"
 	},
 	{
-		"id":"tee_post_filter_creation",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":false,
-                "cmd":
-			[
-				{"subst":"teepot_executable", "ifnull":"teepot"},
-				{"subst":"tpfc_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_post_filter_creation_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
-				{"subst":"teepot_vflag", "ifnull":"-v"},
-				{"subst":"tpfc_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_postfilter_creation_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
-				{"subst":"tpfc_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_postfilter_creation_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
-				{"subst":"tpfc_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_postfilter_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
-				{"subst":"tpfc_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
-				{"port":"file","direction":"out"},
-				{"port":"apply_filter","port":"out"}
-			],
-		"comment":"this tee added to prevent blocking caused by delayed apply_filter execution"
-	},
-	{
 		"id":"spatial_filter_file",
 		"type":"RAFILE",
-		"name":{"subst":"spatial_filter_file","required":true, "subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam.filter" ], "postproc":{"op":"concat","pad":""}}},
+		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam.filter" ], "postproc":{"op":"concat","pad":""}}}},
 		"description":"spatial filter file"
 	},
 	{
@@ -308,6 +288,7 @@
 				{"port":"spatial_filter", "direction":"out"},
 				{"port":"subsample", "direction":"out"},
 				{"port":"fqc", "direction":"out"},
+				{"port":"stats", "direction":"out"},
 				{"port":"split_bam", "direction":"out"}
 			]
 	},
@@ -316,12 +297,11 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"old_cmd":[ {"subst":"samtools_executable", "ifnull":"samtools"}, "split", "-f", {"subst":"split_format"}, "-" ],
 		"cmd":[
 			{"subst":"samtools_executable", "ifnull":"samtools"},
 			"split",
+			{"subst":"split_threads_flag", "ifnull":["--threads", {"subst":"split_threads_val", "ifnull":"0"}]},
 			"-f", {"subst":"split_format", "ifnull":{"subst_constructor":{"vals":[{"subst":"split_prefix","required":true,"ifnull":{"subst":"outdatadir"}}, "/", "%!.bam"], "postproc":{"op":"concat","pad":""}}}},
-			{"subst":"split_threads_flag", "ifnull":{"subst_constructor":{"vals":["--threads", {"subst":"split_threads_val","ifnull":0}],"postproc":{"op":"concat", "pad":" "}}}},
 			"-"
 		],
 		"description":"Split the BAM file into separate BAM files by Read Group"
@@ -333,7 +313,7 @@
 		"use_STDOUT": true,
 		"cmd":[ "samtools",
 			"view",
-			"-s", {"subst":"seed_frac", "required":true, "subst_constructor":{"vals":[ {"subst":"subsample_seed", "ifnull":""}, {"subst":"subsample_frac", "required":true} ],"postproc":{"op":"concat","pad":"."}}},
+			"-s", {"subst":"seed_frac", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"subsample_seed", "ifnull":""}, {"subst":"subsample_frac", "required":true} ],"postproc":{"op":"concat","pad":"."}}}},
 			"-b",
 			"-"
 		]
@@ -345,21 +325,23 @@
 		"use_STDOUT": true,
 		"cmd":[ "samtools",
 			"fastq",
-			"-f", "0x200",
+			"-F", "0x200",
+			"-t",
 			"-1", {"port":"ss_fq1", "direction":"out"},
-			"-2", {"port":"ss_fq2", "direction":"out"}
+			"-2", {"port":"ss_fq2", "direction":"out"},
+                        "-"
 		]
         },
 	{
 		"id":"run_lane_ss_fq1",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"npg_cache","required":true,"ifnull":"."}, "/", {"subst_constructor":{"vals":[ {"subst":"run_lane_label"}, "_1.fastq" ],"postproc":{"op":"concat","pad":"."}}}],"postproc":{"op":"concat","pad":"/"}}}},
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/.npg_cache_10000/", {"subst":"run_lane_label"}, "_1.fastq.10000" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastqcheck output, read1"
 	},
 	{
 		"id":"run_lane_ss_fq2",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"npg_cache","required":true,"ifnull":"."}, "/", {"subst_constructor":{"vals":[ {"subst":"run_lane_label"}, "_2.fastq" ],"postproc":{"op":"concat","pad":"."}}}],"postproc":{"op":"concat","pad":"/"}}}},
+		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/.npg_cache_10000/", {"subst":"run_lane_label"}, "_2.fastq.10000" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastqcheck output, read2"
 	},
         {
@@ -369,9 +351,11 @@
 		"use_STDOUT": true,
 		"cmd":[ "samtools",
 			"fastq",
-			"-f", "0x200",
+			"-F", "0x200",
+			"-t",
 			"-1", {"port":"fq1", "direction":"out"},
-			"-2", {"port":"fq2", "direction":"out"}
+			"-2", {"port":"fq2", "direction":"out"},
+                        "-"
 		]
         },
         {
@@ -400,6 +384,16 @@
 		"name":{"subst":"fqc2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/lane", {"subst":"i2b_lane"}, "/", {"subst":"run_lane_label"}, ".fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane[2]-level fastqcheck output"
 	},
+
+	{
+		"id":"samtools_stats",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-" ]
+	},
+	{ "id":"lane_stats_file", "type":"OUTFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label","ifnull":"rll"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
+
 	{
 		"id":"seqchksum",
 		"type":"EXEC",
@@ -410,7 +404,7 @@
 	{
 		"id":"seqchksum_file",
 		"type":"RAFILE",
-		"name":{"subst":"seqchksum_file", "required":true, "subst_constructor":{"vals":[ {"subst":"scs_outdir", "ifnull":{"subst":"outdatadir"}}, "/", {"subst":"run_lane_label"}, ".post_i2b.seqchksum" ], "postproc":{"op":"concat", "pad":""}}}
+		"name":{"subst":"seqchksum_file", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"scs_outdir", "ifnull":{"subst":"outdatadir"}}, "/", {"subst":"run_lane_label"}, ".post_i2b.seqchksum" ], "postproc":{"op":"concat", "pad":""}}}}
 	},
 	{
 		"id":"filtered_bam",
@@ -444,7 +438,6 @@
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-                "old_cmd":[ "cmp", "__INPUTCHK_IN__", "__OUTPUTCHK_IN__" ],
                 "cmd":[
 			"cmp",
 			{"port":"inputchk", "direction":"in"},
@@ -466,27 +459,22 @@
 	{ "id":"tee_collated_to_alignment", "from":"tee_collated:td2", "to":"alignment_phix" },
 	{ "id":"ref_to_alignment", "from":"reference_phix", "to":"alignment_phix:reference" },
 	{ "id":"alignment_to_merge", "from":"alignment_phix", "to":"bammerge" },
-
 	{ "id":"merge_to_tee", "from":"bammerge", "to":"tee_split" },
-
 	{ "id":"tee_to_create_filter", "from":"tee_split:spatial_filter", "to":"create_filter" },
 	{ "id":"create_filter_to_file", "from":"create_filter", "to":"spatial_filter_file" },
-
 	{ "id":"tee_to_ss", "from":"tee_split:subsample", "to":"subsample" },
 	{ "id":"ss_to_b2fqss", "from":"subsample", "to":"bamtofastq_ss" },
 	{ "id":"b2fqss_to_fq1", "from":"bamtofastq_ss:ss_fq1", "to":"run_lane_ss_fq1" },
 	{ "id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2" },
-
 	{ "id":"tee_to_b2fqfqc", "from":"tee_split:fqc", "to":"bamtofastq_fqc" },
 	{ "id":"tee_to_splitter", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
 	{ "id":"tee_to_splitter", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
 	{ "id":"tee_to_splitter", "from":"fastqcheck_r1", "to":"fqc1" },
 	{ "id":"tee_to_splitter", "from":"fastqcheck_r2", "to":"fqc2" },
-
+	{ "id":"tee_to_stats", "from":"tee_split:stats", "to":"samtools_stats" },
+	{ "id":"stats_to_file", "from":"samtools_stats", "to":"lane_stats_file" },
 	{ "id":"tee_to_splitter", "from":"tee_split:split_bam", "to":"splitter" },
-
 	{ "id":"tee_to_seqchksum", "from":"tee_split:seqchksum", "to":"seqchksum" },
-
 	{ "id":"fs1p_to_tee", "from":"seqchksum", "to":"seqchksum_file" },
 	{ "id":"fopt_to_scs", "from":"seqchksum_file", "to":"head_scs2_input" },
 	{ "id":"input_chksum_to_scs1head", "from":"seqchksum_input", "to":"head_scs1_input" },
