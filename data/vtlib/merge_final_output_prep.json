@@ -231,7 +231,7 @@
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": false,
-	"cmd": [ "tears", {"subst":"cram_file"} ],
+	"cmd": [ "tears", "-w", "-f", {"subst":"cram_file", "required":true} ],
 	"comment":"stream into iRODS"
     },
     { "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
