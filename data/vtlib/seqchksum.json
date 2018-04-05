@@ -33,6 +33,12 @@
 		"use_STDOUT": true,
                 "cmd":[ "bamseqchksum", {"subst":"src_input_format_flag"} ]
         },
+	{
+		"id":"seqchksum_orig_file",
+		"type":"RAFILE",
+		"name":{"subst":"seqchksum_orig_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "#", {"subst":"s2_tag_index"}, ".orig.seqchksum" ], "postproc":{"op":"concat","pad":""}}}},
+		"description":"bamseqchksum output file"
+	},
         {
                 "id":"merge_output_seqchksum",
                 "type":"EXEC",
@@ -50,7 +56,8 @@
         }
 ],
 "edges":[
-        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_input", "to":"cmp_seqchksum:inputchk" },
+        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_input", "to":"seqchksum_orig_file" },
+        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_orig_file", "to":"cmp_seqchksum:inputchk" },
         { "id":"bamcat_to_chk_output", "from":"merge_output_seqchksum", "to":"cmp_seqchksum:outputchk" }
 ]
 }
