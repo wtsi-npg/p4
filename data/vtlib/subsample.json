@@ -23,11 +23,11 @@
                 "cmd":
 			[
 				{"subst":"teepot_executable", "ifnull":"teepot"},
-				{"subst":"ts_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_split_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
+				{"subst":"ts_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_split_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir_value"}} ]}}},
 				{"subst":"teepot_vflag", "ifnull":"-v"},
-				{"subst":"ts_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_split_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
-				{"subst":"ts_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_split_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
-				{"subst":"ts_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_split_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"ts_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_ssfqc_teepot_wval", "ifnull":600} ]}}},
+				{"subst":"ts_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_ssfqc_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"ts_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_ssfqc_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
 				{"subst":"ts_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
 				{"port":"straight_through1", "direction":"out"},
 				{"port":"straight_through2", "direction":"out"},
@@ -43,7 +43,7 @@
 		"use_STDOUT": true,
 		"cmd":[
 			"bash -c '",
-			"if [ -s \"", {"subst":"tag_metrics_file", "required":true}, "\" ]; then reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'"],"postproc":{"op":"concat","pad":""}}}}, {"subst":"tag_metrics_file", "required":true}, "`; frac=`echo \"10000/${reads_count}\" | bc -l`; fi;",
+			"if [ -s ", {"subst":"tag_metrics_file", "required":true}, "]; then reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'\"'\"'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'\"'\"'"],"postproc":{"op":"concat","pad":""}}}}, {"subst":"tag_metrics_file", "required":true}, "`; reads_count=`echo ${reads_count} | tr -cd [:digit:]`; frac=`echo \"10000/${reads_count}\" | bc -l`; fi;",
 			"if [ ! -z $frac ]; then",
 				"samtools",
 				"view",
@@ -71,13 +71,13 @@
 	{
 		"id":"run_lane_ss_fq1",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/.npg_cache_10000/", {"subst":"rpt"}, "_1.fastq.10000" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/.npg_cache_10000/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_1#", {"subst":"s2_tag_index"}, ".fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastqcheck output, read1"
 	},
 	{
 		"id":"run_lane_ss_fq2",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/.npg_cache_10000/", {"subst":"rpt"}, "_2.fastq.10000" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/.npg_cache_10000/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_2#", {"subst":"s2_tag_index"}, ".fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastqcheck output, read2"
 	},
         {
