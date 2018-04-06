@@ -111,13 +111,13 @@
 	{
 		"id":"fqc1",
 		"type":"OUTFILE",
-		"name":{"subst":"fqc1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_1.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"fqc1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_1#", {"subst":"s2_tag_index"}, ".fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane[1]-level fastqcheck output"
 	},
 	{
 		"id":"fqc2",
 		"type":"OUTFILE",
-		"name":{"subst":"fqc2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_2.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"fqc2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_2#", {"subst":"s2_tag_index"}, ".fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane[2]-level fastqcheck output"
 	}
 ],
