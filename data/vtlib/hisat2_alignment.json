@@ -1,0 +1,65 @@
+{
+"version":"2.0",
+"description":"run hisat2 to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"hisat2:reference_genome"
+		},
+		"outputs":{
+			"_stdout_":"hisat2"
+		}
+	}
+},
+"subst_params":[
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
+	{
+		"id":"hisat2_executable",
+		"required":"no",
+		"default":"hisat2"
+	},
+	{
+		"id":"aligner_numthreads_flag",
+		"required":"no",
+		"subst_constructor":{
+								"vals":[ "--threads", {"subst":"aligner_numthreads"} ],
+								"postproc":{"op":"concat","pad":" "}
+							}
+	}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["bamtofastq", "gz=0", {"packflag":["F=", {"port":"fq1", "direction":"out"}]}, {"packflag":["F2=", {"port":"fq2", "direction":"out"}]}]
+	},
+	{
+		"id":"hisat2",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+				{"subst":"hisat2_executable"},
+				{"subst":"aligner_numthreads_flag"},
+				"-x", {"port":"reference_genome", "direction":"in"},
+				"-1", {"port":"fq1","direction":"in"},
+				"-2", {"port":"fq2","direction":"in"},
+				"--reorder",
+				"--rna-strandness", "RF"
+		]
+	}
+],
+"edges":[
+	{ "id":"bamtofastq_to_hisat2_1", "from":"bamtofastq", "to":"hisat2:fq1" },
+	{ "id":"bamtofastq_to_hisat2_2", "from":"bamtofastq", "to":"hisat2:fq2" }
+]
+}
