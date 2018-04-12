@@ -1,0 +1,67 @@
+{
+"version":"2.0",
+"description":"run mnimap2 to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"minimap2:reference_index"
+		},
+		"outputs":{
+			"_stdout_":"samtobam"
+		}
+	}
+},
+"subst_params":[
+	{"id":"minimap2_K_value","required":"no","default":"100000000","comment":"unset this value to remove -K flag"},
+	{
+		"id":"minimap2_K_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-K", {"subst":"minimap2_K_value"} ] }
+	},
+	{"id":"minimap2_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["bamtofastq"]
+	},
+	{
+		"id":"minimap2",
+		"comment":"minimap2 aligner",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[
+			{"subst":"minimap2_executable", "required":true, "ifnull":"minimap2"},
+			"-ax", "sr",
+			"--MD",
+			"-t", {"subst":"minimap2_numthreads", "required":true, "ifnull":{"subst":"aligner_numthreads"}},
+			{"subst":"minimap2_Y_flag"},
+			{"subst":"minimap2_K_flag"},
+			{"port":"reference_index", "direction":"in"},
+			{"port":"fq","direction":"in"}
+		]
+	},
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+			"scramble",
+			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
+			{"subst":"s2b_compress_level", "ifnull":"-0"},
+			"-I", "sam",
+			"-O", "bam"
+		]
+        }
+],
+"edges":[
+	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"minimap2:fq" },
+	{ "id":"mm2_to_scramble", "from":"minimap2", "to":"samtobam" }
+]
+}
