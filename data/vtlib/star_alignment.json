@@ -23,9 +23,9 @@
     {
         "id":"fastq1_name",
         "required":"no",
-        "default":"intfile_1.fq.gz",
+        "default":"intfile_1.fq",
         "subst_constructor":{
-                                "vals":[ "intfile_1_", {"subst":"rpt"}, ".fq.gz" ],
+                                "vals":[ "intfile_1_", {"subst":"rpt"}, ".fq" ],
                                 "postproc":{"op":"concat", "pad":""}
                             }
     },
@@ -40,9 +40,9 @@
     {
         "id":"fastq2_name",
         "required":"no",
-        "default":"intfile_2.fq.gz",
+        "default":"intfile_2.fq",
         "subst_constructor":{
-                                "vals":[ "intfile_2_", {"subst":"rpt"}, ".fq.gz" ],
+                                "vals":[ "intfile_2_", {"subst":"rpt"}, ".fq" ],
                                 "postproc":{"op":"concat", "pad":""}
                             }
     },
