@@ -106,8 +106,8 @@
 		"use_STDOUT": true,
 		"cmd":[
 				"bash -c '",
-					"if [[ `file $0` =~ ASCII ]]; then PART1=`head -c 50K $0 | wc -l`; else PART1=`gunzip -c $0 | head -c 50K | wc -l`; fi;",
-					"if [[ `file $1` =~ ASCII ]]; then PART2=`head -c 50K $1 | wc -l`; else PART2=`gunzip -c $1 | head -c 50K | wc -l`; fi;",
+					"case `file $0` in *ASCII*) PART1=`head -c 50K $0 | wc -l`;; *compressed*) PART1=`gunzip -c $0 | head -c 50K | wc -l`;; *empty*) PART1=0;; esac;",
+					"case `file $1` in *ASCII*) PART2=`head -c 50K $1 | wc -l`;; *compressed*) PART2=`gunzip -c $1 | head -c 50K | wc -l`;; *empty*) PART2=0;; esac;",
 					"if [[ $PART1 -ge 1000 && $PART2 -ge 1000 ]]; then",
 						"salmon",
 						"--no-version-check",
