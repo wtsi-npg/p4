@@ -289,7 +289,8 @@
 				{"port":"subsample", "direction":"out"},
 				{"port":"fqc", "direction":"out"},
 				{"port":"stats", "direction":"out"},
-				{"port":"split_bam", "direction":"out"}
+				{"port":"split_bam", "direction":"out"},
+				{"port":"unsplit_bam", "direction":"out"}
 			]
 	},
 	{
@@ -305,6 +306,25 @@
 			"-"
 		],
 		"description":"Split the BAM file into separate BAM files by Read Group"
+	},
+	{
+		"id":"bamrecompress",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			"bamrecompress",
+			"verbose=0", 
+			"md5=1",
+			{"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}}
+		]
+	},
+	{
+		"id":"lane_level_bam",
+		"type":"OUTFILE",
+		"name":{"subst":"lane_level_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"BAM file after PhiX alignment and spatial filtering"
 	},
         {
                 "id":"subsample",
@@ -426,12 +446,6 @@
 		"type":"RAFILE",
 		"name":{"subst":"seqchksum_file", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"scs_outdir", "ifnull":{"subst":"outdatadir"}}, "/", {"subst":"run_lane_label"}, ".post_i2b.seqchksum" ], "postproc":{"op":"concat", "pad":""}}}}
 	},
-	{
-		"id":"filtered_bam",
-		"type":"OUTFILE",
-		"name":{"subst":"filtered_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".filtered.bam" ], "postproc":{"op":"concat","pad":""} } } },
-		"description":"BAM file after PhiX alignment and spatial filtering"
-	},
         {
                 "id":"seqchksum_input",
                 "type":"EXEC",
@@ -497,6 +511,8 @@
 	{ "id":"tee_to_stats", "from":"tee_split:stats", "to":"samtools_stats" },
 	{ "id":"stats_to_file", "from":"samtools_stats", "to":"lane_stats_file" },
 	{ "id":"tee_to_splitter", "from":"tee_split:split_bam", "to":"splitter" },
+	{ "id":"tee_to_brc", "from":"tee_split:unsplit_bam", "to":"bamrecompress" },
+	{ "id":"brc_to_llb", "from":"bamrecompress", "to":"lane_level_bam" },
 	{ "id":"tee_to_seqchksum", "from":"tee_split:seqchksum", "to":"seqchksum" },
 	{ "id":"fs1p_to_tee", "from":"seqchksum", "to":"seqchksum_file" },
 	{ "id":"fopt_to_scs", "from":"seqchksum_file", "to":"head_scs2_input" },
