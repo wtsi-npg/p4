@@ -36,7 +36,24 @@
 	{
 		"id":"seqchksum_orig_file",
 		"type":"RAFILE",
-		"name":{"subst":"seqchksum_orig_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "#", {"subst":"s2_tag_index"}, ".orig.seqchksum" ], "postproc":{"op":"concat","pad":""}}}},
+		"name":{
+			"subst":"seqchksum_orig_file",
+			"required":true,
+			"ifnull":{
+				"subst_constructor":{
+					"vals":[
+						{"subst":"outdatadir"},
+						"/",
+						{"subst":"s2_id_run"},
+						"_",
+						{"subst":"s2_position"},
+						{"subst_constructor":{"vals":["#", {"subst":"s2_tag_index"}],"postproc":{"op":"concat","pad":""}}},
+						".orig.seqchksum"
+					],
+					"postproc":{"op":["pack","concat"],"pad":""}
+				}
+			}
+		},
 		"description":"bamseqchksum output file"
 	},
         {
