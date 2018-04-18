@@ -1,6 +1,11 @@
 CHANGES LOG
 -----------
 
+release 0.21.0
+ - salmon_alignment: copy quant.genes.sf to archive directory
+ - star_alignment: assign appropriate suffixes to bamtofastq output files
+ - merge: flag change for use with tears 1.2.4
+
 release 0.20.1
  - star_alignment
     correct version number (to 2.0)
