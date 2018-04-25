@@ -109,8 +109,15 @@
 				"quant",
 				"--index", {"subst":"salmon_transcriptome_val"},
 				"--libType", "A",
-				"--mates1", {"port":"fq1", "direction":"in"},
-				"--mates2", {"port":"fq2", "direction":"in"},
+				{
+					"select":"alignment_reads_layout", 
+					"default":"2", 
+					"select_range":[1],
+					"cases":{
+						"1":["-r", {"port":"fq1", "direction":"in"}],
+						"2":["-1", {"port":"fq1", "direction":"in"}, "-2", {"port":"fq2", "direction":"in"}]
+					}
+				},
 				{"subst":"gene_mapping_flag"},
 				{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
 				"--output", {"subst":"salmon_out"}
