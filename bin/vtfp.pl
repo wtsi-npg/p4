@@ -1062,8 +1062,12 @@ sub subgraph_to_flat_graph {
 	# any edges which refer to nodes in this subgraph should also be updated
 	########################################################################
 	for my $edge (@{$subcfg->{edges}}) {
-		$edge->{from} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{from};
-		$edge->{to} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{to};
+		if($edge->{from}) {
+			$edge->{from} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{from};
+		}
+		if($edge->{to}) {
+			$edge->{to} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{to};
+		}
 	}
 
 	##########################################################
@@ -1079,7 +1083,7 @@ sub subgraph_to_flat_graph {
 	# now fiddle the edges in the flattened graph (maybe "fiddle" should be defined)
 
 	# first inputs to the subgraph... (identify edges in the flat graph which terminate in nodes of this subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
-	my $in_edges = [ (grep { $_->{to} =~ /^$ancestor_prefix$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
+	my $in_edges = [ (grep { $_->{to} and $_->{to} =~ /^$ancestor_prefix$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
 	if(@$in_edges and not $subgraph_nodes_in) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode_id, q[". No inputs specified in subgraph ], $vt_name); }
 	for my $edge (@$in_edges) {
 		if($edge->{to} =~ /^$ancestor_prefix$vtnode_id:?(.*)$/) {
@@ -1120,7 +1124,7 @@ sub subgraph_to_flat_graph {
 	}
 
 	#  ...then outputs from the subgraph (identify edges in the flat graph which originate in nodes of the subgraph; use the subgraph_io section of the subgraph to remap these edge destinations)
-	my $out_edges = [ (grep { $_->{from} =~ /^$ancestor_prefix$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
+	my $out_edges = [ (grep { $_->{from} and $_->{from} =~ /^$ancestor_prefix$vtnode_id(:|$)/; } @{$flat_graph->{edges}}) ];
 	if(@$out_edges and not $subgraph_nodes_out) { $logger->($VLFATAL, q[Cannot remap VTFILE node "], $vtnode_id, q[". No outputs specified in subgraph ], $vt_name); }
 	for my $edge (@$out_edges) {
 		if($edge->{from} =~ /^$ancestor_prefix$vtnode_id:?(.*)$/) {
