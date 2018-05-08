@@ -61,6 +61,7 @@ process_tee_list($tee_list, $cfg);
 
 my %all_nodes = (map { $_->{id} => $_ } @{$cfg->{nodes}});
 
+$cfg->{edges} = _filter_edges($cfg->{edges}); # excludes edge entries without minimum requirements
 my $edges = $cfg->{edges};
 
 my %exec_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[EXEC]; } @{$cfg->{nodes}}));
@@ -260,6 +261,24 @@ while((my $pid=wait) > 0) {
 &{$SIG{'ALRM'}||sub{}}(); # fire off bad exit if set
 
 $logger->($VLMIN, "Done\n");
+
+##############################################################################
+# _filter_edges:
+#     exclude edge entries without minimum requirements, produce informational
+#     log message about removed edges
+##############################################################################
+sub _filter_edges {
+	my ($edges) = @_;
+
+	my @discard_edges = grep { not $_->{to} or not $_->{from} } @{$edges}; # edge entries without minimum requirements
+	for my $discard_edge (@discard_edges) {
+		$logger->($VLMED, 'INFO: removing edge entry: ', Dumper($discard_edge));
+	}
+
+	my @keep_edges = grep { $_->{to} and $_->{from} } @{$edges}; # exclude edge entries without minimum requirements
+
+	return \@keep_edges;
+}
 
 sub _get_node_info {
 	my ($edge_id, $all_nodes) = @_;
