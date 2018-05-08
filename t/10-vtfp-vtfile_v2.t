@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Test::Cmd;
 use File::Slurp;
 use Perl6::Slurp;
@@ -93,6 +93,90 @@ subtest 'basic_checks' => sub {
 	};
 
 	is_deeply ($vtfp_results, $expected_result, 'basic check');
+};
+
+# noop edge
+subtest 'noop_edge_checks' => sub {
+	plan tests => 2;
+
+	my $basic_container = {
+		description => 'basic template containing a VTFILE node',
+		version => '2.0',
+		nodes => [
+			{
+				id => 'n1',
+				type => 'EXEC',
+				cmd => [ 'echo', 'aeronautics']
+			},
+			{
+				id => 'v1',
+				type => 'VTFILE',
+				node_prefix => 'vtf00_',
+				name => "$tdir/10-vtfp-vtfile_vtf00.json"
+			}
+		],
+		edges => [
+			{ id => 'e1', from => 'n1', to => 'v1'}
+		]
+	};
+
+	my $vtf00 = {
+		description => 'basic VTFILE',
+		version => '2.0',
+		subgraph_io => {
+			ports => {
+				inputs => {
+					_stdin_ => 'vowelrot'
+				}
+			}
+		},
+		nodes => [
+			{
+				id => 'vowelrot',
+				type => 'EXEC',
+				cmd => [ 'tr', 'aeiou', 'eioua' ]
+			}
+		],
+		edges => [
+			{
+				id => 'noop'
+			}
+		]
+	};
+
+	my $template = $tdir.q[/10-vtfp-vtfile_basic.json];
+	my $template_contents = to_json($basic_container);
+	write_file($template, $template_contents);
+
+	my $vtfile = $tdir.q[/10-vtfp-vtfile_vtf00.json];
+	my $vtfile_contents = to_json($vtf00);
+	write_file($vtfile, $vtfile_contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 $template]);
+	ok($exit_status>>8 == 0, "non-zero exit for vtfp in noop edge test: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+
+	my $expected_result = {
+		version => '2.0',
+		nodes => [
+			{
+				id => 'n1',
+				type => 'EXEC',
+				cmd => ['echo', 'aeronautics']
+			},
+			{
+				id => 'vtf00_vowelrot',
+				type => 'EXEC',
+				cmd => [ 'tr', 'aeiou', 'eioua' ]
+			}
+		],
+		edges=> [
+			{ id => 'e1', from => 'n1', to => 'vtf00_vowelrot'},
+			{ id => 'noop' }
+		]
+	};
+
+	is_deeply ($vtfp_results, $expected_result, 'noop edge check');
 };
 
 subtest 'multilevel_vtf' => sub {
