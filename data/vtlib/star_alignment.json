@@ -195,8 +195,8 @@
                 "default":"2", 
                 "select_range":[1],
                 "cases":{
-                         "1":{"packflag":["S=", {"port":"fq1", "direction":"out"}]},
-                         "2":{"packflag":["F=", {"port":"fq1", "direction":"out"}, "F2=", {"port":"fq2", "direction":"out"}]}
+                         "1":{"packflag":["S=",{"port":"fq1", "direction":"out"}]},
+                         "2":[{"packflag":["F=",{"port":"fq1", "direction":"out"}]}, {"packflag":["F2=",{"port":"fq2", "direction":"out"}]}]
                 }
                }
         ]
@@ -305,27 +305,27 @@
     }
 ],
 "edges":[
+    {"id":"bamtofastq_to_fq1", "from":"bamtofastq:fq1", "to":"fq1"},
+    { "select":"alignment_reads_layout",
+      "default":2,
+      "select_range":[1],
+      "cases":{ "1":{}, "2":{"id":"bamtofastq_to_fq2", "from":"bamtofastq:fq2", "to":"fq2"} } },
+    {"id":"fq1_to_star", "from":"fq1", "to":"star:fq1"},
     { "select":"alignment_reads_layout", 
       "default":2,
       "select_range":[1],
-      "cases":{ "1":{"id":"bamtofastq_to_fq1", "from":"bamtofastq:fq1", "to":"fq1"},
-                "2":[{"id":"bamtofastq_to_fq1", "from":"bamtofastq:fq1", "to":"fq1"}, {"id":"bamtofastq_to_fq2", "from":"bamtofastq:fq2", "to":"fq2"}] } },
-    { "select":"alignment_reads_layout", 
-      "default":2,
-      "select_range":[1],
-      "cases":{ "1":{"id":"fq1_to_star", "from":"fq1", "to":"star:fq1"},
-                "2":[{"id":"fq1_to_star", "from":"fq1", "to":"star:fq1"}, {"id":"fq2_to_star", "from":"fq2", "to":"star:fq2"}] } },
+      "cases":{ "1":{}, "2":{"id":"fq2_to_star", "from":"fq2", "to":"star:fq2"} } },
     { "id":"star_to_junctions_tab", "from":"star", "to":"junctions_tab" },
     { "id":"cp_junctions_tab", "from":"junctions_tab", "to":"cp_junctions_tab:src_junctions_tab" },
     { "id":"star_to_readspergene_tab", "from":"star", "to":"readspergene_tab" },
     { "id":"cp_readspergene_tab", "from":"readspergene_tab", "to":"cp_readspergene_tab:src_readspergene_tab" },
     { "id":"star_to_stargenome_dir", "from":"star", "to":"STARgenome_dir" },
     { "id":"chmod_stargenome_dir", "from":"STARgenome_dir", "to":"chmod_STARgenome_dir:src_stargenome_dir" },
+    { "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1"},
     { "select":"alignment_reads_layout", 
       "default":2,
       "select_range":[1],
-      "cases":{ "1":{ "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1"},
-                "2":[{ "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1"}, {"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"}] } },
+      "cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} } },
     { "id":"star_to_qname_sort", "from":"star", "to":"bamsort_qname" }
 ]
 }
