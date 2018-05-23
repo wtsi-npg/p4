@@ -267,7 +267,7 @@
 	{
 		"id":"spatial_filter_file",
 		"type":"RAFILE",
-		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam.filter" ], "postproc":{"op":"concat","pad":""}}}},
+		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam.spatial_filter" ], "postproc":{"op":"concat","pad":""}}}},
 		"description":"spatial filter file"
 	},
 	{
