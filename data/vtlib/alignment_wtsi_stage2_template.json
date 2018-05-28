@@ -100,7 +100,7 @@
 	{
 		"id":"spatial_filter_file",
 		"type":"INFILE",
-		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"recal_dir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, ".bam.spatial_filter" ], "postproc":{"op":"concat","pad":""}}}},
+		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"recal_dir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, ".spatial_filter" ], "postproc":{"op":"concat","pad":""}}}},
 		"description":"spatial filter file"
 	},
 	{
