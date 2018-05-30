@@ -101,20 +101,28 @@
 	{
 		"id":"salmon",
 		"type":"EXEC",
+		"subtype":"STRINGIFY",
 		"use_STDIN": false,
 		"use_STDOUT": true,
 		"cmd":[
-				"salmon",
-				"--no-version-check",
-				"quant",
-				"--index", {"subst":"salmon_transcriptome_val"},
-				"--libType", "A",
-				"--mates1", {"port":"fq1", "direction":"in"},
-				"--mates2", {"port":"fq2", "direction":"in"},
-				{"subst":"gene_mapping_flag"},
-				{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
-				"--output", {"subst":"salmon_out"}
-		]
+				"bash -c '",
+					"case `file $0` in *ASCII*) PART1=`head -c 50K $0 | wc -l`;; *compressed*) PART1=`gunzip -c $0 | head -c 50K | wc -l`;; *empty*) PART1=0;; esac;",
+					"case `file $1` in *ASCII*) PART2=`head -c 50K $1 | wc -l`;; *compressed*) PART2=`gunzip -c $1 | head -c 50K | wc -l`;; *empty*) PART2=0;; esac;",
+					"if [[ $PART1 -ge 1000 && $PART2 -ge 1000 ]]; then",
+						"salmon",
+						"--no-version-check",
+						"quant",
+						"--index", {"subst":"salmon_transcriptome_val"},
+						"--libType", "A",
+						"--mates1 $0",
+						"--mates2 $1",
+						{"subst":"gene_mapping_flag"},
+						{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
+						"--output", {"subst":"salmon_out"}, ";",
+					"else >&2 printf \"Not enough reads to run Salmon: fq1: %s - fq2: %s\" $(($PART1/4)) $(($PART2/4)); exit 0; fi'",
+				{"port":"fq1", "direction":"in"}, {"port":"fq2", "direction":"in"}
+		],
+		"comment":"salmon is too fussy and requires a minimum of good reads to work or it throws a fit. wrapped in a bash script to validate fastq files"
 	},
 	{
 		"id":"zip_salmon_quant",
@@ -140,9 +148,13 @@
 	{
 		"id":"cp_quant_genes",
 		"type":"EXEC",
+		"subtype":"STRINGIFY",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[ "cp", {"port":"src_quant_genes", "direction":"in"}, {"subst":"cp_quant_genes_target"} ]
+		"cmd":[ "bash -c 'if [ -e $0 ]; then cp $0 $1; else >&2 printf \"No such file: %s\" $0; exit 0; fi'", 
+				{"port":"src_quant_genes", "direction":"in"}, {"subst":"cp_quant_genes_target"}
+		],
+		"comment":"if salmon is not run this file is not created"
 	}
 ],
 "edges":[
