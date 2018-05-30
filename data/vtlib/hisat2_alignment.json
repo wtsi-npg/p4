@@ -1,0 +1,153 @@
+{
+"version":"2.0",
+"description":"run hisat2 to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"hisat2:reference_genome"
+		},
+		"outputs":{
+			"_stdout_":"hisat2"
+		}
+	}
+},
+"subst_params":[
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
+	{
+		"id":"hisat2_executable",
+		"required":"no",
+		"default":"hisat2"
+	},
+	{
+		"id":"rna_strandness_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "--rna-strandness", {"subst":"rna_strandness"} ],
+			"postproc":{"op":"concat","pad":" "}
+		},
+		"comment":"akin to TopHat's --library-type option"
+	},
+	{
+		"id":"aligner_numthreads_flag",
+		"required":"no",
+		"subst_constructor":{
+								"vals":[ "--threads", {"subst":"aligner_numthreads"} ],
+								"postproc":{"op":"concat","pad":" "}
+							}
+	},
+	{
+		"id":"quant_vtf",
+		"required":"yes",
+		"subst_constructor":{
+								"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"quant_method"}, "_alignment.json" ],
+								"postproc":{"op":"concat", "pad":""}
+							}
+	}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["bamtofastq", "gz=0",
+				{
+					"select":"alignment_reads_layout", 
+					"default":"2", 
+					"select_range":[1],
+					"cases":{
+						"1":{"packflag":["S=",{"port":"fq1", "direction":"out"}]},
+						"2":[{"packflag":["F=",{"port":"fq1", "direction":"out"}]}, {"packflag":["F2=",{"port":"fq1", "direction":"out"}]}]
+					}
+				}
+		]
+	},
+	{
+		"id":"teepot_fq1_bif",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[
+			"teepot",
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"teepot_tempdir_flag"},
+			{"subst":"teepot_pval"},
+			{"subst":"bamtofastq_teepot_wflag", "ifnull":{"subst_constructor":{"vals":["-w", {"subst":"bamtofastq_teepot_wflag", "ifnull":"300"}]}}},
+			{"port":"fq1_aln", "direction":"out"},
+			{"port":"fq1_qnt", "direction":"out"}
+		]
+	},
+	{
+		"id":"teepot_fq2_bif",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[
+			"teepot",
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"teepot_tempdir_flag"},
+			{"subst":"teepot_pval"},
+			{"subst":"bamtofastq_teepot_wflag", "ifnull":{"subst_constructor":{"vals":["-w", {"subst":"bamtofastq_teepot_wflag", "ifnull":"300"}]}}},
+			{"port":"fq2_aln", "direction":"out"},
+			{"port":"fq2_qnt", "direction":"out"}
+		]
+	},
+	{
+		"id":"hisat2",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+				{"subst":"hisat2_executable"},
+				{"subst":"aligner_numthreads_flag"},
+				"-x", {"port":"reference_genome", "direction":"in"},
+				"-1", {"port":"fq1_in","direction":"in"},
+				{
+					"select":"alignment_reads_layout",
+					"default":"2",
+					"select_range":[1],
+					"cases":{
+						"1":[ ],
+						"2":[ "-2", {"port":"fq2_in","direction":"in"} ]
+					}
+				},
+				"--reorder",
+				{"subst":"library_type_flag"},
+				"--rna-strandness", "RF"
+		]
+	},
+	{
+		"id":"quantify",
+		"type":"VTFILE",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"comment":"inputs: fq1, fq2; outputs: NONE",
+		"node_prefix":"quant_",
+		"name":{"subst":"quant_vtf"},
+		"description":"subgraph containing salmon quantification of transcripts"
+	}
+],
+"edges":[
+	{"id":"bam2fq_to_fq1bif", "from":"bamtofastq:fq1", "to":"teepot_fq1_bif"},
+	{"select":"alignment_reads_layout",
+		"default":2, "select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"bam2fq_to_fq2bif", "from":"bamtofastq:fq2", "to":"teepot_fq2_bif"} }},
+	{"id":"fq1bif_to_hisat2", "from":"teepot_fq1_bif:fq1_aln", "to":"hisat2:fq1_in"},
+	{"select":"alignment_reads_layout", 
+		"default":2, "select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"fq2bif_to_hisat2", "from":"teepot_fq2_bif:fq2_aln", "to":"hisat2:fq2_in"} }},
+	{"id":"fq1bif_to_quantify", "from":"teepot_fq1_bif:fq1_qnt", "to":"quantify:fastq1"},
+	{"select":"alignment_reads_layout", 
+		"default":2, "select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"fq2bif_to_quantify", "from":"teepot_fq2_bif:fq2_qnt", "to":"quantify:fastq2"} }}
+]
+}
