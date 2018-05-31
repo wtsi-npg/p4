@@ -200,8 +200,15 @@
 		"cmd":[
 			"bamtofastq",
 			"gz=1",
-			{"packflag":["F=", {"port":"__FQ1_OUT__", "direction":"out"}]},
-			{"packflag":["F2=", {"port":"__FQ2_OUT__", "direction":"out"}]}
+			   {
+				"select":"alignment_reads_layout", 
+				"default":"2", 
+				"select_range":[1],
+				"cases":{
+						 "1":{"packflag":["S=",{"port":"__FQ1_OUT__", "direction":"out"}]},
+						 "2":[{"packflag":["F=",{"port":"__FQ1_OUT__", "direction":"out"}]}, {"packflag":["F2=",{"port":"__FQ2_OUT__", "direction":"out"}]}]
+				}
+			   }
 		]
 	},
 	{
@@ -232,8 +239,15 @@
 				"--no-coverage-search",
 				"--microexon-search",
 				{"port":"__REFERENCE_GENOME_IN__", "direction":"in"},
-				{"port":"__FQ1_IN__", "direction":"in"},
-				{"port":"__FQ2_IN__", "direcion":"in"}
+				{
+					"select":"alignment_reads_layout",
+					"default":"2",
+					"select_range":[1],
+					"cases":{
+						"1":{"port":"__FQ1_IN__", "direction":"in"},
+						"2":[{"port":"__FQ1_IN__", "direction":"in"}, {"port":"__FQ2_IN__", "direcion":"in"}]
+					}
+				}
 		]
 	},
 	{
@@ -331,9 +345,15 @@
 ],
 "edges":[
 	{ "id":"bamtofastq_to_fq1", "from":"bamtofastq:__FQ1_OUT__", "to":"fq1" },
-	{ "id":"bamtofastq_to_fq2", "from":"bamtofastq:__FQ2_OUT__", "to":"fq2" },
+	{ "select":"alignment_reads_layout",
+		"default":2,
+		"select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"bamtofastq_to_fq2", "from":"bamtofastq:__FQ2_OUT__", "to":"fq2"} } },
 	{ "id":"fq1_to_tophat2", "from":"fq1", "to":"tophat2:__FQ1_IN__" },
-	{ "id":"fq2_to_tophat2", "from":"fq2", "to":"tophat2:__FQ2_IN__" },
+	{ "select":"alignment_reads_layout", 
+		"default":2,
+		"select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"fq2_to_tophat2", "from":"fq2", "to":"tophat2:__FQ2_IN__"} } },
 	{ "id":"tophat2_to_accepted_hits_bam", "from":"tophat2", "to":"accepted_hits_bam" },
 	{ "id":"tophat2_to_unmapped_bam", "from":"tophat2", "to":"unmapped_bam" },
 	{ "id":"tophat2_to_deletions_bed", "from":"tophat2", "to":"deletions_bed" },
@@ -346,6 +366,9 @@
 	{ "id":"unmapped_bam_to_bamcat", "from":"unmapped_bam", "to":"bamcat:__IN_BAM2__" },
 	{ "id":"bamcat_to_qname_sort", "from":"bamcat", "to":"bamsort_qname" },
 	{ "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1" },
-	{ "id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2" }
+	{ "select":"alignment_reads_layout", 
+		"default":2,
+		"select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} } }
 ]
 }
