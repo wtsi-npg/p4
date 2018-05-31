@@ -77,18 +77,6 @@
 		}
 	},
 	{
-		"id":"gene_mapping_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "--geneMap=", {"subst":"annotation_val"} ],
-			"postproc":{"op":"concat","pad":""}
-		}
-	},
-	{
-		"id":"salmon_transcriptome_val",
-		"required":"yes"
-	},
-	{
 		"id":"cp_quant_genes_target",
 		"required":"no",
 		"subst_constructor":{
@@ -101,27 +89,37 @@
 	{
 		"id":"salmon",
 		"type":"EXEC",
+		"subtype":"STRINGIFY",
 		"use_STDIN": false,
 		"use_STDOUT": true,
 		"cmd":[
-				"salmon",
-				"--no-version-check",
-				"quant",
-				"--index", {"subst":"salmon_transcriptome_val"},
-				"--libType", "A",
-				{
-					"select":"alignment_reads_layout", 
-					"default":"2", 
-					"select_range":[1],
-					"cases":{
-						"1":["-r", {"port":"fq1", "direction":"in"}],
-						"2":["-1", {"port":"fq1", "direction":"in"}, "-2", {"port":"fq2", "direction":"in"}]
+				"bash -c '",
+					"SALMON_CMD=\"salmon --no-version-check quant ",
+					"--libType A ",
+					"--index", {"subst":"salmon_transcriptome_val", "required":"yes"},
+					"--geneMap", {"subst":"annotation_val", "required":"yes"},
+					"--output", {"subst":"salmon_out"},
+					{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
+					"case `file $0` in *ASCII*) PART1=`head -c 50K $0 | wc -l`;; *compressed*) PART1=`gunzip -c $0 | head -c 50K | wc -l`;; *empty*) PART1=0;; esac;",
+					"if [ $0 ] && [ ! $1 ]; then",
+						"SALMON_CMD+=\"-r $0\";",
+						"if [[ $PART1 -lt 1000 ]]; then >&2 printf \"Not enough reads to run Salmon: fq: %s\" $(($PART1/4)); exit 0; fi;",
+					"elif [ $0 ] && [ $1 ]; then",
+						"SALMON_CMD+=\"-1 $0 -2 $1\";",
+						"case `file $1` in *ASCII*) PART2=`head -c 50K $1 | wc -l`;; *compressed*) PART2=`gunzip -c $1 | head -c 50K | wc -l`;; *empty*) PART2=0;; esac;",
+						"if [[ $PART1 -lt 1000 || $PART2 -lt 1000 ]]; then >&2 printf \"Not enough reads to run Salmon: fq1: %s - fq2: %s\" $(($PART1/4)) $(($PART2/4)); exit 0; fi; fi;",
+					"printf \"Running Salmon command: %s\n\" \"$SALMON_CMD\"; eval \"$SALMON_CMD\"' ",
+					{
+						"select":"alignment_reads_layout",
+						"default":"2",
+						"select_range":[1],
+						"cases":{
+							"1":[{"port":"fq1", "direction":"in"}],
+							"2":[{"port":"fq1", "direction":"in"}, {"port":"fq2", "direction":"in"}]
+						}
 					}
-				},
-				{"subst":"gene_mapping_flag"},
-				{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}},
-				"--output", {"subst":"salmon_out"}
-		]
+		],
+		"comment":"salmon is too fussy and requires a minimum of good reads to work or it throws a fit. wrapped in a bash script to validate fastq files"
 	},
 	{
 		"id":"zip_salmon_quant",
@@ -147,9 +145,13 @@
 	{
 		"id":"cp_quant_genes",
 		"type":"EXEC",
+		"subtype":"STRINGIFY",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-		"cmd":[ "cp", {"port":"src_quant_genes", "direction":"in"}, {"subst":"cp_quant_genes_target"} ]
+		"cmd":[ "bash -c 'if [ -e $0 ]; then cp $0 $1; else >&2 printf \"No such file: %s\" $0; exit 0; fi'", 
+				{"port":"src_quant_genes", "direction":"in"}, {"subst":"cp_quant_genes_target"}
+		],
+		"comment":"if salmon is not run this file is not created"
 	}
 ],
 "edges":[
