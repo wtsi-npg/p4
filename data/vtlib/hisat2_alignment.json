@@ -64,7 +64,7 @@
 					"select_range":[1],
 					"cases":{
 						"1":{"packflag":["S=",{"port":"fq1", "direction":"out"}]},
-						"2":[{"packflag":["F=",{"port":"fq1", "direction":"out"}]}, {"packflag":["F2=",{"port":"fq1", "direction":"out"}]}]
+						"2":[{"packflag":["F=",{"port":"fq1", "direction":"out"}]}, {"packflag":["F2=",{"port":"fq2", "direction":"out"}]}]
 					}
 				}
 		]
