@@ -96,8 +96,8 @@ my $builder = $class->new(
 );
 
 if ($builder->install_base()) {
-  $builder->install_path('data' => join q{/}, $builder->install_base(), 'data');
   $builder->add_build_element('data');
+  $builder->install_path('data' => join q{/}, $builder->install_base(), 'data');
 } else {
   warn "WARNING: '--install_base' option is not given, 'data' element will not be installed\n\n";
 }
