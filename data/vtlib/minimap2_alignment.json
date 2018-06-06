@@ -57,13 +57,6 @@
                 "type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":true,
-		"old_cmd":[
-			"scramble",
-			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
-			{"subst":"s2b_compress_level", "ifnull":"-0"},
-			"-I", "sam",
-			"-O", "bam"
-		],
 		"cmd":[
 			{"subst":"samtools_cmd", "required":true, "ifnull":"samtools"},
 			"view",
