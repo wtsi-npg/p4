@@ -19,7 +19,13 @@
 		"required":"no",
 		"subst_constructor":{ "vals":[ "-K", {"subst":"minimap2_K_value"} ] }
 	},
-	{"id":"minimap2_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"}
+	{"id":"minimap2_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"},
+	{"id":"aln_filter_value","comment":"this must be set if you want to filter the output bam (e.g. to 0x900 to filter secondary and supplementary alignments)"},
+	{
+		"id":"aln_filter_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-F", {"subst":"aln_filter_value"} ] }
+	}
 ],
 "nodes":[
 	{
@@ -51,12 +57,19 @@
                 "type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":true,
-		"cmd":[
+		"old_cmd":[
 			"scramble",
 			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
 			{"subst":"s2b_compress_level", "ifnull":"-0"},
 			"-I", "sam",
 			"-O", "bam"
+		],
+		"cmd":[
+			{"subst":"samtools_cmd", "required":true, "ifnull":"samtools"},
+			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "--threads", {"subst":"s2b_mt_val"} ]}}},
+			{"subst":"s2b_compress_level", "ifnull":"-u", "comment":"default to uncompressed (bam) output"},
+			{"subst":"aln_filter_flag", "comment":"set aln_filter_value param to activate this (see above)"},
+			"-"
 		]
         }
 ],
