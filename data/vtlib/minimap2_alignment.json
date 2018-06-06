@@ -66,6 +66,7 @@
 		],
 		"cmd":[
 			{"subst":"samtools_cmd", "required":true, "ifnull":"samtools"},
+			"view",
 			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "--threads", {"subst":"s2b_mt_val"} ]}}},
 			{"subst":"s2b_compress_level", "ifnull":"-u", "comment":"default to uncompressed (bam) output"},
 			{"subst":"aln_filter_flag", "comment":"set aln_filter_value param to activate this (see above)"},
