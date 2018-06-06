@@ -8,7 +8,7 @@
 			"reference":"hisat2:reference_genome"
 		},
 		"outputs":{
-			"_stdout_":"hisat2"
+			"_stdout_":"samtobam"
 		}
 	}
 },
@@ -146,6 +146,19 @@
 		"node_prefix":"quant_",
 		"name":{"subst":"quant_vtf"},
 		"description":"subgraph containing salmon quantification of transcripts"
+	},
+	{
+		"id":"samtobam",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+				"scramble",
+				{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
+				{"subst":"s2b_compress_level", "ifnull":"-0"},
+				"-I", "sam",
+				"-O", "bam"
+		]
 	}
 ],
 "edges":[
@@ -164,6 +177,7 @@
 	{"select":"alignment_reads_layout", 
 		"default":2, "select_range":[1],
 		"cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} }
-	}
+	},
+	{"id":"hisat2_to_scramble", "from":"hisat2", "to":"samtobam" }
 ]
 }
