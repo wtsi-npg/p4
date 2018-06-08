@@ -99,6 +99,41 @@
 		"description":"BAM using as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
 	},
 	{
+		"id":"spatial_filter",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+			"bambi",
+			"spatial_filter",
+			"-a",
+			"--compression-level", "0",
+			"-f",
+			"-l", {"port":"apply_stats", "direction":"out"},
+			"-F", {"port":"filter", "direction":"in"},
+			"/dev/stdin"
+		],
+		"description":"apply the spatial filter (produced in stage1)"
+	},
+	{
+		"id":"spatial_filter_file",
+		"type":"INFILE",
+		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"recal_dir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, ".spatial_filter" ], "postproc":{"op":"concat","pad":""}}}},
+		"description":"spatial filter file"
+	},
+	{
+		"id":"spatial_filter_stats",
+		"type":"OUTFILE",
+		"name":{"subst":"spatial_filter_stats", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".spatial_filter.stats" ], "postproc":{"op":"concat","pad":""}}}} },
+	{
+		"id":"subsample_fqc",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (filtered bam); outputs: _stdout_ (bam, same as input)",
+		"node_prefix":"ssfqc_",
+		"name":{"subst":"subsample_vtf", "ifnull":"subsample.json"},
+		"description":""
+	},
+	{
 		"id":"target_alignment",
 		"type":"VTFILE",
 		"comment":"inputs: _stdin_ (bam), reference, reference dict; outputs: aligned_to_target (bam), aligned_to_phix (bam)",
@@ -186,7 +221,11 @@
 	}
 ],
 "edges":[
-	{ "id":"src_to_bc2", "from":"src_bam", "to":"target_alignment" },
+	{ "id":"src_to_bc2", "from":"src_bam", "to":"spatial_filter" },
+	{ "id":"src_to_bc2", "from":"spatial_filter_file", "to":"spatial_filter:filter" },
+	{ "id":"apply_filter_to_sfqc", "from":"spatial_filter:apply_stats", "to":"spatial_filter_stats" },
+	{ "id":"sf_to_bc2", "from":"spatial_filter", "to":"subsample_fqc" },
+	{ "id":"ssfqc_to_tgtaln", "from":"subsample_fqc:straight_through1", "to":"target_alignment" },
 	{ "id":"target_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_target", "to":"alignment_filter:target_bam_in" },
 	{ "id":"phix_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_phix", "to":"alignment_filter:phix_bam_in" },
 	{ "id":"human_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_human", "to":"alignment_filter:human_bam_in" },
@@ -194,7 +233,7 @@
 	{ "id":"af_to_paf_target", "from":"alignment_filter:target_bam_out", "to":"final_output_prep_target" },
 	{ "id":"af_to_paf_phix", "from":"alignment_filter:phix_bam_out", "to":"final_output_prep_phix" },
 	{ "id":"af_to_paf_hs", "from":"alignment_filter:human_bam_out", "to":"final_output_prep_hs" },
-        { "id":"src_bam_to_seqchksum", "from":"src_bam", "to":"seqchksum" },
+        { "id":"src_to_seqchksum", "from":"subsample_fqc:straight_through2", "to":"seqchksum" },
 	{ "id":"fopt_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
 	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" },
 	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_hs", "to":"seqchksum:hs_seqchksum" }
