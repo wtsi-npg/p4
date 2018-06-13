@@ -25,6 +25,12 @@
 		"id":"aln_filter_flag",
 		"required":"no",
 		"subst_constructor":{ "vals":[ "-F", {"subst":"aln_filter_value"} ] }
+	},
+	{"id":"minimap2_F_value","required":"no","default":"1200","comment":"unset this value to remove -F flag"},
+	{
+		"id":"minimap2_F_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-F", {"subst":"minimap2_F_value"} ] }
 	}
 ],
 "nodes":[
@@ -47,6 +53,7 @@
 			"--MD",
 			"-t", {"subst":"minimap2_numthreads", "required":true, "ifnull":{"subst":"aligner_numthreads"}},
 			{"subst":"minimap2_Y_flag"},
+			{"subst":"minimap2_F_flag"},
 			{"subst":"minimap2_K_flag"},
 			{"port":"reference_index", "direction":"in"},
 			{"port":"fq","direction":"in"}

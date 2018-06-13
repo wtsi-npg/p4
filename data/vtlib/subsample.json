@@ -63,8 +63,10 @@
 			"fastq",
 			"-F", "0x200",
 			"-t",
-			"-1", {"port":"ss_fq1", "direction":"out"},
-			"-2", {"port":"ss_fq2", "direction":"out"},
+			{"select":"s2_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"ss_fq1", "direction":"out"},"-2", {"port":"ss_fq2", "direction":"out"}],
+				"se":["-s", {"port":"ss_fq1", "direction":"out"}]
+			}},
                         "-"
 		]
         },
@@ -89,8 +91,10 @@
 			"fastq",
 			"-F", "0x200",
 			"-t",
-			"-1", {"port":"fq1", "direction":"out"},
-			"-2", {"port":"fq2", "direction":"out"},
+			{"select":"s2_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"fq1", "direction":"out"},"-2", {"port":"fq2", "direction":"out"}],
+				"se":["-s", {"port":"fq1", "direction":"out"}]
+			}},
                         "-"
 		]
         },
@@ -101,13 +105,18 @@
 		"use_STDOUT": true,
 		"cmd":[ "fastqcheck" ]
         },
-        {
-                "id":"fastqcheck_r2",
-                "type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":[ "fastqcheck" ]
-        },
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"node only appears if s2_se_pe is pe",
+           "cases":{
+             "pe":
+		{
+			"id":"fastqcheck_r2",
+			"type":"EXEC",
+			"use_STDIN": true,
+			"use_STDOUT": true,
+			"cmd":[ "fastqcheck" ]
+		},
+             "se":{"comment":"fastqcheck_r2 node removed"}
+	}},
 	{
 		"id":"fqc1",
 		"type":"OUTFILE",
@@ -125,11 +134,23 @@
 	{ "id":"tee_to_ss", "from":"tee_ssfqc:subsample", "to":"subsample" },
 	{ "id":"ss_to_b2fqss", "from":"subsample", "to":"bamtofastq_ss" },
 	{ "id":"b2fqss_to_fq1", "from":"bamtofastq_ss:ss_fq1", "to":"run_lane_ss_fq1" },
-	{ "id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2" },
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"edge only appears if s2_se_pe is pe",
+           "cases":{
+	      "pe":{ "id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2" },
+              "se":{"comment":"b2fqss_to_fq2 edge removed"}
+	}},
 	{ "id":"tee_to_b2fqfqc", "from":"tee_ssfqc:fqc", "to":"bamtofastq_fqc" },
 	{ "id":"tee_to_splitter", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
-	{ "id":"tee_to_splitter", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"edge only appears if s2_se_pe is pe",
+           "cases":{
+	      "pe":{ "id":"bamtofastq_fqx_to_fastqcheck_r2", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
+              "se":{"comment":"bamtofastq_fqx_to_fastqcheck_r2 edge removed"}
+	}},
 	{ "id":"tee_to_splitter", "from":"fastqcheck_r1", "to":"fqc1" },
-	{ "id":"tee_to_splitter", "from":"fastqcheck_r2", "to":"fqc2" }
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"edge only appears if s2_se_pe is pe",
+           "cases":{
+             "pe": { "id":"fastqcheck_r2_to_fqc2", "from":"fastqcheck_r2", "to":"fqc2" },
+             "se":{"comment":"fastqcheck_r2_to_fqc2 edge removed"}
+	}}
 ]
 }
