@@ -346,8 +346,10 @@
 		"cmd":[ "samtools",
 			"fastq",
 			"-F", "0x200",
-			"-1", {"port":"ss_fq1", "direction":"out"},
-			"-2", {"port":"ss_fq2", "direction":"out"},
+			{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"ss_fq1", "direction":"out"},"-2", {"port":"ss_fq2", "direction":"out"}],
+				"se":["-s", {"port":"ss_fq1", "direction":"out"}]
+			}},
 			"--i1", {"port":"ss_fqt", "direction":"out"},
 			"--index-format", "i99",
                         "-"
@@ -499,7 +501,10 @@
 	{ "id":"tee_to_ss", "from":"tee_split:subsample", "to":"subsample" },
 	{ "id":"ss_to_b2fqss", "from":"subsample", "to":"bamtofastq_ss" },
 	{ "id":"b2fqss_to_fq1", "from":"bamtofastq_ss:ss_fq1", "to":"run_lane_ss_fq1" },
-	{ "id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2" },
+	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
+		"pe":{"id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2"},
+		"se":{}
+	}},
 	{ "id":"b2fqss_to_fqt", "from":"bamtofastq_ss:ss_fqt", "to":"run_lane_ss_fqt" },
 	{ "id":"tee_to_b2fqfqc", "from":"tee_split:fqc", "to":"bamtofastq_fqc" },
 	{ "id":"fq_to_fqc1", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
