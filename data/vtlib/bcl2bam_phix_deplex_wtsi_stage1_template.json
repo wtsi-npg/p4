@@ -381,8 +381,10 @@
 		"cmd":[ "samtools",
 			"fastq",
 			"-F", "0x200",
-			"-1", {"port":"fq1", "direction":"out"},
-			"-2", {"port":"fq2", "direction":"out"},
+			{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"fq1", "direction":"out"},"-2", {"port":"fq2", "direction":"out"}],
+				"se":["-0", {"port":"fq1", "direction":"out"}]
+			}},
 			"--i1", {"port":"fqt", "direction":"out"},
 			"--index-format", "i99",
                         "-"
@@ -397,7 +399,7 @@
         },
         {
                 "id":"fastqcheck_r2",
-                "type":"EXEC",
+                "type":{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{"pe":"EXEC","se":"INACTIVE"}},
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd":[ "fastqcheck" ]
@@ -508,10 +510,16 @@
 	{ "id":"b2fqss_to_fqt", "from":"bamtofastq_ss:ss_fqt", "to":"run_lane_ss_fqt" },
 	{ "id":"tee_to_b2fqfqc", "from":"tee_split:fqc", "to":"bamtofastq_fqc" },
 	{ "id":"fq_to_fqc1", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
-	{ "id":"fq_to_fqc2", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
+	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
+		"pe":{ "id":"fq_to_fqc2", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
+		"se":{}
+	}},
 	{ "id":"fq_to_fqct", "from":"bamtofastq_fqc:fqt", "to":"fastqcheck_rt" },
 	{ "id":"fqc_to_f1", "from":"fastqcheck_r1", "to":"fqc1" },
-	{ "id":"fqc_to_f2", "from":"fastqcheck_r2", "to":"fqc2" },
+	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
+		"pe":{ "id":"fqc_to_f2", "from":"fastqcheck_r2", "to":"fqc2" },
+		"se":{}
+	}},
 	{ "id":"fqc_to_ft", "from":"fastqcheck_rt", "to":"fqct" },
 	{ "id":"tee_to_stats", "from":"tee_split:stats", "to":"samtools_stats" },
 	{ "id":"stats_to_file", "from":"samtools_stats", "to":"lane_stats_file" },

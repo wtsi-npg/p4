@@ -62,7 +62,6 @@
 		"cmd":[ "samtools",
 			"fastq",
 			"-F", "0x200",
-			"-t",
 			{"select":"s2_se_pe", "default":"pe", "select_range":[1], "cases":{
 				"pe":["-1", {"port":"ss_fq1", "direction":"out"},"-2", {"port":"ss_fq2", "direction":"out"}],
 				"se":["-0", {"port":"ss_fq1", "direction":"out"}]
@@ -90,10 +89,9 @@
 		"cmd":[ "samtools",
 			"fastq",
 			"-F", "0x200",
-			"-t",
 			{"select":"s2_se_pe", "default":"pe", "select_range":[1], "cases":{
 				"pe":["-1", {"port":"fq1", "direction":"out"},"-2", {"port":"fq2", "direction":"out"}],
-				"se":["-s", {"port":"fq1", "direction":"out"}]
+				"se":["-0", {"port":"fq1", "direction":"out"}]
 			}},
                         "-"
 		]
