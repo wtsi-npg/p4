@@ -1,16 +1,7 @@
-
 {
 "description":"This pipeline starts with Illumina2Bam, and ends by running SplitBamByReadGroup to create separate BAM files for each sample.",
-"version":"1.0",
+"version":"2.0",
 "subst_params":[
-	{
-		"id":"basic_pipeline_params_file",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"cfgdatadir"}, "/", "alignment_common.json" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
 	{"id":"rpt","description":"Run/Position/TagIndex, though here it is generally only Run/Position. Used in defaults/constructors for i2b_rg,decoder_metrics,md5_file,seqchksum_file,spatial_filter_file and filtered_bam"},
 	{"id":"i2b_run_path","description":"path to runfolder. Provides a base on which i2b_runfolder_path can be constructed"},
 	{"id":"i2b_runfolder","description":"runfolder directory. Provides a base on which platform unit and i2b_runfolder_path can be constructed"},
@@ -73,139 +64,25 @@
 			"postproc":{"op":"concat","pad":","}
 		}
 	},
-	{"id":"bid_opt","required":"no","default":"bamindexdecoder"},
-        {
-                "id":"bid_vtf",
-                "required":"yes",
-                "subst_constructor":{
-                        "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"bid_opt"}, ".json" ],
-                        "postproc":{"op":"concat", "pad":""}
-                }
-        },
 	{"id":"qc_check_id_run","required":"yes"},
 	{"id":"qc_check_position","required":"yes","default":{"subst":"i2b_lane"}},
 	{"id":"qc_check_qc_in_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"i2b_runfolder_path"}, "Data/Intensities", {"subst":"i2b_bam_basecalls_dir"}],"postproc":{"op":"concat","pad":"/"}}}},
 	{"id":"qc_check_qc_out_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"qc_check_qc_in_dir"}, "no_cal/archive/qc"],"postproc":{"op":"concat","pad":"/"}}}},
-	{"id":"phix_alignment_method","required":"no","default":"bwa_aln"},
-        {
-                "id":"alignment_vtf",
-                "required":"yes",
-                "subst_constructor":{
-                        "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"phix_alignment_method"}, "_alignment.json" ],
-                        "postproc":{"op":"concat", "pad":""}
-                }
-        },
-	{"id":"split_prefix","required":"yes", "default":{"subst":"outdatadir"}},
+	{"id":"run_lane_label", "description":"label constructed from id_run and position", "default":{"subst_constructor":{"vals":[{"subst":"qc_check_id_run"}, "_", {"subst":"i2b_lane"}],"postproc":{"op":"concat","pad":""}}}}
+],
+"nodes":[
 	{
-		"id":"split_format",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[
-				{"subst":"split_prefix"},
-				"/",
-				"%!.bam"
-			],
-			"postproc":{"op":"concat","pad":""}
-		}
-	},
-	{
-		"id":"md5filename",
-		"description":"md5 file name used by bamrecompress",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".bam.md5" ],
-			"postproc":{"op":"concat","pad":""}
-		}
-	},
-        {
-                "id":"seqchksum_file",
-                "required":"yes",
-                "subst_constructor":{
-                        "vals":[ {"subst":"scs_outdir", "ifnull":{"subst":"outdatadir"}}, "/", {"subst":"rpt"}, ".post_i2b.seqchksum" ],
-                        "postproc":{"op":"concat", "pad":""}
-                }
-        },
-	{
-		"id":"spatial_filter_file",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".bam.filter" ],
-			"postproc":{"op":"concat","pad":""}
-		}
-	},
-	{
-		"id":"spatial_filter_stats",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_spatial_filter.stats" ],
-			"postproc":{"op":"concat","pad":""}
-		}
-	},
-	{
-		"id":"filtered_bam",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_filtered.bam" ],
-			"postproc":{"op":"concat","pad":""}
-		}
-	},
-	{"id":"refname_phix","required":"yes"},
-	{
-		"id":"reference_phix",
-		"required":"yes",
-		"subst_constructor":{
-			"vals":[ {"subst":"reposdir"}, "/", {"subst":"refname_phix"} ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{"id":"illumina2bam_opt","required":"yes","default":{"subst_constructor":{"vals":[ "illumina2bam", {"subst":"i2b_implementation", "ifnull":"bambi"}, "cmd" ],"postproc":{"op":"concat","pad":"_"}}}},
-	{"id":"illumina2bam_cmd", "default":{"subst":{"subst":"illumina2bam_opt","required":"yes"}}},
-	{
-		"id":"illumina2bam_java_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals": [
-				{"subst":"java_cmd","ifnull":"java","required":"yes"},
-				"-Xmx1024m",
-				"-jar",{"subst":"illumina2bam_jar","required":"yes","ifnull":{"subst_constructor":{"vals":[ {"subst":"i2b_jar_path"}, "/Illumina2bam.jar" ],"postproc":{"op":"concat","pad":""}}}},
-				{"subst":"i2b_intensity_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "I", {"subst":"i2b_intensity_dir","required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_basecalls_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "B", {"subst":"i2b_basecalls_dir","required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_lane_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "LANE", {"subst":"i2b_lane","required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_pu_flag","ifnull":{"subst_constructor":{"vals":[ "PU", {"subst":"i2b_pu"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_rg_flag","ifnull":{"subst_constructor":{"vals":[ "READ_GROUP_ID", {"subst":"i2b_rg"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_bc_seq_flag","ifnull":{"subst_constructor":{"vals":[ "BC_SEQ", {"subst":"i2b_bc_seq_val"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_bc_qual_flag","ifnull":{"subst_constructor":{"vals":[ "BC_QUAL", {"subst":"i2b_bc_qual_val"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_sec_bc_seq_flag","ifnull":{"subst_constructor":{"vals":[ "SEC_BC_SEQ", {"subst":"i2b_sec_bc_seq_val"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_sec_bc_qual_flag","ifnull":{"subst_constructor":{"vals":[ "SEC_BC_QUAL", {"subst":"i2b_sec_bc_qual_val"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_first_tile_flag","ifnull":{"subst_constructor":{"vals":[ "FIRST_TILE", {"subst":"i2b_first_tile"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_tile_limit_flag","ifnull":{"subst_constructor":{"vals":[ "TILE_LIMIT", {"subst":"i2b_tile_limit"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_library_flag","ifnull":{"subst_constructor":{"vals":[ "LIBRARY_NAME", {"subst":"i2b_library_name"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_study_name_flag","ifnull":{"subst_constructor":{"vals":[ "STUDY_NAME", {"subst":"i2b_study_name"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_sample_alias_flag","ifnull":{"subst_constructor":{"vals":[ "SAMPLE_ALIAS", {"subst":"i2b_sample_aliases"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_bc_read_flag","ifnull":{"subst_constructor":{"vals":[ "BC_READ", {"subst":"i2b_bc_read"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_first_index_0_flag","ifnull":{"subst_constructor":{"vals":[ "FIRST_INDEX", {"subst":"i2b_first_index_0"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_final_index_0_flag","ifnull":{"subst_constructor":{"vals":[ "FINAL_INDEX", {"subst":"i2b_final_index_0"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_first_index_1_flag","ifnull":{"subst_constructor":{"vals":[ "FIRST_INDEX", {"subst":"i2b_first_index_1"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_final_index_1_flag","ifnull":{"subst_constructor":{"vals":[ "FINAL_INDEX", {"subst":"i2b_final_index_1"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_first_0_flag","ifnull":{"subst_constructor":{"vals":[ "FIRST", {"subst":"i2b_first_0"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_final_0_flag","ifnull":{"subst_constructor":{"vals":[ "FINAL", {"subst":"i2b_final_0"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_first_1_flag","ifnull":{"subst_constructor":{"vals":[ "FIRST", {"subst":"i2b_first_1"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_final_1_flag","ifnull":{"subst_constructor":{"vals":[ "FINAL", {"subst":"i2b_final_1"} ],"postproc":{"op":"concat","pad":"="}}}},
-				"OUTPUT=/dev/stdout",
-				"COMPRESSION_LEVEL=0"
-			],
-			"postproc":{"op":"pack"}
-		}
-	},
-	{
-		"id":"illumina2bam_bambi_cmd",
-		"required":"yes",
-		"subst_constructor":{
-			"vals": [
+		"id":"illumina2bam",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"comment":"Actual executable used depends on the value of the 12b_implementation parameter: java - use illumina2bam (default); bambi - use new bambi i2b",
+		"cmd":[
 				"bambi",
 				"i2b",
-				{"subst":"i2b_intensity_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--intensity-dir", {"subst":"i2b_intensity_dir","required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_basecalls_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--basecalls-dir", {"subst":"i2b_basecalls_dir","required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
-				{"subst":"i2b_lane_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--lane", {"subst":"i2b_lane","required":"yes"} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"i2b_intensity_flag","required":true,"ifnull":{"subst_constructor":{"vals":[ "--intensity-dir", {"subst":"i2b_intensity_dir","required":true} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"i2b_basecalls_flag","required":true,"ifnull":{"subst_constructor":{"vals":[ "--basecalls-dir", {"subst":"i2b_basecalls_dir","required":true} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"subst":"i2b_lane_flag","required":true,"ifnull":{"subst_constructor":{"vals":[ "--lane", {"subst":"i2b_lane","required":true} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"i2b_pu_flag","ifnull":{"subst_constructor":{"vals":[ "--platform-unit", {"subst":"i2b_pu"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"i2b_rg_flag","ifnull":{"subst_constructor":{"vals":[ "--read-group-id", {"subst":"i2b_rg"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"i2b_bc_seq_flag","ifnull":{"subst_constructor":{"vals":[ "--barcode-tag", {"subst":"i2b_bc_seq_val"} ],"postproc":{"op":"concat","pad":"="}}}},
@@ -231,19 +108,7 @@
 				{"subst":"i2b_arbitrary_flags", "comment":"this allows arbitrary sets of flag strings to be inserted in the command" },
 				"--output-file=-",
 				"--compression-level=0"
-			],
-			"postproc":{"op":"pack"}
-		}
-	}
-],
-"nodes":[
-	{
-		"id":"illumina2bam",
-		"type":"EXEC",
-		"use_STDIN":false,
-		"use_STDOUT":true,
-		"comment":"Actual executable used depends on the value of the 12b_implementation parameter: java - use illumina2bam (default); bambi - use new bambi i2b",
-		"cmd":{"subst":"illumina2bam_cmd","required":"yes"},
+		],
 		"description":"Create the initial BAM file from the data generated by the Illumina machine"
 	},
 	{
@@ -260,8 +125,8 @@
 				{"subst":"ti2b_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_i2b_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
 				{"subst":"ti2b_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_i2b_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
 				{"subst":"ti2b_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
-				"__SCS_OUT__",
-				"__BAF_OUT__"
+				{"port":"scs", "direction":"out"},
+				{"port":"baf","direction":"out"}
 			]
 	},
 	{
@@ -274,11 +139,56 @@
 	},
 	{
 		"id":"bamindexdecoder",
-		"type":"VTFILE",
-		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
-		"node_prefix":"bid_",
-                "name":{"subst":"bid_vtf"},
-		"description":"subgraph containing index decoding options (decode or passthrough)"
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"description":"assign RG values to reads based on index tag sequence (BC tag value)",
+		"comment":"now uses bambi decode (formerly java, illumina2bam BamIndexDecoder.jar",
+		"cmd":[
+			"bambi", "decode",
+			"--metrics-file", {"port":"metrics_file", "direction":"out"},
+			{"subst":"barcode_file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--barcode-file", {"subst":"barcode_file", "required":"yes"} ]}}},
+			{"subst":"bid_convert_low_quality_to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "--convert-low-quality", {"subst":"bid_convert_low_quality_to_no_call"} ]}}},
+			{"subst":"bid_max_low_quality_to_convert to_no_call_flag","ifnull":{"subst_constructor":{"vals":[ "--max-low-quality-to-convert", {"subst":"bid_max_low_quality_to_convert_to_no_call"} ]}}},
+			{"subst":"bid_max_no_calls_flag","ifnull":{"subst_constructor":{"vals":[ "--max-no-calls", {"subst":"bid_max_no_calls"} ]}}},
+			{"subst":"bid_max_mismatches_flag","ifnull":{"subst_constructor":{"vals":[ "--max-mismatches", {"subst":"bid_max_mismatches"} ]}}},
+			{"subst":"bid_min_mismatch_delta_flag","ifnull":{"subst_constructor":{"vals":[ "--min-mismatch-delta", {"subst":"bid_min_mismatch_delta"} ]}}},
+			{"subst":"bid_change_read_name_flag","ifnull":{"subst_constructor":{"vals":[ "--change-read-name", {"subst":"bid_change_read_name"} ]}}},
+			{"subst":"bid_barcode_tag_name_flag","ifnull":{"subst_constructor":{"vals":[ "--barcode-tag-name", {"subst":"bid_barcode_tag_name"} ]}}},
+			{"subst":"bid_quality_tag_name_flag","ifnull":{"subst_constructor":{"vals":[ "--quality-tag-name", {"subst":"bid_quality_tag_name"} ]}}},
+			{"subst":"bid_input_fmt_flag","ifnull":{"subst_constructor":{"vals":[ "--input-fmt", {"subst":"bid_input_fmt"} ]}}},
+			{"subst":"bid_output_fmt_flag","ifnull":{"subst_constructor":{"vals":[ "--output-fmt", {"subst":"bid_output_fmt"} ]}}},
+			{"subst":"bid_arbitrary_flags", "comment":"this allows arbitrary sets of flag strings to be inserted in the command" },
+			{"subst":"bid_compression_level_flag","ifnull":{"subst_constructor":{"vals":[ "--compression-level", {"subst":"bid_compression_level","ifnull":"0"} ]}}},
+			"-"
+		]
+	},
+	{
+		"id":"decoder_metrics",
+		"type":"RAFILE",
+		"name":{
+			"subst":"decoder_metrics", "required":true,
+			"ifnull":{"subst_constructor":{
+				"vals":[ {"subst":"qc_check_qc_in_dir"}, "/", {"subst":"run_lane_label"}, ".bam.", {"subst":"decoder_metrics_name","ifnull":"tag_decode.metrics"} ],
+				"postproc":{"op":"concat", "pad":""}
+			}}
+		}
+	},
+	{
+		"id":"qc_tag_metrics_check",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
+		"comment":"This node is defined as reading stdin, even though this is not true. This bodge is to activate the RAFILE/OUTFILE behaviour and delay execution until after the decoder_metrics output is complete",
+		"cmd":[
+			"qc",
+			"--check=tag_metrics",
+			{"subst":"tmc_id_run_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--id_run", {"subst":"tmc_id_run", "ifnull":{"subst":"qc_check_id_run"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"tmc_position_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--position", {"subst":"tmc_position", "ifnull":{"subst":"qc_check_position"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"tmc_qc_in","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_in", {"subst":"tmc_qc_in_dir", "ifnull":{"subst":"qc_check_qc_in_dir"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"tmc_qc_out","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_out", {"subst":"tmc_qc_out_dir", "ifnull":{"subst":"qc_check_qc_out_dir"}} ],"postproc":{"op":"concat","pad":"="}}}}
+		],
+		"description":"run the qc tag_metrics check"
 	},
 	{
 		"id":"bamcollate",
@@ -292,18 +202,17 @@
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":false,
-                "cmd":
-			[
-				{"subst":"teepot_executable", "ifnull":"teepot"},
-				{"subst":"tctp_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_collated_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
-				{"subst":"teepot_vflag", "ifnull":"-v"},
-				{"subst":"tctp_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_collated_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
-				{"subst":"tctp_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_collated_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
-				{"subst":"tctp_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_collated_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
-				{"subst":"tctp_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
-				"__TD1_OUT__",
-				"__TD2_OUT__"
-			]
+                "cmd": [
+			{"subst":"teepot_executable", "ifnull":"teepot"},
+			{"subst":"tctp_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_collated_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
+			{"subst":"teepot_vflag", "ifnull":"-v"},
+			{"subst":"tctp_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_collated_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
+			{"subst":"tctp_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_collated_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+			{"subst":"tctp_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_collated_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+			{"subst":"tctp_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
+			{"port":"td1","direction":"out"},
+			{"port":"td2","direction":"out"}
+		]
 	},
 	{
 		"id":"simple_cat",
@@ -317,13 +226,13 @@
                 "type":"VTFILE",
                 "comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
                 "node_prefix":"alnphix_",
-                "name":{"subst":"alignment_vtf"},
+                "name":{"subst":"alignment_vtf", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"phix_alignment_method", "required":true, "ifnull":"bwa_aln"}, "_alignment.json" ], "postproc":{"op":"concat", "pad":""}}}},
                 "description":"subgraph containing alignment process"
         },
 	{
 		"id":"reference_phix",
 		"type":"INFILE",
-		"name":{"subst":"reference_phix"},
+		"name":{"subst":"reference_phix", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"reposdir"}, "/", {"subst":"refname_phix"} ], "postproc":{"op":"concat", "pad":""} } } },
 		"description":"Prefix for Phix reference"
 	},
 	{
@@ -331,25 +240,15 @@
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":true,
-		"cmd":[ "bam12auxmerge", "level=0", "rankstrip=1", "ranksplit=1", "zztoname=0", "clipreinsert=1", "__UNALN_BAM_IN__" ]
-	},
-	{
-		"id":"tee_prefilter",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":false,
-                "cmd":
-			[
-				{"subst":"teepot_executable", "ifnull":"teepot"},
-				{"subst":"tpf_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_prefilter_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
-				{"subst":"teepot_vflag", "ifnull":"-v"},
-				{"subst":"tpf_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_prefilter_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
-				{"subst":"tpf_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_prefilter_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
-				{"subst":"tpf_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_prefilter_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
-				{"subst":"tpf_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
-				"__PF1_OUT__",
-				"__PF2_OUT__"
-			]
+		"cmd":[
+			"bam12auxmerge",
+			"level=0",
+			"rankstrip=1",
+			"ranksplit=1",
+			"zztoname=0",
+			"clipreinsert=1",
+			{"port":"unaln_bam", "direction":"in"}
+		]
 	},
 	{
 		"id":"create_filter",
@@ -366,121 +265,273 @@
 		"description":"Create a spatial filter"
 	},
 	{
-		"id":"tee_post_filter_creation",
+		"id":"spatial_filter_file",
+		"type":"RAFILE",
+		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".spatial_filter" ], "postproc":{"op":"concat","pad":""}}}},
+		"description":"spatial filter file"
+	},
+	{
+		"id":"tee_split",
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":false,
                 "cmd":
 			[
 				{"subst":"teepot_executable", "ifnull":"teepot"},
-				{"subst":"tpfc_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_post_filter_creation_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
+				{"subst":"ts_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_split_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir"}} ]}}},
 				{"subst":"teepot_vflag", "ifnull":"-v"},
-				{"subst":"tpfc_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_postfilter_creation_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
-				{"subst":"tpfc_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_postfilter_creation_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
-				{"subst":"tpfc_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_postfilter_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
-				{"subst":"tpfc_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
-				"__FILE_OUT__",
-				"__APPLY_FILTER_OUT__"
-			],
-		"comment":"this tee added to prevent blocking caused by delayed apply_filter execution"
+				{"subst":"ts_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_split_teepot_wval", "ifnull":{"subst":"teepot_wval"}} ]}}},
+				{"subst":"ts_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_split_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"ts_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_split_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"ts_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
+				{"port":"seqchksum", "direction":"out"},
+				{"port":"spatial_filter", "direction":"out"},
+				{"port":"subsample", "direction":"out"},
+				{"port":"fqc", "direction":"out"},
+				{"port":"stats", "direction":"out"},
+				{"port":"split_bam", "direction":"out"},
+				{"port":"unsplit_bam", "direction":"out"}
+			]
 	},
 	{
-		"id":"spatial_filter_file",
-		"type":"RAFILE",
-		"name":{"subst":"spatial_filter_file"},
-		"description":"spatial filter file"
-	},
-	{
-		"id":"bamtocram",
+		"id":"splitter",
 		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
+		"use_STDIN": true,
+		"use_STDOUT": false,
 		"cmd":[
-			"scramble",
-			"-I", "bam",
-			"-O", "cram",
-			"-x",
-			{"subst":"b2c_compression", "ifnull":"-3"}
+			{"subst":"samtools_executable", "ifnull":"samtools"},
+			"split",
+			{"subst":"split_threads_flag", "ifnull":["--threads", {"subst":"split_threads_val", "ifnull":"0"}]},
+			"-f", {"subst":"split_format", "ifnull":{"subst_constructor":{"vals":[{"subst":"split_prefix","required":true,"ifnull":{"subst":"outdatadir"}}, "/", "%!.bam"], "postproc":{"op":"concat","pad":""}}}},
+			"-"
 		],
-		"description":"bam to cram conversion before application of spatial filter file"
+		"description":"Split the BAM file into separate BAM files by Read Group"
 	},
 	{
-		"id":"unfiltered_cram_file",
-		"type":"RAFILE",
-		"name":{"subst":"unfiltered_cram_file", "required":"yes", "ifnull":"unfiltered.cram"},
-		"description":"cram file (before spatial filter application)"
-	},
-	{
-		"id":"cramtobam",
+		"id":"bamrecompress",
 		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":[
-			"scramble",
-			"-I", "cram",
-			"-O", "bam",
-			{"subst":"c2b_compression", "ifnull":"-0"}
-		],
-		"description":"cram to bam conversion before application of spatial filter file"
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			"bamrecompress",
+			"verbose=0", 
+			"md5=1",
+			{"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}}
+		]
 	},
 	{
-		"id":"apply_filter",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":[ "bambi", "spatial_filter", "-a", "--compression-level", "0", "-f", "-F", "__FILTER_IN__", "-l", "__APPLY_STATS_OUT__", "/dev/stdin" ],
-		"description":"Apply a spatial filter"
-	},
-	{ "id":"spatial_filter_stats", "type":"OUTFILE", "name":{"subst":"spatial_filter_stats"} },
-        {
-                "id":"final_stage1_process",
-                "type":"VTFILE",
-                "node_prefix":"fs1p_",
-                "comment":"inputs: _stdin_ (bam); outputs: compressed bam stream, seqchksum (and possibly deplexed bams)",
-                "name":{"subst":"seqchksum","required":"yes","ifnull":{"subst_constructor":{ "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"fs1p","required":"yes", "ifnull": "final_stage1_process.json"} ], "postproc":{"op":"concat", "pad":""} }}},
-                "description":"subgraph containing final stage1 processing"
-        },
-	{ "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
-	{
-		"id":"filtered_bam",
+		"id":"lane_level_bam",
 		"type":"OUTFILE",
-		"name":{"subst":"filtered_bam"},
+		"name":{"subst":"lane_level_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"BAM file after PhiX alignment and spatial filtering"
 	},
         {
-                "id":"final_seqchksum",
-                "type":"VTFILE",
-                "node_prefix":"scs_",
-                "comment":"inputs: _stdin_ (start bam), target_seqchksum",
-                "name":{"subst":"seqchksum","required":"yes","ifnull":{"subst_constructor":{ "vals":[ {"subst":"cfgdatadir"}, "/", "seqchksum_stage1.json" ], "postproc":{"op":"concat", "pad":""} }}},
-                "description":"subgraph containing seqchksum validation of outputs"
+                "id":"subsample",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"view",
+			"-s", {"subst":"seed_frac", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"subsample_seed", "ifnull":""}, {"subst":"subsample_frac", "required":true} ],"postproc":{"op":"concat","pad":"."}}}},
+			"-b",
+			"-"
+		]
+        },
+        {
+                "id":"bamtofastq_ss",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"fastq",
+			"-F", "0x200",
+			{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"ss_fq1", "direction":"out"},"-2", {"port":"ss_fq2", "direction":"out"}],
+				"se":["-0", {"port":"ss_fq1", "direction":"out"}]
+			}},
+			"--i1", {"port":"ss_fqt", "direction":"out"},
+			"--index-format", "i99",
+                        "-"
+		]
+        },
+	{
+		"id":"run_lane_ss_fq1",
+		"type":"OUTFILE",
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_1.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane-level fastq output, read1"
+	},
+	{
+		"id":"run_lane_ss_fq2",
+		"type":"OUTFILE",
+		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_2.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane-level fastq output, read2"
+	},
+	{
+		"id":"run_lane_ss_fqt",
+		"type":"OUTFILE",
+		"name":{"subst":"run_lane_ss_fqt", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_t.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane-level fastq output, tagread"
+	},
+        {
+                "id":"bamtofastq_fqc",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"fastq",
+			"-F", "0x200",
+			{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"fq1", "direction":"out"},"-2", {"port":"fq2", "direction":"out"}],
+				"se":["-0", {"port":"fq1", "direction":"out"}]
+			}},
+			"--i1", {"port":"fqt", "direction":"out"},
+			"--index-format", "i99",
+                        "-"
+		]
+        },
+        {
+                "id":"fastqcheck_r1",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "fastqcheck" ]
+        },
+        {
+                "id":"fastqcheck_r2",
+                "type":{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{"pe":"EXEC","se":"INACTIVE"}},
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "fastqcheck" ]
+        },
+        {
+                "id":"fastqcheck_rt",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "fastqcheck" ]
+        },
+	{
+		"id":"fqc1",
+		"type":"OUTFILE",
+		"name":{"subst":"fqc1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/", {"subst":"run_lane_label"}, "_1.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane[1]-level fastqcheck output"
+	},
+	{
+		"id":"fqc2",
+		"type":"OUTFILE",
+		"name":{"subst":"fqc2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/", {"subst":"run_lane_label"}, "_2.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane[2]-level fastqcheck output"
+	},
+	{
+		"id":"fqct",
+		"type":"OUTFILE",
+		"name":{"subst":"fqct", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/", {"subst":"run_lane_label"}, "_t.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane[t]-level fastqcheck output"
+	},
+	{
+		"id":"samtools_stats",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-" ]
+	},
+	{ "id":"lane_stats_file", "type":"OUTFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label","ifnull":"rll"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
+
+	{
+		"id":"seqchksum",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "bamseqchksum" ]
+	},
+	{
+		"id":"seqchksum_file",
+		"type":"RAFILE",
+		"name":{"subst":"seqchksum_file", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"scs_outdir", "ifnull":{"subst":"outdatadir"}}, "/", {"subst":"run_lane_label"}, ".post_i2b.seqchksum" ], "postproc":{"op":"concat", "pad":""}}}}
+	},
+        {
+                "id":"seqchksum_input",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":[ "bamseqchksum", {"subst":"src_input_format_flag"} ]
+        },
+        {
+                "id":"head_scs1_input",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":[ "head", "-2" ]
+        },
+        {
+                "id":"head_scs2_input",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+                "cmd":[ "head", "-2" ]
+        },
+        {
+                "id":"cmp_seqchksum",
+                "type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+                "cmd":[
+			"cmp",
+			{"port":"inputchk", "direction":"in"},
+			{"port":"outputchk", "direction":"in"}
+		],
+                "description":"check input primary/sequence data matches output"
         }
 ],
 "edges":[
 	{ "id":"illumina2bam_to_ti2b", "from":"illumina2bam", "to":"tee_i2b" },
-	{ "id":"ti2b_to_bamadapterfind", "from":"tee_i2b:__BAF_OUT__", "to":"bamadapterfind" },
+	{ "id":"ti2b_to_bamadapterfind", "from":"tee_i2b:baf", "to":"bamadapterfind" },
 	{ "id":"bamadapterfind_to_decoder", "from":"bamadapterfind", "to":"bamindexdecoder" },
+	{ "id":"decoder_to_metrics", "from":"bamindexdecoder:metrics_file", "to":"decoder_metrics" },
+	{ "id":"decoder_metrics_to_qc_tag_metrics", "from":"decoder_metrics", "to":"qc_tag_metrics_check" },
 	{ "id":"bamindexdecoder_to_collate", "from":"bamindexdecoder", "to":"bamcollate" },
 	{ "id":"collate_to_tee", "from":"bamcollate", "to":"tee_collated" },
-	{ "id":"tee_collated_to_cat", "from":"tee_collated:__TD1_OUT__", "to":"simple_cat" },
-	{ "id":"cat_to_merge", "from":"simple_cat", "to":"bammerge:__UNALN_BAM_IN__" },
-	{ "id":"tee_collated_to_alignment", "from":"tee_collated:__TD2_OUT__", "to":"alignment_phix" },
+	{ "id":"tee_collated_to_cat", "from":"tee_collated:td1", "to":"simple_cat" },
+	{ "id":"cat_to_merge", "from":"simple_cat", "to":"bammerge:unaln_bam" },
+	{ "id":"tee_collated_to_alignment", "from":"tee_collated:td2", "to":"alignment_phix" },
 	{ "id":"ref_to_alignment", "from":"reference_phix", "to":"alignment_phix:reference" },
 	{ "id":"alignment_to_merge", "from":"alignment_phix", "to":"bammerge" },
-	{ "id":"merge_to_prefilter", "from":"bammerge", "to":"tee_prefilter" },
-	{ "id":"prefilter_to_create_filter", "from":"tee_prefilter:__PF1_OUT__", "to":"create_filter" },
-	{ "id":"create_filter_to_tee", "from":"create_filter", "to":"tee_post_filter_creation" },
-	{ "id":"tee_filter_file", "from":"tee_post_filter_creation:__FILE_OUT__", "to":"spatial_filter_file" },
-	{ "id":"tee_to_apply_filter", "from":"tee_post_filter_creation:__APPLY_FILTER_OUT__", "to":"apply_filter:__FILTER_IN__" },
-	{ "id":"prefilter_to_b2c", "from":"tee_prefilter:__PF2_OUT__", "to":"bamtocram" },
-	{ "id":"b2c_to_ufc", "from":"bamtocram", "to":"unfiltered_cram_file" },
-	{ "id":"ufc_to_c2b", "from":"unfiltered_cram_file", "to":"cramtobam" },
-	{ "id":"c2b_to_apply", "from":"cramtobam", "to":"apply_filter" },
-	{ "id":"apply_filter_to_fs1p", "from":"apply_filter", "to":"final_stage1_process" },
-	{ "id":"apply_filter_to_sfqc", "from":"apply_filter:__APPLY_STATS_OUT__", "to":"spatial_filter_stats" },
-	{ "id":"fs1p_to_tee", "from":"final_stage1_process", "to":"filtered_bam" },
-	{ "id":"fs1p_to_tee", "from":"final_stage1_process:__SEQCHKSUM_OUT__", "to":"seqchksum_file" },
-	{ "id":"fopt_to_scs", "from":"seqchksum_file", "to":"final_seqchksum:target_seqchksum" },
-	{ "id":"ti2b_to_bam", "from":"tee_i2b:__SCS_OUT__", "to":"final_seqchksum" }
+	{ "id":"merge_to_tee", "from":"bammerge", "to":"tee_split" },
+	{ "id":"tee_to_create_filter", "from":"tee_split:spatial_filter", "to":"create_filter" },
+	{ "id":"create_filter_to_file", "from":"create_filter", "to":"spatial_filter_file" },
+	{ "id":"tee_to_ss", "from":"tee_split:subsample", "to":"subsample" },
+	{ "id":"ss_to_b2fqss", "from":"subsample", "to":"bamtofastq_ss" },
+	{ "id":"b2fqss_to_fq1", "from":"bamtofastq_ss:ss_fq1", "to":"run_lane_ss_fq1" },
+	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
+		"pe":{"id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2"},
+		"se":{}
+	}},
+	{ "id":"b2fqss_to_fqt", "from":"bamtofastq_ss:ss_fqt", "to":"run_lane_ss_fqt" },
+	{ "id":"tee_to_b2fqfqc", "from":"tee_split:fqc", "to":"bamtofastq_fqc" },
+	{ "id":"fq_to_fqc1", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
+	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
+		"pe":{ "id":"fq_to_fqc2", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
+		"se":{}
+	}},
+	{ "id":"fq_to_fqct", "from":"bamtofastq_fqc:fqt", "to":"fastqcheck_rt" },
+	{ "id":"fqc_to_f1", "from":"fastqcheck_r1", "to":"fqc1" },
+	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
+		"pe":{ "id":"fqc_to_f2", "from":"fastqcheck_r2", "to":"fqc2" },
+		"se":{}
+	}},
+	{ "id":"fqc_to_ft", "from":"fastqcheck_rt", "to":"fqct" },
+	{ "id":"tee_to_stats", "from":"tee_split:stats", "to":"samtools_stats" },
+	{ "id":"stats_to_file", "from":"samtools_stats", "to":"lane_stats_file" },
+	{ "id":"tee_to_splitter", "from":"tee_split:split_bam", "to":"splitter" },
+	{ "id":"tee_to_brc", "from":"tee_split:unsplit_bam", "to":"bamrecompress" },
+	{ "id":"brc_to_llb", "from":"bamrecompress", "to":"lane_level_bam" },
+	{ "id":"tee_to_seqchksum", "from":"tee_split:seqchksum", "to":"seqchksum" },
+	{ "id":"fs1p_to_tee", "from":"seqchksum", "to":"seqchksum_file" },
+	{ "id":"fopt_to_scs", "from":"seqchksum_file", "to":"head_scs2_input" },
+	{ "id":"input_chksum_to_scs1head", "from":"seqchksum_input", "to":"head_scs1_input" },
+	{ "id":"scs1head_to_cmp", "from":"head_scs1_input", "to":"cmp_seqchksum:inputchk" },
+	{ "id":"scs2head_to_cmp", "from":"head_scs2_input", "to":"cmp_seqchksum:outputchk" },
+	{ "id":"ti2b_to_bam", "from":"tee_i2b:scs", "to":"seqchksum_input" }
 ]
 }

@@ -1,0 +1,81 @@
+{
+"version":"2.0",
+"description":"run mnimap2 to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"minimap2:reference_index"
+		},
+		"outputs":{
+			"_stdout_":"samtobam"
+		}
+	}
+},
+"subst_params":[
+	{"id":"minimap2_K_value","required":"no","default":"100000000","comment":"unset this value to remove -K flag"},
+	{
+		"id":"minimap2_K_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-K", {"subst":"minimap2_K_value"} ] }
+	},
+	{"id":"minimap2_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"},
+	{"id":"aln_filter_value","comment":"this must be set if you want to filter the output bam (e.g. to 0x900 to filter secondary and supplementary alignments)"},
+	{
+		"id":"aln_filter_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-F", {"subst":"aln_filter_value"} ] }
+	},
+	{"id":"minimap2_F_value","required":"no","default":"1200","comment":"unset this value to remove -F flag"},
+	{
+		"id":"minimap2_F_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-F", {"subst":"minimap2_F_value"} ] }
+	}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["bamtofastq"]
+	},
+	{
+		"id":"minimap2",
+		"comment":"minimap2 aligner",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[
+			{"subst":"minimap2_executable", "required":true, "ifnull":"minimap2"},
+			"-ax", "sr",
+			"--MD",
+			"-t", {"subst":"minimap2_numthreads", "required":true, "ifnull":{"subst":"aligner_numthreads"}},
+			{"subst":"minimap2_Y_flag"},
+			{"subst":"minimap2_F_flag"},
+			{"subst":"minimap2_K_flag"},
+			{"port":"reference_index", "direction":"in"},
+			{"port":"fq","direction":"in"}
+		]
+	},
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+			{"subst":"samtools_cmd", "required":true, "ifnull":"samtools"},
+			"view",
+			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "--threads", {"subst":"s2b_mt_val"} ]}}},
+			{"subst":"s2b_compress_level", "ifnull":"-u", "comment":"default to uncompressed (bam) output"},
+			{"subst":"aln_filter_flag", "comment":"set aln_filter_value param to activate this (see above)"},
+			"-"
+		]
+        }
+],
+"edges":[
+	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"minimap2:fq" },
+	{ "id":"mm2_to_scramble", "from":"minimap2", "to":"samtobam" }
+]
+}

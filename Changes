@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - added -F option to minimap2
+
 release 0.21.0
  - salmon_alignment: copy quant.genes.sf to archive directory
  - star_alignment: assign appropriate suffixes to bamtofastq output files
