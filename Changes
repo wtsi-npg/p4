@@ -1,6 +1,16 @@
 CHANGES LOG
 -----------
 
+release 0.22.0
+ - new template for minimap2 alignment, with optional post-alignment filtering of secondary and supplementary
+     alignments, and minimap2_F_value parameter to allow non-default insert size to be specified (-F flag)
+ - subsampling of 10K reads (fastq produced by samtools view -s SEED.FRAC) and production of fastqcheck files
+     added to stage1 and stage2 analyses (nchs, single-/paired-end)
+ - add lane-level samtools stats to stage1
+ - spatial filter application moved to stage2 from stage1
+ - amend spatial_filter input/output file names for easier identification
+ - empty edge entries recognised as noop - filter in viv.pl, ignore in visualisation, do not apply VTFILE
+    prefixes when there are no to and from attributes
  - added -F option to minimap2
 
 release 0.21.0
