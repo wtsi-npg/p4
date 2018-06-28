@@ -176,7 +176,7 @@
         "id":"quant_vtf",
         "required":"yes",
         "subst_constructor":{
-                                "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"quant_method"}, "_alignment.json" ],
+                                "vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"quant_method", "ifnull":"salmon"}, "_alignment.json" ],
                                 "postproc":{"op":"concat", "pad":""}
                             }
     }
