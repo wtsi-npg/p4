@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.22.1
+ - add default ("ifnull":"salmon") value for quant_method parameter to fix star/tophat2 tag#0 problem
+
 release 0.22.0
  - new template for minimap2 alignment, with optional post-alignment filtering of secondary and supplementary
      alignments, and minimap2_F_value parameter to allow non-default insert size to be specified (-F flag)
