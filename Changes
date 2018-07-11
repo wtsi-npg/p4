@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+release 0.23.0
+ - target stats (samtools) addition to final output prep
+
 release 0.22.1
  - add default ("ifnull":"salmon") value for quant_method parameter to fix star/tophat2 tag#0 problem
 
