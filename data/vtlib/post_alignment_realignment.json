@@ -50,8 +50,8 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){ if(my$nsq=$sq{$1}){my@ah=grep{/^AH:/}split qq(\\t),$_; $_=join qq(\\t),$nsq,@ah;} }elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_PICARD_DICT__",
-		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
+		"cmd":["perl", "-nle", "use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){ if(my$nsq=$sq{$1}){my@ah=grep{/^AH:/}split qq(\\t),$_; $_=join qq(\\t),$nsq,@ah;} }elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print",{"port":"picard_dict", "direction":"in"}],
+		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed, separate arguments to avoid being wrapped by a shell (which might hang onto file handles breaking this intention)",
 		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file, but propagate any 'AH' fields provided by the aligner"
 	},
 	{
