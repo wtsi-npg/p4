@@ -43,7 +43,7 @@
 		"use_STDOUT": true,
 		"cmd":[
 			"bash -c '",
-			"if [ -s ", {"subst":"tag_metrics_file", "required":true}, "]; then reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'\"'\"'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'\"'\"'"],"postproc":{"op":"concat","pad":""}}}}, {"subst":"tag_metrics_file", "required":true}, "`; reads_count=`echo ${reads_count} | tr -cd [:digit:]`; frac=`echo \"10000/${reads_count}\" | bc -l`; fi;",
+			{"subst_constructor":{"vals":["tmfs=\"", {"subst":"tag_metrics_files", "required":true}, "\""],"postproc":{"op":"concat","pad":""}}}, "; if [ ! -z \"${tmfs}\" ]; then for tag_metrics_file in ${tmfs}; do reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'\"'\"'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'\"'\"'"],"postproc":{"op":"concat","pad":""}}}}, "${tag_metrics_file}`; reads_count=`echo ${reads_count} | tr -cd [:digit:]`; reads_count_total=$((${reads_count_total}+${reads_count})); done; frac=`echo \"10000/${reads_count_total}\" | bc -l`; fi;",
 			"if [ ! -z $frac ]; then",
 				"samtools",
 				"view",
@@ -78,7 +78,7 @@
 	{
 		"id":"run_lane_ss_fq2",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_2#", {"subst":"s2_tag_index"}, ".fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_2#", {"subst":"s2_tag_index"}, ".fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastqcheck output, read2"
 	},
         {
