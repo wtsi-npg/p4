@@ -111,7 +111,7 @@
 			"-f",
 			"-l", {"port":"apply_stats", "direction":"out"},
 			"-F", {"port":"filter", "direction":"in"},
-			"/dev/stdin"
+			"-"
 		],
 		"description":"apply the spatial filter (produced in stage1)"
 	},

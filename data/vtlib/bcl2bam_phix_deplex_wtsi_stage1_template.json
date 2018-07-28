@@ -68,7 +68,14 @@
 	{"id":"qc_check_position","required":"yes","default":{"subst":"i2b_lane"}},
 	{"id":"qc_check_qc_in_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"i2b_runfolder_path"}, "Data/Intensities", {"subst":"i2b_bam_basecalls_dir"}],"postproc":{"op":"concat","pad":"/"}}}},
 	{"id":"qc_check_qc_out_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"qc_check_qc_in_dir"}, "no_cal/archive/qc"],"postproc":{"op":"concat","pad":"/"}}}},
-	{"id":"run_lane_label", "description":"label constructed from id_run and position", "default":{"subst_constructor":{"vals":[{"subst":"qc_check_id_run"}, "_", {"subst":"i2b_lane"}],"postproc":{"op":"concat","pad":""}}}}
+	{"id":"run_lane_label", "description":"label constructed from id_run and position", "default":{"subst_constructor":{"vals":[{"subst":"qc_check_id_run"}, "_", {"subst":"i2b_lane"}],"postproc":{"op":"concat","pad":""}}}},
+	{
+		"id":"s1_split_reference_flag",
+		"required":"no",
+		"comment":"flag will disappear unless scramble_reference_fasta value is given (allows unaligned cram)",
+		"subst_constructor":{ "vals":[ "--reference", {"subst":"scramble_reference_fasta"} ] }
+	},
+	{"id":"s1_split_output_format_val", "description":"output format for deplexed reads (bam/cram/etc)", "default":"bam"}
 ],
 "nodes":[
 	{
@@ -301,8 +308,10 @@
 		"cmd":[
 			{"subst":"samtools_executable", "ifnull":"samtools"},
 			"split",
-			{"subst":"split_threads_flag", "ifnull":["--threads", {"subst":"split_threads_val", "ifnull":"0"}]},
-			"-f", {"subst":"split_format", "ifnull":{"subst_constructor":{"vals":[{"subst":"split_prefix","required":true,"ifnull":{"subst":"outdatadir"}}, "/", "%!.bam"], "postproc":{"op":"concat","pad":""}}}},
+			{"subst":"split_threads_flag", "ifnull":["--threads", {"subst":"split_threads_val", "required":true, "ifnull":"0"}]},
+			{"subst":"s1_split_output_format_flag", "ifnull":["--output-fmt", {"subst":"s1_split_output_format_val", "required":true}]},
+			{"subst":"s1_split_reference_flag"},
+			"-f", {"subst":"split_format", "ifnull":{"subst_constructor":{"vals":[{"subst":"split_prefix","required":true,"ifnull":{"subst":"outdatadir"}}, "/", "%!.", {"subst":"s1_split_output_format_val", "required":true}], "postproc":{"op":"concat","pad":""}}}},
 			"-"
 		],
 		"description":"Split the BAM file into separate BAM files by Read Group"
@@ -358,19 +367,19 @@
 	{
 		"id":"run_lane_ss_fq1",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_1.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_1.fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastq output, read1"
 	},
 	{
 		"id":"run_lane_ss_fq2",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_2.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_2.fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastq output, read2"
 	},
 	{
 		"id":"run_lane_ss_fqt",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fqt", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_t.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fqt", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_t.fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastq output, tagread"
 	},
         {
