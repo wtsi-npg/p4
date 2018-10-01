@@ -69,7 +69,7 @@
 	{"id":"qc_check_qc_in_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"i2b_runfolder_path"}, "Data/Intensities", {"subst":"i2b_bam_basecalls_dir"}],"postproc":{"op":"concat","pad":"/"}}}},
 	{"id":"qc_check_qc_out_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"qc_check_qc_in_dir"}, "no_cal/archive/qc"],"postproc":{"op":"concat","pad":"/"}}}},
 	{"id":"run_lane_label", "description":"label constructed from id_run and position", "default":{"subst_constructor":{"vals":[{"subst":"qc_check_id_run"}, "_", {"subst":"i2b_lane"}],"postproc":{"op":"concat","pad":""}}}},
-	{"id":"s1_split_output_format_val", "description":"output format for deplexed reads (bam/cram/etc)", "default":"bam"}
+	{"id":"s1_output_format", "description":"output format for deplexed reads (bam/cram/etc)", "default":"cram"}
 ],
 "nodes":[
 	{
@@ -296,8 +296,10 @@
 			{"subst":"samtools_executable", "ifnull":"samtools"},
 			"split",
 			{"subst":"split_threads_flag", "ifnull":["--threads", {"subst":"split_threads_val", "required":true, "ifnull":"0"}]},
-			{"subst":"s1_split_output_format_flag", "ifnull":["--output-fmt", {"subst":"s1_split_output_format_val", "required":true}]},
-			"-f", {"subst":"split_format", "ifnull":{"subst_constructor":{"vals":[{"subst":"split_prefix","required":true,"ifnull":{"subst":"outdatadir"}}, "/", "%!.", {"subst":"s1_split_output_format_val", "required":true}], "postproc":{"op":"concat","pad":""}}}},
+			{"select":"s1_output_format", "default":"cram", "select_range":[1], "cases":{
+				"cram":["--output-fmt", "cram,no_ref=1", "-f", {"subst_constructor":{"vals":[{"subst":"outdatadir","required":true}, "/%!.cram"], "postproc":{"op":"concat","pad":""}}}],
+				"bam":["--output-fmt", "bam", "-f", {"subst_constructor":{"vals":[{"subst":"outdatadir", "required":true}, "/%!.bam"], "postproc":{"op":"concat","pad":""}}}]
+			}},
 			"-"
 		],
 		"description":"Split the BAM file into separate BAM files by Read Group"
@@ -307,13 +309,10 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [
-			"bamrecompress",
-			"verbose=0", 
-			"md5=1",
-			{"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}},
-			{"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}}
-		]
+		"cmd": {"select":"s1_output_format", "default":"cram", "select_range":[1], "cases":{
+			"bam":[ "bamrecompress", "verbose=0", "md5=1", {"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}}, {"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}} ],
+			"cram":["scramble", "-x", "-I", "bam", "-O", "cram"]
+		}}
 	},
 	{
 		"id":"lane_level_bam",
