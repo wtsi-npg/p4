@@ -18,6 +18,12 @@
 		"comment":"this will expand to a set of subst_param elements"
 	},
 
+	{
+		"id":"spatial_filter_rg_flag",
+		"required":"no",
+		"comment":"flag will disappear unless RG values are given (for multiple filter file application)",
+		"subst_constructor":{ "vals":[ "--rg", {"subst":"spatial_filter_rg_value"} ] }
+	},
 	{"id":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"},
 	{
 		"id":"af_metrics",
