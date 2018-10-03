@@ -18,6 +18,12 @@
 		"comment":"this will expand to a set of subst_param elements"
 	},
 
+	{
+		"id":"spatial_filter_rg_flag",
+		"required":"no",
+		"comment":"flag will disappear unless RG values are given (for multiple filter file application)",
+		"subst_constructor":{ "vals":[ "--rg", {"subst":"spatial_filter_rg_value"} ] }
+	},
 	{"id":"af_metrics_name","required":"no","default":"alignment_filter_metrics.json"},
 	{
 		"id":"af_metrics",
@@ -84,19 +90,19 @@
 ],
 "nodes":[
 	{
-		"id":"src_bam",
-		"type":"INFILE",
-		"name":{
-			"subst":"src_bam",
-			"required":"yes",
-			"ifnull":{
-				"subst_constructor":{
-					"vals":[ {"subst":"indatadir"}, "/", {"subst":"rpt"}, ".bam" ],
-					"postproc":{"op":"concat", "pad":""}
-				}
-			}
-		},
-		"description":"BAM using as input to this pipeline - expected to already contain PhiX (normally from hyb buffer spike-in) alignments"
+		"id":"crammerge",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+			"bamcat",
+			"level=0",
+			"inputformat=bam",
+			{"subst":"s2_input_format_flag"},
+			"outputformat=bam",
+			{"subst":"incrams"}
+		],
+		"description":"merge individual cram files from a sample into one cram file"
 	},
 	{
 		"id":"spatial_filter",
@@ -110,21 +116,17 @@
 			"--compression-level", "0",
 			"-f",
 			"-l", {"port":"apply_stats", "direction":"out"},
-			"-F", {"port":"filter", "direction":"in"},
+			"-F", {"subst":"s2_filter_files", "required":true},
+			{"subst":"spatial_filter_rg_flag"},
 			"-"
 		],
 		"description":"apply the spatial filter (produced in stage1)"
 	},
 	{
-		"id":"spatial_filter_file",
-		"type":"INFILE",
-		"name":{"subst":"spatial_filter_file","required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"recal_dir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, ".spatial_filter" ], "postproc":{"op":"concat","pad":""}}}},
-		"description":"spatial filter file"
-	},
-	{
 		"id":"spatial_filter_stats",
 		"type":"OUTFILE",
-		"name":{"subst":"spatial_filter_stats", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".spatial_filter.stats" ], "postproc":{"op":"concat","pad":""}}}} },
+		"name":{"subst":"spatial_filter_stats", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".spatial_filter.stats" ], "postproc":{"op":"concat","pad":""}}}}
+	},
 	{
 		"id":"subsample_fqc",
 		"type":"VTFILE",
@@ -221,8 +223,7 @@
 	}
 ],
 "edges":[
-	{ "id":"src_to_bc2", "from":"src_bam", "to":"spatial_filter" },
-	{ "id":"src_to_bc2", "from":"spatial_filter_file", "to":"spatial_filter:filter" },
+	{ "id":"src_to_bc2", "from":"crammerge", "to":"spatial_filter" },
 	{ "id":"apply_filter_to_sfqc", "from":"spatial_filter:apply_stats", "to":"spatial_filter_stats" },
 	{ "id":"sf_to_bc2", "from":"spatial_filter", "to":"subsample_fqc" },
 	{ "id":"ssfqc_to_tgtaln", "from":"subsample_fqc:straight_through1", "to":"target_alignment" },
@@ -236,6 +237,6 @@
         { "id":"src_to_seqchksum", "from":"subsample_fqc:straight_through2", "to":"seqchksum" },
 	{ "id":"fopt_to_bam", "from":"final_output_prep_target", "to":"seqchksum:target_seqchksum" },
 	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_phix", "to":"seqchksum:phix_seqchksum" },
-	{ "id":"fopp_to_bam_phix", "from":"final_output_prep_hs", "to":"seqchksum:hs_seqchksum" }
+	{ "id":"fopp_to_bam_hs", "from":"final_output_prep_hs", "to":"seqchksum:hs_seqchksum" }
 ]
 }
