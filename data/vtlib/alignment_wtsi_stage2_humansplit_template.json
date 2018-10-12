@@ -95,11 +95,16 @@
 		"use_STDIN": false,
 		"use_STDOUT": true,
 		"cmd": [
-			"bamcat",
-			"level=0",
-			"inputformat=bam",
-			{"subst":"s2_input_format_flag"},
-			"outputformat=bam",
+			"samtools",
+			"merge",
+			"-n",
+			"-O", "BAM",
+			"-l", "0",
+			{"select":"s2_input_format", "default":"cram", "select_range":[1], "cases":{
+				"cram":["--input-fmt-option", "no_ref=1"],
+				"bam":["--input-fmt", "bam"]
+			}},
+			"-",
 			{"subst":"incrams"}
 		],
 		"description":"merge individual cram files from a sample into one cram file"
