@@ -317,7 +317,7 @@
 	{
 		"id":"lane_level_bam",
 		"type":"OUTFILE",
-		"name":{"subst":"lane_level_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"lane_level_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".", {"subst":"s1_output_format"} ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"BAM file after PhiX alignment and spatial filtering"
 	},
         {
