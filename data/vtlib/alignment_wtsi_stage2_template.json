@@ -69,13 +69,6 @@
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_phix_name"}, ".json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
-	},
-	{"id":"s2_input_format_val", "description":"input format (bam/cram/etc)", "default":"bam"},
-	{
-		"id":"input_format_flag",
-		"required":"no",
-		"comment":"flag will disappear unless RG values are given (for multiple filter file application)",
-		"subst_constructor":{ "vals":[ "inputformat", {"subst":"spatial_filter_rg_value"} ], "postproc":{"op":"concat","pad":"="} }
 	}
 ],
 "nodes":[
@@ -84,17 +77,20 @@
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"orig_cmd":{"subst":"crammerge"},
-		"old_cmd": [ "bammerge", "level=0", "SO=coordinate", "inputformat=cram", "outputformat=bam", {"subst":"incrams"} ],
 		"cmd": [
-			"bamcat",
-			"level=0",
-			"inputformat=bam",
-			{"subst":"s2_input_format_flag"},
-			"outputformat=bam",
+			"samtools",
+			"merge",
+			"-n",
+			"-O", "BAM",
+			"-l", "0",
+			{"select":"s2_input_format", "default":"cram", "select_range":[1], "cases":{
+				"cram":["--input-fmt-option", "no_ref=1"],
+				"bam":["--input-fmt", "bam"]
+			}},
+			"-",
 			{"subst":"incrams"}
 		],
-		"description":"merge individual cram files from a sample into one cram file"
+		"description":"merge individual cram files from a sample into one bam file"
 	},
 	{
 		"id":"spatial_filter",
