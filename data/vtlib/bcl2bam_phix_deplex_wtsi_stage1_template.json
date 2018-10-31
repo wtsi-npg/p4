@@ -430,7 +430,23 @@
 		"use_STDOUT": true,
 		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-" ]
 	},
-	{ "id":"lane_stats_file", "type":"OUTFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label","ifnull":"rll"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
+	{ "id":"lane_stats_file", "type":"RAFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"lane_archive_path","required":true}, "/", {"subst":"run_lane_label","ifnull":"rll"}, {"subst":"filter_ext", "ifnull":"_F0x00"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
+
+	{
+		"id":"qc_samtools_stats_check",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
+		"comment":"This node is defined as reading stdin, even though this is not true. This bodge is to activate the RAFILE/OUTFILE behaviour and delay execution until after the stats output is complete",
+		"cmd":[
+			"qc",
+			"--check=samtools_stats",
+			{"subst":"sss_rpt_list","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--rpt_list", {"subst":"rpt_list", "required":true} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"sss_qc_in","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_in", {"subst":"sss_qc_in_dir", "ifnull":{"subst":"lane_archive_path"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"sss_qc_out","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_out", {"subst":"sss_qc_out_dir", "ifnull":{"subst":"qc_check_qc_out_dir"}} ],"postproc":{"op":"concat","pad":"="}}}}
+		],
+		"description":"run the qc samtools_stats check"
+	},
 
 	{
 		"id":"seqchksum",
@@ -516,6 +532,7 @@
 	{ "id":"fqc_to_ft", "from":"fastqcheck_rt", "to":"fqct" },
 	{ "id":"tee_to_stats", "from":"tee_split:stats", "to":"samtools_stats" },
 	{ "id":"stats_to_file", "from":"samtools_stats", "to":"lane_stats_file" },
+	{ "id":"stats_to_qc_samtools_stats", "from":"lane_stats_file", "to":"qc_samtools_stats_check" },
 	{ "id":"tee_to_splitter", "from":"tee_split:split_bam", "to":"splitter" },
 	{ "id":"tee_to_brc", "from":"tee_split:unsplit_bam", "to":"bamrecompress" },
 	{ "id":"brc_to_llb", "from":"bamrecompress", "to":"lane_level_bam" },
