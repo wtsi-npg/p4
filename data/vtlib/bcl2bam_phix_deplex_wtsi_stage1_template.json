@@ -430,7 +430,7 @@
 		"use_STDOUT": true,
 		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-" ]
 	},
-	{ "id":"lane_stats_file", "type":"RAFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"lane_archive_path","required":true}, "/", {"subst":"run_lane_label","ifnull":"rll"}, {"subst":"filter_ext", "ifnull":"_F0x00"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
+	{ "id":"lane_stats_file", "type":"RAFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"lane_archive_path","required":true}, "/", {"subst":"run_lane_label","ifnull":"rll"}, {"subst":"filter_ext", "ifnull":"_F0x000"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
 
 	{
 		"id":"qc_samtools_stats_check",
