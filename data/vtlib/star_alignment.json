@@ -23,9 +23,9 @@
     {
         "id":"fastq1_name",
         "required":"no",
-        "default":"intfile_1.fq",
+        "default":"intfile_1.fq.gz",
         "subst_constructor":{
-                                "vals":[ "intfile_1_", {"subst":"rpt"}, ".fq" ],
+                                "vals":[ "intfile_1_", {"subst":"rpt"}, ".fq.gz" ],
                                 "postproc":{"op":"concat", "pad":""}
                             }
     },
@@ -40,9 +40,9 @@
     {
         "id":"fastq2_name",
         "required":"no",
-        "default":"intfile_2.fq",
+        "default":"intfile_2.fq.gz",
         "subst_constructor":{
-                                "vals":[ "intfile_2_", {"subst":"rpt"}, ".fq" ],
+                                "vals":[ "intfile_2_", {"subst":"rpt"}, ".fq.gz" ],
                                 "postproc":{"op":"concat", "pad":""}
                             }
     },
@@ -119,7 +119,7 @@
         "required":"no",
         "subst_constructor":{
                                 "vals":[ "--chimJunctionOverhangMin", {
-                                                                          "subst":"chimJunctionOverhangMin_val", 
+                                                                          "subst":"chimJunctionOverhangMin_val",
                                                                           "ifnull":"20",
                                                                           "comment":"unset this value to remove --chimJunctionOverhangMin flag"
                                                                       }
@@ -188,11 +188,11 @@
         "use_STDIN": true,
         "use_STDOUT": false,
         "cmd":[
-               "bamtofastq", 
-               "gz=0",
+               "bamtofastq",
+               "gz=1",
                {
-                "select":"alignment_reads_layout", 
-                "default":"2", 
+                "select":"alignment_reads_layout",
+                "default":"2",
                 "select_range":[1],
                 "cases":{
                          "1":{"packflag":["S=",{"port":"fq1", "direction":"out"}]},
@@ -243,7 +243,8 @@
                           "2":["--readFilesIn", {"port":"fq1", "direction":"in"}, {"port":"fq2", "direction":"in"}]
                  }
                 },
-                "--outStd", "BAM_Unsorted"
+                "--outStd", "BAM_Unsorted",
+                "--readFilesCommand", "zcat"
         ]
     },
     {
@@ -311,7 +312,7 @@
       "select_range":[1],
       "cases":{ "1":{}, "2":{"id":"bamtofastq_to_fq2", "from":"bamtofastq:fq2", "to":"fq2"} } },
     {"id":"fq1_to_star", "from":"fq1", "to":"star:fq1"},
-    { "select":"alignment_reads_layout", 
+    { "select":"alignment_reads_layout",
       "default":2,
       "select_range":[1],
       "cases":{ "1":{}, "2":{"id":"fq2_to_star", "from":"fq2", "to":"star:fq2"} } },
@@ -322,7 +323,7 @@
     { "id":"star_to_stargenome_dir", "from":"star", "to":"STARgenome_dir" },
     { "id":"chmod_stargenome_dir", "from":"STARgenome_dir", "to":"chmod_STARgenome_dir:src_stargenome_dir" },
     { "id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1"},
-    { "select":"alignment_reads_layout", 
+    { "select":"alignment_reads_layout",
       "default":2,
       "select_range":[1],
       "cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} } },
