@@ -23,7 +23,7 @@
 	{
 		"id":"fastq1_name",
 		"required":"no",
-		"default":"intfile_1.fq",
+		"default":"intfile_1.fq.gz",
 		"subst_constructor":{
 			"vals":[ "intfile_1_", {"subst":"rpt"}, ".fq" ],
 			"postproc":{"op":"concat", "pad":""}
@@ -40,7 +40,7 @@
 	{
 		"id":"fastq2_name",
 		"required":"no",
-		"default":"intfile_2.fq",
+		"default":"intfile_2.fq.gz",
 		"subst_constructor":{
 			"vals":[ "intfile_2_", {"subst":"rpt"}, ".fq" ],
 			"postproc":{"op":"concat", "pad":""}
@@ -91,10 +91,10 @@
 		"type":"EXEC",
 		"use_STDIN":true,
 		"use_STDOUT":false,
-		"cmd":["bamtofastq", "gz=0",
+		"cmd":["bamtofastq", "gz=1",
 				{
-					"select":"alignment_reads_layout", 
-					"default":"2", 
+					"select":"alignment_reads_layout",
+					"default":"2",
 					"select_range":[1],
 					"cases":{
 						"1":{"packflag":["S=",{"port":"fq1", "direction":"out"}]},
@@ -168,12 +168,12 @@
 		"cases":{ "1":{}, "2":{"id":"bamtofastq_to_fq2", "from":"bamtofastq:fq2", "to":"fq2"} }
 	},
 	{"id":"fq1_to_hisat2", "from":"fq1", "to":"hisat2:fq1"},
-	{"select":"alignment_reads_layout", 
+	{"select":"alignment_reads_layout",
 		"default":2, "select_range":[1],
 		"cases":{ "1":{}, "2":{"id":"fq2_to_hisat2", "from":"fq2", "to":"hisat2:fq2"} }
 	},
 	{"id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1"},
-	{"select":"alignment_reads_layout", 
+	{"select":"alignment_reads_layout",
 		"default":2, "select_range":[1],
 		"cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} }
 	},
