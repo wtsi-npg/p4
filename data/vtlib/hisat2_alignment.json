@@ -133,8 +133,7 @@
 					}
 				},
 				"--reorder",
-				{"subst":"library_type_flag"},
-				"--rna-strandness", "RF"
+				{"subst":"rna_strandness_flag"}
 		]
 	},
 	{
