@@ -8,7 +8,7 @@
 			"reference":"hisat2:reference_genome"
 		},
 		"outputs":{
-			"_stdout_":"samtobam"
+			"_stdout_":"bamsort_qname"
 		}
 	}
 },
@@ -25,7 +25,7 @@
 		"required":"no",
 		"default":"intfile_1.fq.gz",
 		"subst_constructor":{
-			"vals":[ "intfile_1_", {"subst":"rpt"}, ".fq" ],
+			"vals":[ "intfile_1_", {"subst":"rpt"}, {"subst":"fqext", "ifnull":".fq.gz"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -42,7 +42,7 @@
 		"required":"no",
 		"default":"intfile_2.fq.gz",
 		"subst_constructor":{
-			"vals":[ "intfile_2_", {"subst":"rpt"}, ".fq" ],
+			"vals":[ "intfile_2_", {"subst":"rpt"}, {"subst":"fqext", "ifnull":".fq.gz"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -158,6 +158,15 @@
 				"-I", "sam",
 				"-O", "bam"
 		]
+	},
+	{
+		"id":"bamsort_qname",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+				"bamsormadup", {"subst":"bsmd_threads"},"SO=queryname", "level=0"
+		]
 	}
 ],
 "edges":[
@@ -177,6 +186,7 @@
 		"default":2, "select_range":[1],
 		"cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} }
 	},
-	{"id":"hisat2_to_scramble", "from":"hisat2", "to":"samtobam" }
+	{"id":"hisat2_to_scramble", "from":"hisat2", "to":"samtobam"},
+	{"id":"samtobam_to_qname_sort", "from":"samtobam", "to":"bamsort_qname"}
 ]
 }
