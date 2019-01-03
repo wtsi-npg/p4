@@ -68,7 +68,8 @@
 	{"id":"qc_check_position","required":"yes","default":{"subst":"i2b_lane"}},
 	{"id":"qc_check_qc_in_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"i2b_runfolder_path"}, "Data/Intensities", {"subst":"i2b_bam_basecalls_dir"}],"postproc":{"op":"concat","pad":"/"}}}},
 	{"id":"qc_check_qc_out_dir","required":"yes","default":{"subst_constructor":{"vals":[{"subst":"qc_check_qc_in_dir"}, "no_cal/archive/qc"],"postproc":{"op":"concat","pad":"/"}}}},
-	{"id":"run_lane_label", "description":"label constructed from id_run and position", "default":{"subst_constructor":{"vals":[{"subst":"qc_check_id_run"}, "_", {"subst":"i2b_lane"}],"postproc":{"op":"concat","pad":""}}}}
+	{"id":"run_lane_label", "description":"label constructed from id_run and position", "default":{"subst_constructor":{"vals":[{"subst":"qc_check_id_run"}, "_", {"subst":"i2b_lane"}],"postproc":{"op":"concat","pad":""}}}},
+	{"id":"s1_output_format", "description":"output format for deplexed reads (bam/cram/etc)", "default":"cram"}
 ],
 "nodes":[
 	{
@@ -214,13 +215,6 @@
 			{"port":"td2","direction":"out"}
 		]
 	},
-	{
-		"id":"simple_cat",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":"cat"
-	},
         {
                 "id":"alignment_phix",
                 "type":"VTFILE",
@@ -301,8 +295,11 @@
 		"cmd":[
 			{"subst":"samtools_executable", "ifnull":"samtools"},
 			"split",
-			{"subst":"split_threads_flag", "ifnull":["--threads", {"subst":"split_threads_val", "ifnull":"0"}]},
-			"-f", {"subst":"split_format", "ifnull":{"subst_constructor":{"vals":[{"subst":"split_prefix","required":true,"ifnull":{"subst":"outdatadir"}}, "/", "%!.bam"], "postproc":{"op":"concat","pad":""}}}},
+			{"subst":"split_threads_flag", "ifnull":["--threads", {"subst":"split_threads_val", "required":true, "ifnull":"0"}]},
+			{"select":"s1_output_format", "default":"cram", "select_range":[1], "cases":{
+				"cram":["--output-fmt", "cram,no_ref=1", "-f", {"subst_constructor":{"vals":[{"subst":"outdatadir","required":true}, "/%!.cram"], "postproc":{"op":"concat","pad":""}}}],
+				"bam":["--output-fmt", "bam", "-f", {"subst_constructor":{"vals":[{"subst":"outdatadir", "required":true}, "/%!.bam"], "postproc":{"op":"concat","pad":""}}}]
+			}},
 			"-"
 		],
 		"description":"Split the BAM file into separate BAM files by Read Group"
@@ -312,18 +309,15 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [
-			"bamrecompress",
-			"verbose=0", 
-			"md5=1",
-			{"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}},
-			{"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}}
-		]
+		"cmd": {"select":"s1_output_format", "default":"cram", "select_range":[1], "cases":{
+			"bam":[ "bamrecompress", "verbose=0", "md5=1", {"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}}, {"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}} ],
+			"cram":["scramble", "-x", "-I", "bam", "-O", "cram"]
+		}}
 	},
 	{
 		"id":"lane_level_bam",
 		"type":"OUTFILE",
-		"name":{"subst":"lane_level_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".bam" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"lane_level_bam", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label"}, ".", {"subst":"s1_output_format"} ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"BAM file after PhiX alignment and spatial filtering"
 	},
         {
@@ -358,19 +352,19 @@
 	{
 		"id":"run_lane_ss_fq1",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_1.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_1.fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastq output, read1"
 	},
 	{
 		"id":"run_lane_ss_fq2",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_2.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_2.fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastq output, read2"
 	},
 	{
 		"id":"run_lane_ss_fqt",
 		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fqt", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"run_lane_label"}, "_t.fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"name":{"subst":"run_lane_ss_fqt", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_t.fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastq output, tagread"
 	},
         {
@@ -436,7 +430,23 @@
 		"use_STDOUT": true,
 		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-" ]
 	},
-	{ "id":"lane_stats_file", "type":"OUTFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"run_lane_label","ifnull":"rll"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
+	{ "id":"lane_stats_file", "type":"RAFILE", "name":{"subst":"lane_stats_file", "ifnull":{"subst_constructor":{"vals":[ {"subst":"lane_archive_path","required":true}, "/", {"subst":"run_lane_label","ifnull":"rll"}, {"subst":"filter_ext", "ifnull":"_F0x000"}, ".stats" ],"postproc":{"op":"concat", "pad":""}}}} },
+
+	{
+		"id":"qc_samtools_stats_check",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
+		"comment":"This node is defined as reading stdin, even though this is not true. This bodge is to activate the RAFILE/OUTFILE behaviour and delay execution until after the stats output is complete",
+		"cmd":[
+			"qc",
+			"--check=samtools_stats",
+			{"subst":"sss_rpt_list","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--rpt_list", {"subst":"rpt_list", "required":true} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"sss_qc_in","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_in", {"subst":"sss_qc_in_dir", "ifnull":{"subst":"lane_archive_path"}} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"sss_qc_out","required":"yes","ifnull":{"subst_constructor":{"vals":[ "--qc_out", {"subst":"sss_qc_out_dir", "ifnull":{"subst":"qc_check_qc_out_dir"}} ],"postproc":{"op":"concat","pad":"="}}}}
+		],
+		"description":"run the qc samtools_stats check"
+	},
 
 	{
 		"id":"seqchksum",
@@ -486,14 +496,13 @@
 ],
 "edges":[
 	{ "id":"illumina2bam_to_ti2b", "from":"illumina2bam", "to":"tee_i2b" },
-	{ "id":"ti2b_to_bamadapterfind", "from":"tee_i2b:baf", "to":"bamadapterfind" },
-	{ "id":"bamadapterfind_to_decoder", "from":"bamadapterfind", "to":"bamindexdecoder" },
+	{ "id":"ti2b_to_bamadapterfind", "from":"tee_i2b:baf", "to":"bamindexdecoder" },
 	{ "id":"decoder_to_metrics", "from":"bamindexdecoder:metrics_file", "to":"decoder_metrics" },
 	{ "id":"decoder_metrics_to_qc_tag_metrics", "from":"decoder_metrics", "to":"qc_tag_metrics_check" },
 	{ "id":"bamindexdecoder_to_collate", "from":"bamindexdecoder", "to":"bamcollate" },
 	{ "id":"collate_to_tee", "from":"bamcollate", "to":"tee_collated" },
-	{ "id":"tee_collated_to_cat", "from":"tee_collated:td1", "to":"simple_cat" },
-	{ "id":"cat_to_merge", "from":"simple_cat", "to":"bammerge:unaln_bam" },
+	{ "id":"tee_collated_to_baf", "from":"tee_collated:td1", "to":"bamadapterfind" },
+	{ "id":"baf_to_merge", "from":"bamadapterfind", "to":"bammerge:unaln_bam" },
 	{ "id":"tee_collated_to_alignment", "from":"tee_collated:td2", "to":"alignment_phix" },
 	{ "id":"ref_to_alignment", "from":"reference_phix", "to":"alignment_phix:reference" },
 	{ "id":"alignment_to_merge", "from":"alignment_phix", "to":"bammerge" },
@@ -523,6 +532,7 @@
 	{ "id":"fqc_to_ft", "from":"fastqcheck_rt", "to":"fqct" },
 	{ "id":"tee_to_stats", "from":"tee_split:stats", "to":"samtools_stats" },
 	{ "id":"stats_to_file", "from":"samtools_stats", "to":"lane_stats_file" },
+	{ "id":"stats_to_qc_samtools_stats", "from":"lane_stats_file", "to":"qc_samtools_stats_check" },
 	{ "id":"tee_to_splitter", "from":"tee_split:split_bam", "to":"splitter" },
 	{ "id":"tee_to_brc", "from":"tee_split:unsplit_bam", "to":"bamrecompress" },
 	{ "id":"brc_to_llb", "from":"bamrecompress", "to":"lane_level_bam" },

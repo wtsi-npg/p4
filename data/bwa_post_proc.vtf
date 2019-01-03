@@ -1,7 +1,7 @@
 {
 "description":"A HiSeqX processing pipeline",
-"version":"1.0",
-"subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:__IN_PICARD_DICT__","prealign":"bam12auxmerge:__PREALN_BAM__"},"outputs":{"_stdout_":"bam12auxmerge"}}},
+"version":"2.0",
+"subgraph_io":{"ports":{"inputs":{"_stdin_":"scramble_sam_to_bam","reference_picard_dict":"alterSQ_headerSQfix:picard_dict","prealign":"bam12auxmerge:prealn_bam"},"outputs":{"_stdout_":"bam12auxmerge"}}},
 "subst_params":[
 	{"id":"rpt","required":"yes"},
 	{"id":"tmpdir","required":"no","default":"."},
@@ -86,14 +86,15 @@
 	{
 		"id":"alterSQ_headerSQfix",
 		"type":"EXEC",
-		"cmd":"perl -nle 'use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){$_=$sq{$1}||$_}elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print' __IN_PICARD_DICT__",
-		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed",
+		"cmd":["perl", "-nle", "use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){ if(my$nsq=$sq{$1}){my@ah=grep{/^AH:/}split qq(\\t),$_; $_=join qq(\\t),$nsq,@ah;} }elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print",{"port":"picard_dict", "direction":"in"}],
+		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed, separate arguments to avoid being wrapped by a shell (which might hang onto file handles breaking this intention)",
+
 		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file"
 	},
 	{
 		"id":"reheader_headerSQfix",
 		"type":"EXEC",
-		"cmd":"samtools reheader __IN_SAMHEADER__ __IN_BAM__"
+		"cmd":["samtools", "reheader", {"port":"samheader", "direction":"in"}, {"port":"bam", "direction":"in"} ]
 	},
 	{
 		"id":"bam12split",
@@ -108,7 +109,7 @@
 	{
 		"id":"bam12auxmerge",
 		"type":"EXEC",
-		"cmd":"bam12auxmerge level=0 rankstrip=1 ranksplit=0 zztoname=0 clipreinsert=1 __PREALN_BAM__"
+		"cmd":["bam12auxmerge", "level=0", "rankstrip=1", "ranksplit=0", "zztoname=0", "clipreinsert=1", {"port":"prealn_bam", "direction":"in"} ]
 	}
 ],
 "edges":[
@@ -130,12 +131,12 @@
 	{
 		"id":"alterSQ_headerSQfix_to_reheader",
 		"from":"alterSQ_headerSQfix",
-		"to":"reheader_headerSQfix:__IN_SAMHEADER__"
+		"to":"reheader_headerSQfix:samheader"
 	},
 	{
 		"id":"tee_headerSQfix_to_reheader",
 		"from":"tee_bwa",
-		"to":"reheader_headerSQfix:__IN_BAM__"
+		"to":"reheader_headerSQfix:bam"
 	},
 	{
 		"id":"reheader_headerSQfix_to_bam12split",
