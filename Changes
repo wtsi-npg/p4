@@ -1,6 +1,20 @@
 CHANGES LOG
 -----------
 
+release 0.24.0
+ - allow format selection for stage1 outputs/stage2 inputs (default: cram)
+ - stage1 adapter detection now done in parallel with phix alignment
+ - add samtools stats qc check to stage1 analysis
+ - stage2 analysis templates amended to allow merging of multiple inputs; application of spatial_filter moved from stage1
+ - RNA alignments handle single-end runs
+ - new hisat2 alignment method
+ - use compressed fastq input for star alignment
+ - salmon quantification
+     check that there are enough reads in the fastq file inputs
+     check if quant file is present before copying it
+     connect zip node to quant_genes node to ensure zip waits for salmon
+ - post_alignment_realignment.json: new port specification format
+
 release 0.23.0
  - target stats (samtools) addition to final output prep
 
