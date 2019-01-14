@@ -122,14 +122,13 @@
 				{"subst":"hisat2_executable"},
 				{"subst":"aligner_numthreads_flag"},
 				"-x", {"port":"reference_genome", "direction":"in"},
-				"-1", {"port":"fq1","direction":"in"},
 				{
 					"select":"alignment_reads_layout",
 					"default":"2",
 					"select_range":[1],
 					"cases":{
-						"1":[ ],
-						"2":[ "-2", {"port":"fq2","direction":"in"} ]
+						"1":[ "-U", {"port":"fq1","direction":"in"} ],
+						"2":[ "-1", {"port":"fq1","direction":"in"}, "-2", {"port":"fq2","direction":"in"} ]
 					}
 				},
 				"--reorder",
