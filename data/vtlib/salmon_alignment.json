@@ -99,7 +99,7 @@
 					"--geneMap", {"subst":"annotation_val", "required":"yes"},
 					"--output", {"subst":"salmon_out"},
 					{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}}, "\";",
-					"case `file $0` in *ASCII*) PART1=`head -n 1000 | wc -l`;; *compressed*) PART1=`gunzip -c $0 | head -n 1000 | wc -l`;; *empty*) PART1=0;; esac;",
+					"case `file $0` in *ASCII*) PART1=`head -n 1000 $0 | wc -l`;; *compressed*) PART1=`gunzip -c $0 | head -n 1000 | wc -l`;; *empty*) PART1=0;; esac;",
 					"if [[ $0 && ! $1 ]]; then",
 						"SALMON_CMD+=\"-r $0\";",
 						"if [[ $PART1 -lt 1000 ]]; then",
