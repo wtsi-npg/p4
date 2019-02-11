@@ -1,0 +1,111 @@
+{
+"version":"2.0",
+"description":"any post-alignment processing required before passing through AlignmentFilter",
+"subgraph_io":{
+        "ports":{
+                "inputs":{
+                        "_stdin_":"tee_headerSQfix",
+                        "reference_dict":"alterSQ_headerSQfix:picard_dict",
+                        "no_align_bam":"bam12auxmerge:no_aln_bam"
+                },
+                "outputs":{
+                        "_stdout_":"bam12auxmerge"
+                }
+        }
+},
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+	},
+	{
+		"id":"bsmd_threads",
+		"subst_constructor":{
+			"vals":[ "threads", {"subst":"aligner_numthreads"} ],
+			"postproc":{"op":"concat", "pad":"="}
+		}
+        }
+],
+"nodes":[
+	{
+		"id":"tee_headerSQfix",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":["teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, {"subst":"teepot_tempdir_flag"}, "-w", "300", "-m", {"subst":"SQhdr_teepot_mval", "ifnull":"100M"}, {"port":"header_fix","direction":"out"}, {"port":"full_bam","direction":"out"}],
+		"comment":"get deadlock when tee used here; specify parameter value teepot_tempdir_value to specify teepot tempdir"
+	},
+	{
+		"id":"sam_headerSQfix",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ {"subst":"samtools_executable"}, "view", "-h", "-" ]
+	},
+	{
+		"id":"alterSQ_headerSQfix",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["perl", "-nle", "use strict; use autodie; our%sq; our$re; our$body; BEGIN{$body=0; $re=qr/^\\@SQ.*\\tSN:([^\\t]+)/; open(my$df,q(<),shift@ARGV); while(<$df>){chomp; if(/$re/){$sq{$1}=$_;} } close $df; } next if $body ; if(/$re/){ if(my$nsq=$sq{$1}){my@ah=grep{/^AH:/}split qq(\\t),$_; $_=join qq(\\t),$nsq,@ah;} }elsif(/^[^@]/){open STDOUT,q(>),q(/dev/null); $body=1; next} print",{"port":"picard_dict", "direction":"in"}],
+		"comment":"careful to not send SIGPIPE back to tee, yet ensure EOF to reheader as soon as header processed, separate arguments to avoid being wrapped by a shell (which might hang onto file handles breaking this intention)",
+		"description":"where SN field in SQ header record matches one in the given dict file, replace that SQ record with that in the dict file, but propagate any 'AH' fields provided by the aligner"
+	},
+	{
+		"id":"mbuffer_headerSQfix",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "teepot", {"subst":"teepot_vflag", "ifnull":"-v"}, "-m", "5M", "-" ]
+	},
+	{
+		"id":"reheader_headerSQfix",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":[ {"subst":"samtools_executable"}, "reheader", {"port":"samheader", "direction":"in"}, {"port":"bam", "direction":"in"} ]
+	},
+	{
+		"id":"bam12split",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bam12split", "verbose=0", "level=0"]
+	},
+	{
+		"id":"bamsort_qname",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bamsormadup", {"subst":"bsmd_threads"},"SO=queryname", "level=0"]
+	},
+	{
+		"id":"bam12auxmerge",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+			"bam12auxmerge",
+			"level=0",
+			{"subst":"rankstrip_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "rankstrip", {"subst":"rankstrip_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			"ranksplit=0",
+			"zztoname=0",
+			{"subst":"clipreinsert_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "clipreinsert", {"subst":"clipreinsert_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"port":"no_aln_bam", "direction":"in"}
+		]
+	}
+],
+"edges":[
+	{ "id":"tee_headerSQfix_to_sam", "from":"tee_headerSQfix:header_fix", "to":"sam_headerSQfix" },
+	{ "id":"sam_headerSQfix_to_alterSQ", "from":"sam_headerSQfix", "to":"alterSQ_headerSQfix" },
+	{ "id":"alterSQ_headerSQfix_to_reheader", "from":"alterSQ_headerSQfix", "to":"reheader_headerSQfix:samheader" },
+	{ "id":"tee_headerSQfix_to_mbuffer", "from":"tee_headerSQfix:full_bam", "to":"mbuffer_headerSQfix" },
+	{ "id":"mbuffer_headerSQfix_to_reheader", "from":"mbuffer_headerSQfix", "to":"reheader_headerSQfix:bam" },
+	{ "id":"reheader_headerSQfix_to_bam12split", "from":"reheader_headerSQfix", "to":"bam12split" },
+	{ "id":"bam12split_to_bamsort_qname", "from":"bam12split", "to":"bamsort_qname" },
+	{ "id":"bsqn_to_bam12auxmerge", "from":"bamsort_qname", "to":"bam12auxmerge" }
+]
+}

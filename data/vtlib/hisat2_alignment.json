@@ -1,0 +1,191 @@
+{
+"version":"2.0",
+"description":"run hisat2 to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"hisat2:reference_genome"
+		},
+		"outputs":{
+			"_stdout_":"bamsort_qname"
+		}
+	}
+},
+"subst_params":[
+	{
+		"id": "basic_pipeline_params",
+		"type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+		"required": "no",
+		"comment":"this will expand to a set of subst_param elements"
+	},
+	{
+		"id":"fastq1_name",
+		"required":"no",
+		"default":"intfile_1.fq.gz",
+		"subst_constructor":{
+			"vals":[ "intfile_1_", {"subst":"rpt"}, {"subst":"fqext", "ifnull":".fq.gz"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"fastq1",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"fastq1_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"fastq2_name",
+		"required":"no",
+		"default":"intfile_2.fq.gz",
+		"subst_constructor":{
+			"vals":[ "intfile_2_", {"subst":"rpt"}, {"subst":"fqext", "ifnull":".fq.gz"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"fastq2",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"fastq2_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"hisat2_executable",
+		"required":"no",
+		"default":"hisat2"
+	},
+	{
+		"id":"rna_strandness_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "--rna-strandness", {"subst":"rna_strandness"} ],
+			"postproc":{"op":"concat","pad":" "}
+		},
+		"comment":"akin to TopHat's --library-type option"
+	},
+	{
+		"id":"aligner_numthreads_flag",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ "--threads", {"subst":"aligner_numthreads"} ],
+			"postproc":{"op":"concat","pad":" "}
+		}
+	},
+	{
+		"id":"quant_vtf",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"quant_method"}, "_alignment.json" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
+		"cmd":["bamtofastq", "gz=1",
+				{
+					"select":"alignment_reads_layout",
+					"default":"2",
+					"select_range":[1],
+					"cases":{
+						"1":{"packflag":["S=",{"port":"fq1", "direction":"out"}]},
+						"2":[{"packflag":["F=",{"port":"fq1", "direction":"out"}]}, {"packflag":["F2=",{"port":"fq2", "direction":"out"}]}]
+					}
+				}
+		]
+	},
+	{
+		"id":"fq1",
+		"type":"RAFILE",
+		"name":{"subst":"fastq1"}
+	},
+	{
+		"id":"fq2",
+		"type":"RAFILE",
+		"name":{"subst":"fastq2"}
+	},
+	{
+		"id":"hisat2",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+				{"subst":"hisat2_executable"},
+				{"subst":"aligner_numthreads_flag"},
+				"-x", {"port":"reference_genome", "direction":"in"},
+				{
+					"select":"alignment_reads_layout",
+					"default":"2",
+					"select_range":[1],
+					"cases":{
+						"1":[ "-U", {"port":"fq1","direction":"in"} ],
+						"2":[ "-1", {"port":"fq1","direction":"in"}, "-2", {"port":"fq2","direction":"in"} ]
+					}
+				},
+				"--reorder",
+				{"subst":"rna_strandness_flag"}
+		]
+	},
+	{
+		"id":"quantify",
+		"type":"VTFILE",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"comment":"inputs: fq1, fq2; outputs: NONE",
+		"node_prefix":"quant_",
+		"name":{"subst":"quant_vtf"},
+		"description":"subgraph containing salmon quantification of transcripts"
+	},
+	{
+		"id":"samtobam",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+				"scramble",
+				{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
+				{"subst":"s2b_compress_level", "ifnull":"-0"},
+				"-I", "sam",
+				"-O", "bam"
+		]
+	},
+	{
+		"id":"bamsort_qname",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+				"bamsormadup", {"subst":"bsmd_threads"},"SO=queryname", "level=0"
+		]
+	}
+],
+"edges":[
+	{"id":"bamtofastq_to_fq1", "from":"bamtofastq:fq1", "to":"fq1"},
+	{ "select":"alignment_reads_layout",
+		"default":2,
+		"select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"bamtofastq_to_fq2", "from":"bamtofastq:fq2", "to":"fq2"} }
+	},
+	{"id":"fq1_to_hisat2", "from":"fq1", "to":"hisat2:fq1"},
+	{"select":"alignment_reads_layout",
+		"default":2, "select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"fq2_to_hisat2", "from":"fq2", "to":"hisat2:fq2"} }
+	},
+	{"id":"fq1_to_quantify", "from":"fq1", "to":"quantify:fastq1"},
+	{"select":"alignment_reads_layout",
+		"default":2, "select_range":[1],
+		"cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} }
+	},
+	{"id":"hisat2_to_scramble", "from":"hisat2", "to":"samtobam"},
+	{"id":"samtobam_to_qname_sort", "from":"samtobam", "to":"bamsort_qname"}
+]
+}

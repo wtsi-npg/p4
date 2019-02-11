@@ -1,12 +1,122 @@
 CHANGES LOG
 -----------
 
+release 0.24.0
+ - allow format selection for stage1 outputs/stage2 inputs (default: cram)
+ - stage1 adapter detection now done in parallel with phix alignment
+ - add samtools stats qc check to stage1 analysis
+ - stage2 analysis templates amended to allow merging of multiple inputs; application of spatial_filter moved from stage1
+ - RNA alignments handle single-end runs
+ - new hisat2 alignment method
+ - use compressed fastq input for star alignment
+ - salmon quantification
+     check that there are enough reads in the fastq file inputs
+     check if quant file is present before copying it
+     connect zip node to quant_genes node to ensure zip waits for salmon
+ - post_alignment_realignment.json: new port specification format
+
+release 0.23.0
+ - target stats (samtools) addition to final output prep
+
+release 0.22.1
+ - add default ("ifnull":"salmon") value for quant_method parameter to fix star/tophat2 tag#0 problem
+
+release 0.22.0
+ - new template for minimap2 alignment, with optional post-alignment filtering of secondary and supplementary
+     alignments, and minimap2_F_value parameter to allow non-default insert size to be specified (-F flag)
+ - subsampling of 10K reads (fastq produced by samtools view -s SEED.FRAC) and production of fastqcheck files
+     added to stage1 and stage2 analyses (nchs, single-/paired-end)
+ - add lane-level samtools stats to stage1
+ - spatial filter application moved to stage2 from stage1
+ - amend spatial_filter input/output file names for easier identification
+ - empty edge entries recognised as noop - filter in viv.pl, ignore in visualisation, do not apply VTFILE
+    prefixes when there are no to and from attributes
+ - added -F option to minimap2
+
+release 0.21.0
+ - salmon_alignment: copy quant.genes.sf to archive directory
+ - star_alignment: assign appropriate suffixes to bamtofastq output files
+ - merge: flag change for use with tears 1.2.4
+
+release 0.20.1
+ - star_alignment
+    correct version number (to 2.0)
+    do queryname sort after alignment
+ - upgrade realignment template to version 2
+ - viv.pl: loosen overly strict checks when using output file nodes with subtype dummy
+
+release 0.20.0
+ - phase 1 of new format templates (port spec)
+ - replacement of AlignmentFilter and spatial filter with bambi commands
+ - now handles XA/Y-split with no target alignment
+
+release 0.19.3
+ - fixes for nonconsented human split with no target alignment
+     change intermediate OUTFILE node to RAFILE
+     remove unneeded bammarkduplicates and parameters only used by sort and duplicate marking
+
+release 0.19.2
+ - fix for single-end alignments (bwa aln): specify use_STD[IN|OUT] attributes for EXEC nodes in bwa_aln_se_alignment
+
+release 0.19.1
+ - fix split_by_chromosome template (ysplit)
+
+release 0.19.0
+ - add new templates for STAR alignment and Salmon
+ - Small change in final_output_prep to allow bamsort_cmd to have configurable executable and scramble to have optional embed reference param.
+ - add select directive
+ - splice/prune operations can be specified in param_vals file
+ - new version2 format of port specification in templates
+ - correct failure to report errors lower than one VTFILE level
+
+release 0.18.6
+ - Y-split fixes
+     When processing VTFILE nodes, make sure that parameters are reevaluated locally instead of naively inheriting values
+         from the enclosing template (otherwise local changes in values of components of a parameter value may be ignored).
+     use bambi for split by chromosome (remove java)
+     10-vtfp-vtfile.t - add tests for VTFILE functionality
+
+release 0.18.5
+ - Correct logic in vftp.pl for allowing edges without id attributes
+ - Reduce verbosity in vtfp.pl
+ - Fix handling of splice/prune in vftp.pl where source/destination is STDIN/STOUT
+ - Use fopid in place of other substitutions
+ - use FindBin in vtfp.pl and viv.pl
+
+release 0.18.4
+ - removal of -n 1 flag with seqchksum_merge.pl command in merge_aligned template to maintain current behaviour 
+ - logging changes
+    correct unneeded warnings about changing use_STDIN/use_STDOUT values for INFILE/OUTFILE/RAFILE node
+    recognise JSON::PP:Boolean type (remove warning from log)
+    allow edges to have no id values (warnings about undefined values in log files should no longer appear)
+ - cope with differing line return behaviour of versions of rev utility (test fix)
+
+release 0.18.3
+ - bwa mem flags default changes and additions
+    don't use -T by default
+    [new flag] use -K 100000000 (reads per thread, large value to make alignment runs replicable)
+    [new flag] use -Y to soft clip supplementary alignments instead of hard clipping
+ - add ability to splice and prune nodes from the final graph
+ - final_output_prep changes to support optional targeted stats files.
+ - use threaded bamsormadup in place of bamsort for coord sort
+ - add parameters to allow selection of java or bambi (default) implementations of i2b and decode
+
+release 0.18.2
+ - propagate any 'AH' fields provided by the aligner when providing full SQ headers (bwa0.7.15)
+ - fix bamindexdecoder.json template: add pack option to bamindexdecoder_java_cmd array to handle undefined parameters; change default implementation from "samtools decode" to java BamIndexDecoder
+
+release 0.18.1
+- corrected typo (add_item instead of additem) which can cause compilation failure
+
+release 0.18.0
 - stage1 analysis : update to bcl_phix_deplex_wtsi_stage1_template; addition of new subgraphs
+- added bcftools_genotype_call template for library merge gtcheck qc test
 - added facility to allow splicing in of tee(pot) nodes at node outputs at viv.pl runtime
 - remove bamcheck and add bam_stats
 - added in realignment_wtsi_stage2_humansplit_template which was used to split existing target files from iRODS. Now renamed to realignment_wtsi_humansplit_template.
 - changes to merge_final_output_prep to remove extra stats files and allow use of reference for existing stats files
 - adding in realignment_wtsi_humansplit_notargetalign_template
+- updated bamindexdecoder template (stage1 analysis) to use samtools decode by default (java version still an option)
 
 release 0.17.3
  - update Build.PL and tests to have correct and full set of requirements

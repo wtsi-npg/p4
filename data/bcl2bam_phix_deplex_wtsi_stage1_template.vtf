@@ -292,13 +292,13 @@
 	{
 		"id":"create_filter",
 		"type":"EXEC",
-		"cmd":"spatial_filter -c -q -F /dev/stdout /dev/stdin",
+		"cmd":"bambi spatial_filter -c -F /dev/stdout /dev/stdin",
 		"description":"Create a spatial filter"
 	},
 	{
 		"id":"apply_filter",
 		"type":"EXEC",
-		"cmd":"spatial_filter -a -f -q -F __FILTER__ /dev/stdin",
+		"cmd":"bambi spatial_filter -a -f -F __FILTER__ /dev/stdin",
 		"description":"Apply a spatial filter"
 	},
 	{

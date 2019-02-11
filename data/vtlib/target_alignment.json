@@ -1,0 +1,177 @@
+{
+"version":"2.0",
+"description":"Process DNA (or RNA) seq data in BAM files within second stage of NPG Pipeline producing WTSI DNAP Sequencing Informatics output",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamcollate2"
+		},
+		"outputs":{
+			"aligned_to_target":"bam12auxmerge",
+			"aligned_to_phix":"tee3:phix_aln"
+		}
+	}
+},
+"subst_params":[
+	{
+		"id":"initial_phix_aln_bam_name",
+		"required":"no",
+		"default":"initial_phix_aln.bam",
+		"subst_constructor":{
+			"vals":[ "initial_phix_aln_", {"subst":"rpt"}, ".bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"initial_phix_aln_bam",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"initial_phix_aln_bam_name"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"bamcollate2",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bamcollate2", "collate=1", "level=0"],
+		"comment":"ensure BAM records are gathered by template i.e. queryname"
+	},
+	{
+		"id":"tee3",
+		"type":"VTFILE",
+		"node_prefix":"tee3_",
+		"name":{"select":"align_intfile_opt", "default":0, "select_range":[0,1],
+				"cases":[
+					"unaln_tee3.json",
+					"unaln_intfile.json"
+				]
+		},
+		"comment":"allow option to create an intermediate file for alignment methods which may require it (e.g. tophat2)"
+	},
+	{
+		"id":"auxmerge_prep",
+		"type":"VTFILE",
+		"node_prefix":"amp_",
+		"orig_name":{"subst":"auxmerge_prep"},
+		"name":{
+			"subst":"auxmerge_prep",
+			"required":true,
+			"ifnull":{
+				"subst_constructor":{
+				"vals":
+				[ {"subst":"cfgdatadir"}, "/", {"subst":"auxmerge_prep_name", "ifnull":"auxmerge_prep"}, ".json" ],
+				"postproc":{"op":"concat", "pad":""}
+				}
+			}
+		},
+		"description":"subgraph containing pre alignment process"
+	},
+	{
+		"id":"pre_alignment",
+		"type":"VTFILE",
+		"node_prefix":"prealn_",
+		"orig_name":{"subst":"pre_alignment"},
+		"name":{
+			"subst":"pre_alignment",
+			"required":true,
+			"ifnull":{
+				"subst_constructor":{
+				"vals":
+				[ {"subst":"cfgdatadir"}, "/", {"subst":"pre_alignment_name", "ifnull":"pre_alignment"}, ".json" ],
+				"postproc":{"op":"concat", "pad":""}
+				}
+			}
+		},
+		"description":"subgraph containing pre alignment process"
+	},
+	{
+		"id":"alignment",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (bam), reference; outputs: _stdout_ (bam)",
+		"node_prefix":"alntgt_",
+		"orig_name":{"subst":"alignment_vtf"},
+		"name":{
+			"subst":"alignment_vtf",
+			"required":true,
+			"ifnull":{
+				"subst_constructor":{
+				"vals":
+				[ {"subst":"cfgdatadir"}, "/", {"subst":"alignment_method", "required":true}, "_alignment.json" ],
+				"postproc":{"op":"concat", "pad":""}
+				}
+			}
+		},
+		"description":"subgraph containing alignment process"
+	},
+	{
+		"id":"alignment_reference_genome",
+		"type":"INFILE",
+		"name":{"subst":"alignment_reference_genome","required":true},
+		"description":"Prefix for reference fasta and Bowtie2 index files"
+	},
+	{
+		"id":"post_alignment",
+		"type":"VTFILE",
+		"node_prefix":"postaln_",
+		"orig_name":{"subst":"post_alignment"},
+		"name":{
+			"subst":"post_alignment",
+			"required":true,
+			"ifnull":{
+				"subst_constructor":{
+				"vals":
+				[ {"subst":"cfgdatadir"}, "/", {"subst":"post_alignment", "ifnull":"post_alignment"}, ".json" ],
+				"postproc":{"op":"concat", "pad":""}
+				}
+			}
+		},
+		"description":"subgraph containing post alignment process"
+	},
+	{
+		"id":"alignment_reference_dict",
+		"type":"INFILE",
+		"name":{"subst":"reference_dict","required":true},
+		"description":"Extra metadata e.g. UR, M5 auxtags for BAM SQ header records"
+	},
+	{
+		"id":"bam12auxmerge",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+			"bam12auxmerge",
+			"level=0",
+			{"subst":"rankstrip_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "rankstrip", {"subst":"rankstrip_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			"ranksplit=0",
+			"zztoname=0",
+			{"subst":"clipreinsert_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "clipreinsert", {"subst":"clipreinsert_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"port":"no_aln_bam", "direction":"in"}
+		]
+	},
+	{
+		"id":"initial_phix_aln_bam",
+		"type":"RAFILE",
+		"name":{"subst":"initial_phix_aln_bam", "ifnull":"tmp.bam"}
+	},
+	{
+		"id":"initial_phix_aln_bam2",
+		"type":"RAFILE",
+		"name":{"subst":"initial_phix_aln_bam2", "ifnull":"tmp2.bam"}
+	}
+],
+"edges":[
+	{ "id":"bc2_to_t3", "from":"bamcollate2", "to":"tee3" },
+	{ "id":"phixaln_to_amp", "from":"tee3:amp", "to":"auxmerge_prep" },
+	{ "id":"amp_to_auxmrg", "from":"auxmerge_prep", "to":"bam12auxmerge:no_aln_bam" },
+	{ "id":"tgtaln_to_prealn", "from":"tee3:prealn", "to":"pre_alignment" },
+	{ "id":"prealn_to_tee", "from":"pre_alignment", "to":"alignment" },
+	{ "id":"ref_to_alignment", "from":"alignment_reference_genome", "to":"alignment:reference" },
+	{ "id":"alignment_to_postaln", "from":"alignment", "to":"post_alignment" },
+        { "id":"refdict_to_postaln", "from":"alignment_reference_dict", "to":"post_alignment:reference_dict" },
+	{ "id":"postaln_to_auxmrg", "from":"post_alignment", "to":"bam12auxmerge" }
+]
+}

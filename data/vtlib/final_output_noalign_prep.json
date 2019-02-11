@@ -1,11 +1,10 @@
 {
 "version":"1.0",
 "description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
-"comment":"bammarkduplicates reintroduced for unaligned file because downstream qc processing relies on presence of markdups_metrics file",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-			"_stdin_":"bammarkduplicates"
+			"_stdin_":"fo_in_multiway"
 		},
 		"outputs":{
 			"_stdout_":"seqchksum_tee:__FINAL_OUT__"
@@ -13,40 +12,6 @@
 	}
 },
 "subst_params":[
-	{"id":"phix_or_target","required":"yes"},
-	{
-		"id":"bs_tmpfile_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bstmp"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"bmd_tmpfile_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"bmdtmp","required":"yes"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"bmd_metrics_file_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "M=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".markdups_metrics.txt" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"bmd_resetdupflag",
-		"comment":"this option should only be used with bamstreamingmarkduplicates (not bammarkduplicates or bammarkduplicates2)",
-		"subst_constructor":{
-			"vals":[ "resetdupflag", {"subst":"bmd_resetdupflag_val"} ],
-			"postproc":{"op":"concat", "pad":"="}
-		}
-	},
-	{"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
 	{"id":"stats_filter__F0x900","required":"no","default":"0x900"},
 	{"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
 	{"id":"bam_stats_executable","required":"no","default":"bam_stats"},
@@ -63,7 +28,7 @@
 		"id":"br_md5file_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "md5filename=", {"subst":"outdatadir"}, "/", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".bam.md5" ],
+			"vals":[ "md5filename=", {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".bam.md5" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -79,12 +44,12 @@
 		"id":"br_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
-			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"brtmp"}, "_", {"subst":"rpt"}, {"subst":"phix_or_target"}, ".tmp" ],
+			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"brtmp"}, "_", {"subst":"fopid"}, ".tmp" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
 	{"id":"flagstats_filter_flag","required":"no","default":"0x900"},
-	{"id":"fopid","default":{"subst":"phix_or_target"}},
+	{"id":"fopid","required":"yes"},
 	{
 		"id":"bam_file",
 		"required":"yes",
@@ -172,14 +137,6 @@
 		"use_STDOUT": false,
 		"cmd": [ {"subst":"bam_stats_executable"}, "-o", {"subst":"bam_stats_file"}] ,
 		"comment":"CGP bam_stats"
-	},
-	{
-		"id":"bammarkduplicates",
-		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd": [ {"subst":"bmd_cmd"}, "level=0", "verbose=0", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"}, {"subst":"bmd_resetdupflag"} ]
 	},
 	{
 		"id":"fo_in_multiway",
@@ -281,7 +238,7 @@
 	{ "id":"bam_file", "type":"OUTFILE", "name":{"subst":"bam_file"} },
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
 	{ "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
-	{ "id":"seqchksum_file", "type":"OUTFILE", "name":{"subst":"seqchksum_file"} },
+	{ "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
 	{ "id":"seqchksum_file_cram", "type":"RAFILE", "name":{"subst":"seqchksum_file_cram"}, "comment":"this file is a temporary fix for blocking problems at the cmp_seqchksum node" },
 	{ "id":"seqchksum_extrahash_file", "type":"OUTFILE", "name":{"subst":"seqchksum_extrahash_file"} },
 	{ "id":"stats_F0x900_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_file"} },
@@ -311,7 +268,6 @@
 	}
 ],
 "edges":[
-	{ "id":"bammarkduplicates_to_multiway", "from":"bammarkduplicates", "to":"fo_in_multiway" },
 	{ "id":"bmdmw_to_scramble", "from":"fo_in_multiway:__SCRAMBLE_OUT__", "to":"scramble" },
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
 	{ "id":"scramble_tee_to_md5", "from":"scramble_tee:__MD5_OUT__", "to":"scramble_md5" },

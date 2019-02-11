@@ -1,17 +1,22 @@
 {
 	"description":	"minimal failing test pipeline. Fails because of false in cmd",
+	"version":1.0,
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",
+		"use_STDOUT":true,
 		"cmd": "echo stuff; sleep 1 && cat"
 	},
 	{	"id": "n2",
 		"type": "EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
 		"ocmd": "cat; false",
 		"cmd": "head -1; false"
 	},
 	{	"id": "m",
 		"type": "EXEC",
+		"use_STDOUT":true,
 		"cmd": ["echo", "stuff"]
 	},
 	{	"id": "d",

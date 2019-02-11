@@ -1,0 +1,155 @@
+{
+"version":"2.0",
+"description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+				"fastq1":"salmon:fq1",
+				"fastq2":"salmon:fq2"
+		}
+	}
+},
+"subst_params":[
+	{
+		"id":"salmon_dir",
+		"required":"no",
+		"default":"salmon_quant"
+	},
+	{
+		"id":"salmon_out",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"} ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"quant",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/quant.sf"
+	},
+	{
+		"id":"quant_genes",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/quant.genes.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/quant.genes.sf"
+	},
+	{
+		"id":"lib_format_counts",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/lib_format_counts.json" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/lib_format_counts.json"
+	},
+	{
+		"id":"libparams",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/libParams" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/libParams"
+	},
+	{
+		"id":"cmd_info",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"salmon_dir"}, "_", {"subst":"rpt"}, "/cmd_info.json" ],
+			"postproc":{"op":"concat","pad":""}
+		},
+		"default":"salmon_quant/cmd_info.json"
+	},
+	{
+		"id":"zip_target",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_salmon.quant.zip" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	},
+	{
+		"id":"quant_genes_target",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, ".quant.genes.sf" ],
+			"postproc":{"op":"concat","pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"salmon",
+		"type":"EXEC",
+		"subtype":"STRINGIFY",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd":[
+				"bash -c '",
+					"SALMON_CMD=\"salmon --no-version-check quant --libType A",
+					"--index", {"subst":"salmon_transcriptome_val", "required":"yes"},
+					"--geneMap", {"subst":"annotation_val", "required":"yes"},
+					"--output", {"subst":"salmon_out"},
+					{"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-p", {"subst":"b2c_mt_val"} ]}}}, "\";",
+					"case `file $0` in *ASCII*) PART1=`head -c 50K $0 | wc -l`;; *compressed*) PART1=`gunzip -c $0 | head -c 50K | wc -l`;; *empty*) PART1=0;; esac;",
+					"if [[ $0 && ! $1 ]]; then",
+						"SALMON_CMD+=\"-r $0\";",
+						"if [[ $PART1 -lt 1000 ]]; then",
+							">&2 printf \"Not enough reads to run Salmon: fq: %s\" \"$((PART1/4))\"; exit 0; fi;",
+					"elif [[ $0 && $1 ]]; then",
+						"SALMON_CMD+=\"-1 $0 -2 $1\";",
+						"case `file $1` in *ASCII*) PART2=`head -c 50K $1 | wc -l`;; *compressed*) PART2=`gunzip -c $1 | head -c 50K | wc -l`;; *empty*) PART2=0;; esac;",
+						"if [[ $PART1 -lt 1000 || $PART2 -lt 1000 ]]; then",
+							">&2 printf \"Not enough reads to run Salmon: fq1: %s - fq2: %s\" \"$((PART1/4))\" \"$((PART2/4))\"; exit 0; fi; fi;",
+					"$SALMON_CMD'",
+					{
+						"select":"alignment_reads_layout",
+						"default":"2",
+						"select_range":[1],
+						"cases":{
+							"1":[{"port":"fq1", "direction":"in"}],
+							"2":[{"port":"fq1", "direction":"in"}, {"port":"fq2", "direction":"in"}]
+						}
+					}
+		],
+		"comment":"salmon is too fussy and requires a minimum of good reads to work or it throws a fit. wrapped in a bash script to validate fastq files"
+	},
+	{
+		"id":"zip_salmon_quant",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd":[ "zip", "-r", {"subst":"zip_target"}, {"subst":"quant"}, {"subst":"quant_genes"}, {"subst":"lib_format_counts"}, {"subst":"libparams"}, {"subst":"cmd_info"} ]
+	},
+	{
+		"id":"quant_genes",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst":"quant_genes"}
+	},
+	{
+		"id":"cp_quant_genes",
+		"type":"EXEC",
+		"subtype":"STRINGIFY",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+		"cmd":[ "bash -c 'if [ -e $0 ]; then cp $0 $1; else >&2 printf \"No such file: %s\" $0; exit 0; fi'", 
+				{"port":"src_quant_genes", "direction":"in"}, {"subst":"quant_genes_target"}
+		],
+		"comment":"if salmon is not run this file is not created"
+	}
+],
+"edges":[
+	{ "id":"zip_salmon_output", "from":"quant_genes", "to":"zip_salmon_quant"},
+	{ "id":"salmon_to_quant_genes", "from":"salmon", "to":"quant_genes" },
+	{ "id":"cp_quant_genes", "from":"quant_genes", "to":"cp_quant_genes:src_quant_genes" }
+]
+}

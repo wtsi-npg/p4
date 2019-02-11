@@ -1,0 +1,154 @@
+{
+"version":"2.0",
+"description":"produce 10k subsample fastq files and fastqcheck files",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"tee_ssfqc"
+		},
+		"outputs":{
+			"straight_through1":"tee_ssfqc:straight_through1",
+			"straight_through2":"tee_ssfqc:straight_through2"
+		}
+	}
+},
+"subst_params":[
+],
+"nodes":[
+	{
+		"id":"tee_ssfqc",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
+                "cmd":
+			[
+				{"subst":"teepot_executable", "ifnull":"teepot"},
+				{"subst":"ts_tmpdirflag","ifnull":{"subst_constructor":{"vals":[ "-t", {"subst":"tee_split_teepot_tempdir", "ifnull":{"subst":"teepot_tempdir_value"}} ]}}},
+				{"subst":"teepot_vflag", "ifnull":"-v"},
+				{"subst":"ts_wflag","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_ssfqc_teepot_wval", "ifnull":600} ]}}},
+				{"subst":"ts_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_ssfqc_teepot_mval", "ifnull":{"subst":"teepot_mval"}} ]}}},
+				{"subst":"ts_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_ssfqc_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
+				{"subst":"ts_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
+				{"port":"straight_through1", "direction":"out"},
+				{"port":"straight_through2", "direction":"out"},
+				{"port":"subsample", "direction":"out"},
+				{"port":"fqc", "direction":"out"}
+			]
+	},
+        {
+                "id":"subsample",
+                "type":"EXEC",
+		"subtype":"STRINGIFY",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+			"bash -c '",
+			{"subst_constructor":{"vals":["tmfs=\"", {"subst":"tag_metrics_files", "required":true}, "\""],"postproc":{"op":"concat","pad":""}}}, "; if [ ! -z \"${tmfs}\" ]; then for tag_metrics_file in ${tmfs}; do reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'\"'\"'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'\"'\"'"],"postproc":{"op":"concat","pad":""}}}}, "${tag_metrics_file}`; reads_count=`echo ${reads_count} | tr -cd [:digit:]`; reads_count_total=$((${reads_count_total}+${reads_count})); done; frac=`echo \"10000/${reads_count_total}\" | bc -l`; fi;",
+			"if [ ! -z $frac ]; then",
+				"samtools",
+				"view",
+				"-s", {"subst":"seed_frac", "required":true, "ifnull": {"subst_constructor":{"vals":[ {"subst":"subsample_seed", "ifnull":{"subst":"s2_id_run", "required":true}}, "${frac}" ],"postproc":{"op":"concat","pad":""}}}},
+				"-b",
+				"-",
+				";",
+			"else >&2 printf \"No tag metrics, no subsample\"; fi;'"
+		]
+        },
+        {
+                "id":"bamtofastq_ss",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"fastq",
+			"-F", "0x200",
+			{"select":"s2_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"ss_fq1", "direction":"out"},"-2", {"port":"ss_fq2", "direction":"out"}],
+				"se":["-0", {"port":"ss_fq1", "direction":"out"}]
+			}},
+                        "-"
+		]
+        },
+	{
+		"id":"run_lane_ss_fq1",
+		"type":"OUTFILE",
+		"name":{"subst":"run_lane_ss_fq1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_1#", {"subst":"s2_tag_index"}, ".fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane-level fastqcheck output, read1"
+	},
+	{
+		"id":"run_lane_ss_fq2",
+		"type":"OUTFILE",
+		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"subsetsubpath","default":""}, {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_2#", {"subst":"s2_tag_index"}, ".fastq" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane-level fastqcheck output, read2"
+	},
+        {
+                "id":"bamtofastq_fqc",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "samtools",
+			"fastq",
+			"-F", "0x200",
+			{"select":"s2_se_pe", "default":"pe", "select_range":[1], "cases":{
+				"pe":["-1", {"port":"fq1", "direction":"out"},"-2", {"port":"fq2", "direction":"out"}],
+				"se":["-0", {"port":"fq1", "direction":"out"}]
+			}},
+                        "-"
+		]
+        },
+        {
+                "id":"fastqcheck_r1",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "fastqcheck" ]
+        },
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"node only appears if s2_se_pe is pe",
+           "cases":{
+             "pe":
+		{
+			"id":"fastqcheck_r2",
+			"type":"EXEC",
+			"use_STDIN": true,
+			"use_STDOUT": true,
+			"cmd":[ "fastqcheck" ]
+		},
+             "se":{"comment":"fastqcheck_r2 node removed"}
+	}},
+	{
+		"id":"fqc1",
+		"type":"OUTFILE",
+		"name":{"subst":"fqc1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_1#", {"subst":"s2_tag_index"}, ".fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane[1]-level fastqcheck output"
+	},
+	{
+		"id":"fqc2",
+		"type":"OUTFILE",
+		"name":{"subst":"fqc2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/", {"subst":"s2_id_run"}, "_", {"subst":"s2_position"}, "_2#", {"subst":"s2_tag_index"}, ".fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
+		"description":"lane[2]-level fastqcheck output"
+	}
+],
+"edges":[
+	{ "id":"tee_to_ss", "from":"tee_ssfqc:subsample", "to":"subsample" },
+	{ "id":"ss_to_b2fqss", "from":"subsample", "to":"bamtofastq_ss" },
+	{ "id":"b2fqss_to_fq1", "from":"bamtofastq_ss:ss_fq1", "to":"run_lane_ss_fq1" },
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"edge only appears if s2_se_pe is pe",
+           "cases":{
+	      "pe":{ "id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2" },
+              "se":{"comment":"b2fqss_to_fq2 edge removed"}
+	}},
+	{ "id":"tee_to_b2fqfqc", "from":"tee_ssfqc:fqc", "to":"bamtofastq_fqc" },
+	{ "id":"tee_to_splitter", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"edge only appears if s2_se_pe is pe",
+           "cases":{
+	      "pe":{ "id":"bamtofastq_fqx_to_fastqcheck_r2", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
+              "se":{"comment":"bamtofastq_fqx_to_fastqcheck_r2 edge removed"}
+	}},
+	{ "id":"tee_to_splitter", "from":"fastqcheck_r1", "to":"fqc1" },
+	{"select":"s2_se_pe", "default":"pe", "select_range":[0,1], "comment":"edge only appears if s2_se_pe is pe",
+           "cases":{
+             "pe": { "id":"fastqcheck_r2_to_fqc2", "from":"fastqcheck_r2", "to":"fqc2" },
+             "se":{"comment":"fastqcheck_r2_to_fqc2 edge removed"}
+	}}
+]
+}

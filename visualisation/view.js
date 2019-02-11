@@ -27,13 +27,15 @@ document.getElementById('filename').innerHTML = json_url;
 document.getElementById('description').innerHTML = graph.description;
 
 graph.edges.forEach(function(link) {
-  var from_name = link.from.split(':',2)[0];
-  var to_name = link.to.split(':',2)[0];
-  link.source = nodes[from_name] || (nodes[from_name] = {name: from_name});
-  link.target = nodes[to_name] || (nodes[to_name] = {name: to_name});
-  link.type = "std";
-  if (link.id.match(/phix/i)) { link.type="phix"; }
-  linx.push(link);
+  if(link.from && link.to) {
+    var from_name = link.from.split(':',2)[0];
+    var to_name = link.to.split(':',2)[0];
+    link.source = nodes[from_name] || (nodes[from_name] = {name: from_name});
+    link.target = nodes[to_name] || (nodes[to_name] = {name: to_name});
+    link.type = "std";
+    if (link.id.match(/phix/i)) { link.type="phix"; }
+    linx.push(link);
+  }
 });
 
 graph.nodes.forEach(function(node) {

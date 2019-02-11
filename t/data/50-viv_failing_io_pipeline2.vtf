@@ -1,5 +1,6 @@
 {
 	"description":	"minimal failing test pipeline. Port names in edges match the node definitions, but are of the wrong type",
+	"version":1.0,
 	"nodes":[
 	{	"id": "n1",
 		"type": "EXEC",

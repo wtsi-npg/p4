@@ -1,12 +1,12 @@
 {
-"version":"1.0",
+"version":"2.0",
 "description":"steps in the alignment pipeline perform a checksum-based comparison of input and output (bam) data. Final validation step in alignment pipeline",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
 				"_stdin_":"seqchksum_input",
-				"target_seqchksum":"merge_output_seqchksum:__TARGET_CHKSUM_IN__",
-				"phix_seqchksum":"merge_output_seqchksum:__PHIX_CHKSUM_IN__"
+				"target_seqchksum":"merge_output_seqchksum:target_chksum",
+				"phix_seqchksum":"merge_output_seqchksum:phix_chksum"
 		}
 	}
 },
@@ -33,24 +33,48 @@
 		"use_STDOUT": true,
                 "cmd":[ "bamseqchksum", {"subst":"src_input_format_flag"} ]
         },
+	{
+		"id":"seqchksum_orig_file",
+		"type":"RAFILE",
+		"name":{
+			"subst":"seqchksum_orig_file",
+			"required":true,
+			"ifnull":{
+				"subst_constructor":{
+					"vals":[
+						{"subst":"outdatadir"},
+						"/",
+						{"subst":"s2_id_run"},
+						"_",
+						{"subst":"s2_position"},
+						{"subst_constructor":{"vals":["#", {"subst":"s2_tag_index"}],"postproc":{"op":"concat","pad":""}}},
+						".orig.seqchksum"
+					],
+					"postproc":{"op":["pack","concat"],"pad":""}
+				}
+			}
+		},
+		"description":"bamseqchksum output file"
+	},
         {
                 "id":"merge_output_seqchksum",
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
-		"cmd": [ "seqchksum_merge.pl", {"subst":"rehash_acc_flag"}, {"subst":"rehash_chksum_flag"}, {"subst":"rehash_match_flag"}, "__TARGET_CHKSUM_IN__", "__PHIX_CHKSUM_IN__" ]
+		"cmd": [ "seqchksum_merge.pl", {"subst":"rehash_acc_flag"}, {"subst":"rehash_chksum_flag"}, {"subst":"rehash_match_flag"}, {"port":"target_chksum", "direction":"in"}, {"port":"phix_chksum", "direction":"in"} ]
         },
         {
                 "id":"cmp_seqchksum",
                 "type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": false,
-                "cmd":[ "cmp", "__INPUTCHK_IN__", "__OUTPUTCHK_IN__" ],
+                "cmd":[ "cmp", {"port":"inputchk", "direction":"in"}, {"port":"outputchk", "direction":"in"} ],
                 "description":"check input primary/sequence data matches output"
         }
 ],
 "edges":[
-        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_input", "to":"cmp_seqchksum:__INPUTCHK_IN__" },
-        { "id":"bamcat_to_chk_output", "from":"merge_output_seqchksum", "to":"cmp_seqchksum:__OUTPUTCHK_IN__" }
+        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_input", "to":"seqchksum_orig_file" },
+        { "id":"seqchksum_input_to_cmp", "from":"seqchksum_orig_file", "to":"cmp_seqchksum:inputchk" },
+        { "id":"bamcat_to_chk_output", "from":"merge_output_seqchksum", "to":"cmp_seqchksum:outputchk" }
 ]
 }

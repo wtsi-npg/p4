@@ -1,11 +1,11 @@
 {
-"version":"1.0",
+"version":"2.0",
 "description":"run bwa aln to to align input bam to supplied reference genome; cat nodes used to avoid creation of intermediate files",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
 			"_stdin_":"tee4",
-			"reference":["bwa_aln_1:__REFERENCE_GENOME_FASTA_IN__", "bwa_aln_2:__REFERENCE_GENOME_FASTA_IN__", "bwa_sampe:__REFERENCE_GENOME_FASTA_IN__"]
+			"reference":["bwa_aln_1:reference_genome_fasta", "bwa_aln_2:reference_genome_fasta", "bwa_sampe:reference_genome_fasta"]
 		},
 		"outputs":{
 			"_stdout_":"samtobam"
@@ -25,6 +25,8 @@
 	{
 		"id":"tee4",
 		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":false,
 		"cmd":[
 			"teepot",
 			{"subst":"teepot_vflag", "ifnull":"-v"},
@@ -32,19 +34,25 @@
 			{"subst":"bwa_aln_teepot_mflag","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"bwa_aln_teepot_mval", "ifnull":"1G"} ]}}},
 			{"subst":"bwa_aln_teepot_fflag","ifnull":{"subst_constructor":{"vals":[ "-f", {"subst":"tee_split_teepot_fval", "ifnull":{"subst":"teepot_fval"}} ]}}},
 			{"subst":"bwa_aln_teepot_pflag", "ifnull":{"subst":"teepot_pval"}, "comment":"default to no flag; should be set to -p or -P"},
-			"__ALN_1_OUT__", "__ALN_2_OUT__",
-			"__SAMPE_1_OUT__", "__SAMPE_2_OUT__"
+			{"port":"aln_1", "direction":"out"},
+			{"port":"aln_2", "direction":"out"},
+			{"port":"sampe_1", "direction":"out"},
+			{"port":"sampe_2", "direction":"out"}
 		]
 	},
 	{
 		"id":"bwa_aln_1",
 		"type":"EXEC",
-		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b1", "__REFERENCE_GENOME_FASTA_IN__", "__BAM_IN__" ]
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b1", {"port":"reference_genome_fasta", "direction":"in"}, {"port":"bam_in", "direction":"in"} ]
 	},
 	{
 		"id":"bwa_aln_2",
 		"type":"EXEC",
-		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b2", "__REFERENCE_GENOME_FASTA_IN__", "__BAM_IN__" ]
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[ {"subst":"bwa_executable"}, "aln", "-t", {"subst":"aligner_numthreads"}, "-b2", {"port":"reference_genome_fasta", "direction":"in"}, {"port":"bam_in", "direction":"in"} ]
 	},
         {
                 "id":"simple_cat1",
@@ -63,11 +71,15 @@
         {
                 "id":"bwa_sampe",
                 "type":"EXEC",
-		"cmd":[ {"subst":"bwa_executable"}, "sampe", "__REFERENCE_GENOME_FASTA_IN__", "__SAI_1_IN__", "__SAI_2_IN__", "__BAM_1_IN__", "__BAM_2_IN__" ]
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[ {"subst":"bwa_executable"}, "sampe", {"port":"reference_genome_fasta", "direction":"in"}, {"port":"sai_1", "direction":"in"}, {"port":"sai_2", "direction":"in"}, {"port":"bam_1", "direction":"in"}, {"port":"bam_2", "direction":"in"} ]
         },
         {
                 "id":"samtobam",
                 "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
                 "cmd":[
 			"scramble",
 			{"subst":"s2b_compress_level", "ifnull":"-0"},
@@ -78,14 +90,14 @@
         }
 ],
 "edges":[
-	{ "id":"bwa_aln_bam1", "from":"tee4:__ALN_1_OUT__", "to":"bwa_aln_1:__BAM_IN__" },
-	{ "id":"bwa_aln_bam2", "from":"tee4:__ALN_2_OUT__", "to":"bwa_aln_2:__BAM_IN__" },
-	{ "id":"tee_to_cat1", "from":"tee4:__SAMPE_1_OUT__", "to":"simple_cat1" },
-	{ "id":"cat1_to_sampe1", "from":"simple_cat1", "to":"bwa_sampe:__BAM_1_IN__" },
-	{ "id":"tee_to_cat2", "from":"tee4:__SAMPE_2_OUT__", "to":"simple_cat2" },
-	{ "id":"cat1_to_sampe2", "from":"simple_cat2", "to":"bwa_sampe:__BAM_2_IN__" },
-	{ "id":"aln1_sai_to_sampe", "from":"bwa_aln_1", "to":"bwa_sampe:__SAI_1_IN__" },
-	{ "id":"aln2_sai_to_sampe", "from":"bwa_aln_2", "to":"bwa_sampe:__SAI_2_IN__" },
+	{ "id":"bwa_aln_bam1", "from":"tee4:aln_1", "to":"bwa_aln_1:bam_in" },
+	{ "id":"bwa_aln_bam2", "from":"tee4:aln_2", "to":"bwa_aln_2:bam_in" },
+	{ "id":"tee_to_cat1", "from":"tee4:sampe_1", "to":"simple_cat1" },
+	{ "id":"cat1_to_sampe1", "from":"simple_cat1", "to":"bwa_sampe:bam_1" },
+	{ "id":"tee_to_cat2", "from":"tee4:sampe_2", "to":"simple_cat2" },
+	{ "id":"cat1_to_sampe2", "from":"simple_cat2", "to":"bwa_sampe:bam_2" },
+	{ "id":"aln1_sai_to_sampe", "from":"bwa_aln_1", "to":"bwa_sampe:sai_1" },
+	{ "id":"aln2_sai_to_sampe", "from":"bwa_aln_2", "to":"bwa_sampe:sai_2" },
 	{ "id":"bwa_sampe_to_scramble", "from":"bwa_sampe", "to":"samtobam" }
 ]
 }
