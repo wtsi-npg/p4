@@ -1,5 +1,7 @@
 CHANGES LOG
 -----------
+release 0.24.1
+ - correct count of minimum reads to run Salmon
 
 release 0.24.0
  - allow format selection for stage1 outputs/stage2 inputs (default: cram)
