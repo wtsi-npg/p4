@@ -50,11 +50,18 @@
 	}
     },
     {"id":"flagstats_filter_flag","required":"no","default":"0x900"},
-    {"id":"outirodsdir","required":"yes"},
+    {"id":"outirodsdir","required":"no"},
     {
 	"id":"cram_file",
 	"subst_constructor":{
             "vals":[ {"subst":"outirodsdir"}, "/", {"subst":"library"}, {"subst":"cram_ext"} ],
+	    "postproc":{"op":"concat", "pad":""}
+	}
+    },
+    {
+	"id":"local_cram_file",
+	"subst_constructor":{
+            "vals":[ {"subst":"outdatadir"}, "/", {"subst":"library"}, {"subst":"cram_ext"} ],
 	    "postproc":{"op":"concat", "pad":""}
 	}
     },
@@ -226,14 +233,26 @@
 	"cmd": [ "bamseqchksum", {"subst":"seqchksum_hash_flag"} ],
 	"comment":"default hash type is currently sha512primesums512"
     },
-    {
-	"id":"cram_tears",
-	"type":"EXEC",
-	"use_STDIN": true,
-	"use_STDOUT": false,
-	"cmd": [ "tears", "-w", "-f", {"subst":"cram_file", "required":true} ],
-	"comment":"stream into iRODS"
+    { "select":"cram_write_option",
+        "default":"use_tears",
+        "select_range":[1],
+        "cases":{
+           "use_tears":{
+               "id":"cram_output",
+               "type":"EXEC",
+               "use_STDIN": true,
+               "use_STDOUT": false,
+               "cmd": [ "tears", "-w", "-f", {"subst":"cram_file", "required":true} ],
+               "comment":"stream into iRODS"
+           },
+           "use_local":{
+                "id":"cram_output",
+                "type":"OUTFILE",
+                "name":{"subst":"local_cram_file","required":true,"ifnull":"no_tears.cram"}
+           }
+        }
     },
+    { "id":"local_cram_file", "type":"OUTFILE", "name":{"subst":"local_cram_file"} },
     { "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
     { "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
     { "id":"seqchksum_file_cram", "type":"RAFILE", "name":{"subst":"seqchksum_file_cram"}, "comment":"this file is a temporary fix for blocking problems at the cmp_seqchksum node" },
@@ -277,7 +296,7 @@
     { "id":"bmdmw_to_seqchksum_extrahash", "from":"bmd_multiway:__SEQCHKSUM_EXTRAHASH_OUT__", "to":"seqchksum_extrahash" },
     { "id":"bmdmw_to_flagstat", "from":"bmd_multiway:__FLAGSTAT_OUT__", "to":"flagstat_filter" },
     { "id":"flagstat_filter_to_flagstat", "from":"flagstat_filter", "to":"flagstat" },
-    { "id":"tee_to_cram_tears", "from":"scramble_tee:__CRAM_OUT__", "to":"cram_tears" },
+    { "id":"tee_to_cram_tears", "from":"scramble_tee:__CRAM_OUT__", "to":"cram_output" },
     { "id":"corrected_md5_out", "from":"postprocess_md5", "to":"cram_md5" },
     { "id":"scs_to_tee", "from":"seqchksum", "to":"seqchksum_tee" },
     { "id":"scs_tee_to_file", "from":"seqchksum_tee:__FILE_OUT__", "to":"seqchksum_file" },
