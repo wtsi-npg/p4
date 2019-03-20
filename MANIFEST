@@ -19,7 +19,9 @@ data/vtlib/bwa_mem_alignment.json
 data/vtlib/final_output_noalign_prep.json
 data/vtlib/final_output_prep.json
 data/vtlib/merge_aligned.json
+data/vtlib/merge_aligned_non_tears.json
 data/vtlib/merge_final_output_prep.json
+data/vtlib/merge_final_output_prep_non_tears.json
 data/vtlib/post_alignment.json
 data/vtlib/pre_alignment.json
 data/vtlib/pre_alignment_realign.json

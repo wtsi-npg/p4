@@ -1,5 +1,6 @@
 CHANGES LOG
 -----------
+ - library merge:  cram_write_option (default: use_tears, option use_local)
 release 0.24.1
  - correct count of minimum reads to run Salmon
 
