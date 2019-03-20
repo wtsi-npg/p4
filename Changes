@@ -1,6 +1,12 @@
 CHANGES LOG
 -----------
+
  - library merge:  cram_write_option (default: use_tears, option use_local)
+ 
+release 0.24.2
+ - stage 1 and seq alignment templates: remove fastqcheck file generation
+ - stage 1 template: remove generation of a fastq file for index read 
+
 release 0.24.1
  - correct count of minimum reads to run Salmon
 

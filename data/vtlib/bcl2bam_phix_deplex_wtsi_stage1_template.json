@@ -281,7 +281,6 @@
 				{"port":"seqchksum", "direction":"out"},
 				{"port":"spatial_filter", "direction":"out"},
 				{"port":"subsample", "direction":"out"},
-				{"port":"fqc", "direction":"out"},
 				{"port":"stats", "direction":"out"},
 				{"port":"split_bam", "direction":"out"},
 				{"port":"unsplit_bam", "direction":"out"}
@@ -344,8 +343,6 @@
 				"pe":["-1", {"port":"ss_fq1", "direction":"out"},"-2", {"port":"ss_fq2", "direction":"out"}],
 				"se":["-0", {"port":"ss_fq1", "direction":"out"}]
 			}},
-			"--i1", {"port":"ss_fqt", "direction":"out"},
-			"--index-format", "i99",
                         "-"
 		]
         },
@@ -360,68 +357,6 @@
 		"type":"OUTFILE",
 		"name":{"subst":"run_lane_ss_fq2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_2.fastq" ], "postproc":{"op":"concat","pad":""} } } },
 		"description":"lane-level fastq output, read2"
-	},
-	{
-		"id":"run_lane_ss_fqt",
-		"type":"OUTFILE",
-		"name":{"subst":"run_lane_ss_fqt", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"subsetsubpath","default":""}, "/", {"subst":"run_lane_label"}, "_t.fastq" ], "postproc":{"op":"concat","pad":""} } } },
-		"description":"lane-level fastq output, tagread"
-	},
-        {
-                "id":"bamtofastq_fqc",
-                "type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":[ "samtools",
-			"fastq",
-			"-F", "0x200",
-			{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{
-				"pe":["-1", {"port":"fq1", "direction":"out"},"-2", {"port":"fq2", "direction":"out"}],
-				"se":["-0", {"port":"fq1", "direction":"out"}]
-			}},
-			"--i1", {"port":"fqt", "direction":"out"},
-			"--index-format", "i99",
-                        "-"
-		]
-        },
-        {
-                "id":"fastqcheck_r1",
-                "type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":[ "fastqcheck" ]
-        },
-        {
-                "id":"fastqcheck_r2",
-                "type":{"select":"s1_se_pe", "default":"pe", "select_range":[1], "cases":{"pe":"EXEC","se":"INACTIVE"}},
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":[ "fastqcheck" ]
-        },
-        {
-                "id":"fastqcheck_rt",
-                "type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":[ "fastqcheck" ]
-        },
-	{
-		"id":"fqc1",
-		"type":"OUTFILE",
-		"name":{"subst":"fqc1", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/", {"subst":"run_lane_label"}, "_1.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
-		"description":"lane[1]-level fastqcheck output"
-	},
-	{
-		"id":"fqc2",
-		"type":"OUTFILE",
-		"name":{"subst":"fqc2", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/", {"subst":"run_lane_label"}, "_2.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
-		"description":"lane[2]-level fastqcheck output"
-	},
-	{
-		"id":"fqct",
-		"type":"OUTFILE",
-		"name":{"subst":"fqct", "required":true, "ifnull":{"subst_constructor":{ "vals":[ {"subst":"outdatadir"}, "/archive/", {"subst":"run_lane_label"}, "_t.fastqcheck" ], "postproc":{"op":"concat","pad":""} } } },
-		"description":"lane[t]-level fastqcheck output"
 	},
 	{
 		"id":"samtools_stats",
@@ -516,20 +451,6 @@
 		"pe":{"id":"b2fqss_to_fq2", "from":"bamtofastq_ss:ss_fq2", "to":"run_lane_ss_fq2"},
 		"se":{}
 	}},
-	{ "id":"b2fqss_to_fqt", "from":"bamtofastq_ss:ss_fqt", "to":"run_lane_ss_fqt" },
-	{ "id":"tee_to_b2fqfqc", "from":"tee_split:fqc", "to":"bamtofastq_fqc" },
-	{ "id":"fq_to_fqc1", "from":"bamtofastq_fqc:fq1", "to":"fastqcheck_r1" },
-	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
-		"pe":{ "id":"fq_to_fqc2", "from":"bamtofastq_fqc:fq2", "to":"fastqcheck_r2" },
-		"se":{}
-	}},
-	{ "id":"fq_to_fqct", "from":"bamtofastq_fqc:fqt", "to":"fastqcheck_rt" },
-	{ "id":"fqc_to_f1", "from":"fastqcheck_r1", "to":"fqc1" },
-	{"select":"s1_se_pe","select_range":[0,1], "default":"pe", "cases":{
-		"pe":{ "id":"fqc_to_f2", "from":"fastqcheck_r2", "to":"fqc2" },
-		"se":{}
-	}},
-	{ "id":"fqc_to_ft", "from":"fastqcheck_rt", "to":"fqct" },
 	{ "id":"tee_to_stats", "from":"tee_split:stats", "to":"samtools_stats" },
 	{ "id":"stats_to_file", "from":"samtools_stats", "to":"lane_stats_file" },
 	{ "id":"stats_to_qc_samtools_stats", "from":"lane_stats_file", "to":"qc_samtools_stats_check" },
