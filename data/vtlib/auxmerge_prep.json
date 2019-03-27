@@ -28,7 +28,7 @@
 		"cmd":{"select":"realignment_switch", "select_range":[1], "default":0, "comment":"only preserve aux tags for realignment (realignment is non-default)",
 			"cases":[
 				["bamreset", "resetaux=0", "level=0", "verbose=0"],
-				["bamreset", "resetaux=0", "auxfilter=RG,PG,BC,RT,QT,tr,tq,br,qr", "level=0", "verbose=0"]
+				["bamreset", "resetaux=0", "auxfilter=RG,PG,BC,RT,QT,OX,BZ,tr,tq,br,qr", "level=0", "verbose=0"]
 			]
 		},
 		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
