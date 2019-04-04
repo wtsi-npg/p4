@@ -1,0 +1,102 @@
+{
+"version":"2.0",
+"description":"run bwa mem to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"bwa_mem:db_prefix_reference_genome"
+		},
+		"outputs":{
+			"_stdout_":"samtobam"
+		}
+	}
+},
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{"id":"bwa_mem_T_value","required":"no","comment":"default value of 0 removed when moving to bwa0.7.15 (so new default is no -T flag)"},
+	{
+		"id":"bwa_mem_T_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-T", {"subst":"bwa_mem_T_value"} ] }
+	},
+	{"id":"bwa_mem_K_value","required":"no","default":"100000000","comment":"unset this value to remove -K flag"},
+	{
+		"id":"bwa_mem_K_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-K", {"subst":"bwa_mem_K_value"} ] }
+	},
+	{"id":"bwa_mem_p_flag","required":"no","default":"-p","comment":"by default, paired alignment is assumed"},
+	{"id":"bwa_mem_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["bamtofastq"]
+	},
+	{
+		"id":"bwa_mem",
+		"comment":"presuming interleaved FR fastq records (-p flag), output all records (-T 0)",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[
+			{"subst":"bwa_executable"}, "mem",
+			"-t", {"subst":"bwa_mem_numthreads", "ifnull":{"subst":"aligner_numthreads"}},
+			{
+				"select":"bwa_mem_read_type","select_range":[0,1],"default":"intractg", "comment":"set to undef for no flag",
+				"cases":{
+					"intractg":["-x", "intractg"],
+					"pacbio":["-x", "pacbio"],
+					"ont2d:":["-x", "ont2d:"]
+				}
+			},
+			{"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"},
+			{"subst":"bwa_mem_T_flag"},
+			{"subst":"bwa_mem_K_flag"},
+			{"port":"db_prefix_reference_genome", "direction":"in"},
+			{"port":"fq","direction":"in"}
+		]
+	},
+	{
+		"id":"bwa-postalt",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+			"k8",
+			{"subst":"bwa-postalt_path", "ifnull":{"subst_constructor":{ "vals":[ {"subst":"js_dir","ifnull":"./"}, "bwa-postalt.js" ],"postproc":{"op":"concat","pad":""}}}},
+			"-p",
+			"out.hla",
+			{"subst":"fa_alt_path", "ifnull":{"subst_constructor":{ "vals":[ {"subst":"alt_ctg_dir","ifnull":"./"}, {"subst":"alts","required":true,"ifnull":"Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa.alt"} ],"postproc":{"op":"concat","pad":""}}}}
+		]
+	},
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+			"scramble",
+			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
+			{"subst":"s2b_compress_level", "ifnull":"-0"},
+			"-I", "sam",
+			"-O", "bam"
+		]
+        }
+],
+"edges":[
+	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:fq" },
+	{ "id":"bwa_mem_to_bwa_postalt", "from":"bwa_mem", "to":"bwa-postalt" },
+	{ "id":"bwa_postalt_to_scramble", "from":"bwa-postalt", "to":"samtobam" }
+]
+}
