@@ -53,8 +53,18 @@
 	{
 		"id":"bmd_metrics_file_flag",
 		"required":"no",
+		"comment":"changed flag to -f since markdup is now done with samtools",
 		"subst_constructor":{
 			"vals":[ "M=", {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".markdups_metrics.txt" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"stmd_metrics_file",
+		"required":"no",
+		"comment":"changed flag to -f since markdup is now done with samtools",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".markdups_metrics.txt" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -264,7 +274,7 @@
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"comment":"add -T <temp_prefix> after initial tests",
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-S", "-s", "-", "-" ]
+		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-f", {"subst":"stmd_metrics_file","required":true}, "-S", "-s", "-", "-" ]
 	},
 	{
 		"id":"bmd_multiway",
