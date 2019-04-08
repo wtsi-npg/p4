@@ -3,7 +3,7 @@
 "description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
 "subgraph_io":{
 	"ports":{
-		"inputs":{ "_stdin_":"fixmate" },
+		"inputs":{ "_stdin_":"markdup" },
 		"outputs":{ "_stdout_":"seqchksum_file" }
 	}
 },
@@ -246,35 +246,27 @@
 ],
 "nodes":[
 	{
+		"id":"markdup",
+		"description":"mark duplicates method",
+		"type":"VTFILE",
+		"comment":"inputs: _stdin_ (filtered bam); outputs: _stdout_ (bam, same as input)",
+		"node_prefix":"markdup_",
+		"name":{
+			"select":"markdup_method", "required":true, "select_range":[1], "default":"samtools",
+			"cases":{
+				"samtools":"samtools_markdup.json",
+				"picard":"picard_markdup.json",
+				"biobambam":"biobambam_markdup.json"
+			}
+		}
+	},
+	{
 		"id":"bam_stats",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": false,
 		"cmd": [ {"subst":"bam_stats_executable"}, {"subst":"stats_reference_flag"}, "-o", {"subst":"bam_stats_file"} ],
 		"comment":"CGP bam_stats"
-	},
-
-	{
-		"id":"fixmate",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "fixmate", "--threads", {"subst":"fixmate_threads","required":true,"ifnull":1}, "-m", "-", "-" ]
-	},
-	{
-		"id":"coord_sort",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort", "-l", "0", "--threads", {"subst":"coord_sort_threads","required":true,"ifnull":1}, "-" ]
-	},
-	{
-		"id":"markdup",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"comment":"add -T <temp_prefix> after initial tests",
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-f", {"subst":"stmd_metrics_file","required":true}, "-S", "-s", "-", "-" ]
 	},
 	{
 		"id":"bmd_multiway",
@@ -472,9 +464,6 @@
 	}
 ],
 "edges":[
-
-	{ "id":"fixmate_to_coordsort", "from":"fixmate", "to":"coord_sort" },
-	{ "id":"coordsort_tomarkdup", "from":"coord_sort", "to":"markdup" },
 	{ "id":"markdup_to_multiway", "from":"markdup", "to":"bmd_multiway" },
 	{ "id":"bmdmw_to_scramble", "from":"bmd_multiway:scramble", "to":"scramble" },
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
