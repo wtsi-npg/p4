@@ -254,9 +254,9 @@
 		"name":{
 			"select":"markdup_method", "required":true, "select_range":[1], "default":"samtools",
 			"cases":{
-				"samtools":"samtools_markdup.json",
-				"picard":"picard_markdup.json",
-				"biobambam":"biobambam_markdup.json"
+				"samtools":"markdup_samtools.json",
+				"picard":"markdup_picard.json",
+				"biobambam":"markdup_biobambam.json"
 			}
 		}
 	},
