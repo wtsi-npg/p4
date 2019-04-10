@@ -1,5 +1,8 @@
 CHANGES LOG
 -----------
+
+ - add target autosome stats file generation to final_output_prep
+
 release 0.24.2
  - stage 1 and seq alignment templates: remove fastqcheck file generation
  - stage 1 template: remove generation of a fastq file for index read 
