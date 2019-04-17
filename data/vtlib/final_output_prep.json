@@ -250,7 +250,7 @@
 		"description":"mark duplicates method",
 		"type":"VTFILE",
 		"comment":"inputs: _stdin_ (filtered bam); outputs: _stdout_ (bam, same as input)",
-		"node_prefix":"markdup_",
+		"node_prefix_tba":"markdup_",
 		"name":{
 			"select":"markdup_method", "required":true, "select_range":[1], "default":"samtools",
 			"cases":{
