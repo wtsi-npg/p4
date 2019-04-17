@@ -39,7 +39,12 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":[ "bamadapterclip", "verbose=0", "level=0" ],
+		"cmd":{"select":"realignment_switch", "select_range":[1], "default":0, "comment":"detect and clip for realign, otherwise just clip (realignment is non-default)",
+			"cases":[
+				["bamadapterclip", "verbose=0", "level=0"],
+				["bamadapterfind", "clip=1", "verbose=0", "level=0"]
+			]
+		},
 		"description":"Hard clip adapter sequence from reads before feeding to Tophat2"
 	}
 ],
