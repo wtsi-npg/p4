@@ -7,6 +7,47 @@
 		"outputs":{ "_stdout_":"coord_sort" }
 	}
 },
+"subst_params":[
+	{
+		"id":"markdup_metrics_file",
+		"required":"no",
+		"comment":"changed flag to -f since markdup is now done with samtools",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".markdups_metrics.txt" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"markdup_intermediate_file",
+		"required":"no",
+		"comment":"changed flag to -f since markdup is now done with samtools",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"fopid"}, ".markdups_intermediate.bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"javapath",
+		"required":false,
+		"default":"/software/jre1.8.0_201/bin"
+	},
+	{
+		"id":"java",
+		"required":false,
+		"default":"java"
+	},
+	{
+		"id":"picardpath",
+		"required":false,
+		"default":"/software/solexa/pkg/picard/picard-2.19.0"
+	},
+	{
+		"id":"picardjar",
+		"required":false,
+		"default":"picard.jar"
+	}
+	
+],
 "nodes":[
 	{
 		"id":"fixmate",
@@ -16,21 +57,24 @@
 		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "fixmate", "--threads", {"subst":"fixmate_threads","required":true,"ifnull":1}, "-m", "-", "-" ]
 	},
 	{
-		"id":"name_sort",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort", "-n", "-l", "0", "--threads", {"subst":"name_sort_threads","required":true,"ifnull":4}, "-" ]
-	},
-	{
 		"id":"markdup",
 		"type":"EXEC",
-		"use_STDIN": true,
+		"use_STDIN": false,
 		"use_STDOUT": true,
 		"comment":"add -T <temp_prefix> after initial tests",
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-f", {"subst":"stmd_metrics_file","required":true}, "-S", "-s", "-", "-" ]
+		"cmd": [
+			{"subst":"java_executable", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"javapath"}, {"subst":"java"} ],"postproc":{"op":"concat", "pad":"/"}},
+			"-jar", {"subst":"picard", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"picardpath"}, {"subst":"picardjar"} ],"postproc":{"op":"concat", "pad":"/"}},
+			"MarkDuplicates",
+			"ASSUME_SORT_ORDER=queryname",
+			"TAG_DUPLICATE_SET_MEMBERS=true",
+			"TAGGING_POLICY=All",
+                        {"subst":"markdup_metrics_flag","ifnull":{"subst_constructor":{"vals":[ "METRICS_FILE", {"subst":"markdup_metrics_file","required":true} ],"postproc":{"op":"concat","pad":"="}}}},
+                        {"packflag":["INPUT=",{"port":"markdup_in", "direction":"in"}]},
+			"OUTPUT=/dev/stdout"
+		]
 	},
-	{ "id":"md_output", "type":"RAFILE", "name":{"subst":"md_output","ifnull":"md_output.bam"} },
+	{ "id":"md_input", "type":"RAFILE", "name":{"subst":"md_output", "required":true, "ifnull":{"subst":"markdup_intermediate_file"}} },
 	{
 		"id":"coord_sort",
 		"type":"EXEC",
@@ -41,9 +85,8 @@
 ],
 "edges":[
 
-	{ "id":"fixmate_to_coordsort", "from":"fixmate", "to":"name_sort" },
-	{ "id":"namesort_tomarkdup", "from":"name_sort", "to":"markdup" },
-	{ "id":"markdup_to_multiway", "from":"markdup", "to":"md_output" },
-	{ "id":"markdup_to_multiway", "from":"md_output", "to":"coord_sort" }
+	{ "id":"fixmate_to_intfile", "from":"fixmate", "to":"md_input" },
+	{ "id":"intfile_to_markdup", "from":"md_input", "to":"markdup:markdup_in" },
+	{ "id":"markdup_to_coord_sort", "from":"markdup", "to":"coord_sort" }
 ]
 }
