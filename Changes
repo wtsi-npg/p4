@@ -1,5 +1,7 @@
 CHANGES LOG
 -----------
+
+ - add target autosome stats file generation to final_output_prep
  - library merge:  
          cram_write_option (default: use_tears, option use_local)
          updated templates to v2.0 format
