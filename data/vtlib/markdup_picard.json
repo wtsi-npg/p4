@@ -63,8 +63,8 @@
 		"use_STDOUT": true,
 		"comment":"add -T <temp_prefix> after initial tests",
 		"cmd": [
-			{"subst":"java_executable", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"javapath"}, {"subst":"java"} ],"postproc":{"op":"concat", "pad":"/"}},
-			"-jar", {"subst":"picard", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"picardpath"}, {"subst":"picardjar"} ],"postproc":{"op":"concat", "pad":"/"}},
+			{"subst":"java_executable", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"javapath"}, {"subst":"java"} ],"postproc":{"op":"concat", "pad":"/"}}}},
+			"-jar", {"subst":"picard", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"picardpath"}, {"subst":"picardjar"} ],"postproc":{"op":"concat", "pad":"/"}}}},
 			"MarkDuplicates",
 			"ASSUME_SORT_ORDER=queryname",
 			"TAG_DUPLICATE_SET_MEMBERS=true",
