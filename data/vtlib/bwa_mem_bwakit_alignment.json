@@ -52,14 +52,6 @@
 		"cmd":[
 			{"subst":"bwa_executable"}, "mem",
 			"-t", {"subst":"bwa_mem_numthreads", "ifnull":{"subst":"aligner_numthreads"}},
-			{
-				"select":"bwa_mem_read_type","select_range":[0,1],"default":"intractg", "comment":"set to undef for no flag",
-				"cases":{
-					"intractg":["-x", "intractg"],
-					"pacbio":["-x", "pacbio"],
-					"ont2d:":["-x", "ont2d:"]
-				}
-			},
 			{"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"},
 			{"subst":"bwa_mem_T_flag"},
 			{"subst":"bwa_mem_K_flag"},
