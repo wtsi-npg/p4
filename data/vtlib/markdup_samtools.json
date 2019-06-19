@@ -28,7 +28,7 @@
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"comment":"add -T <temp_prefix> after initial tests",
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-f", {"subst":"stmd_metrics_file","required":true}, "-S", "-s", {"subst":"optflags", "required":false, "ifnull":"-t"},  "-", "-" ]
+		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-f", {"subst":"stmd_metrics_file","required":true}, "-S", "-s", "-d", {"subst":"optical_distance_value","required":true,"ifnull":2500}, {"subst":"optflags", "required":false, "ifnull":"-t"},  "-", "-" ]
 	}
 ],
 "edges":[
