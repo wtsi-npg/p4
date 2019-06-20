@@ -69,6 +69,7 @@
 			"ASSUME_SORT_ORDER=queryname",
 			"TAG_DUPLICATE_SET_MEMBERS=true",
 			"TAGGING_POLICY=All",
+			{"subst":"optical_distance_flag","ifnull":{"subst_constructor":{"vals":[ "OPTICAL_DUPLICATE_PIXEL_DISTANCE", {"subst":"optical_distance_value"} ], "postproc":{"op":"concat","pad":"="}}}},
                         {"subst":"markdup_metrics_flag","ifnull":{"subst_constructor":{"vals":[ "METRICS_FILE", {"subst":"markdup_metrics_file","required":true} ],"postproc":{"op":"concat","pad":"="}}}},
                         {"packflag":["INPUT=",{"port":"markdup_in", "direction":"in"}]},
 			"OUTPUT=/dev/stdout"
