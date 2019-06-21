@@ -1,10 +1,12 @@
 CHANGES LOG
 -----------
 
+0.25.0
  - add target autosome stats file generation to final_output_prep
  - library merge:  
          cram_write_option (default: use_tears, option use_local)
          updated templates to v2.0 format
+ - add options to standard stage2 templates to handle realignment
  
 release 0.24.2
  - stage 1 and seq alignment templates: remove fastqcheck file generation
