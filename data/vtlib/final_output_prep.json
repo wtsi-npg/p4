@@ -74,6 +74,7 @@
 	{"id":"bam_stats_executable","required":"no","default":"bam_stats"},
         {"id":"bait_regions_file","required":"yes","comment":"regions file for optional bait stats"},
         {"id":"target_regions_file","required":"yes","comment":"regions file for optional target regions stats"},
+        {"id":"target_autosome_regions_file","required":"yes","comment":"regions file for optional target autosome only regions stats"},
         {"id":"calibration_pu_executable","required":"no","default":"calibration_pu"},
         {"id":"calibration_pu_bad_tiles_count","required":"no","default":"2"},
         {
@@ -218,6 +219,13 @@
 		}
 	},
 	{
+		"id":"stats_F0xF04_target_autosome_file",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, "_F0xF04_target_autosome.stats" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
 		"id":"bam_stats_file",
 		"required":"yes",
 		"subst_constructor":{
@@ -280,7 +288,8 @@
 			{"port":"seqchksum_extrahash", "direction":"out"},
 			{"port":"samtools_stats_F0x900_bait", "direction":"out"},
 			{"port":"samtools_stats_F0xB00_bait", "direction":"out"},
-			{"port":"samtools_stats_F0xF04_target", "direction":"out"}
+			{"port":"samtools_stats_F0xF04_target", "direction":"out"},
+			{"port":"samtools_stats_F0xF04_target_autosome", "direction":"out"}
 		]
 	},
 	{
@@ -386,6 +395,13 @@
 		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-p", "-g", {"subst":"stats_filter__cov_threshold"},"-F", {"subst":"stats_filter__F0xF04"},"-t",{"subst":"target_regions_file"},"-" ]
 	},
 	{
+		"id":"samtools_stats_F0xF04_target_autosome",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-p", "-g", {"subst":"stats_filter__cov_threshold"},"-F", {"subst":"stats_filter__F0xF04"},"-t",{"subst":"target_autosome_regions_file"},"-" ]
+	},
+	{
 		"id":"seqchksum",
 		"type":"EXEC",
 		"use_STDIN": true,
@@ -425,6 +441,7 @@
 	{ "id":"stats_F0x900_bait_file", "type":"OUTFILE", "name":{"subst":"stats_F0x900_bait_file"} },
 	{ "id":"stats_F0xB00_bait_file", "type":"OUTFILE", "name":{"subst":"stats_F0xB00_bait_file"} },
 	{ "id":"stats_F0xF04_target_file", "type":"OUTFILE", "name":{"subst":"stats_F0xF04_target_file"} },
+	{ "id":"stats_F0xF04_target_autosome_file", "type":"OUTFILE", "name":{"subst":"stats_F0xF04_target_autosome_file"} },
 	{ "id":"flagstat_file", "type":"OUTFILE", "name":{"subst":"flagstat_file"} },
 	{
 		"id":"flagstat_filter",
@@ -467,6 +484,7 @@
 	{ "id":"bmdmw_to_sts_F0x900_bait", "from":"bmd_multiway:samtools_stats_F0x900_bait", "to":"samtools_stats_F0x900_bait" },
 	{ "id":"bmdmw_to_sts_F0xB00_bait", "from":"bmd_multiway:samtools_stats_F0xB00_bait", "to":"samtools_stats_F0xB00_bait" },
 	{ "id":"bmdmw_to_sts_F0xF04_target", "from":"bmd_multiway:samtools_stats_F0xF04_target", "to":"samtools_stats_F0xF04_target" },
+	{ "id":"bmdmw_to_sts_F0xF04_target_autosome", "from":"bmd_multiway:samtools_stats_F0xF04_target_autosome", "to":"samtools_stats_F0xF04_target_autosome" },
 	{ "id":"bmdmw_to_bam_stats", "from":"bmd_multiway:bam_stats", "to":"bam_stats" },
 	{ "id":"bmdmw_to_calibration_pu", "from":"bmd_multiway:calibration_pu", "to":"calibration_pu" },
 	{ "id":"bmdmw_to_seqchksum", "from":"bmd_multiway:seqchksum", "to":"seqchksum" },
@@ -485,6 +503,7 @@
 	{ "id":"samtools_stats_F0x900_bait_to_file", "from":"samtools_stats_F0x900_bait", "to":"stats_F0x900_bait_file" },
 	{ "id":"samtools_stats_F0xB00_bait_to_file", "from":"samtools_stats_F0xB00_bait", "to":"stats_F0xB00_bait_file" },
 	{ "id":"samtools_stats_F0xF04_target_to_file", "from":"samtools_stats_F0xF04_target", "to":"stats_F0xF04_target_file" },
+	{ "id":"samtools_stats_F0xF04_target_autosome_to_file", "from":"samtools_stats_F0xF04_target_autosome", "to":"stats_F0xF04_target_autosome_file" },
 	{ "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" },
 	{ "id":"cscs_to_file", "from":"cram_seqchksum", "to":"seqchksum_file_cram" },
 	{ "id":"cscsfile_to_cmp", "from":"seqchksum_file_cram", "to":"cmp_seqchksum:cram_seqchksum" }

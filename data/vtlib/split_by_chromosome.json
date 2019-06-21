@@ -35,8 +35,8 @@
 	{
 		"id":"split",
 		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
+		"use_STDIN": false,
+		"use_STDOUT": false,
 		"cmd":["bambi", "chrsplit", "--exclude", "__SPLIT_OUT__", "--input", "__DATA_IN__", "--output", "__TARGET_OUT__", {"subst":"chrsplit_subset_flag"}, {"subst":"chrsplit_invert_flag"}]
 	},
 	{

@@ -9,19 +9,29 @@
 },
 "nodes":[
 	{
-		"id":"bamreset_pre_auxmerge",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":["bamreset", "resetaux=0", "level=0", "verbose=0"],
-		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
-	},
-	{
 		"id":"bamadapterclip_pre_auxmerge",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamadapterclip", "verbose=0", "level=0"]
+		"cmd":{"select":"realignment_switch", "select_range":[1], "default":0,"comment":"detect and clip for realign, otherwise just clip (realignment is non-default)",
+			"cases":[
+				["bamadapterclip", "verbose=0", "level=0"],
+				["bamadapterfind", "clip=1", "verbose=0", "level=0"]
+			]
+		}
+	},
+	{
+		"id":"bamreset_pre_auxmerge",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":{"select":"realignment_switch", "select_range":[1], "default":0, "comment":"only preserve aux tags for realignment (realignment is non-default)",
+			"cases":[
+				["bamreset", "resetaux=0", "level=0", "verbose=0"],
+				["bamreset", "resetaux=0", "auxfilter=RG,PG,BC,RT,QT,OX,BZ,tr,tq,br,qr", "level=0", "verbose=0"]
+			]
+		},
+		"comment":"bam12auxmerge <= 0.0.142 requires SQ headers removed. Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	}
 ],
 "edges":[
