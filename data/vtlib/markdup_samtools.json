@@ -13,14 +13,27 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "fixmate", "--threads", {"subst":"fixmate_threads","required":true,"ifnull":1}, "-m", "-", "-" ]
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "fixmate",
+			"--threads", {"subst":"fixmate_threads","required":true,"ifnull":4},
+			{"select":"fixmate_add_mate_score", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-m","off":[]}},
+			{"subst":"fixmate_extra_flags", "required":false},
+			"-", "-"
+		]
 	},
 	{
 		"id":"coord_sort",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort", "-l", "0", "--threads", {"subst":"coord_sort_threads","required":true,"ifnull":1}, "-" ]
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort",
+			"-l", {"subst":"coord_sort_compression","required":true,"ifnull":["0"]},
+			["-m", {"subst":"coord_sort_mem_per_thread","required":false}],
+			"--threads", {"subst":"coord_sort_threads","required":true,"ifnull":4},
+			{"subst":"coord_sort_extra_flags", "required":false},
+			"-"
+		]
 	},
 	{
 		"id":"markdup",
@@ -28,7 +41,19 @@
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"comment":"add -T <temp_prefix> after initial tests",
-		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-f", {"subst":"stmd_metrics_file","required":true}, "-S", "-s", "-d", {"subst":"optical_distance_value","required":true,"ifnull":2500}, {"subst":"optflags", "required":false, "ifnull":"-t"},  "-", "-" ]
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup",
+			"--threads", {"subst":"markdup_threads","required":true,"ifnull":4},
+			"-s",
+			"-f", {"subst":"stmd_metrics_file","required":true},
+			{"select":"stmd_mark_supps", "required":true, "select_range":[1], "default":"on","cases":{"on":"-S","off":[]}},
+			["-d", {"subst":"stmd_optical_distance_value","required":false,"ifnull":2500}],
+			{"subst":"stmd_relaxed_flag","required":false, "ifnull":"--relaxed"},
+			{"select":"stmd_label_dups", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-t","off":[]}},
+			{"select":"stmd_clear_previous", "required":true, "select_range":[1], "default":"off","cases":{"on":"-c","off":[]}},
+			{"subst":"stmd_extra_flags", "required":false},
+			"-", "-"
+		]
 	}
 ],
 "edges":[
