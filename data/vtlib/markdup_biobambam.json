@@ -1,0 +1,31 @@
+{
+"version":"2.0",
+"description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
+"subgraph_io":{
+	"ports":{
+		"inputs":{ "_stdin_":"bamsort_coord" },
+		"outputs":{ "_stdout_":"bammarkduplicates" }
+	}
+},
+"nodes":[
+	{
+		"id":"bamsort_coord",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ {"subst":"bsc_executable", "required":"yes", "ifnull":"bamsormadup"}, {"subst":"bsmd_threads"}, "SO=coordinate", "level=0", "verbose=0", "fixmate=1", "adddupmarksupport=1", {"subst":"bs_tmpfile_flag"} ]
+	},
+	{
+		"id":"bammarkduplicates",
+		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ {"subst":"bmd_cmd"}, "level=0", "verbose=0", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"}, {"subst":"bmd_resetdupflag"} ]
+	}
+],
+"edges":[
+
+	{ "id":"coordsort_tomarkdup", "from":"bamsort_coord", "to":"bammarkduplicates" }
+]
+}

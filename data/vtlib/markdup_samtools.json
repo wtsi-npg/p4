@@ -1,0 +1,39 @@
+{
+"version":"2.0",
+"description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
+"subgraph_io":{
+	"ports":{
+		"inputs":{ "_stdin_":"fixmate" },
+		"outputs":{ "_stdout_":"markdup" }
+	}
+},
+"nodes":[
+	{
+		"id":"fixmate",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "fixmate", "--threads", {"subst":"fixmate_threads","required":true,"ifnull":1}, "-m", "-", "-" ]
+	},
+	{
+		"id":"coord_sort",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort", "-l", "0", "--threads", {"subst":"coord_sort_threads","required":true,"ifnull":1}, "-" ]
+	},
+	{
+		"id":"markdup",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"comment":"add -T <temp_prefix> after initial tests",
+		"cmd": [ {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup", "--threads", {"subst":"markdup_threads","required":true,"ifnull":1}, "-f", {"subst":"stmd_metrics_file","required":true}, "-S", "-s", "-d", {"subst":"optical_distance_value","required":true,"ifnull":2500}, {"subst":"optflags", "required":false, "ifnull":"-t"},  "-", "-" ]
+	}
+],
+"edges":[
+
+	{ "id":"fixmate_to_coordsort", "from":"fixmate", "to":"coord_sort" },
+	{ "id":"coordsort_tomarkdup", "from":"coord_sort", "to":"markdup" }
+]
+}
