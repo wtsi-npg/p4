@@ -1,0 +1,80 @@
+{
+"version":"2.0",
+"description":"run bwa mem 2 to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"bwa_mem2:db_prefix_reference_genome"
+		},
+		"outputs":{
+			"_stdout_":"samtobam"
+		}
+	}
+},
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        },
+	{"id":"bwa_mem_T_value","required":"no","comment":"default value of 0 removed when moving to bwa0.7.15 (so new default is no -T flag)"},
+	{
+		"id":"bwa_mem_T_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-T", {"subst":"bwa_mem_T_value"} ] }
+	},
+	{"id":"bwa_mem_K_value","required":"no","default":"100000000","comment":"unset this value to remove -K flag"},
+	{
+		"id":"bwa_mem_K_flag",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-K", {"subst":"bwa_mem_K_value"} ] }
+	},
+	{"id":"bwa_mem_p_flag","required":"no","default":"-p","comment":"by default, paired alignment is assumed"},
+	{"id":"bwa_mem_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["bamtofastq"]
+	},
+	{
+		"id":"bwa_mem2",
+		"comment":"presuming interleaved FR fastq records (-p flag), output all records (-T 0)",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[
+			{"subst":"bwa_mem2_executable"}, "mem",
+			"-t", {"subst":"bwa_mem_numthreads", "ifnull":{"subst":"aligner_numthreads"}},
+			{"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"},
+			{"subst":"bwa_mem_T_flag"},
+			{"subst":"bwa_mem_K_flag"},
+			{"port":"db_prefix_reference_genome", "direction":"in"},
+			{"port":"fq","direction":"in"}
+		]
+	},
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+			"scramble",
+			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
+			{"subst":"s2b_compress_level", "ifnull":"-0"},
+			"-I", "sam",
+			"-O", "bam"
+		]
+        }
+],
+"edges":[
+	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem2:fq" },
+	{ "id":"bwa_mem2_to_scramble", "from":"bwa_mem2", "to":"samtobam" }
+]
+}
