@@ -260,7 +260,7 @@
 		"comment":"inputs: _stdin_ (filtered bam); outputs: _stdout_ (bam, same as input)",
 		"node_prefix_tba":"markdup_",
 		"name":{
-			"select":"markdup_method", "required":true, "select_range":[1], "default":"samtools",
+			"select":"markdup_method", "required":true, "select_range":[1], "default":"biobambam",
 			"cases":{
 				"samtools":"markdup_samtools.json",
 				"picard":"markdup_picard.json",
