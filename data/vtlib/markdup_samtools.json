@@ -47,7 +47,7 @@
 			"-s",
 			"-f", {"subst":"stmd_metrics_file","required":true},
 			{"select":"stmd_mark_supps", "required":true, "select_range":[1], "default":"on","cases":{"on":"-S","off":[]}},
-			["-d", {"subst":"stmd_optical_distance_value","required":false,"ifnull":2500}],
+			["-d", {"subst":"markdup_optical_distance_value","required":false,"ifnull":2500}],
 			{"subst":"stmd_relaxed_flag","required":false, "ifnull":["--mode", {"subst":"stmd_dup_pos_mode","required":false,"ifnull":"s"}]},
 			{"select":"stmd_label_dups", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-t","off":[]}},
 			{"select":"stmd_clear_previous", "required":true, "select_range":[1], "default":"off","cases":{"on":"-c","off":[]}},
