@@ -29,7 +29,7 @@
 		"cmd": [
 			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort",
 			"-l", {"subst":"coord_sort_compression","required":true,"ifnull":["0"]},
-			["-m", {"subst":"coord_sort_mem_per_thread","required":false}],
+			{"subst":"coord_sort_mpt_flag","ifnull":{"subst_constructor":{"vals":["-m", {"subst":"coord_sort_mem_per_thread","required":false}]}}},
 			"--threads", {"subst":"coord_sort_threads","required":true,"ifnull":4},
 			{"subst":"coord_sort_extra_flags", "required":false},
 			"-"
