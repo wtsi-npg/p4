@@ -305,12 +305,25 @@
 			"-I", "bam",
 			"-O", "cram",
 			{"subst":"scramble_reference_flag"},
+			{"select":"b2c_scramble_bzip2","default":0,"select_range":[0,1],
+				"cases":[
+					[],
+					"-j"
+				]
+			},
+			{"select":"b2c_scramble_lzma","default":0,"select_range":[0,1],
+				"cases":[
+					[],
+					"-Z"
+				]
+			},
 			{"select":"scramble_embed_reference","default":0,"select_range":[0,1],
 				"cases":[
 					[],
 					"-e"
 				]
-			}
+			},
+			{"subst":"b2c_arbitrary_flags", "comment":"this allows arbitrary sets of flag strings to be inserted in the command" }
 		]	
 	},
 	{
