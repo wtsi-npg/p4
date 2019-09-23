@@ -12,6 +12,7 @@ data/vtlib/alignment_wtsi_stage2_humansplit_template.json
 data/vtlib/alignment_wtsi_stage2_template.json
 data/vtlib/auxmerge_prep.json
 data/vtlib/auxmerge_prep_realign.json
+data/vtlib/basic_params_top_up_merge.json
 data/vtlib/bcl2bam_phix_deplex_wtsi_stage1_template.json
 data/vtlib/bwa_aln_alignment.json
 data/vtlib/bwa_aln_se_alignment.json
