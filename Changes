@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+0.26.0
+ - add parameters file for top-up merge
+ - functional equivalence: enable selection of markdup method - biobambam (default), samtools or picard
+
 0.25.0
  - add target autosome stats file generation to final_output_prep
  - library merge:  
