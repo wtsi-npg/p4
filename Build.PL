@@ -58,6 +58,10 @@ my $builder = $class->new(
     'ExtUtils::CBuilder'    => 0
   },
 
+  'test_requires' => {
+    'Test::Compile'         => '< 1.4',
+  },
+
   'build_requires' => {
     'Carp'                  => 0,
     'Cwd'                   => 0,

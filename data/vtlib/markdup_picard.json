@@ -1,0 +1,107 @@
+{
+"version":"2.0",
+"description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
+"subgraph_io":{
+	"ports":{
+		"inputs":{ "_stdin_":"fixmate" },
+		"outputs":{ "_stdout_":"coord_sort" }
+	}
+},
+"subst_params":[
+	{
+		"id":"markdup_metrics_file",
+		"required":"no",
+		"comment":"changed flag to -f since markdup is now done with samtools",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".markdups_metrics.txt" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"markdup_intermediate_file",
+		"required":"no",
+		"comment":"changed flag to -f since markdup is now done with samtools",
+		"subst_constructor":{
+			"vals":[ {"subst":"tmpdir"}, "/", {"subst":"fopid"}, ".markdups_intermediate.bam" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"javapath",
+		"required":false,
+		"default":"/software/jre1.8.0_201/bin"
+	},
+	{
+		"id":"java",
+		"required":false,
+		"default":"java"
+	},
+	{
+		"id":"picardpath",
+		"required":false,
+		"default":"/software/solexa/pkg/picard/picard-2.19.0"
+	},
+	{
+		"id":"picardjar",
+		"required":false,
+		"default":"picard.jar"
+	}
+	
+],
+"nodes":[
+	{
+		"id":"fixmate",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "fixmate",
+			"--threads", {"subst":"fixmate_threads","required":true,"ifnull":4},
+			{"select":"fixmate_add_mate_score", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-m","off":[]}},
+			{"subst":"fixmate_extra_flags", "required":false},
+			"-", "-"
+		]
+	},
+	{
+		"id":"markdup",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"comment":"add -T <temp_prefix> after initial tests",
+		"cmd": [
+			{"subst":"java_executable", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"javapath"}, {"subst":"java"} ],"postproc":{"op":"concat", "pad":"/"}}}},
+			"-jar", {"subst":"picard", "required":true, "ifnull":{"subst_constructor":{"vals":[ {"subst":"picardpath"}, {"subst":"picardjar"} ],"postproc":{"op":"concat", "pad":"/"}}}},
+			"MarkDuplicates",
+			"ASSUME_SORT_ORDER=queryname",
+			{"subst":"picardmd_tag_dsm_flag","ifnull":{"subst_constructor":{"vals":[ "TAG_DUPLICATE_SET_MEMBERS", {"subst":"picardmd_tag_dsm_val"} ], "postproc":{"op":"concat","pad":"="}}}},
+                        {"subst":"picardmd_tagging_policy_flag","ifnull":{"subst_constructor":{"vals":[ "TAGGING_POLICY", {"select":"picardmd_tagging_policy", "required":true, "select_range":[1], "default":"donttag", "cases":{"tagall":"All","donttag":"DontTag","opticalonly":"OpticalOnly"}}], "postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"optical_distance_flag","ifnull":{"subst_constructor":{"vals":[ "OPTICAL_DUPLICATE_PIXEL_DISTANCE", {"subst":"markdup_optical_distance_value","required":false,"ifnull":2500} ], "postproc":{"op":"concat","pad":"="}}}},
+                        {"subst":"markdup_metrics_flag","ifnull":{"subst_constructor":{"vals":[ "METRICS_FILE", {"subst":"markdup_metrics_file","required":true} ],"postproc":{"op":"concat","pad":"="}}}},
+                        {"packflag":["INPUT=",{"port":"markdup_in", "direction":"in"}]},
+			{"subst":"picardmd_extra_flags", "required":false},
+			"OUTPUT=/dev/stdout"
+		]
+	},
+	{ "id":"md_input", "type":"RAFILE", "name":{"subst":"md_output", "required":true, "ifnull":{"subst":"markdup_intermediate_file"}} },
+	{
+		"id":"coord_sort",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort",
+			"-l", {"subst":"coord_sort_compression","required":true,"ifnull":["0"]},
+			{"subst":"coord_sort_mpt_flag","ifnull":{"subst_constructor":{"vals":["-m", {"subst":"coord_sort_mem_per_thread","required":false}]}}},
+			"--threads", {"subst":"coord_sort_threads","required":true,"ifnull":4},
+			{"subst":"coord_sort_extra_flags", "required":false},
+			"-"
+		]
+	}
+],
+"edges":[
+
+	{ "id":"fixmate_to_intfile", "from":"fixmate", "to":"md_input" },
+	{ "id":"intfile_to_markdup", "from":"md_input", "to":"markdup:markdup_in" },
+	{ "id":"markdup_to_coord_sort", "from":"markdup", "to":"coord_sort" }
+]
+}

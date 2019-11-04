@@ -1,0 +1,23 @@
+{
+  "ops": {
+    "splice": [
+      "crammerge:-000_bammarkduplicates:"
+    ],
+    "prune": [
+      ".*bmd_multiway:calibration_pu-",
+      ".*samtools_stats_F0.*00_bait.*-",
+      ".*samtools_stats_F0xF04_target.*-"
+    ]
+  },
+  "assign": [
+    {
+      "final_output_prep_name": "final_output_prep",
+      "samtools_executable": "samtools",
+      "tmpdir": "tmp",
+      "alignment_method": "bwa_mem",
+      "basic_pipeline_params_file": "alignment_common.json",
+      "bmd_resetdupflag_val": "1",
+      "bmdtmp": "merge_bmd"
+    }
+  ]
+}
