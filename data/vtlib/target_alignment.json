@@ -37,7 +37,29 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":["bamcollate2", "collate=1", "level=0"],
+		"comment": "if realignment_switch is set to 1, will use samtools collate otherwise biobambam collate. Unless the collate_or_namesort parameter has been set directly",
+		"cmd":{
+			"select":"collate_or_namesort", "select_range":[1], "default":{"select":"realignment_switch", "select_range":[1], "default":0,"cases":["collate","stcollate"]},
+			"cases":{
+				"collate": ["bamcollate2", "collate=1", "level=0"],
+				"namesort": [
+						{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort", "-n",
+						"-l", {"subst":"name_sort_compression","required":true,"ifnull":["0"]},
+						{"subst":"name_sort_mpt_flag","ifnull":{"subst_constructor":{"vals":["-m", {"subst":"coord_sort_mem_per_thread","required":false}]}}},
+						"--threads", {"subst":"name_sort_threads","required":true,"ifnull":4},
+						{"subst":"name_sort_extra_flags", "required":false},
+						"-"
+				],
+				"stcollate": [
+						{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "collate", "-O",
+						"-l", {"subst":"stcollate_compression","required":true,"ifnull":["0"]},
+						{"subst":"stcollate_tfn_flag","ifnull":{"subst_constructor":{"vals":["-n", {"subst":"stcollate_tmpfilenum","required":false}]}}},
+						"--threads", {"subst":"stcollate_threads","required":true,"ifnull":4},
+						{"subst":"stcollate_extra_flags", "required":false},
+						"-"
+				]
+			}
+		},
 		"comment":"ensure BAM records are gathered by template i.e. queryname"
 	},
 	{
