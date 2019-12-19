@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add markdup_botseq.json
+
 0.26.0
  - add parameters file for top-up merge
  - functional equivalence: enable selection of markdup method - biobambam (default), samtools or picard
