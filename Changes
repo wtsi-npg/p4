@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+ - check for divide by 0 when calc samtools subsample value
+ - drop file check, explictly assume fastq.gz files are gzipped when calc #reads for salmon
+
 0.26.0
  - add parameters file for top-up merge
  - functional equivalence: enable selection of markdup method - biobambam (default), samtools or picard
