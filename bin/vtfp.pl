@@ -1809,8 +1809,8 @@ sub delete_port {
 }
 
 sub _extract_ports {
-	my ($cmd, $id) = @_;
-	my %ports;
+	my ($cmd, $id, $ports) = @_;
+	$ports //= {};
 
 	unless($cmd and ref $cmd eq q[ARRAY]) {
 		return;
@@ -1818,20 +1818,23 @@ sub _extract_ports {
 
 	for my $i (0..$#{$cmd}) {
 		my $elem = $cmd->[$i];
-		if(ref $elem eq q[HASH]) {
+		if(ref $elem eq q[ARRAY]) {
+			$ports = _extract_ports($elem, $id, $ports);
+		}
+		elsif(ref $elem eq q[HASH]) {
 			if($elem->{port}) {
-				$ports{$elem->{port}}->{attribs} = reconcile_port_info($elem, $ports{$elem->{port}}->{attribs});
-				$ports{$elem->{port}}->{occurrences} ||= [];
-				push @{$ports{$elem->{port}}->{occurrences}}, {arr => $cmd, idx => $i}; # note location for later substitution
+				$ports->{$elem->{port}}->{attribs} = reconcile_port_info($elem, $ports->{$elem->{port}}->{attribs});
+				$ports->{$elem->{port}}->{occurrences} ||= [];
+				push @{$ports->{$elem->{port}}->{occurrences}}, {arr => $cmd, idx => $i}; # note location for later substitution
 			}
 			elsif($elem->{packflag}) {
 				if(ref $elem->{packflag} eq q[ARRAY]) {
 					for my $j (0..$#{$elem->{packflag}}) {
 						my $pf_elem = $elem->{packflag}->[$j];
 						if(ref $pf_elem eq q[HASH] and $pf_elem->{port}) {
-							$ports{$pf_elem->{port}}->{attribs} = reconcile_port_info($pf_elem, $ports{$pf_elem->{port}}->{attribs});
-							$ports{$pf_elem->{port}}->{occurrences} ||= [];
-							push @{$ports{$pf_elem->{port}}->{occurrences}}, {arr => $elem->{packflag}, idx => $j}; # note location for later substitution
+							$ports->{$pf_elem->{port}}->{attribs} = reconcile_port_info($pf_elem, $ports->{$pf_elem->{port}}->{attribs});
+							$ports->{$pf_elem->{port}}->{occurrences} ||= [];
+							push @{$ports->{$pf_elem->{port}}->{occurrences}}, {arr => $elem->{packflag}, idx => $j}; # note location for later substitution
 						}
 					}
 				}
@@ -1842,7 +1845,7 @@ sub _extract_ports {
 		}
 	}
 
-	return \%ports;
+	return $ports;
 }
 
 sub reconcile_port_info {
