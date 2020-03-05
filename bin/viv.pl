@@ -260,7 +260,30 @@ while((my $pid=wait) > 0) {
 }
 &{$SIG{'ALRM'}||sub{}}(); # fire off bad exit if set
 
+_final_cleanup(values %rafile_nodes);
+
 $logger->($VLMIN, "Done\n");
+
+#################################################################################################################
+# _final_cleanup
+#  Any post-run cleanup jobs go here. Initially just remove any RAFILEs. Maybe there should be opt-out mechanisms.
+#  Possible enhancements: 1) use node->subtype to selectively override this blanket deletion; 2) allow OUTFILE
+#   nodes to be placed between EXEC nodes (defacto RAFILE nodes) to indicate that this post-run deletion does not
+#   apply to them; 3) "containerise" execution of EXEC nodes, i.e. cwd before execution to a temporary area that
+#   is flagged for post-run deletion
+#################################################################################################################
+sub _final_cleanup {
+	my (@rafile_nodes) = @_;
+
+	for my $raf_name (map { $_->{name} } @rafile_nodes) {
+		if(-f $raf_name) {
+			$logger->($VLMED, 'INFO: Unlinking ', $raf_name);
+ 			unlink($raf_name);
+		}
+	}
+
+	return;
+}
 
 ##############################################################################
 # _filter_edges:
