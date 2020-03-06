@@ -103,12 +103,12 @@
 					"if [[ $0 && ! $1 ]]; then",
 						"SALMON_CMD+=\"-r $0\";",
 						"if [[ $PART1 -lt 1000 ]]; then",
-							">&2 printf \"Not enough reads to run Salmon: fq: %s\" \"$((PART1/4))\"; exit 0; fi;",
+							">&2 printf \"Not enough reads to run Salmon: fq: %s\\n\" \"$((PART1/4))\"; echo 'NO_ARCHIVE_SE'; exit 0; fi;",
 					"elif [[ $0 && $1 ]]; then",
 						"SALMON_CMD+=\"-1 $0 -2 $1\";",
 						"PART2=`gunzip -c $1 | head -n 1000 | wc -l`;",
 						"if [[ $PART1 -lt 1000 || $PART2 -lt 1000 ]]; then",
-							">&2 printf \"Not enough reads to run Salmon: fq1: %s - fq2: %s\" \"$((PART1/4))\" \"$((PART2/4))\"; exit 0; fi; fi;",
+							">&2 printf \"Not enough reads to run Salmon: fq1: %s - fq2: %s\\n\" \"$((PART1/4))\" \"$((PART2/4))\"; echo 'NO_ARCHIVE_PE'; exit 0; fi; fi;",
 					"$SALMON_CMD'",
 					{
 						"select":"alignment_reads_layout",
@@ -118,38 +118,42 @@
 							"1":[{"port":"fq1", "direction":"in"}],
 							"2":[{"port":"fq1", "direction":"in"}, {"port":"fq2", "direction":"in"}]
 						}
-					}
+					},
+					"&& echo 'DO_ARCHIVE';"
 		],
 		"comment":"salmon is too fussy and requires a minimum of good reads to work or it throws a fit. wrapped in a bash script to validate fastq files"
 	},
 	{
 		"id":"zip_salmon_quant",
 		"type":"EXEC",
+		"subtype":"STRINGIFY",
 		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":[ "zip", "-r", {"subst":"zip_target"}, {"subst":"quant"}, {"subst":"quant_genes"}, {"subst":"lib_format_counts"}, {"subst":"libparams"}, {"subst":"cmd_info"} ]
+		"cmd":[
+			"bash -c 'ms=`cat`; if [ \"${ms}\" == \"DO_ARCHIVE\" ]; then >&2 printf \"Found archive instruction, so zipping\\n\"; zip -r $0 $1 $2 $3 $4 $5; else >&2 printf \"No such file, so no zip: %s\\n\" $1; exit 0; fi'", {"subst":"zip_target"}, {"subst":"quant"}, {"subst":"quant_genes"}, {"subst":"lib_format_counts"}, {"subst":"libparams"}, {"subst":"cmd_info"}
+		]
 	},
 	{
-		"id":"quant_genes",
+		"id":"archive_decision",
 		"type":"RAFILE",
-		"subtype":"DUMMY",
-		"name":{"subst":"quant_genes"}
+		"stubtype":"DUMMY",
+		"name":{"subst":"archive_decision", "ifnull":"archive_decision.txt"}
 	},
 	{
 		"id":"cp_quant_genes",
 		"type":"EXEC",
 		"subtype":"STRINGIFY",
-		"use_STDIN": false,
+		"use_STDIN": true,
 		"use_STDOUT": false,
-		"cmd":[ "bash -c 'if [ -e $0 ]; then cp $0 $1; else >&2 printf \"No such file: %s\" $0; exit 0; fi'", 
-				{"port":"src_quant_genes", "direction":"in"}, {"subst":"quant_genes_target"}
+		"cmd":[ "bash -c 'ms=`cat`; if [[ \"${ms}\" == \"DO_ARCHIVE\"  ]] && [[ -e $0 ]]; then >&2 cp -v $0 $1; else >&2 printf \"No quant_genes file: %s\\n\" $0; exit 0; fi'", 
+				{"subst":"quant_genes"}, {"subst":"quant_genes_target"}
 		],
-		"comment":"if salmon is not run this file is not created"
+		"comment":"if salmon is not run the quant_genes file is not created"
 	}
 ],
 "edges":[
-	{ "id":"zip_salmon_output", "from":"quant_genes", "to":"zip_salmon_quant"},
-	{ "id":"salmon_to_quant_genes", "from":"salmon", "to":"quant_genes" },
-	{ "id":"cp_quant_genes", "from":"quant_genes", "to":"cp_quant_genes:src_quant_genes" }
+	{ "id":"salmon_to_quant_genes", "from":"salmon", "to":"archive_decision" },
+	{ "id":"zip_salmon_output", "from":"archive_decision", "to":"zip_salmon_quant"},
+	{ "id":"cp_quant_genes", "from":"archive_decision", "to":"cp_quant_genes" }
 ]
 }
