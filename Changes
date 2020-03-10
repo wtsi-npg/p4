@@ -1,6 +1,12 @@
 CHANGES LOG
 -----------
 
+0.27.0
+ - check for divide by 0 when calc samtools subsample value
+ - drop file check, explictly assume fastq.gz files are gzipped when calc #reads for salmon
+ - make the code flow more robust in cases of insufficient reads for salmon
+ - unconditionally remove auxtags before adapter clipping when realignment_switch is 1
+
 0.26.0
  - add parameters file for top-up merge
  - functional equivalence: enable selection of markdup method - biobambam (default), samtools or picard

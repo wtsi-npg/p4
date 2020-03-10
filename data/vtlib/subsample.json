@@ -42,7 +42,7 @@
 		"use_STDOUT": true,
 		"cmd":[
 			"bash -c '",
-			{"subst_constructor":{"vals":["tmfs=\"", {"subst":"tag_metrics_files", "required":true}, "\""],"postproc":{"op":"concat","pad":""}}}, "; if [ ! -z \"${tmfs}\" ]; then for tag_metrics_file in ${tmfs}; do reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'\"'\"'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'\"'\"'"],"postproc":{"op":"concat","pad":""}}}}, "${tag_metrics_file}`; reads_count=`echo ${reads_count} | tr -cd [:digit:]`; reads_count_total=$((${reads_count_total}+${reads_count})); done; frac=`echo \"10000/${reads_count_total}\" | bc -l`; fi;",
+			{"subst_constructor":{"vals":["tmfs=\"", {"subst":"tag_metrics_files", "required":true}, "\""],"postproc":{"op":"concat","pad":""}}}, "; if [ ! -z \"${tmfs}\" ]; then for tag_metrics_file in ${tmfs}; do reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'\"'\"'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'\"'\"'"],"postproc":{"op":"concat","pad":""}}}}, "${tag_metrics_file}`; reads_count=`echo ${reads_count} | tr -cd [:digit:]`; reads_count_total=$((${reads_count_total}+${reads_count})); done; if [[ $reads_count_total -eq 0 ]]; then reads_count_total=1; fi; frac=`echo \"10000/${reads_count_total}\" | bc -l`; fi;",
 			"if [ ! -z $frac ]; then",
 				"samtools",
 				"view",
