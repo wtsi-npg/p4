@@ -1,0 +1,50 @@
+{
+"version":"2.0",
+"description":"steps in the alignment pipeline to post-process bam files produced by the AlignmentFilter",
+"subgraph_io":{
+	"ports":{
+		"inputs":{ "_stdin_":"coord_sort" },
+		"outputs":{ "_stdout_":"coord_sort" }
+	}
+},
+"nodes":[
+	{
+		"id":"coord_sort",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"orig_cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort",
+			"-l", {"subst":"coord_sort_compression","required":true,"ifnull":["0"]},
+			{"subst":"coord_sort_mpt_flag","ifnull":{"subst_constructor":{"vals":["-m", {"subst":"coord_sort_mem_per_thread","required":false}]}}},
+			"--threads", {"subst":"coord_sort_threads","required":true,"ifnull":4},
+			{"subst":"coord_sort_extra_flags", "required":false},
+			"-"
+		],
+		"cmd":{
+			"select":"coord_sort_method", "select_range":[1], "default":"samtools",
+			"cases":{
+				"samtools":[
+					{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort",
+					"-l", {"subst":"coord_sort_compression","required":true,"ifnull":["0"]},
+					{"subst":"coord_sort_mpt_flag","ifnull":{"subst_constructor":{"vals":["-m", {"subst":"coord_sort_mem_per_thread","required":false}]}}},
+					"--threads", {"subst":"coord_sort_threads","required":true,"ifnull":4},
+					{"subst":"coord_sort_extra_flags", "required":false},
+					"-"
+				],
+				"biobambam": [
+					{"subst":"bsc_executable", "required":"yes", "ifnull":"bamsormadup"},
+					{"subst":"bsmd_threads"},
+					"SO=coordinate",
+					"level=0", "verbose=0",
+					{"select":"bsmd_fixmate", "select_range":[1], "default":0, "cases":[[],["fixmate=1"]]},
+					{"subst":"bsmd_tmpfile_flag"},
+					{"subst":"bsmd_arbitrary_flags"}
+				]
+			}
+		}
+	}
+],
+"edges":[
+]
+}

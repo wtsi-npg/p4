@@ -264,7 +264,8 @@
 			"cases":{
 				"samtools":"markdup_samtools.json",
 				"picard":"markdup_picard.json",
-				"biobambam":"markdup_biobambam.json"
+				"biobambam":"markdup_biobambam.json",
+				"none":"markdup_none.json"
 			}
 		}
 	},
