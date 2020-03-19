@@ -13,14 +13,6 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"orig_cmd": [
-			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "sort",
-			"-l", {"subst":"coord_sort_compression","required":true,"ifnull":["0"]},
-			{"subst":"coord_sort_mpt_flag","ifnull":{"subst_constructor":{"vals":["-m", {"subst":"coord_sort_mem_per_thread","required":false}]}}},
-			"--threads", {"subst":"coord_sort_threads","required":true,"ifnull":4},
-			{"subst":"coord_sort_extra_flags", "required":false},
-			"-"
-		],
 		"cmd":{
 			"select":"coord_sort_method", "select_range":[1], "default":"samtools",
 			"cases":{
