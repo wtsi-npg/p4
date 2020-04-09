@@ -1,6 +1,11 @@
 CHANGES LOG
 -----------
 
+0.28.0
+ - a new template for cases when marking duplicates is not required, with
+   an option to clip primers, which relies on a new feature in samtools
+   and is not enabled by default
+
 0.27.0
  - check for divide by 0 when calc samtools subsample value
  - drop file check, explictly assume fastq.gz files are gzipped when calc #reads for salmon
