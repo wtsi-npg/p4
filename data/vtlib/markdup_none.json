@@ -14,7 +14,7 @@
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd":{
-			"select":"primer_clip_method", "select_range":[1], "default":"no_clip",
+			"select":"primer_clip_method", "select_range":[1], "default":"samtools",
 			"cases":{
 				"samtools":[
 					{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "amplicon-clip",
