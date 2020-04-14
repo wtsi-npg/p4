@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.28.1
+ - amend samtools command to "ampliconclip" (previously "amplicon-clip")
+
 0.28.0
  - a new template for cases when marking duplicates is not required, with
    an option to clip primers, which relies on a new feature in samtools
