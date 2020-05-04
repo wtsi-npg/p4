@@ -54,6 +54,7 @@
 			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "markdup",
 			"--threads", {"subst":"markdup_threads","required":true,"ifnull":4},
 			"-s",
+      "-c",
 			"-f", {"subst":"stmd_metrics_file","required":true},
 			{"select":"stmd_mark_supps", "required":true, "select_range":[1], "default":"on","cases":{"on":"-S","off":[]}},
 			["-d", {"subst":"markdup_optical_distance_value","required":false,"ifnull":2500}],
