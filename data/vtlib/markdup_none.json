@@ -4,7 +4,7 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{ "_stdin_":"primer_clip" },
-		"outputs":{ "_stdout_":"coord_sort" }
+		"outputs":{ "_stdout_":"calmd" }
 	}
 },
 "nodes":[
@@ -97,7 +97,8 @@
 ],
 "edges":[
 	{"id":"primclip_to_fixmate","from":"primer_clip","to":"fixmate"},
-	{"id":"fixmate_to_calmd","from":"fixmate","to":"calmd"},
-	{"id":"calmd_to_coord_sort","from":"calmd","to":"coord_sort"}
+	{"id":"fixmate_to_coord_sort","from":"fixmate","to":"coord_sort"},
+	{"id":"coord_sort_to_calmd","from":"coord_sort","to":"calmd"}
+
 ]
 }
