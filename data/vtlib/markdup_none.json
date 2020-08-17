@@ -4,7 +4,7 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{ "_stdin_":"primer_clip" },
-		"outputs":{ "_stdout_":"coord_sort" }
+		"outputs":{ "_stdout_":"calmd" }
 	}
 },
 "nodes":[
@@ -58,7 +58,7 @@
 			{"select":"calmd_identical_bases_to_equal", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-e","off":[]}},
 			{"select":"calmd_uncompressed", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-u","off":[]}},
 			{"select":"calmd_quality_mod", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-A","off":[]}},
-			{"select":"calmd_quiet_mode", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-Q","off":[]}},
+			{"select":"calmd_quiet_mode", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-Q","off":[]}},
 			{"select":"calmd_BQ_tag_compute", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-r","off":[]}},
 			{"select":"calmd_extended_BAQ", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-E","off":[]}},
 			{"select":"calmd_BQ_tag_compute", "required":true, "select_range":[1], "default":"off", "cases":{"on":["--reference", {"subst":"alignment_reference_genome","required":true}],"off":[]}},
@@ -97,7 +97,8 @@
 ],
 "edges":[
 	{"id":"primclip_to_fixmate","from":"primer_clip","to":"fixmate"},
-	{"id":"fixmate_to_calmd","from":"fixmate","to":"calmd"},
-	{"id":"calmd_to_coord_sort","from":"calmd","to":"coord_sort"}
+	{"id":"fixmate_to_coord_sort","from":"fixmate","to":"coord_sort"},
+	{"id":"coord_sort_to_calmd","from":"coord_sort","to":"calmd"}
+
 ]
 }
