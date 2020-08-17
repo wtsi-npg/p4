@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.28.2
+ - move samtools calmd to correct position downstream of coord sort, and make calmd -Q flag (quiet) the default (alignment with markdup_method:none)
+
 0.28.1
  - amend samtools command to "ampliconclip" (previously "amplicon-clip")
 
