@@ -4,7 +4,7 @@
 "subgraph_io":{
 	"ports":{
 		"inputs":{
-			"_stdin_":"bamcollate2"
+			"_stdin_":"tee3"
 		},
 		"outputs":{
 			"aligned_to_target":"bam12auxmerge",
@@ -32,14 +32,6 @@
 	}
 ],
 "nodes":[
-	{
-		"id":"bamcollate2",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":["bamcollate2", "collate=1", "level=0"],
-		"comment":"ensure BAM records are gathered by template i.e. queryname"
-	},
 	{
 		"id":"tee3",
 		"type":"VTFILE",
@@ -164,7 +156,6 @@
 	}
 ],
 "edges":[
-	{ "id":"bc2_to_t3", "from":"bamcollate2", "to":"tee3" },
 	{ "id":"phixaln_to_amp", "from":"tee3:amp", "to":"auxmerge_prep" },
 	{ "id":"amp_to_auxmrg", "from":"auxmerge_prep", "to":"bam12auxmerge:no_aln_bam" },
 	{ "id":"tgtaln_to_prealn", "from":"tee3:prealn", "to":"pre_alignment" },
