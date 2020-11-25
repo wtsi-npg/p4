@@ -33,6 +33,10 @@ data/vtlib/seqchksum_realign.json
 data/vtlib/split_by_chromosome.json
 data/vtlib/star_alignment.json
 data/vtlib/tophat2_alignment.json
+data/vtlib/markdup_biobambam.json
+data/vtlib/markdup_duplexseq.json
+data/vtlib/markdup_picard.json
+data/vtlib/markdup_samtools.json
 examples/bwa_aln_cfg.png
 examples/bwa_mem/bwa_mem_alignment.vtf
 examples/bwa_mem/generic_alignment_with_phix.vtf
