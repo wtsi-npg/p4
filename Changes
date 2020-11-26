@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+ - renamed markdup_botseq.json markdup_duplexseq.json
+ - add markdup_botseq.json
+
 0.28.2
  - move samtools calmd to correct position downstream of coord sort, and make calmd -Q flag (quiet) the default (alignment with markdup_method:none)
 
