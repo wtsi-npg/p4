@@ -265,6 +265,7 @@
 				"samtools":"markdup_samtools.json",
 				"picard":"markdup_picard.json",
 				"biobambam":"markdup_biobambam.json",
+				"duplexseq":"markdup_duplexseq.json",
 				"none":"markdup_none.json"
 			}
 		}
