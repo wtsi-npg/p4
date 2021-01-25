@@ -1,6 +1,7 @@
 CHANGES LOG
 -----------
 
+0.29.0
  - renamed markdup_botseq.json markdup_duplexseq.json
  - add markdup_botseq.json
 
