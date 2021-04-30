@@ -43,6 +43,12 @@
 		"subst_constructor":{ "vals":[ "-r", {"subst":"scramble_reference_fasta"} ] }
 	},
 	{
+		"id":"scramble_seqperslice_flag",
+		"required":"no",
+		"comment":"flag will disappear unless scramble_seqperslice_value is given (used for unaligned crams)",
+		"subst_constructor":{ "vals":[ "-s", {"subst":"scramble_seqperslice_value"} ] }
+	},
+	{
 		"id":"bmd_tmpfile_flag",
 		"required":"no",
 		"subst_constructor":{
@@ -317,12 +323,26 @@
 			"-I", "bam",
 			"-O", "cram",
 			{"subst":"scramble_reference_flag"},
+			{"subst":"scramble_seqperslice_flag"},
+			{"select":"b2c_scramble_bzip2","default":0,"select_range":[0,1],
+				"cases":[
+					[],
+					"-j"
+				]
+			},
+			{"select":"b2c_scramble_lzma","default":0,"select_range":[0,1],
+				"cases":[
+					[],
+					"-Z"
+				]
+			},
 			{"select":"scramble_embed_reference","default":0,"select_range":[0,1],
 				"cases":[
 					[],
 					"-e"
 				]
-			}
+			},
+			{"subst":"b2c_arbitrary_flags", "comment":"this allows arbitrary sets of flag strings to be inserted in the command" }
 		]	
 	},
 	{
