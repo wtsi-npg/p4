@@ -448,7 +448,7 @@
 		"use_STDOUT": false,
 		"cmd": [
 			{"subst":"npg_substitution_metrics", "required": true, "ifnull":"npg_substitution_metrics.pl"}, 
-			{"substitution_metrics_verbose_flag":"", "required":false},
+			{"subst":"substitution_metrics_verbose_flag", "required":false},
 			"-o", {"subst":"substitution_metrics_file", "required":true, "ifnull":"subst_metrics.txt"},
 			"/dev/stdin"
 		]
@@ -494,7 +494,7 @@
 	{ "id":"stats_F0xB00_bait_file", "type":"OUTFILE", "name":{"subst":"stats_F0xB00_bait_file"} },
 	{ "id":"stats_F0xF04_target_file", "type":"OUTFILE", "name":{"subst":"stats_F0xF04_target_file"} },
 	{ "id":"stats_F0xF04_target_autosome_file", "type":"OUTFILE", "name":{"subst":"stats_F0xF04_target_autosome_file"} },
-	{ "id":"substitution_analysis_file", "type":"OUTFILE", "name":{"subst":"substitution_analysis_file"} },
+	{ "id":"substitution_analysis_file", "type":"RAFILE", "name":{"subst":"substitution_analysis_file"} },
 	{ "id":"flagstat_file", "type":"OUTFILE", "name":{"subst":"flagstat_file"} },
 	{
 		"id":"flagstat_filter",
