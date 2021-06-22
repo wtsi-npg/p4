@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+0.30.0
+ - add optional flags to bwa mem command for Hi-C library stage 2 analyses
+ - bam files (and md5, index files) produced using samtools and md5sum instead of bamrecompress
+
 0.29.0
  - renamed markdup_botseq.json markdup_duplexseq.json
  - add markdup_botseq.json
