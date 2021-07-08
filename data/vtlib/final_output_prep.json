@@ -219,6 +219,22 @@
 		}
 	},
 	{
+		"id":"substitution_analysis_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".substitution_analysis.txt" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"substitution_metrics_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".substitution_metrics.txt" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
 		"id":"bam_stats_file",
 		"required":"yes",
 		"subst_constructor":{
@@ -285,7 +301,8 @@
 			{"port":"samtools_stats_F0x900_bait", "direction":"out"},
 			{"port":"samtools_stats_F0xB00_bait", "direction":"out"},
 			{"port":"samtools_stats_F0xF04_target", "direction":"out"},
-			{"port":"samtools_stats_F0xF04_target_autosome", "direction":"out"}
+			{"port":"samtools_stats_F0xF04_target_autosome", "direction":"out"},
+			{"port":"substitution_analysis", "direction":"out"}
 		]
 	},
 	{
@@ -413,6 +430,29 @@
 		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-p", "-g", {"subst":"stats_filter__cov_threshold"},"-F", {"subst":"stats_filter__F0xF04"},"-t",{"subst":"target_autosome_regions_file"},"-" ]
 	},
 	{
+		"id":"substitution_analysis",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"bambi_executable", "required": true, "ifnull":"bambi"},
+			"substitution_analysis",
+			"-"
+		]
+	},
+	{
+		"id":"substitution_metrics",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd": [
+			{"subst":"npg_substitution_metrics", "required": true, "ifnull":"npg_substitution_metrics.pl"}, 
+			{"subst":"substitution_metrics_verbose_flag", "required":false},
+			"-o", {"subst":"substitution_metrics_file", "required":true, "ifnull":"subst_metrics.txt"},
+			"/dev/stdin"
+		]
+	},
+	{
 		"id":"seqchksum",
 		"type":"EXEC",
 		"use_STDIN": true,
@@ -473,6 +513,7 @@
 	{ "id":"stats_F0xB00_bait_file", "type":"OUTFILE", "name":{"subst":"stats_F0xB00_bait_file"} },
 	{ "id":"stats_F0xF04_target_file", "type":"OUTFILE", "name":{"subst":"stats_F0xF04_target_file"} },
 	{ "id":"stats_F0xF04_target_autosome_file", "type":"OUTFILE", "name":{"subst":"stats_F0xF04_target_autosome_file"} },
+	{ "id":"substitution_analysis_file", "type":"RAFILE", "name":{"subst":"substitution_analysis_file"} },
 	{ "id":"flagstat_file", "type":"OUTFILE", "name":{"subst":"flagstat_file"} },
 	{
 		"id":"flagstat_filter",
@@ -515,6 +556,7 @@
 	{ "id":"bmdmw_to_sts_F0xB00_bait", "from":"bmd_multiway:samtools_stats_F0xB00_bait", "to":"samtools_stats_F0xB00_bait" },
 	{ "id":"bmdmw_to_sts_F0xF04_target", "from":"bmd_multiway:samtools_stats_F0xF04_target", "to":"samtools_stats_F0xF04_target" },
 	{ "id":"bmdmw_to_sts_F0xF04_target_autosome", "from":"bmd_multiway:samtools_stats_F0xF04_target_autosome", "to":"samtools_stats_F0xF04_target_autosome" },
+	{ "id":"bmdmw_to_substitution_analysis", "from":"bmd_multiway:substitution_analysis", "to":"substitution_analysis" },
 	{ "id":"bmdmw_to_bam_stats", "from":"bmd_multiway:bam_stats", "to":"bam_stats" },
 	{ "id":"bmdmw_to_calibration_pu", "from":"bmd_multiway:calibration_pu", "to":"calibration_pu" },
 	{ "id":"bmdmw_to_seqchksum", "from":"bmd_multiway:seqchksum", "to":"seqchksum" },
@@ -539,6 +581,8 @@
 	{ "id":"samtools_stats_F0xB00_bait_to_file", "from":"samtools_stats_F0xB00_bait", "to":"stats_F0xB00_bait_file" },
 	{ "id":"samtools_stats_F0xF04_target_to_file", "from":"samtools_stats_F0xF04_target", "to":"stats_F0xF04_target_file" },
 	{ "id":"samtools_stats_F0xF04_target_autosome_to_file", "from":"samtools_stats_F0xF04_target_autosome", "to":"stats_F0xF04_target_autosome_file" },
+	{ "id":"substitution_analysis_to_file", "from":"substitution_analysis", "to":"substitution_analysis_file" },
+	{ "id":"substitution_analysis_file_to_metrics", "from":"substitution_analysis_file", "to":"substitution_metrics" },
 	{ "id":"flagstat_to_file", "from":"flagstat", "to":"flagstat_file" },
 	{ "id":"cscs_to_file", "from":"cram_seqchksum", "to":"seqchksum_file_cram" },
 	{ "id":"cscsfile_to_cmp", "from":"seqchksum_file_cram", "to":"cmp_seqchksum:cram_seqchksum" }
