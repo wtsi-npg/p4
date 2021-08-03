@@ -272,6 +272,10 @@
 			{"subst":"teepot_vflag", "ifnull":"-v"},
 			{"subst":"teepot_tempdir_flag"},
 			"-w", {"subst":"fomw_teepot_wval", "ifnull":"300"},
+			{"select":"c2a_switch", "select_range":[0,1], "cases":{
+				"on": {"port":"c2a", "direction":"out"}
+				}
+			},
 			{"port":"scramble", "direction":"out"},
 			{"port":"flagstat", "direction":"out"},
 			{"port":"calibration_pu", "direction":"out"},
@@ -287,6 +291,17 @@
 			{"port":"samtools_stats_F0xF04_target", "direction":"out"},
 			{"port":"samtools_stats_F0xF04_target_autosome", "direction":"out"}
 		]
+	},
+	{"select":"c2a_switch", "required":false, "select_range":[0,1], "cases":{
+		"on":{
+			"id":"c2a",
+			"description":"C2A analysis",
+			"type":"VTFILE",
+			"comment":"inputs: _stdin_ (bam)",
+			"node_prefix":"c2a_",
+			"name":"c2a.json"
+			}
+		}
 	},
 	{
 		"id":"scramble",
@@ -503,6 +518,10 @@
 ],
 "edges":[
 	{ "id":"markdup_to_multiway", "from":"markdup", "to":"bmd_multiway" },
+	{"select":"c2a_switch", "required":false, "select_range":[0,1], "cases":{
+		"on": { "id":"bmdmw_to_c2a", "from":"bmd_multiway:c2a", "to":"c2a" }
+		}
+	},
 	{ "id":"bmdmw_to_scramble", "from":"bmd_multiway:scramble", "to":"scramble" },
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
 	{ "id":"scramble_tee_to_md5", "from":"scramble_tee:md5", "to":"scramble_md5" },
