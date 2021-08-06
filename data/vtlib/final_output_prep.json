@@ -272,7 +272,7 @@
 			{"subst":"teepot_vflag", "ifnull":"-v"},
 			{"subst":"teepot_tempdir_flag"},
 			"-w", {"subst":"fomw_teepot_wval", "ifnull":"300"},
-			{"select":"c2a_switch", "select_range":[0,1], "cases":{
+			{"select":"c2a_switch", "id":"c2a_select", "cases":{
 				"on": {"port":"c2a", "direction":"out"}
 				}
 			},
@@ -292,16 +292,21 @@
 			{"port":"samtools_stats_F0xF04_target_autosome", "direction":"out"}
 		]
 	},
-	{"select":"c2a_switch", "required":false, "select_range":[0,1], "cases":{
-		"on":{
-			"id":"c2a",
-			"description":"C2A analysis",
-			"type":"VTFILE",
-			"comment":"inputs: _stdin_ (bam)",
-			"node_prefix":"c2a_",
-			"name":"c2a.json"
+	{
+		"id":"c2a",
+		"description":"C2A analysis - enabled/disabled by c2a_switch parameter",
+		"type":{
+			"select":"c2a_switch",
+			"required":true,
+			"default":"off",
+			"cases":{
+				"on":"VTFILE",
+				"off":"INACTIVE"
 			}
-		}
+		},
+		"comment":"inputs: _stdin_ (bam)",
+		"node_prefix":{ "subst_constructor":{ "vals": [ "c2a_", {"subst":"phix_or_target", "ifnull":"pot"}, "_" ], "postproc":{"op":"concat", "pad":""} } },
+		"name":"c2a.json"
 	},
 	{
 		"id":"scramble",
@@ -518,7 +523,7 @@
 ],
 "edges":[
 	{ "id":"markdup_to_multiway", "from":"markdup", "to":"bmd_multiway" },
-	{"select":"c2a_switch", "required":false, "select_range":[0,1], "cases":{
+	{"select":"c2a_switch", "required":false, "cases":{
 		"on": { "id":"bmdmw_to_c2a", "from":"bmd_multiway:c2a", "to":"c2a" }
 		}
 	},

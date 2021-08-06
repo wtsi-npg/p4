@@ -71,8 +71,8 @@
 		}
 	},
 	{"id":"c2a_list","required":true,"default":["target"]},
-	{"id":"c2a_target","required":"no","default":{"select":"c2a_list", "cases":{"target":"on"}}},
-	{"id":"c2a_phix","required":"no","default":{"select":"c2a_list", "cases":{"phix":"on"}}}
+	{"id":"c2a_target","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"target":"on","deflt":"off"}}},
+	{"id":"c2a_phix","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"phix":"on", "deflt":"off"}}}
 ],
 "nodes":[
 	{

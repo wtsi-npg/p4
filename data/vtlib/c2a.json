@@ -33,7 +33,6 @@
 	{ "id":"substitution_analysis_file", "type":"RAFILE", "name":{"subst":"substitution_analysis_file"} }
 ],
 "edges":[
-	{ "id":"bmdmw_to_substitution_analysis", "from":"bmd_multiway:substitution_analysis", "to":"substitution_analysis" },
 	{ "id":"substitution_analysis_to_file", "from":"substitution_analysis", "to":"substitution_analysis_file" },
 	{ "id":"substitution_analysis_file_to_metrics", "from":"substitution_analysis_file", "to":"substitution_metrics" }
 ]
