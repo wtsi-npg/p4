@@ -1,0 +1,60 @@
+{
+"version":"2.0",
+"description":"perform substitution analysis on the input bam stream",
+"subgraph_io":{
+	"ports":{
+		"inputs":{ "_stdin_":"substitution_analysis" }
+	}
+},
+"nodes":[
+	{
+		"id":"substitution_analysis",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"bambi_executable", "required": true, "ifnull":"bambi"},
+			"substitution_analysis",
+			"-"
+		]
+	},
+	{
+		"id":"substitution_metrics",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd": [
+			{"subst":"npg_substitution_metrics", "required": true, "ifnull":"npg_substitution_metrics.pl"}, 
+			{"subst":"substitution_metrics_verbose_flag", "required":false},
+			"-o", {
+				"subst":"substitution_metrics_file",
+				"required":true,
+				"ifnull":{
+					"subst_constructor":{
+						"vals":[{"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"sm_ext", "ifnull":".substitution_metrics.txt"} ],
+						 "postproc":{"op":"concat", "pad":""}
+					}
+				}
+			},
+			"/dev/stdin"
+		]
+	},
+	{
+		"id":"substitution_analysis_file",
+		"type":"RAFILE",
+		"name":{
+			"subst":"substitution_analysis_file",
+			"ifnull":{
+				"subst_constructor":{
+					"vals":[{"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"sa_ext", "ifnull":".substitution_analysis.txt"} ],
+					 "postproc":{"op":"concat", "pad":""}
+				}
+			}
+		}
+	}
+],
+"edges":[
+	{ "id":"substitution_analysis_to_file", "from":"substitution_analysis", "to":"substitution_analysis_file" },
+	{ "id":"substitution_analysis_file_to_metrics", "from":"substitution_analysis_file", "to":"substitution_metrics" }
+]
+}
