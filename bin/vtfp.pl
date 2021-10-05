@@ -130,6 +130,9 @@ foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
 		${$cmd_ref} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
 	}
 }
+if($flat_graph->{'edges'}) {
+	$flat_graph->{'edges'} = finalise_array($flat_graph->{'edges'});
+}
 
 print $out to_json($flat_graph);
 
