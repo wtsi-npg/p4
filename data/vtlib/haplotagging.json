@@ -1,0 +1,64 @@
+{
+"version":"2.0",
+"description":"perform haplotagging post-processing on a sam/bam/cram stream; default output bam format",
+"subgraph_io":{
+	"ports":{
+		"inputs":{ "_stdin_":"ht_prefilter" },
+		"outputs":{ "_stdout_":"ht_convert_to_cram" }
+	}
+},
+"nodes":[
+	{
+		"id":"ht_prefilter",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required": true, "ifnull":"samtools"},
+			"view",
+			"-h",
+			"--threads", {"subst":"ht_prefilter_threads","required":true,"ifnull":4},
+			{"subst":"ht_prefilter_mask_flag", "ifnull":{"subst_constructor":{ "vals":[ "-F", {"subst":"ht_prefilter_mask", "required":false, "ifnull":"0xF00"} ]}}},
+			"-"
+		]
+	},
+	{
+		"id":"samhaplotag",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samhaplotag_executable", "required": true, "ifnull":"SamHaplotag"} ,
+			{"select":"ht_revcomp_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"--revcomp","off":[]},"comment":"Reverse-complement second barcode (BD) group"},
+			{"select":"ht_rxqx_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"--rxqx","off":[]},"comment":"Output additional raw barcode/quality RX/QX tags"},
+			{
+				"subst":"ht_prefix_flag","required":false,
+				"ifnull":{
+					"subst_constructor":{
+					"vals":[
+						"-prefix",
+						{"subst":"ht_prefix", "required":false, "ifnull":{ "subst_constructor":{ "vals":[{"subst":"outdatadir"}, "/", {"subst":"fopid"} ], "postproc":{"op":"concat", "pad":""}}}}
+					]
+					}
+				}
+			}
+		]
+	},
+	{
+		"id":"ht_convert_to_cram",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required": true, "ifnull":"samtools"},
+			"view",
+			"--threads", {"subst":"ht_cvt2cram_threads","required":true,"ifnull":4},
+			"-O", {"subst":"ht_output_format","required":true,"ifnull":"BAM"}
+		]
+	}
+],
+"edges":[
+	{ "id":"ht_filter_to_samhaplotag", "from":"ht_prefilter", "to":"samhaplotag" },
+	{ "id":"samhaplotag_to_cvtcram", "from":"samhaplotag", "to":"ht_convert_to_cram" }
+]
+}

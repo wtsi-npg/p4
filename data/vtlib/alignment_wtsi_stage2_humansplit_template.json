@@ -144,6 +144,25 @@
 		"name":{"subst":"subsample_vtf", "ifnull":"subsample.json"},
 		"description":""
 	},
+
+	{
+		"id":"haplotag",
+		"description":"haplotagging post-processing",
+		"type":{
+			"select":"haplotag_processing",
+			"required":true,
+			"select_range":[1],
+			"default":"off",
+			"cases":{
+				"on":"VTFILE",
+				"off":"INACTIVE"
+			}
+		},
+		"comment":"inputs: _stdin_ (bam)",
+		"node_prefix":{ "subst_constructor":{ "vals": [ "ht_", {"subst":"phix_or_target", "ifnull":"pot"}, "_" ], "postproc":{"op":"concat", "pad":""} } },
+		"name":"haplotagging.json"
+	},
+
 	{
 		"id":"target_alignment",
 		"type":"VTFILE",
@@ -235,7 +254,16 @@
 	{ "id":"src_to_bc2", "from":"crammerge", "to":"spatial_filter" },
 	{ "id":"apply_filter_to_sfqc", "from":"spatial_filter:apply_stats", "to":"spatial_filter_stats" },
 	{ "id":"sf_to_bc2", "from":"spatial_filter", "to":"subsample_fqc" },
-	{ "id":"ssfqc_to_tgtaln", "from":"subsample_fqc:straight_through1", "to":"target_alignment" },
+	{
+	"select":"haplotag_switch", "required":true, "select_range":[1], "default":"off",
+	"cases":{
+		"on": [
+			{ "id":"ssfqc_to_ht", "from":"subsample_fqc:straight_through1", "to":"haplotag" },
+			{ "id":"ht_to_tgtaln", "from":"haplotag", "to":"target_alignment" }
+		],
+		"off": { "id":"ssfqc_to_tgtaln", "from":"subsample_fqc:straight_through1", "to":"target_alignment" }
+		}
+	},
 	{ "id":"target_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_target", "to":"alignment_filter:target_bam_in" },
 	{ "id":"phix_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_phix", "to":"alignment_filter:phix_bam_in" },
 	{ "id":"human_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_human", "to":"alignment_filter:human_bam_in" },
