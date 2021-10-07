@@ -18,7 +18,7 @@
 			"view",
 			"-h",
 			"--threads", {"subst":"ht_prefilter_threads","required":true,"ifnull":4},
-			{"subst":"ht_prefilter_mask_flag", "ifnull":{"subst_constructor":{ "vals":[ "-F", {"subst":"ht_prefilter_mask", "required":false, "ifnull":"0xF00"} ]}}},
+			{"subst":"ht_prefilter_mask_flag", "ifnull":{"subst_constructor":{ "vals":[ "-F", {"subst":"ht_prefilter_mask", "required":false, "ifnull":"0"} ]}}},
 			"-"
 		]
 	},
