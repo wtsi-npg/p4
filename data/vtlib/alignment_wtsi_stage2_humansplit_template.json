@@ -90,7 +90,26 @@
 	{"id":"c2a_list","required":true,"default":["target"]},
 	{"id":"c2a_target","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"target":"on","deflt":"off"}}},
 	{"id":"c2a_phix","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"phix":"on", "deflt":"off"}}},
-	{"id":"c2a_hs","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"nchs":"on", "deflt":"off"}}}
+	{"id":"c2a_hs","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"nchs":"on", "deflt":"off"}}},
+	{"id":"post_cm","required":true,"comment":"node to follow crammerge, do not set manually","default":
+		{"select":"spatial_filter_switch", "required":true, "select_range":[1], "default":"on",
+			"cases":{
+				"on":"spatial_filter",
+				"off":
+					{"select":"haplotag_processing","required":true,"select_range":[1], "default":"off",
+						"cases":{
+							"on": "haplotag",
+							"off": "subsample_fqc"
+						}
+					}
+			}
+		}
+	},
+	{"id":"post_sf","required":true,"comment":"node to follow spatial_filter, do not set manually","default":
+		{"select":"haplotag_processing", "required":true, "select_range":[1], "default":"off",
+			"cases":{ "on":"haplotag", "off":"subsample_fqc" }
+		}
+	}
 ],
 "nodes":[
 	{
@@ -115,7 +134,16 @@
 	},
 	{
 		"id":"spatial_filter",
-		"type":"EXEC",
+		"type":{
+			"select":"spatial_filter_switch",
+			"required":true,
+			"select_range":[1],
+			"default":"on",
+			"cases":{
+				"on":"EXEC",
+				"off":"INACTIVE"
+			}
+		},
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd":[
@@ -251,19 +279,21 @@
 	}
 ],
 "edges":[
-	{ "id":"src_to_bc2", "from":"crammerge", "to":"spatial_filter" },
-	{ "id":"apply_filter_to_sfqc", "from":"spatial_filter:apply_stats", "to":"spatial_filter_stats" },
-	{ "id":"sf_to_bc2", "from":"spatial_filter", "to":"subsample_fqc" },
-	{
-	"select":"haplotag_switch", "required":true, "select_range":[1], "default":"off",
+	{ "id":"src_to_bc2", "from":"crammerge", "to":{"subst":"post_cm","required":true} },
+	{"select":"spatial_filter_switch", "required":true, "select_range":[1], "default":"on", "allow_unspec_keys":true,
 	"cases":{
 		"on": [
-			{ "id":"ssfqc_to_ht", "from":"subsample_fqc:straight_through1", "to":"haplotag" },
-			{ "id":"ht_to_tgtaln", "from":"haplotag", "to":"target_alignment" }
-		],
-		"off": { "id":"ssfqc_to_tgtaln", "from":"subsample_fqc:straight_through1", "to":"target_alignment" }
-		}
-	},
+			{ "id":"apply_filter_to_sfqc", "from":"spatial_filter:apply_stats", "to":"spatial_filter_stats" },
+			{ "id":"sf_to_next", "from":"spatial_filter", "to":{"subst":"post_sf"} }
+		]
+	}},
+	{
+	"select":"haplotag_processing", "required":true, "select_range":[1], "default":"off", "allow_unspec_keys":true,
+	"cases":{
+		"on": [
+			{ "id":"ht_to_next", "from":"haplotag", "to":"subsample_fqc" }
+		]
+	}},
 	{ "id":"target_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_target", "to":"alignment_filter:target_bam_in" },
 	{ "id":"phix_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_phix", "to":"alignment_filter:phix_bam_in" },
 	{ "id":"human_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_human", "to":"alignment_filter:human_bam_in" },
