@@ -1065,6 +1065,7 @@ sub subgraph_to_flat_graph {
 	########################################################################
 	# any edges which refer to nodes in this subgraph should also be updated
 	########################################################################
+	$subcfg->{'edges'} = finalise_array($subcfg->{'edges'});
 	for my $edge (@{$subcfg->{edges}}) {
 		if($edge->{from}) {
 			$edge->{from} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{from};
