@@ -36,8 +36,8 @@
 				"ifnull":{
 					"subst_constructor":{
 					"vals":[
-						"-prefix",
-						{"subst":"ht_prefix", "required":false, "ifnull":{ "subst_constructor":{ "vals":[{"subst":"outdatadir"}, "/", {"subst":"fopid"} ], "postproc":{"op":"concat", "pad":""}}}}
+						"--prefix",
+						{"subst":"ht_prefix", "required":false, "ifnull":{"subst_constructor":{"vals":[ {"subst":"outdatadir"}, "/", {"subst":"rpt"}, "_" ], "postproc":{"op":"concat","pad":""}}}}
 					]
 					}
 				}
