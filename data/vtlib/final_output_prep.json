@@ -272,10 +272,6 @@
 			{"subst":"teepot_vflag", "ifnull":"-v"},
 			{"subst":"teepot_tempdir_flag"},
 			"-w", {"subst":"fomw_teepot_wval", "ifnull":"300"},
-			{"select":"c2a_switch", "id":"c2a_select", "cases":{
-				"on": {"port":"c2a", "direction":"out"}
-				}
-			},
 			{"port":"scramble", "direction":"out"},
 			{"port":"flagstat", "direction":"out"},
 			{"port":"calibration_pu", "direction":"out"},
@@ -339,6 +335,10 @@
 			{"subst":"teepot_vflag", "ifnull":"-v"},
 			{"subst":"teepot_tempdir_flag"},
 			"-w", "30000",
+			{"select":"c2a_switch", "id":"c2a_select", "cases":{
+				"on": {"port":"c2a", "direction":"out"}
+				}
+			},
 			{"port":"cram", "direction":"out"},
 			{"port":"crai", "direction":"out"},
 			{"port":"md5", "direction":"out"},
@@ -523,12 +523,12 @@
 ],
 "edges":[
 	{ "id":"markdup_to_multiway", "from":"markdup", "to":"bmd_multiway" },
-	{"select":"c2a_switch", "required":false, "cases":{
-		"on": { "id":"bmdmw_to_c2a", "from":"bmd_multiway:c2a", "to":"c2a" }
-		}
-	},
 	{ "id":"bmdmw_to_scramble", "from":"bmd_multiway:scramble", "to":"scramble" },
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
+	{"select":"c2a_switch", "required":false, "cases":{
+		"on": { "id":"cramtee_to_c2a", "from":"scramble_tee:c2a", "to":"c2a" }
+		}
+	},
 	{ "id":"scramble_tee_to_md5", "from":"scramble_tee:md5", "to":"scramble_md5" },
 	{ "id":"scramble_tee_to_crai", "from":"scramble_tee:crai", "to":"cram_index" },
 	{ "id":"scramble_tee_to_bscs", "from":"scramble_tee:seqchksum", "to":"cram_seqchksum" },
