@@ -9,11 +9,6 @@
 },
 "nodes":[
 	{
-		"id":"bamsort_coord_output",
-		"type":"RAFILE",
-		"name": "bamsort_coord.bam"
-	},
-	{
 		"id":"bamsort_coord",
 		"type":"EXEC",
 		"use_STDIN": true,
@@ -31,8 +26,6 @@
 	}
 ],
 "edges":[
-
-	{ "id":"coordsort_todisk", "from":"bamsort_coord", "to":"bamsort_coord_output" },
-	{ "id":"disk_tomarkdup", "from":"bamsort_coord_output", "to":"bammarkduplicates" }
+	{ "id":"coordsort_todisk", "from":"bamsort_coord", "to":"bammarkduplicates" }
 ]
 }
