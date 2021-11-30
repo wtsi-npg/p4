@@ -1,6 +1,12 @@
 CHANGES LOG
 -----------
 
+0.32.0
+ - add haplotag processing to stage2 analysis
+ - move C2A analysis from bam to cram output stream (to void possible malformed MD tag values)
+ - remove intermediate files from duplexseq processing
+ - flatten edges arrays (burst sub-arrays) as part of vtfp processing
+
 0.31.0
  - add C2A analysis to stage2 of standard pipelines
 
