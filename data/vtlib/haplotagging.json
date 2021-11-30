@@ -1,0 +1,71 @@
+{
+"version":"2.0",
+"description":"perform haplotagging post-processing on a sam/bam/cram stream; default output bam format",
+"subgraph_io":{
+	"ports":{
+		"inputs":{ "_stdin_":"ht_prefilter" },
+		"outputs":{ "_stdout_":"ht_convert_to_bam" }
+	}
+},
+"nodes":[
+	{
+		"id":"ht_prefilter",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required": true, "ifnull":"samtools"},
+			"view",
+			"-h",
+			"--threads", {"subst":"ht_prefilter_threads","required":true,"ifnull":4},
+			{"subst":"ht_prefilter_mask_flag", "ifnull":{"subst_constructor":{ "vals":[ "-F", {"subst":"ht_prefilter_mask", "required":false, "ifnull":"0"} ]}}},
+			"-"
+		]
+	},
+	{
+		"id":"samhaplotag",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+			"perl", "-le",
+			"use strict; use autodie; BEGIN{symlink($ARGV[0], q[outdatalink]) or die qq[Failed to create outdata symlink: $!\n]; } exec (@ARGV[1..$#ARGV]) or die qq[failed to exec $ARGV[1]: $!];",
+			{"subst":"ht_symlink", "required":true, "ifnull":{"subst":"outdatadir"}},
+			{"subst":"samhaplotag_executable", "required": true, "ifnull":"SamHaplotag"} ,
+			{"select":"ht_revcomp_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"--revcomp","off":[]},"comment":"Reverse-complement second barcode (BD) group"},
+			{"select":"ht_rxqx_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"--rxqx","off":[]},"comment":"Output additional raw barcode/quality RX/QX tags"},
+			{
+				"subst":"ht_prefix_flag","required":false,
+				"ifnull":{
+					"subst_constructor":{
+						"vals":[
+							"--prefix",
+							{"subst":"ht_prefix", "required":true, "ifnull":{"subst_constructor":{"vals":[ "outdatalink/", {"subst":"rpt"} ], "postproc":{"op":"concat","pad":""}}}}
+						]
+					}
+				}
+			}
+		],
+		"comment":"a temporary fix until SamHaplotag allows longer prefixes for log files",
+		"description":"create symlink, exec cat to pass through all data from sdtin"
+	},
+	{
+		"id":"ht_convert_to_bam",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required": true, "ifnull":"samtools"},
+			"view",
+			"-u",
+			"--threads", {"subst":"ht_cvt2cram_threads","required":true,"ifnull":4},
+			"-O", {"subst":"ht_output_format","required":true,"ifnull":"BAM"},
+			"-"
+		]
+	}
+],
+"edges":[
+	{ "id":"ht_filter_to_samhaplotag", "from":"ht_prefilter", "to":"samhaplotag" },
+	{ "id":"samhaplotag_to_cvtbam", "from":"samhaplotag", "to":"ht_convert_to_bam" }
+]
+}
