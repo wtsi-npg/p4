@@ -104,38 +104,6 @@
 			"postproc":{"op":"concat","pad":"="}
 		}
 	},
-	{
-		"id":"br_indexfile_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "indexfilename=", {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".bai" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"br_md5file_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "md5filename=", {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".bam.md5" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"br_numthreads_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "numthreads=", {"subst":"br_numthreads_val"} ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
-	{
-		"id":"br_tmpfile_flag",
-		"required":"no",
-		"subst_constructor":{
-			"vals":[ "tmpfile=", {"subst":"outdatadir"}, "/", {"subst":"brtmp"}, "_", {"subst":"fopid"}, ".tmp" ],
-			"postproc":{"op":"concat", "pad":""}
-		}
-	},
 	{"id":"flagstats_filter_flag","required":"no","default":"0x900"},
 	{"id":"fopid","required":"yes"},
 	{
@@ -143,6 +111,14 @@
 		"required":"yes",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"bam_ext"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bam_index_file",
+		"required":"yes",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"bam_idx_ext"} ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -157,6 +133,13 @@
 		"id":"crai_file",
 		"subst_constructor":{
 			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, {"subst":"cram_idx_ext"} ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"bam_md5",
+		"subst_constructor":{
+			"vals":[ {"subst":"outdatadir"}, "/", {"subst":"fopid"}, ".bam.md5" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
 	},
@@ -264,7 +247,9 @@
 			"cases":{
 				"samtools":"markdup_samtools.json",
 				"picard":"markdup_picard.json",
-				"biobambam":"markdup_biobambam.json"
+				"biobambam":"markdup_biobambam.json",
+				"duplexseq":"markdup_duplexseq.json",
+				"none":"markdup_none.json"
 			}
 		}
 	},
@@ -291,6 +276,7 @@
 			{"port":"flagstat", "direction":"out"},
 			{"port":"calibration_pu", "direction":"out"},
 			{"port":"bam", "direction":"out"},
+			{"port":"md5", "direction":"out"},
 			{"port":"samtools_stats_F0x900", "direction":"out"},
 			{"port":"samtools_stats_F0xB00", "direction":"out"},
 			{"port":"bam_stats", "direction":"out"},
@@ -301,6 +287,22 @@
 			{"port":"samtools_stats_F0xF04_target", "direction":"out"},
 			{"port":"samtools_stats_F0xF04_target_autosome", "direction":"out"}
 		]
+	},
+	{
+		"id":"c2a",
+		"description":"C2A analysis - enabled/disabled by c2a_switch parameter",
+		"type":{
+			"select":"c2a_switch",
+			"required":true,
+			"default":"off",
+			"cases":{
+				"on":"VTFILE",
+				"off":"INACTIVE"
+			}
+		},
+		"comment":"inputs: _stdin_ (bam)",
+		"node_prefix":{ "subst_constructor":{ "vals": [ "c2a_", {"subst":"phix_or_target", "ifnull":"pot"}, "_" ], "postproc":{"op":"concat", "pad":""} } },
+		"name":"c2a.json"
 	},
 	{
 		"id":"scramble",
@@ -333,12 +335,23 @@
 			{"subst":"teepot_vflag", "ifnull":"-v"},
 			{"subst":"teepot_tempdir_flag"},
 			"-w", "30000",
+			{"select":"c2a_switch", "id":"c2a_select", "cases":{
+				"on": {"port":"c2a", "direction":"out"}
+				}
+			},
 			{"port":"cram", "direction":"out"},
 			{"port":"crai", "direction":"out"},
 			{"port":"md5", "direction":"out"},
 			{"port":"seqchksum", "direction":"out"}
 		],
 		"comment":"allow a generous 500 minutes for the teepot timeout; specify parameter value teepot_tempdir_value to specify teepot tempdir"
+	},
+	{
+		"id":"create_bam_md5",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":"md5sum"
 	},
 	{
 		"id":"scramble_md5",
@@ -349,6 +362,14 @@
 	},
 	{
 		"id":"postprocess_md5",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "tr", "-d", " \\-\n" ],
+		"comment":"the double-backslash is required to get the correct character set to the tr command"
+	},
+	{
+		"id":"postprocess_bam_md5",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -434,14 +455,34 @@
 		"cmd": [ {"subst":"calibration_pu_executable"}, "-p", {"subst":"calibration_pu_prefix"}, "-filter-bad-tiles", {"subst":"calibration_pu_bad_tiles_count"}, "-" ]
 	},
 	{
-		"id":"bamrecompress",
+		"id":"diskbam",
+		"comment":"convert compression level 0 bam stream to bam file",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ "bamrecompress", "verbose=0", "index=1", {"subst":"br_indexfile_flag"}, "md5=1", {"subst":"br_md5file_flag"}, {"subst":"br_numthreads_flag"}, {"subst":"br_tmpfile_flag"} ]
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "view", "-b",
+			"--threads", {"subst":"diskbam_threads","required":true,"ifnull":4},
+			{"subst":"diskbam_extra_flags", "required":false},
+			"-"
+		]
 	},
-	{ "id":"bam_file", "type":"OUTFILE", "name":{"subst":"bam_file"} },
+	{
+		"id":"bam_index",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": false,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "index",
+			{"subst":"diskbam_extra_flags", "required":false},
+			{"port":"bam", "direction":"in"},
+			{"port":"idx", "direction":"out"}
+		]
+	},
+	{ "id":"bam_file", "type":"RAFILE", "name":{"subst":"bam_file"} },
+	{ "id":"bam_index_file", "type":"OUTFILE", "name":{"subst":"bam_index_file"} },
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
+	{ "id":"bam_md5", "type":"OUTFILE", "name":{"subst":"bam_md5"} },
 	{ "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
 	{ "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
 	{ "id":"seqchksum_file_cram", "type":"RAFILE", "name":{"subst":"seqchksum_file_cram"}, "comment":"this file is a temporary fix for blocking problems at the cmp_seqchksum node" },
@@ -484,6 +525,10 @@
 	{ "id":"markdup_to_multiway", "from":"markdup", "to":"bmd_multiway" },
 	{ "id":"bmdmw_to_scramble", "from":"bmd_multiway:scramble", "to":"scramble" },
 	{ "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
+	{"select":"c2a_switch", "required":false, "cases":{
+		"on": { "id":"cramtee_to_c2a", "from":"scramble_tee:c2a", "to":"c2a" }
+		}
+	},
 	{ "id":"scramble_tee_to_md5", "from":"scramble_tee:md5", "to":"scramble_md5" },
 	{ "id":"scramble_tee_to_crai", "from":"scramble_tee:crai", "to":"cram_index" },
 	{ "id":"scramble_tee_to_bscs", "from":"scramble_tee:seqchksum", "to":"cram_seqchksum" },
@@ -500,8 +545,13 @@
 	{ "id":"bmdmw_to_seqchksum_extrahash", "from":"bmd_multiway:seqchksum_extrahash", "to":"seqchksum_extrahash" },
 	{ "id":"bmdmw_to_flagstat", "from":"bmd_multiway:flagstat", "to":"flagstat_filter" },
 	{ "id":"flagstat_filter_to_flagstat", "from":"flagstat_filter", "to":"flagstat" },
-	{ "id":"bmd_to_bam", "from":"bmd_multiway:bam", "to":"bamrecompress" },
-	{ "id":"brc_to_bam", "from":"bamrecompress", "to":"bam_file" },
+	{ "id":"bmd_to_bam", "from":"bmd_multiway:bam", "to":"diskbam" },
+	{ "id":"stv_to_bam", "from":"diskbam", "to":"bam_file" },
+	{ "id":"bam_to_idx", "from":"bam_file", "to":"bam_index:bam" },
+	{ "id":"idx_to_file", "from":"bam_index:idx", "to":"bam_index_file" },
+	{ "id":"bmw_to_md5", "from":"bmd_multiway:md5", "to":"create_bam_md5" },
+	{ "id":"md5_to_bam_postprocess", "from":"create_bam_md5", "to":"postprocess_bam_md5" },
+	{ "id":"corrected_bam_md5_out", "from":"postprocess_bam_md5", "to":"bam_md5" },
 	{ "id":"tee_to_cram", "from":"scramble_tee:cram", "to":"cram_file" },
 	{ "id":"corrected_md5_out", "from":"postprocess_md5", "to":"cram_md5" },
 	{ "id":"scs_to_tee", "from":"seqchksum", "to":"seqchksum_file" },

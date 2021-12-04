@@ -1,8 +1,38 @@
 CHANGES LOG
 -----------
 
+0.32.0
+ - add haplotag processing to stage2 analysis
+ - move C2A analysis from bam to cram output stream (to void possible malformed MD tag values)
+ - remove intermediate files from duplexseq processing
+ - flatten edges arrays (burst sub-arrays) as part of vtfp processing
+
+0.31.0
+ - add C2A analysis to stage2 of standard pipelines
+
+0.30.0
+ - add optional flags to bwa mem command for Hi-C library stage 2 analyses
+ - bam files (and md5, index files) produced using samtools and md5sum instead of bamrecompress
+
+0.29.0
+ - renamed markdup_botseq.json markdup_duplexseq.json
+ - add markdup_botseq.json
+
+0.28.2
+ - move samtools calmd to correct position downstream of coord sort, and make calmd -Q flag (quiet) the default (alignment with markdup_method:none)
+
+0.28.1
+ - amend samtools command to "ampliconclip" (previously "amplicon-clip")
+
+0.28.0
+ - a new template for cases when marking duplicates is not required, with
+   an option to clip primers, which relies on a new feature in samtools
+
+0.27.0
  - check for divide by 0 when calc samtools subsample value
  - drop file check, explictly assume fastq.gz files are gzipped when calc #reads for salmon
+ - make the code flow more robust in cases of insufficient reads for salmon
+ - unconditionally remove auxtags before adapter clipping when realignment_switch is 1
 
 0.26.0
  - add parameters file for top-up merge

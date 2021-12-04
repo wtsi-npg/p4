@@ -25,13 +25,12 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":[
-			"bamreset",
-			{"subst":"resetaux_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "resetaux", {"subst":"resetaux_val", "required":"no", "ifnull":"0"} ],"postproc":{"op":"concat","pad":"="}}}},
-			{"subst":"auxfilter_flag","required":"no"},
-			"level=0",
-			"verbose=0"
-		],
+		"cmd":{"select":"realignment_switch", "select_range":[1], "default":0, "comment":"remove aux tags unconditionally for realignment (realignment is non-default)",
+			"cases":[
+				["bamreset", "resetaux=0", {"subst":"auxfilter_flag","required":"no", "comment":"auxfilter=comma separated list of aux tags to be kept if resetaux=0"}, "level=0", "verbose=0"],
+				["bamreset", "level=0", "verbose=0"]
+			]
+		},
 		"comment":"Alignment removal also required for bamadapterclip (at least 0.0.142)"
 	},
 	{

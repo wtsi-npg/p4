@@ -130,6 +130,9 @@ foreach my $node_with_cmd ( grep {$_->{'cmd'}} @{$flat_graph->{'nodes'}}) {
 		${$cmd_ref} =~ s/\A(\S+)/ abs_path( (-x $1 ? $1 : undef) || (which $1) || croak "cannot find program $1" )/e;
 	}
 }
+if($flat_graph->{'edges'}) {
+	$flat_graph->{'edges'} = finalise_array($flat_graph->{'edges'});
+}
 
 print $out to_json($flat_graph);
 
@@ -430,10 +433,11 @@ sub apply_subst {
 		#  to elements which are later pruned/spliced away. See use of $cull_node_ids list returned by splice_nodes() in report_pv_ewi() for how this is done.)
 		my $id = q[PREID];
 		$ewi->{settag}->(\$id);
+		my $elem_id = (exists $elem->{id} and $elem->{id})? $elem->{id} : q[NOID];
 
-		$ewi->{addlabel}->(q{assigning to id:[} . $elem->{id} . q{]});
+		$ewi->{addlabel}->(q{assigning to id:[} . $elem_id . q{]});
 		$elem = subst_walk($elem, $params, $ewi);
-		$id = $vtnode_prefix . (exists $elem->{id} and $elem->{id})? $elem->{id} : q[NOID];
+		$id = $vtnode_prefix . $elem_id;
 		$ewi->{removelabel}->();
 
 	}
@@ -842,7 +846,7 @@ sub resolve_select_value {
 	$indexes = finalise_array($indexes); # do this after default check
 
 	# validate indices - numerics for array cases, existing keys for hash cases
-	if(not defined ($indexes = _validate_indexes($indexes, $select->{cases}, $params, $ewi))) { # array indices numeric and in range? hash keys exist in hash?
+	if(not $select->{allow_unspec_keys} and not defined ($indexes = _validate_indexes($indexes, $select->{cases}, $params, $ewi))) { # array indices numeric and in range? hash keys exist in hash?
 		$ewi->{additem}->($EWI_ERROR, 0, q[select directive without valid indexes (select on: ], $id_string, q[)]);
 		return;
 	}
@@ -1061,6 +1065,7 @@ sub subgraph_to_flat_graph {
 	########################################################################
 	# any edges which refer to nodes in this subgraph should also be updated
 	########################################################################
+	$subcfg->{'edges'} = finalise_array($subcfg->{'edges'});
 	for my $edge (@{$subcfg->{edges}}) {
 		if($edge->{from}) {
 			$edge->{from} = sprintf "%s%s%s", $ancestor_prefix, $tree_node->{node_prefix}, $edge->{from};
