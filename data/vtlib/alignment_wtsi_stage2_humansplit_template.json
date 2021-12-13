@@ -294,6 +294,7 @@
 			{ "id":"ht_to_next", "from":"haplotag", "to":"subsample_fqc" }
 		]
 	}},
+	{ "id":"ssfqc_to_tgtaln", "from":"subsample_fqc:straight_through1", "to":"target_alignment" },
 	{ "id":"target_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_target", "to":"alignment_filter:target_bam_in" },
 	{ "id":"phix_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_phix", "to":"alignment_filter:phix_bam_in" },
 	{ "id":"human_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_human", "to":"alignment_filter:human_bam_in" },
