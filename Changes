@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.32.1
+ - add missing edge to top-level human split template
+
 0.32.0
  - add haplotag processing to stage2 analysis
  - move C2A analysis from bam to cram output stream (to void possible malformed MD tag values)
