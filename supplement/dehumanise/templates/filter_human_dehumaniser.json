@@ -1,0 +1,26 @@
+{
+"version":"2.0",
+"description":"run dehumanise utility (removes potential human contamination from bam data); input: bam, output: bam",
+"subgraph_io":{
+        "ports":{
+                "inputs":{
+                        "_stdin_":"dehumaniser"
+                },
+                "outputs":{
+                        "_stdout_":"dehumaniser"
+                }
+        }
+},
+"subst_params":[],
+"nodes":[
+	{
+		"id":"dehumaniser",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "dehumanise", {"subst":"dehumanising_manifest", "required":true, "ifnull": "manifest.txt"}, "/dev/stdin", "--preset", "sr", "--bam", "-o", "/dev/stdout", "--trash-minalen", {"subst":"dh_min_alen", "required":true, "ifnull":25}, "--log", {"subst":"dh_log", "required":true, "ifnull":"dhlog.log"} ],
+		"comment":"dehumaniser script - use stdin and stdout instead of files"
+	}
+],
+"edges":[ ]
+}
