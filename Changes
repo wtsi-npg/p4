@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - updated to use samtools merge instead of bammerge for library merging  
+
 0.32.1
  - add missing edge to top-level human split template
 
