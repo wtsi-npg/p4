@@ -278,7 +278,7 @@
 			"phix_or_target":{"subst":"hs_indicator"},
 			"fopid":{"subst":"fopid_hs"},
 			"c2a_switch":{"subst":"c2a_hs"},
-			"c2a_switch":{"subst":"c2a_phix"},
+			"primer_clip_method":"no_clip",
 			"markdup_method":"none",
 			"bstmp":"bsfoph","brtmp":"brfoph","bmdtmp":"bmdfoph",
 			"scramble_reference_fasta":{"subst":"hs_reference_genome_fasta"},
