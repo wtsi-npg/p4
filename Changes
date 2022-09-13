@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.32.3
+ - force markdup_method:none (and primer_clip_method:no_clip) for untagged phiX and non-consented human split
+
 0.32.2
  - change prefix for SamHaplotag log files to include a trailing '.' (simplifies npg_irods archival)
 
