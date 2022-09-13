@@ -61,7 +61,6 @@
 			{"select":"calmd_quiet_mode", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-Q","off":[]}},
 			{"select":"calmd_BQ_tag_compute", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-r","off":[]}},
 			{"select":"calmd_extended_BAQ", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-E","off":[]}},
-			{"select":"calmd_BQ_tag_compute", "required":true, "select_range":[1], "default":"off", "cases":{"on":["--reference", {"subst":"alignment_reference_genome","required":true}],"off":[]}},
 			{"subst":"calmd_extra_flags", "required":false},
 			"-", {"subst":"reference_genome_fasta","required":true}
 		]

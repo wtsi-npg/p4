@@ -241,7 +241,16 @@
                 "type":"VTFILE",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (seqchksum)",
 		"node_prefix":"fopphx_",
-                "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"c2a_switch":{"subst":"c2a_phix"},"bstmp":"bsfopp","brtmp":"brfopp","bmdtmp":"bmdfopp","scramble_reference_fasta":{"subst":"phix_reference_genome_fasta"}},
+		"subst_map":{
+			"phix_or_target":{"subst":"phix_indicator"},
+			"fopid":{"subst":"fopid_phix"},
+			"c2a_switch":{"subst":"c2a_phix"},
+			"markdup_method":"none",
+			"primer_clip_method":"no_clip",
+			"bstmp":"bsfopp","brtmp":"brfopp","bmdtmp":"bmdfopp",
+			"scramble_reference_fasta":{"subst":"phix_reference_genome_fasta"},
+			"reference_genome_fasta":{"subst":"phix_reference_genome_fasta"}
+		},
                 "name":{"subst":"final_output_prep_phix"},
                 "description":"subgraph containing post alignment_filter process (phix)"
         },
