@@ -21,7 +21,15 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"bmd_cmd"}, "level=0", "verbose=0", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"}, {"subst":"bmd_resetdupflag"} ]
+		"cmd": [
+			{"subst":"bmd_cmd"},
+			"level=0", "verbose=0",
+			{"subst":"bmd_tmpfile_flag"},
+			{"subst":"bmd_metrics_file_flag"},
+			{"subst":"bmd_resetdupflag"},
+			{"subst":"bsmd_maxreadlen_flag","required":false,"ifnull":{"subst_constructor":{"vals":[ "maxreadlen", {"subst":"bsmd_maxreadlen_val","required":true, "ifnull":"500"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"bsmd_arbitrary_flags"}
+		]
 	}
 ],
 "edges":[
