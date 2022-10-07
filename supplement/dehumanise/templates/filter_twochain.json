@@ -1,0 +1,150 @@
+{
+"version":"2.0",
+"description":"two stage filter for removal of potential human contamination",
+"subgraph_io":{
+        "ports":{
+                "inputs":{
+                        "_stdin_":"filter1"
+                },
+                "outputs":{
+                        "_stdout_":"filter8"
+                }
+        }
+},
+"subst_params":[
+	{
+		"id":"main_input",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"fh_indatadir", "required":false, "comment":"note: if defined, use trailing /",
+					"ifnull": {"subst_constructor":{
+							"vals":[
+								{"subst":"fh_base","required":false,"ifnull":"","comment":"note: if defined, use trailing /"},
+								{"subst":"run","required":false,"ifnull":""},
+								"/indata/"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				},
+				{"subst":"run","required":true},
+				"_",
+				{"subst":"position","required":true},
+				"#",
+				{"subst":"tag","required":true},
+				".mapped.",
+				{"select":"input_format","select_range":[1], "default":"bam", "cases":{ "bam":"bam", "cram":"cram", "sam":"sam" }}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"filtered_cram",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[
+				{"subst":"fh_outdatadir", "required":false, "comment":"note: if defined, use trailing /",
+					"ifnull": {"subst_constructor":{
+							"vals":[
+								{"subst":"fh_base","required":false,"ifnull":"","comment":"note: if defined, use trailing /"},
+								{"subst":"run","required":false,"ifnull":""},
+								"/outdata/"
+							],
+							"postproc":{"op":"concat", "pad":""}
+						}
+					}
+				},
+				{"subst":"run","required":true},
+				"_",
+				{"subst":"position","required":true},
+				"#",
+				{"subst":"tag","required":true},
+				".",
+				{"select":"output_format","select_range":[1], "default":"cram", "cases":{ "bam":"bam", "cram":"cram", "sam":"sam" }}
+			],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"in_bam",
+		"type":"INFILE",
+		"name":{"subst":"main_input","required":true},
+		"description":"input (bam)"
+	},
+	{
+		"id":"filter1",
+		"type":"VTFILE",
+		"node_prefix":"filter1_",
+		"subst_map":{"fhqn1_id":"fhqn1"},
+		"name":{"subst":"fhqn1", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 1"
+	},
+	{
+		"id":"filter2",
+		"type":"VTFILE",
+		"node_prefix":"filter2_",
+		"subst_map":{"fhqn2_id":"fhqn2"},
+		"name":{"subst":"fhqn2", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 2"
+	},
+	{
+		"id":"covid_hdr_fix",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": {"select":"do_covid_hdr_fix","select_range":[1], "default":"on", "cases":{
+			"off":
+				["cat"],
+			"on":
+				[
+					{"subst":"chf_cmd","required":true,
+						"ifnull":[
+							"samtools", "reheader",
+							"--no-PG",
+							"-c", {"subst":"chf_hdrmod_cmd","required":true,"ifnull":"covid_hdr_fix.pl"},
+							"-"
+						]
+					}
+				]
+			}
+
+		},
+		"description":"fix BAM header before final output format conversion"
+	},
+	{
+		"id":"convert_to_cram",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": {"select":"output_format","select_range":[1], "default":"cram", "cases":{
+			"bam":
+				["cat"],
+			"cram":
+				[
+					{"subst":"cvt2cram_cmd","required":true,
+						"ifnull":[ "samtools", "view", "-C", "-" ]
+					}
+				]
+			}
+
+		},
+		"description":"filter out human query names"
+	},
+	{
+		"id":"final_product",
+		"type":"OUTFILE",
+		"name":{"subst":"filtered_cram","required":true,"ifnull":"human_expunged.cram"},
+		"comment":"temporary - for testing (should use output_format to create name)"
+	}
+],
+"edges":[
+	{ "id":"e00", "from":"in_bam", "to":"filter1" },
+	{ "id":"e01", "from":"filter1", "to":"filter2" },
+	{ "id":"e02", "from":"filter2", "to":"covid_hdr_fix" },
+	{ "id":"e02", "from":"covid_hdr_fix", "to":"convert_to_cram" },
+	{ "id":"e03", "from":"convert_to_cram", "to":"final_product" }
+]
+}

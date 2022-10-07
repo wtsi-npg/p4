@@ -1,0 +1,91 @@
+{
+"version":"2.0",
+"description":"use a utility (default: kraken2) to identify reads which appear to be human; remove them from a SAM stream; input: bam, output: bam",
+"subgraph_io":{
+        "ports":{
+                "inputs":{
+                        "_stdin_":"upstream_output"
+                },
+                "outputs":{
+                        "_stdout_":"convert_to_bam"
+                }
+        }
+},
+"subst_params":[],
+"nodes":[
+	{
+		"id":"upstream_output",
+		"type":"RAFILE",
+		"name":{"subst":"upstream_output_fname","required":true,"ifnull":"upstream_output.bam"}
+	},
+	{
+		"id":"collate",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+				{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "collate",
+				{"select":"collate_output_uncompressed","select_range":[1], "default":"on", "cases":{"on":"-u", "off":[]}},
+				{"select":"collate_no_pg","select_range":[1], "default":"on", "cases":{"on":"--no-PG", "off":[]}},
+				"--threads", {"subst":"collate_threads","required":true,"ifnull":4},
+				{"subst":"collate_extra_flags", "required":false},
+				"-O", "-"
+		],
+		"comment":"ensure BAM records are gathered by template i.e. queryname for subsequent conversion to FASTQ; should probably be optional"
+	},
+	{
+		"id":"find_human_querynames",
+		"type":"VTFILE",
+		"node_prefix":"fhqn_",
+		"name":{"subst":"fhq_method", "required":true, "ifnull":"kraken2_human_qn.json"},
+		"description":"find human query names (temporary hardwiring to kraken2)"
+	},
+	{
+		"id":"human_residue",
+		"type":"RAFILE",
+		"name":{"subst":"human_residue_fname","required":true,"ifnull":"human_residue_qns.txt"}
+	},
+	{
+		"id":"convert_to_sam",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ "samtools", "view", "-h", "-" ],
+		"description":"filter out human query names"
+	},
+	{
+		"id":"filter_human",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"fh_cmd","required":true,"ifnull":"filter_by_qn.pl"},
+			{"port":"human_residue", "direction":"in"}
+		],
+		"description":"filter out human query names"
+	},
+	{
+		"id":"convert_to_bam",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [ "samtools", "view", "-b", "-" ],
+		"description":"filter out human query names"
+	},
+	{
+		"id":"filtered_bam",
+		"type":"OUTFILE",
+		"name":{"subst":"filtered_bam","required":true,"ifnull":"human_expunged.bam"},
+		"comment":"temporary - for testing"
+	}
+],
+"edges":[
+	{ "id":"e00", "from":"upstream_output:", "to":"collate" },
+	{ "id":"e01", "from":"upstream_output:", "to":"convert_to_sam" },
+	{ "id":"e02", "from":"convert_to_sam", "to":"filter_human" },
+	{ "id":"e03", "from":"collate", "to":"find_human_querynames" },
+	{ "id":"e04", "from":"find_human_querynames", "to":"human_residue" },
+	{ "id":"e05", "from":"human_residue", "to":"filter_human:human_residue" },
+	{ "id":"e06", "from":"filter_human", "to":"convert_to_bam" }
+]
+}

@@ -1,0 +1,214 @@
+{
+"version":"2.0",
+"description":"use kraken2 (in both paired- and single-end modes) to find human reads, filter querynames from classified output FASTQ; assumes name sorted input",
+"subgraph_io":{
+        "ports":{
+                "inputs":{
+                        "_stdin_":"bamtofastq"
+                },
+                "outputs":{
+                        "_stdout_":"uniq_qn_sort"
+                }
+        }
+},
+"subst_params":[
+	{
+		"id":"classified_out_val",
+		"required":"no",
+		"subst_constructor":{
+			"vals":[ {"subst":"run", "required":false}, "_", {"subst":"position", "required":false}, {"subst":"tagsep","required":true,"ifnull":"t"}, {"subst":"tag", "required":false}, "_cseqs#.fq" ],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"classified_out_prefix",
+		"required":false,
+		"subst_constructor":{
+			"vals":[{"subst":"run", "required":false}, "_", {"subst":"position", "required":false}, {"subst":"tagsep","required":true,"ifnull":"t"}, {"subst":"tag", "required":false}],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"classified_out_pe",
+		"required":false,
+		"subst_constructor":{
+			"vals":[{"subst":"classified_out_prefix", "required":true}, "_cseqs#.fq"],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"classified_out_se",
+		"required":false,
+		"subst_constructor":{
+			"vals":[{"subst":"classified_out_prefix", "required":true}, "_cseqs_s.fq"],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"r1_fq_name",
+		"required":false,
+		"subst_constructor":{
+			"vals":[{"subst":"classified_out_prefix", "required":true}, "_cseqs_1.fq"],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"r2_fq_name",
+		"required":false,
+		"subst_constructor":{
+			"vals":[{"subst":"classified_out_prefix", "required":true}, "_cseqs_2.fq"],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	},
+	{
+		"id":"human_residue_fname",
+		"required":false,
+		"subst_constructor":{
+			"vals":[{"subst":"classified_out_prefix", "required":true}, "_human_residue_qns.txt"],
+			"postproc":{"op":"concat", "pad":""}
+		}
+	}
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": false,
+		"cmd": [
+				{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "fastq",
+				{"subst":"coord_sort_compression_flag","ifnull":{"subst_constructor":{"vals":["-c", {"subst":"coord_sort_compression","required":false}]}}},
+				"--threads", {"subst":"name_sort_threads","required":true,"ifnull":4},
+				"-1", {"port":"r1", "direction":"out"},
+				"-2", {"port":"r2", "direction":"out"},
+				"-s", {"port":"se", "direction":"out"},
+				{"subst":"bamtofastq_extra_flags", "required":false},
+				"-"
+		],
+		"comment":"produce FASTQ (read1, read2 and singletons)"
+	},
+	{
+		"id":"reads1",
+		"type":"RAFILE",
+		"name":{"subst":"fastq_read1","required":true, "ifnull":"reads.fq1.gz"},
+		"description":"fastq output read1"
+	},
+	{
+		"id":"reads2",
+		"type":"RAFILE",
+		"name":{"subst":"fastq_read2","required":true, "ifnull":"reads.fq2.gz"},
+		"description":"fastq output read2"
+	},
+	{
+		"id":"readss",
+		"type":"RAFILE",
+		"name":{"subst":"fastq_reads","required":true, "ifnull":"reads.fqs.gz"},
+		"description":"fastq output read1"
+	},
+	{
+		"id":"kraken2_pe",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+				{"subst":"kraken2_executable", "required":true, "ifnull":"kraken2"}, "--paired",
+				{"subst":"kraken2_pe_threads_flag","ifnull":{"subst_constructor":{"vals":["--threads", {"subst":"kraken2_pe_threads_val","required":false,"ifnull":4}]}}},
+				{"select":"kraken2_pe_inputs_compressed","select_range":[1], "default":"on", "cases":{"on":"--gzip-compressed", "off":[]}},
+				"--db", {"subst":"kraken2_pe_db","required":true,"ifnull":{"subst":"kraken2_db"}},
+				"--classified-out", {"subst":"classified_out_pe","required":true},
+				{"port":"r1", "direction":"in"},
+				{"port":"r2", "direction":"in"}
+		],
+		"comment":"kraken2 paired end run)"
+	},
+	{
+		"id":"kraken2_se",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+				{"subst":"kraken2_executable", "required":true, "ifnull":"kraken2"},
+				{"subst":"kraken2_se_threads_flag","ifnull":{"subst_constructor":{"vals":["--threads", {"subst":"kraken2_pe_threads_val","required":false,"ifnull":4}]}}},
+				{"select":"kraken2_se_inputs_compressed","select_range":[1], "default":"on","cases":{"on":"--gzip-compressed","off":[]}},
+				"--db", {"subst":"kraken2_se_db","required":true,"ifnull":{"subst":"kraken2_db"}},
+				"--classified-out", {"subst":"classified_out_se","required":true},
+				{"port":"se", "direction":"in"}
+		],
+		"comment":"kraken2 single end run)"
+	},
+	{
+		"id":"r1_fq",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst":"r1_fq_name","required":true},
+		"description":"file containing FASTQ output for kraken2 paired read1"
+	},
+	{
+		"id":"r2_fq",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst":"r2_fq_name","required":true},
+		"description":"file containing FASTQ output for kraken2 paired read2"
+	},
+	{
+		"id":"rs_fq",
+		"type":"RAFILE",
+		"subtype":"DUMMY",
+		"name":{"subst":"classified_out_se","required":true},
+		"description":"file containing FASTQ output for kraken2 singletons"
+	},
+	{
+		"id":"select_human",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"ocmd":[ "grep", "-Eh", "taxid\\|9606$", {"port":"r1","direction":"in"}, {"port":"r2","direction":"in"}, {"port":"rs","direction":"in"} ],
+		"cmd":[ 
+			{"subst":"sh_cmd","required":true,"ifnull":"filter_by_taxid9606.pl"},
+			{"port":"r1","direction":"in"}, {"port":"r2","direction":"in"}, {"port":"rs","direction":"in"}
+		]
+	},
+	{
+		"id":"qn_extract",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[ "sed", "-e", "s/^@\\([^ ]*\\).*$/\\1/" ]
+	},
+	{
+		"id":"uniq_qn_sort",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"comment":"specify parameter value teepot_tempdir_value to specify teepot tempdir",
+		"cmd":[ "sort", "-u" ]
+	},
+	{
+		"id":"human_residue",
+		"type":"OUTFILE",
+		"name":{"subst":"human_residue_fname","required":true,"ifnull":"human_residue_qns.txt"}
+	}
+],
+"edges":[
+	{ "id":"e02", "from":"bamtofastq:r1", "to":"reads1" },
+	{ "id":"e03", "from":"bamtofastq:r2", "to":"reads2" },
+	{ "id":"e04", "from":"bamtofastq:se", "to":"readss" },
+
+	{ "id":"e05", "from":"reads1", "to":"kraken2_pe:r1" },
+	{ "id":"e06", "from":"reads2", "to":"kraken2_pe:r2" },
+	{ "id":"e07", "from":"readss", "to":"kraken2_se:se" },
+
+	{ "id":"e08", "from":"kraken2_pe", "to":"r1_fq" },
+	{ "id":"e09", "from":"kraken2_pe", "to":"r2_fq" },
+	{ "id":"e10", "from":"kraken2_se", "to":"rs_fq" },
+
+	{ "id":"e11", "from":"r1_fq", "to":"select_human:r1" },
+	{ "id":"e12", "from":"r2_fq", "to":"select_human:r2" },
+	{ "id":"e13", "from":"rs_fq", "to":"select_human:rs" },
+
+	{ "id":"e14", "from":"select_human", "to":"qn_extract" },
+	{ "id":"e15", "from":"qn_extract", "to":"uniq_qn_sort" }
+]
+}

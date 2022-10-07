@@ -1,0 +1,90 @@
+{
+"version":"2.0",
+"description":"template for eight sequential filters",
+"subgraph_io":{
+        "ports":{
+                "inputs":{
+                        "_stdin_":"filter1"
+                },
+                "outputs":{
+                        "_stdout_":"filter8"
+                }
+        }
+},
+"subst_params":[],
+"nodes":[
+	{
+		"id":"filter1",
+		"type":"VTFILE",
+		"node_prefix":"filter1_",
+		"subst_map":{"fhqn1_id":"fhqn1"},
+		"name":{"subst":"fhqn1", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 1"
+	},
+	{
+		"id":"filter2",
+		"type":"VTFILE",
+		"node_prefix":"filter2_",
+		"subst_map":{"fhqn2_id":"fhqn2"},
+		"name":{"subst":"fhqn2", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 2"
+	},
+	{
+		"id":"filter3",
+		"type":"VTFILE",
+		"node_prefix":"filter3_",
+		"subst_map":{"fhqn3_id":"fhqn3"},
+		"name":{"subst":"fhqn3", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 3"
+	},
+	{
+		"id":"filter4",
+		"type":"VTFILE",
+		"node_prefix":"filter4_",
+		"subst_map":{"fhqn4_id":"fhqn4"},
+		"name":{"subst":"fhqn4", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 4"
+	},
+	{
+		"id":"filter5",
+		"type":"VTFILE",
+		"node_prefix":"filter5_",
+		"subst_map":{"fhqn5_id":"fhqn5"},
+		"name":{"subst":"fhqn5", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 5"
+	},
+	{
+		"id":"filter6",
+		"type":"VTFILE",
+		"node_prefix":"filter6_",
+		"subst_map":{"fhqn6_id":"fhqn6"},
+		"name":{"subst":"fhqn6", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 6"
+	},
+	{
+		"id":"filter7",
+		"type":"VTFILE",
+		"node_prefix":"filter7_",
+		"subst_map":{"fhqn7_id":"fhqn7"},
+		"name":{"subst":"fhqn7", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 7"
+	},
+	{
+		"id":"filter8",
+		"type":"VTFILE",
+		"node_prefix":"filter8_",
+		"subst_map":{"fhqn8_id":"fhqn8"},
+		"name":{"subst":"fhqn8", "required":true, "ifnull":"passthrough.json"},
+		"description":"filter human query names 8"
+	}
+],
+"edges":[
+	{ "id":"e00", "from":"filter1", "to":"filter2" },
+	{ "id":"e01", "from":"filter2", "to":"filter3" },
+	{ "id":"e02", "from":"filter3", "to":"filter4" },
+	{ "id":"e03", "from":"filter4", "to":"filter5" },
+	{ "id":"e04", "from":"filter5", "to":"filter6" },
+	{ "id":"e05", "from":"filter6", "to":"filter7" },
+	{ "id":"e06", "from":"filter7", "to":"filter8" }
+]
+}
