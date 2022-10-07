@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+0.32.4
+ - add supplementary files used in dehumanising CLIMB uploads for ENA (Heron)
+ - add maxreadlen flag to bamstreamingduplicates in markdup_biobambam with default of 500
+
 0.32.3
  - force markdup_method:none (and primer_clip_method:no_clip) for untagged phiX and non-consented human split
 
