@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.33.0
+ - extend list of preserved auxtags in realignment bamreset (for Duplex-Seq)
+
 0.32.4
  - add supplementary files used in dehumanising CLIMB uploads for ENA (Heron)
  - add maxreadlen flag to bamstreamingduplicates in markdup_biobambam with default of 500
