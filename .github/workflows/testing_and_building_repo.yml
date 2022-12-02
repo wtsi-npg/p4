@@ -7,7 +7,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-   # Caching cpanm external modules
+    # Caching cpanm external modules
     - name: Cache cpanm external modules
       id: cpanmCache
       uses: actions/cache@v2
