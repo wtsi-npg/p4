@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.33.1
+ - update CI and tests
+
 0.33.0
  - extend list of preserved auxtags in realignment bamreset (for Duplex-Seq)
 
