@@ -15,6 +15,24 @@
 		"use_STDOUT": true,
 		"cmd": [ {"subst":"bsc_executable", "required":"yes", "ifnull":"bamsormadup"}, {"subst":"bsmd_threads"}, "SO=coordinate", "level=0", "verbose=0", "fixmate=1", "adddupmarksupport=1", {"subst":"bs_tmpfile_flag"} ]
 	},
+        {
+                "id":"calmd",
+                "type":"EXEC",
+                "use_STDIN": true,
+                "use_STDOUT": true,
+                "cmd": [
+                        {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "calmd",
+                        "--threads", {"subst":"calmd_threads","required":true,"ifnull":4},
+                        {"select":"calmd_identical_bases_to_equal", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-e","off":[]}},
+                        {"select":"calmd_uncompressed", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-u","off":"-b"}},
+                        {"select":"calmd_quality_mod", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-A","off":[]}},
+                        {"select":"calmd_quiet_mode", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-Q","off":[]}},
+                        {"select":"calmd_BQ_tag_compute", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-r","off":[]}},
+                        {"select":"calmd_extended_BAQ", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-E","off":[]}},
+                        {"subst":"calmd_extra_flags", "required":false},
+                        "-", {"subst":"reference_genome_fasta","required":true}
+                ]
+        },
 	{
 		"id":"bammarkduplicates",
 		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
@@ -33,7 +51,7 @@
 	}
 ],
 "edges":[
-
-	{ "id":"coordsort_tomarkdup", "from":"bamsort_coord", "to":"bammarkduplicates" }
+	{ "id":"coordsort_tomarkdup", "from":"bamsort_coord", "to":"calmd" },
+	{ "id":"coordsort_tomarkdup", "from":"calmd", "to":"bammarkduplicates" }
 ]
 }
