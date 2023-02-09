@@ -51,7 +51,7 @@
 	}
 ],
 "edges":[
-	{ "id":"coordsort_tomarkdup", "from":"bamsort_coord", "to":"calmd" },
-	{ "id":"coordsort_tomarkdup", "from":"calmd", "to":"bammarkduplicates" }
+	{ "id":"coordsort_to_calmd", "from":"bamsort_coord", "to":"calmd" },
+	{ "id":"calmd_to_markdup", "from":"calmd", "to":"bammarkduplicates" }
 ]
 }

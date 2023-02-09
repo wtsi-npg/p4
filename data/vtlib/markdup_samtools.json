@@ -76,7 +76,7 @@
 ],
 "edges":[
 	{ "id":"fixmate_to_coordsort", "from":"fixmate", "to":"coord_sort" },
-        { "id":"coordsort_tomarkdup", "from":"coord_sort", "to":"calmd" },
-        { "id":"coordsort_tomarkdup", "from":"calmd", "to":"markdup" }
+        { "id":"coordsort_to_calmd", "from":"coord_sort", "to":"calmd" },
+        { "id":"calmd_to_markdup", "from":"calmd", "to":"markdup" }
 ]
 }
