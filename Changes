@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.34.0
+ - add calmd to biobambam,samtools and duplexseq markdup methods
+
 0.33.1
  - update CI and tests
 
