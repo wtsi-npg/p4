@@ -21,13 +21,6 @@
     },
     {"id":"genome_reference_fasta","required":"no"},
     {
-	"id":"scramble_reference_flag",
-        "required":"no",
-	"comment":"flag will disappear unless genome_reference_fasta value is given (allows unaligned cram)",
-        "subst_constructor":{ "vals":[ "-r", {"subst":"genome_reference_fasta"} ]
-                            }
-    },
-    {
         "id":"samtools_reference_flag",
         "required":"no",
 	"comment":"Reference required for alts, GC-depth and mismatches-per-cycle calculation.",
@@ -147,7 +140,7 @@
 		{"subst":"teepot_vflag", "ifnull":"-v"},
 		{"subst":"teepot_tempdir_flag"},
 		"-w", {"subst":"fomw_teepot_wval", "ifnull":"7200"},
-		{"port":"scramble", "direction":"out"},
+		{"port":"b2c", "direction":"out"},
 		{"port":"flagstat", "direction":"out"},
 		{"port":"samtools_stats_F0x900", "direction":"out"},
 		{"port":"samtools_stats_F0xB00", "direction":"out"},
@@ -156,22 +149,20 @@
 	]
     },
     {
-	"id":"scramble",
+	"id":"bam2cram",
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": true,
 	"cmd":[
-	    "scramble",
-	    {"subst":"b2c_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"b2c_mt_val"} ]}}},
-	    {"subst":"b2c_fmtver", "ifnull":{"subst_constructor":{ "vals":[ "-V", {"subst":"b2c_format_version"} ]}}},
-	    {"subst":"b2c_compress_level", "ifnull":"-7"},
-	    "-I", "bam",
-	    "-O", "cram",
-	    {"subst":"scramble_reference_flag"}
+		{"subst":"samtools_executable"}, "view", "-C",
+		{"subst_constructor":{"vals":[ "--threads", {"subst":"b2c_threads","ifnull":{"subst":"b2c_mt_val"}}]}},
+		{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"b2c_compression_level","ifnull":7} ], "postproc":{"op":"concat", "pad":"="}}}]}},
+		{"subst_constructor":{"vals":[ "-T", {"subst":"scramble_reference_fasta"}]}},
+		"-"
 	]
     },
     {
-	"id":"scramble_tee",
+	"id":"cram_tee",
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": false,
@@ -188,7 +179,7 @@
 	"comment":"allow a generous 500 minutes for the teepot timeout; specify parameter value teepot_tempdir_value to specify teepot tempdir"
     },
     {
-	"id":"scramble_md5",
+	"id":"cram_md5",
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": true,
@@ -315,19 +306,19 @@
     }
 ],
 "edges":[
-    { "id":"bmdmw_to_scramble", "from":"bmd_multiway:scramble", "to":"scramble" },
-    { "id":"scramble_to_scramble_tee", "from":"scramble", "to":"scramble_tee" },
-    { "id":"scramble_tee_to_md5", "from":"scramble_tee:md5", "to":"scramble_md5" },
-    { "id":"scramble_tee_to_crai", "from":"scramble_tee:crai", "to":"cram_index" },
-    { "id":"scramble_tee_to_bscs", "from":"scramble_tee:seqchksum", "to":"cram_seqchksum" },
-    { "id":"md5_to_postprocess", "from":"scramble_md5", "to":"postprocess_md5" },
+    { "id":"bmdmw_to_b2c", "from":"bmd_multiway:b2c", "to":"bam2cram" },
+    { "id":"b2c_to_cram_tee", "from":"bam2cram", "to":"cram_tee" },
+    { "id":"cram_tee_to_md5", "from":"cram_tee:md5", "to":"cram_md5" },
+    { "id":"cram_tee_to_crai", "from":"cram_tee:crai", "to":"cram_index" },
+    { "id":"cram_tee_to_bscs", "from":"cram_tee:seqchksum", "to":"cram_seqchksum" },
+    { "id":"md5_to_postprocess", "from":"cram_md5", "to":"postprocess_md5" },
     { "id":"bmdmw_to_sts_F0x900", "from":"bmd_multiway:samtools_stats_F0x900", "to":"samtools_stats_F0x900" },
     { "id":"bmdmw_to_sts_F0xB00", "from":"bmd_multiway:samtools_stats_F0xB00", "to":"samtools_stats_F0xB00" },
     { "id":"bmdmw_to_seqchksum", "from":"bmd_multiway:seqchksum", "to":"seqchksum" },
     { "id":"bmdmw_to_seqchksum_extrahash", "from":"bmd_multiway:seqchksum_extrahash", "to":"seqchksum_extrahash" },
     { "id":"bmdmw_to_flagstat", "from":"bmd_multiway:flagstat", "to":"flagstat_filter" },
     { "id":"flagstat_filter_to_flagstat", "from":"flagstat_filter", "to":"flagstat" },
-    { "id":"tee_to_cram_tears", "from":"scramble_tee:cram", "to":"cram_output" },
+    { "id":"tee_to_cram_tears", "from":"cram_tee:cram", "to":"cram_output" },
     { "id":"corrected_md5_out", "from":"postprocess_md5", "to":"cram_md5" },
     { "id":"scs_to_tee", "from":"seqchksum", "to":"seqchksum_tee" },
     { "id":"scs_tee_to_file", "from":"seqchksum_tee:file", "to":"seqchksum_file" },

@@ -151,11 +151,10 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"cmd":[
-				"scramble",
-				{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
-				{"subst":"s2b_compress_level", "ifnull":"-0"},
-				"-I", "sam",
-				"-O", "bam"
+			{"subst":"samtools_executable"}, "view", "-b",
+			{"subst_constructor":{"vals":[ "--threads", {"subst":"b2c_threads","ifnull":{"subst":"b2c_mt_val"}}]}},
+			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"s2b_compression_level","ifnull":0} ], "postproc":{"op":"concat", "pad":"="}}}]}},
+			"-"
 		]
 	},
 	{
@@ -185,7 +184,7 @@
 		"default":2, "select_range":[1],
 		"cases":{ "1":{}, "2":{"id":"fq2_to_quantify", "from":"fq2", "to":"quantify:fastq2"} }
 	},
-	{"id":"hisat2_to_scramble", "from":"hisat2", "to":"samtobam"},
+	{"id":"hisat2_to_s2b", "from":"hisat2", "to":"samtobam"},
 	{"id":"samtobam_to_qname_sort", "from":"samtobam", "to":"bamsort_qname"}
 ]
 }
