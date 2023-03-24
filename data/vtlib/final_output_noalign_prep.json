@@ -167,7 +167,7 @@
 		"comment":"allow a generous 500 minutes for the teepot timeout; specify parameter value teepot_tempdir_value to specify teepot tempdir"
 	},
 	{
-		"id":"cram_md5",
+		"id":"create_cram_md5",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -268,9 +268,9 @@
 "edges":[
 	{ "id":"bmdmw_to_b2c", "from":"fo_in_multiway:__B2C_OUT__", "to":"bam2cram" },
 	{ "id":"b2c_to_cram_tee", "from":"bam2cram", "to":"cram_tee" },
-	{ "id":"cram_tee_to_md5", "from":"cram_tee:__MD5_OUT__", "to":"cram_md5" },
+	{ "id":"cram_tee_to_md5", "from":"cram_tee:__MD5_OUT__", "to":"create_cram_md5" },
 	{ "id":"cram_tee_to_bscs", "from":"cram_tee:__SEQCHKSUM_OUT__", "to":"cram_seqchksum" },
-	{ "id":"md5_to_postprocess", "from":"cram_md5", "to":"postprocess_md5" },
+	{ "id":"md5_to_postprocess", "from":"create_cram_md5", "to":"postprocess_md5" },
 	{ "id":"bmdmw_to_sts_F0x900", "from":"fo_in_multiway:__SAMTOOLS_STATS_F0x900_OUT__", "to":"samtools_stats_F0x900" },
 	{ "id":"bmdmw_to_sts_F0xB00", "from":"fo_in_multiway:__SAMTOOLS_STATS_F0xB00_OUT__", "to":"samtools_stats_F0xB00" },
 	{ "id":"bmdmw_to_bam_stats", "from":"fo_in_multiway:__BAM_STATS_OUT__", "to":"bam_stats" },

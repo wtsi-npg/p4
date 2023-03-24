@@ -342,7 +342,7 @@
 		"cmd":"md5sum"
 	},
 	{
-		"id":"cram_md5",
+		"id":"create_cram_md5",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
@@ -517,10 +517,10 @@
 		"on": { "id":"cramtee_to_c2a", "from":"cram_tee:c2a", "to":"c2a" }
 		}
 	},
-	{ "id":"cram_tee_to_md5", "from":"cram_tee:md5", "to":"cram_md5" },
+	{ "id":"cram_tee_to_md5", "from":"cram_tee:md5", "to":"create_cram_md5" },
 	{ "id":"cram_tee_to_crai", "from":"cram_tee:crai", "to":"cram_index" },
 	{ "id":"cram_tee_to_bscs", "from":"cram_tee:seqchksum", "to":"cram_seqchksum" },
-	{ "id":"md5_to_postprocess", "from":"cram_md5", "to":"postprocess_md5" },
+	{ "id":"md5_to_postprocess", "from":"create_cram_md5", "to":"postprocess_md5" },
 	{ "id":"bmdmw_to_sts_F0x900", "from":"bmd_multiway:samtools_stats_F0x900", "to":"samtools_stats_F0x900" },
 	{ "id":"bmdmw_to_sts_F0xB00", "from":"bmd_multiway:samtools_stats_F0xB00", "to":"samtools_stats_F0xB00" },
 	{ "id":"bmdmw_to_sts_F0x900_bait", "from":"bmd_multiway:samtools_stats_F0x900_bait", "to":"samtools_stats_F0x900_bait" },
