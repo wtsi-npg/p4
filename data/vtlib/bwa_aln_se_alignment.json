@@ -76,6 +76,6 @@
 	{ "id":"tee_to_cat", "from":"tee2:sampe", "to":"simple_cat" },
 	{ "id":"cat1_to_sampe", "from":"simple_cat", "to":"bwa_samse:bam" },
 	{ "id":"aln_sai_to_samse", "from":"bwa_aln", "to":"bwa_samse:sai" },
-	{ "id":"bwa_samse_to_scramble", "from":"bwa_samse", "to":"samtobam" }
+	{ "id":"bwa_samse_to_s2b", "from":"bwa_samse", "to":"samtobam" }
 ]
 }

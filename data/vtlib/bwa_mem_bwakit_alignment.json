@@ -88,6 +88,6 @@
 "edges":[
 	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:fq" },
 	{ "id":"bwa_mem_to_bwa_postalt", "from":"bwa_mem", "to":"bwa-postalt" },
-	{ "id":"bwa_postalt_to_scramble", "from":"bwa-postalt", "to":"samtobam" }
+	{ "id":"bwa_postalt_to_s2b", "from":"bwa-postalt", "to":"samtobam" }
 ]
 }

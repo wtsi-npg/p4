@@ -86,6 +86,6 @@
 ],
 "edges":[
 	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:fq" },
-	{ "id":"bwa_mem_to_scramble", "from":"bwa_mem", "to":"samtobam" }
+	{ "id":"bwa_mem_to_s2b", "from":"bwa_mem", "to":"samtobam" }
 ]
 }

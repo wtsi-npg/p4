@@ -97,6 +97,6 @@
 	{ "id":"cat1_to_sampe2", "from":"simple_cat2", "to":"bwa_sampe:bam_2" },
 	{ "id":"aln1_sai_to_sampe", "from":"bwa_aln_1", "to":"bwa_sampe:sai_1" },
 	{ "id":"aln2_sai_to_sampe", "from":"bwa_aln_2", "to":"bwa_sampe:sai_2" },
-	{ "id":"bwa_sampe_to_scramble", "from":"bwa_sampe", "to":"samtobam" }
+	{ "id":"bwa_sampe_to_s2b", "from":"bwa_sampe", "to":"samtobam" }
 ]
 }
