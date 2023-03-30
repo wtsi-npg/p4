@@ -77,16 +77,15 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"cmd":[
-			"scramble",
-			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
-			{"subst":"s2b_compress_level", "ifnull":"-0"},
-			"-I", "sam",
-			"-O", "bam"
+			{"subst":"samtools_executable"}, "view", "-b",
+			{"subst_constructor":{"vals":[ "--threads", {"subst":"s2b_threads","ifnull":{"subst":"s2b_mt_val"}}]}},
+			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"s2b_compression_level","ifnull":0} ], "postproc":{"op":"concat", "pad":"="}}}]}},
+			"-"
 		]
         }
 ],
 "edges":[
 	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:fq" },
-	{ "id":"bwa_mem_to_scramble", "from":"bwa_mem", "to":"samtobam" }
+	{ "id":"bwa_mem_to_s2b", "from":"bwa_mem", "to":"samtobam" }
 ]
 }

@@ -310,7 +310,11 @@
 		"use_STDOUT": true,
 		"cmd": {"select":"s1_output_format", "default":"cram", "select_range":[1], "cases":{
 			"bam":[ "bamrecompress", "verbose=0", "md5=1", {"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}}, {"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}} ],
-			"cram":["scramble", "-x", "-I", "bam", "-O", "cram"]
+			"cram": [
+				{"subst":"samtools_executable"}, "view", "-C",
+				"--output-fmt-option", "no_ref",
+				"-"
+			]
 		}}
 	},
 	{
