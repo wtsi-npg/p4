@@ -46,6 +46,7 @@
 			{"subst":"bmd_metrics_file_flag"},
 			{"subst":"bmd_resetdupflag"},
 			{"subst":"bsmd_maxreadlen_flag","required":false,"ifnull":{"subst_constructor":{"vals":[ "maxreadlen", {"subst":"bsmd_maxreadlen_val","required":true, "ifnull":"500"} ],"postproc":{"op":"concat","pad":"="}}}},
+                        {"subst":"optical_distance_flag","ifnull":{"subst_constructor":{"vals":[ "optminpixeldif", {"subst":"markdup_optical_distance_value","required":false,"ifnull":2500} ], "postproc":{"op":"concat","pad":"="}}}},
 			{"subst":"bsmd_arbitrary_flags"}
 		]
 	}
