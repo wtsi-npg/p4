@@ -1,7 +1,9 @@
 CHANGES LOG
 -----------
 
+0.36.0
  - add hs_bwa_executable  parameter to allow different bwa executables for target and nchs alignments (e.g. bwa-mem2 and bwa0_6)
+ - add optminpixeldif flag (optical distance for duplicates) to bamstreamingmarkduplicates command (biobambam markdup method)
 
 0.35.0
  - replace scramble with samtools in analysis pipeline templates
