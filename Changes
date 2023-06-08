@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add hs_bwa_executable  parameter to allow different bwa executables for target and nchs alignments (e.g. bwa-mem2 and bwa0_6)
+
 0.35.0
  - replace scramble with samtools in analysis pipeline templates
 
