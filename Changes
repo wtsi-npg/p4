@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.37.0
+ - add i2b_nocall_qual_switch to stage1 analysis to enable "--nocall-quality=2" to be set for bambi i2b
+
 0.36.0
  - add hs_bwa_executable  parameter to allow different bwa executables for target and nchs alignments (e.g. bwa-mem2 and bwa0_6)
  - add optminpixeldif flag (optical distance for duplicates) to bamstreamingmarkduplicates command (biobambam markdup method)
