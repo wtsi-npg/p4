@@ -80,7 +80,7 @@
 		"use_STDIN": false,
 		"use_STDOUT": true,
 		"orig_cmd":{"subst":"crammerge"},
-		"cmd": [ "bammerge", "level=0", "SO=coordinate", "inputformat=cram", "outputformat=bam", {"subst":"incrams"} ],
+    "cmd": [ "samtools","merge","-O","BAM","-l","0","-",{"subst":"incrams"} ],
 		"description":"merge individual cram files from a sample into one cram file"
 	},
 	{
