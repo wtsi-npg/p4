@@ -288,7 +288,6 @@
         {
                 "id":"final_output_prep_target",
                 "type":"VTFILE",
-		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
 		"node_prefix":"foptgt_",
                 "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bsfopt","brtmp":"brfopt","bmdtmp":"bmdfopt"},
@@ -298,7 +297,6 @@
         {
                 "id":"final_output_prep_phix",
                 "type":"VTFILE",
-		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
 		"node_prefix":"fopphx_",
                 "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bsfopp","brtmp":"brfopp","bmdtmp":"bmdfopp","scramble_reference_fasta":{"subst":"phix_reference_genome_fasta"}},
@@ -308,7 +306,6 @@
         {
                 "id":"final_output_prep_hs",
                 "type":"VTFILE",
-		"old_comment":"inputs: _stdin_ (bam), reference_genome_fasta (for scramble); outputs: _stdout_ (bam)",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (bam)",
 		"node_prefix":"fophs_",
                 "subst_map":{"phix_or_target":{"subst":"hs_indicator"},"fopid":{"subst":"fopid_hs"},"bstmp":"bsfoph","brtmp":"brfoph","bmdtmp":"bmdfoph","scramble_reference_fasta":{"subst":"hs_reference_genome_fasta"}},

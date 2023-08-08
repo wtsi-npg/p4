@@ -15,17 +15,44 @@
 		"use_STDOUT": true,
 		"cmd": [ {"subst":"bsc_executable", "required":"yes", "ifnull":"bamsormadup"}, {"subst":"bsmd_threads"}, "SO=coordinate", "level=0", "verbose=0", "fixmate=1", "adddupmarksupport=1", {"subst":"bs_tmpfile_flag"} ]
 	},
+        {
+                "id":"calmd",
+                "type":"EXEC",
+                "use_STDIN": true,
+                "use_STDOUT": true,
+                "cmd": [
+                        {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "calmd",
+                        "--threads", {"subst":"calmd_threads","required":true,"ifnull":4},
+                        {"select":"calmd_identical_bases_to_equal", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-e","off":[]}},
+                        {"select":"calmd_uncompressed", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-u","off":"-b"}},
+                        {"select":"calmd_quality_mod", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-A","off":[]}},
+                        {"select":"calmd_quiet_mode", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-Q","off":[]}},
+                        {"select":"calmd_BQ_tag_compute", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-r","off":[]}},
+                        {"select":"calmd_extended_BAQ", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-E","off":[]}},
+                        {"subst":"calmd_extra_flags", "required":false},
+                        "-", {"subst":"reference_genome_fasta","required":true}
+                ]
+        },
 	{
 		"id":"bammarkduplicates",
 		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"bmd_cmd"}, "level=0", "verbose=0", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"}, {"subst":"bmd_resetdupflag"} ]
+		"cmd": [
+			{"subst":"bmd_cmd"},
+			"level=0", "verbose=0",
+			{"subst":"bmd_tmpfile_flag"},
+			{"subst":"bmd_metrics_file_flag"},
+			{"subst":"bmd_resetdupflag"},
+			{"subst":"bsmd_maxreadlen_flag","required":false,"ifnull":{"subst_constructor":{"vals":[ "maxreadlen", {"subst":"bsmd_maxreadlen_val","required":true, "ifnull":"500"} ],"postproc":{"op":"concat","pad":"="}}}},
+                        {"subst":"optical_distance_flag","ifnull":{"subst_constructor":{"vals":[ "optminpixeldif", {"subst":"markdup_optical_distance_value","required":false,"ifnull":2500} ], "postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"bsmd_arbitrary_flags"}
+		]
 	}
 ],
 "edges":[
-
-	{ "id":"coordsort_tomarkdup", "from":"bamsort_coord", "to":"bammarkduplicates" }
+	{ "id":"coordsort_to_calmd", "from":"bamsort_coord", "to":"calmd" },
+	{ "id":"calmd_to_markdup", "from":"calmd", "to":"bammarkduplicates" }
 ]
 }

@@ -76,6 +76,6 @@
 ],
 "edges":[
 	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"minimap2:fq" },
-	{ "id":"mm2_to_scramble", "from":"minimap2", "to":"samtobam" }
+	{ "id":"mm2_to_s2b", "from":"minimap2", "to":"samtobam" }
 ]
 }

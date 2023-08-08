@@ -1,0 +1,24 @@
+{
+"description":"NOOP filter",
+"version":"1.0",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"passthrough"
+		},
+		"outputs":{
+			"_stdout_":"passthrough"
+		}
+	}
+},
+"nodes":[
+	{
+		"id":"passthrough",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["cat"]
+	}
+]
+}
+

@@ -40,7 +40,7 @@
 					"subst_constructor":{
 						"vals":[
 							"--prefix",
-							{"subst":"ht_prefix", "required":true, "ifnull":{"subst_constructor":{"vals":[ "outdatalink/", {"subst":"rpt"} ], "postproc":{"op":"concat","pad":""}}}}
+							{"subst":"ht_prefix", "required":true, "ifnull":{"subst_constructor":{"vals":[ "outdatalink/", {"subst":"rpt"}, "." ], "postproc":{"op":"concat","pad":""}}}}
 						]
 					}
 				}

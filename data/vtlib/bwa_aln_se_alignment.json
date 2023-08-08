@@ -64,11 +64,10 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
                 "cmd":[
-			"scramble",
-			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
-			{"subst":"s2b_compress_level", "ifnull":"-0"},
-			"-I", "sam",
-			"-O", "bam"
+			{"subst":"samtools_executable"}, "view", "-b",
+			{"subst_constructor":{"vals":[ "--threads", {"subst":"s2b_threads","ifnull":{"subst":"s2b_mt_val"}}]}},
+			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"s2b_compression_level","ifnull":0} ], "postproc":{"op":"concat", "pad":"="}}}]}},
+			"-"
 		]
         }
 ],
@@ -77,6 +76,6 @@
 	{ "id":"tee_to_cat", "from":"tee2:sampe", "to":"simple_cat" },
 	{ "id":"cat1_to_sampe", "from":"simple_cat", "to":"bwa_samse:bam" },
 	{ "id":"aln_sai_to_samse", "from":"bwa_aln", "to":"bwa_samse:sai" },
-	{ "id":"bwa_samse_to_scramble", "from":"bwa_samse", "to":"samtobam" }
+	{ "id":"bwa_samse_to_s2b", "from":"bwa_samse", "to":"samtobam" }
 ]
 }
