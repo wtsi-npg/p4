@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.37.2
+ - change bambi i2b command in stage1 analysis to use new boolean version of --nocall-quality flag
+
 0.37.1
  - amend markdup command chain for duplexseq (nanoseq) analyses
  - updated to use samtools merge instead of bammerge for library merging  
