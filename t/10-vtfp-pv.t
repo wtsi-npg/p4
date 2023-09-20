@@ -12,6 +12,8 @@ my $tdir = tempdir(CLEANUP => 1);
 my $template = q[t/data/10-vtfp-pv.json];
 my $pv_file = $tdir.q[/10-vtfp-pv.pv];
 my $processed_template = $tdir.q[/10-vtfp-pv-processed.json];
+my $which_echo = `which echo`;
+chomp $which_echo;
 
 # just export and reimport parameter values for a template
 subtest 'pv0' => sub {
@@ -24,7 +26,7 @@ subtest 'pv0' => sub {
 
 	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
 	my $c = from_json(slurp $processed_template);
-	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [q~/bin/echo~,q~The~,q~funeral~,q~ends~,q~with~,q~a~,q~mournful~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
+	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [qq~$which_echo~,q~The~,q~funeral~,q~ends~,q~with~,q~a~,q~mournful~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
 	is_deeply ($vtfp_results, $c, '(ts1) json config generated using pv file matches original generated config');
 	is_deeply ($vtfp_results, $expected, '(ts1) json config generated using pv file as expected');
 };
@@ -40,7 +42,7 @@ subtest 'pv1' => sub {
 
 	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
 	my $c = from_json(slurp $processed_template);
-	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [q~/bin/echo~,q~The~,q~party~,q~ends~,q~with~,q~a~,q~deafening~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
+	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [qq~$which_echo~,q~The~,q~party~,q~ends~,q~with~,q~a~,q~deafening~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
 	is_deeply ($vtfp_results, $c, '(ts2) json config generated using pv file matches original generated config');
 	is_deeply ($vtfp_results, $expected, '(ts2) json config generated using pv file as expected');
 };
@@ -56,7 +58,7 @@ subtest 'pv2' => sub {
 
 	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
 	my $c = from_json(slurp $processed_template);
-	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [q~/bin/echo~,q~The~,q~world~,q~ends~,q~with~,q~a~,q~whimper~], type => q~EXEC~, id => q~n1~}]};
+	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [qq~$which_echo~,q~The~,q~world~,q~ends~,q~with~,q~a~,q~whimper~], type => q~EXEC~, id => q~n1~}]};
 	is_deeply ($vtfp_results, $c, '(ts4) json config generated using pv file matches original generated config');
 	is_deeply ($vtfp_results, $expected, '(ts4) json config generated using pv file as expected');
 };

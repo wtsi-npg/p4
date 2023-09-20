@@ -35,6 +35,24 @@
 			"-"
 		]
 	},
+        {
+                "id":"calmd",
+                "type":"EXEC",
+                "use_STDIN": true,
+                "use_STDOUT": true,
+                "cmd": [
+                        {"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "calmd",
+                        "--threads", {"subst":"calmd_threads","required":true,"ifnull":4},
+                        {"select":"calmd_identical_bases_to_equal", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-e","off":[]}},
+                        {"select":"calmd_uncompressed", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-u","off":"-b"}},
+                        {"select":"calmd_quality_mod", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-A","off":[]}},
+                        {"select":"calmd_quiet_mode", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-Q","off":[]}},
+                        {"select":"calmd_BQ_tag_compute", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-r","off":[]}},
+                        {"select":"calmd_extended_BAQ", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-E","off":[]}},
+                        {"subst":"calmd_extra_flags", "required":false},
+                        "-", {"subst":"reference_genome_fasta","required":true}
+                ]
+        },
 	{
 		"id":"markdup",
 		"type":"EXEC",
@@ -57,8 +75,8 @@
 	}
 ],
 "edges":[
-
 	{ "id":"fixmate_to_coordsort", "from":"fixmate", "to":"coord_sort" },
-	{ "id":"coordsort_tomarkdup", "from":"coord_sort", "to":"markdup" }
+        { "id":"coordsort_to_calmd", "from":"coord_sort", "to":"calmd" },
+        { "id":"calmd_to_markdup", "from":"calmd", "to":"markdup" }
 ]
 }

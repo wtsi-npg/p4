@@ -1,6 +1,72 @@
 CHANGES LOG
 -----------
 
+0.37.2
+ - change bambi i2b command in stage1 analysis to use new boolean version of --nocall-quality flag
+
+0.37.1
+ - amend markdup command chain for duplexseq (nanoseq) analyses
+ - updated to use samtools merge instead of bammerge for library merging  
+
+0.37.0
+ - add i2b_nocall_qual_switch to stage1 analysis to enable "--nocall-quality=2" to be set for bambi i2b
+
+0.36.0
+ - add hs_bwa_executable  parameter to allow different bwa executables for target and nchs alignments (e.g. bwa-mem2 and bwa0_6)
+ - add optminpixeldif flag (optical distance for duplicates) to bamstreamingmarkduplicates command (biobambam markdup method)
+
+0.35.0
+ - replace scramble with samtools in analysis pipeline templates
+
+0.34.0
+ - add calmd to biobambam,samtools and duplexseq markdup methods
+
+0.33.1
+ - update CI and tests
+
+0.33.0
+ - extend list of preserved auxtags in realignment bamreset (for Duplex-Seq)
+
+0.32.4
+ - add supplementary files used in dehumanising CLIMB uploads for ENA (Heron)
+ - add maxreadlen flag to bamstreamingduplicates in markdup_biobambam with default of 500
+
+0.32.3
+ - force markdup_method:none (and primer_clip_method:no_clip) for untagged phiX and non-consented human split
+
+0.32.2
+ - change prefix for SamHaplotag log files to include a trailing '.' (simplifies npg_irods archival)
+
+0.32.1
+ - add missing edge to top-level human split template
+
+0.32.0
+ - add haplotag processing to stage2 analysis
+ - move C2A analysis from bam to cram output stream (to void possible malformed MD tag values)
+ - remove intermediate files from duplexseq processing
+ - flatten edges arrays (burst sub-arrays) as part of vtfp processing
+
+0.31.0
+ - add C2A analysis to stage2 of standard pipelines
+
+0.30.0
+ - add optional flags to bwa mem command for Hi-C library stage 2 analyses
+ - bam files (and md5, index files) produced using samtools and md5sum instead of bamrecompress
+
+0.29.0
+ - renamed markdup_botseq.json markdup_duplexseq.json
+ - add markdup_botseq.json
+
+0.28.2
+ - move samtools calmd to correct position downstream of coord sort, and make calmd -Q flag (quiet) the default (alignment with markdup_method:none)
+
+0.28.1
+ - amend samtools command to "ampliconclip" (previously "amplicon-clip")
+
+0.28.0
+ - a new template for cases when marking duplicates is not required, with
+   an option to clip primers, which relies on a new feature in samtools
+
 0.27.0
  - check for divide by 0 when calc samtools subsample value
  - drop file check, explictly assume fastq.gz files are gzipped when calc #reads for salmon

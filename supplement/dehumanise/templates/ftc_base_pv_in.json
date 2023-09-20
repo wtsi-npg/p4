@@ -1,0 +1,17 @@
+{
+  "assign": [
+    {
+      "fhqn1":"filter_human_dehumaniser.json",
+      "fhqn2":"filter_human.json",
+      "dehumanising_manifest": "/path/to/dehumaniser/manifest.txt",
+      "kraken2_db":"/path/to/kraken2_db",
+      "classified_out_prefix":"copfx"
+    }
+  ],
+  "assign_local": {},
+  "param_store": [],
+  "ops": {
+    "prune": [],
+    "splice": []
+  }
+}

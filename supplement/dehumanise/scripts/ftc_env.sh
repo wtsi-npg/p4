@@ -1,0 +1,5 @@
+export FTC_CLIMB_UPLOAD_BASE="/path/to/climb_upload"
+export FTC_DOCS_DIR="/path/to/ftc/base/docs"
+export FTC_RUNS_DIR="/path/to/ftc/base/runs"
+export FTC_SUBMISSIONS_DIR="/path/to/ftc/base/submissions"
+export FTC_TEMPLATE_DIR="/path/to/ftc/base/runs/config"

@@ -69,6 +69,28 @@
 			"vals":[ {"subst":"cfgdatadir"}, "/", {"subst":"final_output_prep_phix_name"}, ".json" ],
 			"postproc":{"op":"concat", "pad":""}
 		}
+	},
+	{"id":"c2a_list","required":true,"default":["target"]},
+	{"id":"c2a_target","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"target":"on","deflt":"off"}}},
+	{"id":"c2a_phix","required":"no","default":{"select":"c2a_list", "allow_unspec_keys":true, "default":"deflt", "cases":{"phix":"on", "deflt":"off"}}},
+	{"id":"post_cm","required":true,"comment":"node to follow crammerge, do not set manually","default":
+		{"select":"spatial_filter_switch", "required":true, "select_range":[1], "default":"on",
+			"cases":{
+				"on":"spatial_filter",
+				"off":
+					{"select":"haplotag_processing","required":true,"select_range":[1], "default":"off",
+						"cases":{
+							"on": "haplotag",
+							"off": "subsample_fqc"
+						}
+					}
+			}
+		}
+	},
+	{"id":"post_sf","required":true,"comment":"node to follow spatial_filter, do not set manually","default":
+		{"select":"haplotag_processing", "required":true, "select_range":[1], "default":"off",
+			"cases":{ "on":"haplotag", "off":"subsample_fqc" }
+		}
 	}
 ],
 "nodes":[
@@ -94,7 +116,16 @@
 	},
 	{
 		"id":"spatial_filter",
-		"type":"EXEC",
+		"type":{
+			"select":"spatial_filter_switch",
+			"required":true,
+			"select_range":[1],
+			"default":"on",
+			"cases":{
+				"on":"EXEC",
+				"off":"INACTIVE"
+			}
+		},
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd":[
@@ -127,6 +158,23 @@
 		"node_prefix":"ssfqc_",
 		"name":{"subst":"subsample_vtf", "ifnull":"subsample.json"},
 		"description":""
+	},
+	{
+		"id":"haplotag",
+		"description":"haplotagging post-processing",
+		"type":{
+			"select":"haplotag_processing",
+			"required":true,
+			"select_range":[1],
+			"default":"off",
+			"cases":{
+				"on":"VTFILE",
+				"off":"INACTIVE"
+			}
+		},
+		"comment":"inputs: _stdin_ (bam)",
+		"node_prefix":{ "subst_constructor":{ "vals": [ "ht_", {"subst":"phix_or_target", "ifnull":"pot"}, "_" ], "postproc":{"op":"concat", "pad":""} } },
+		"name":"haplotagging.json"
 	},
 	{
 		"id":"target_alignment",
@@ -184,7 +232,7 @@
                 "type":"VTFILE",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (seqchksum)",
 		"node_prefix":"foptgt_",
-                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"bstmp":"bsfopt","brtmp":"brfopt","bmdtmp":"bmdfopt","scramble_reference_fasta":{"subst":"reference_genome_fasta"}},
+                "subst_map":{"phix_or_target":{"subst":"target_indicator"},"fopid":{"subst":"fopid_tgt"},"c2a_switch":{"subst":"c2a_target"},"bstmp":"bsfopt","brtmp":"brfopt","bmdtmp":"bmdfopt","scramble_reference_fasta":{"subst":"reference_genome_fasta"}},
                 "name":{"subst":"final_output_prep_target"},
                 "description":"subgraph containing post alignment_filter process (target)"
         },
@@ -193,7 +241,16 @@
                 "type":"VTFILE",
 		"comment":"inputs: _stdin_ (bam); outputs: _stdout_ (seqchksum)",
 		"node_prefix":"fopphx_",
-                "subst_map":{"phix_or_target":{"subst":"phix_indicator"},"fopid":{"subst":"fopid_phix"},"bstmp":"bsfopp","brtmp":"brfopp","bmdtmp":"bmdfopp","scramble_reference_fasta":{"subst":"phix_reference_genome_fasta"}},
+		"subst_map":{
+			"phix_or_target":{"subst":"phix_indicator"},
+			"fopid":{"subst":"fopid_phix"},
+			"c2a_switch":{"subst":"c2a_phix"},
+			"markdup_method":"none",
+			"primer_clip_method":"no_clip",
+			"bstmp":"bsfopp","brtmp":"brfopp","bmdtmp":"bmdfopp",
+			"scramble_reference_fasta":{"subst":"phix_reference_genome_fasta"},
+			"reference_genome_fasta":{"subst":"phix_reference_genome_fasta"}
+		},
                 "name":{"subst":"final_output_prep_phix"},
                 "description":"subgraph containing post alignment_filter process (phix)"
         },
@@ -207,9 +264,21 @@
 	}
 ],
 "edges":[
-	{ "id":"src_to_bc2", "from":"crammerge", "to":"spatial_filter" },
-	{ "id":"apply_filter_to_sfqc", "from":"spatial_filter:apply_stats", "to":"spatial_filter_stats" },
-	{ "id":"sf_to_bc2", "from":"spatial_filter", "to":"subsample_fqc" },
+	{ "id":"src_to_bc2", "from":"crammerge", "to":{"subst":"post_cm","required":true} },
+	{"select":"spatial_filter_switch", "required":true, "select_range":[1], "default":"on", "allow_unspec_keys":true,
+	"cases":{
+		"on": [
+			{ "id":"apply_filter_to_sfqc", "from":"spatial_filter:apply_stats", "to":"spatial_filter_stats" },
+			{ "id":"sf_to_next", "from":"spatial_filter", "to":{"subst":"post_sf"} }
+		]
+	}},
+	{
+	"select":"haplotag_processing", "required":true, "select_range":[1], "default":"off", "allow_unspec_keys":true,
+	"cases":{
+		"on": [
+			{ "id":"ht_to_next", "from":"haplotag", "to":"subsample_fqc" }
+		]
+	}},
 	{ "id":"ssfqc_to_tgtaln", "from":"subsample_fqc:straight_through1", "to":"target_alignment" },
 	{ "id":"target_alignment_to_alignment_filter", "from":"target_alignment:aligned_to_target", "to":"alignment_filter:target_bam_in" },
 	{ "id":"iab_to_alignment_filter", "from":"target_alignment:aligned_to_phix", "to":"alignment_filter:phix_bam_in" },

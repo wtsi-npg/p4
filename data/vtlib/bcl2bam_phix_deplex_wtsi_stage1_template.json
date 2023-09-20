@@ -106,6 +106,7 @@
 				{"subst":"i2b_final_1_flag","ifnull":{"subst_constructor":{"vals":[ "--final-cycle", {"subst":"i2b_final_1"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"i2b_thread_count_flag","ifnull":{"subst_constructor":{"vals":[ "--threads", {"subst":"i2b_thread_count"} ],"postproc":{"op":"concat","pad":"="}}}},
 				{"subst":"i2b_tqlen_flag","ifnull":{"subst_constructor":{"vals":[ "--queue-len", {"subst":"i2b_tqlen"} ],"postproc":{"op":"concat","pad":"="}}}},
+				{"select":"i2b_nocall_qual_switch", "required":true, "select_range":[1], "default":"off", "cases":{ "on": "--nocall-quality", "off":[]}},
 				{"subst":"i2b_arbitrary_flags", "comment":"this allows arbitrary sets of flag strings to be inserted in the command" },
 				"--output-file=-",
 				"--compression-level=0"
@@ -310,7 +311,11 @@
 		"use_STDOUT": true,
 		"cmd": {"select":"s1_output_format", "default":"cram", "select_range":[1], "cases":{
 			"bam":[ "bamrecompress", "verbose=0", "md5=1", {"subst":"br_md5file_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "md5filename", {"subst":"md5filename"} ],"postproc":{"op":"concat","pad":"="}}}}, {"subst":"br_numthreads_flag", "ifnull":{"subst_constructor":{"vals":[ "numthreads", {"subst":"br_numthreads_val","ifnull":{"subst":"aligner_numthreads"}} ],"postproc":{"op":"concat", "pad":"="}}}} ],
-			"cram":["scramble", "-x", "-I", "bam", "-O", "cram"]
+			"cram": [
+				{"subst":"samtools_executable"}, "view", "-C",
+				"--output-fmt-option", "no_ref",
+				"-"
+			]
 		}}
 	},
 	{

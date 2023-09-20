@@ -33,7 +33,14 @@
 		"subst_constructor":{ "vals":[ "-K", {"subst":"bwa_mem_K_value"} ] }
 	},
 	{"id":"bwa_mem_p_flag","required":"no","default":"-p","comment":"by default, paired alignment is assumed"},
-	{"id":"bwa_mem_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"}
+	{"id":"bwa_mem_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"},
+	{"id":"bwa_mem_B_value","required":"no","comment":"if unspecified, -B flag is not used"},
+	{
+		"id":"bwa_mem_B_flag",
+		"comment":"penalty for a mismatch [default 4]",
+		"required":"no",
+		"subst_constructor":{ "vals":[ "-B", {"subst":"bwa_mem_B_value"} ] }
+	}
 ],
 "nodes":[
 	{
@@ -55,6 +62,11 @@
 			{"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"},
 			{"subst":"bwa_mem_T_flag"},
 			{"subst":"bwa_mem_K_flag"},
+			{"select":"bwa_mem_5_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-5","off":[]},"comment":"for split alignment, take the alignment with the smallest coordinate as primary"},
+			{"select":"bwa_mem_S_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-S","off":[]},"comment":"skip mate rescue"},
+			{"select":"bwa_mem_P_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-P","off":[]},"comment":"skip pairing; mate rescue performed unless -S also in use"},
+			{"subst":"bwa_mem_B_flag"},
+			{"subst":"bwa_mem_arbitrary_flags"},
 			{"port":"db_prefix_reference_genome", "direction":"in"},
 			{"port":"fq","direction":"in"}
 		]
@@ -65,16 +77,15 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"cmd":[
-			"scramble",
-			{"subst":"s2b_mt", "ifnull":{"subst_constructor":{ "vals":[ "-t", {"subst":"s2b_mt_val"} ]}}},
-			{"subst":"s2b_compress_level", "ifnull":"-0"},
-			"-I", "sam",
-			"-O", "bam"
+			{"subst":"samtools_executable"}, "view", "-b",
+			{"subst_constructor":{"vals":[ "--threads", {"subst":"s2b_threads","ifnull":{"subst":"s2b_mt_val"}}]}},
+			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"s2b_compression_level","ifnull":0} ], "postproc":{"op":"concat", "pad":"="}}}]}},
+			"-"
 		]
         }
 ],
 "edges":[
 	{ "id":"bamtofastq_to_int_fq", "from":"bamtofastq", "to":"bwa_mem:fq" },
-	{ "id":"bwa_mem_to_scramble", "from":"bwa_mem", "to":"samtobam" }
+	{ "id":"bwa_mem_to_s2b", "from":"bwa_mem", "to":"samtobam" }
 ]
 }
