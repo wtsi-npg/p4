@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - add additional autosome specific coverage threshold to final_output_prep.json
+
 0.37.2
  - change bambi i2b command in stage1 analysis to use new boolean version of --nocall-quality flag
 

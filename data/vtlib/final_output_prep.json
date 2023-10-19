@@ -75,6 +75,7 @@
 	{"id":"stats_filter__F0xB00","required":"no","default":"0xB00"},
 	{"id":"stats_filter__F0xF04","required":"no","default":"0xF04"},
 	{"id":"stats_filter__cov_threshold","required":"no","default":"15"},
+        {"id":"stats_filter__cov_threshold_autosome","required":"no","default":"15"},
 	{"id":"bam_stats_executable","required":"no","default":"bam_stats"},
         {"id":"bait_regions_file","required":"yes","comment":"regions file for optional bait stats"},
         {"id":"target_regions_file","required":"yes","comment":"regions file for optional target regions stats"},
@@ -418,7 +419,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-p", "-g", {"subst":"stats_filter__cov_threshold"},"-F", {"subst":"stats_filter__F0xF04"},"-t",{"subst":"target_autosome_regions_file"},"-" ]
+		"cmd": [ {"subst":"samtools_executable"}, "stats", {"subst":"stats_reference_flag"}, "-p", "-g", {"subst":"stats_filter__cov_threshold_autosome"},"-F", {"subst":"stats_filter__F0xF04"},"-t",{"subst":"target_autosome_regions_file"},"-" ]
 	},
 	{
 		"id":"seqchksum",
