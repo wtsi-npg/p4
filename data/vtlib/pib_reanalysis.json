@@ -1,0 +1,74 @@
+{
+"version":"2.0",
+"description":"run bwa mem to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{},
+		"outputs":{
+			"_stdout_":"name_collate"
+		}
+	}
+},
+"subst_params":[],
+"nodes":[
+	{
+		"id":"crammerge",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+			"samtools",
+			"merge",
+			"-c",
+			"-O", "BAM",
+			"-l", "0",
+			{"select":"s1_input_format", "default":"cram", "select_range":[1], "cases":{
+				"cram":["--input-fmt-option", "no_ref=1"],
+				"bam":["--input-fmt", "bam"]
+			}},
+			"-",
+			{"subst":"incrams"}
+		],
+		"description":"merge individual cram files from a sample into one bam file"
+	},
+	{
+		"id":"reset",
+		"type":"EXEC",
+		"comment": "WIP",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "reset",
+			{"subst":"reset_keep_tag_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"--keep-tag",
+										{"subst":"reset_keep_tags","required":false, "ifnull":{"subst_constructor":{"vals":["RG","BC"], "postproc":{"op":"concat","pad":","}}}}
+									]
+								}}},
+			{"subst":"reset_output_format_flag","ifnull":{"subst_constructor":{"vals":["--output-fmt", {"subst":"reset_output_format", "ifnull":"BAM", "required":false}]}}},
+			"--threads", {"subst":"reset_threads","required":true,"ifnull":4},
+			{"subst":"reset_extra_flags", "required":false},
+			"-",
+			"-"
+		]
+	},
+	{
+		"id":"name_collate",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "collate", "-O",
+			"-l", {"subst":"pib_reanalysis_collate_compression","required":true,"ifnull":["0"]},
+			"--threads", {"subst":"pib_reanalysis_collate_threads","required":true,"ifnull":4},
+			{"subst":"pib_reanalysis_collate_extra_flags", "required":false},
+			"-"
+		]
+	}
+],
+"edges":[
+	{ "id":"bamtofastq_to_int_fq", "from":"crammerge", "to":"reset" },
+	{ "id":"bwa_mem_to_s2b", "from":"reset", "to":"name_collate" }
+]
+}
