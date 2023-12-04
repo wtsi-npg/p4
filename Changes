@@ -1,6 +1,7 @@
 CHANGES LOG
 -----------
 
+0.38.0
  - add additional autosome specific coverage threshold to final_output_prep.json
 
 0.37.2
