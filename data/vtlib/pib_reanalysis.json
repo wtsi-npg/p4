@@ -12,7 +12,7 @@
 "subst_params":[],
 "nodes":[
 	{
-		"id":"crammerge",
+		"id":"merge",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
@@ -20,6 +20,7 @@
 			"samtools",
 			"merge",
 			"-c",
+			"-r",
 			"-O", "BAM",
 			"-l", "0",
 			{"select":"s1_input_format", "default":"cram", "select_range":[1], "cases":{
@@ -32,9 +33,29 @@
 		"description":"merge individual cram files from a sample into one bam file"
 	},
 	{
+		"id":"reheader",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"comment": "remove unwanted RG header lines",
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "reheader",
+			"--no-PG",
+			"-c",
+			{"subst":"reheader_script","required":true,
+				"ifnull":{"subst_constructor":{"vals":[
+									"perl -ne \"(!/^\\@RG/ || /\\tID:",
+									{"subst":"reheader_rg_id", "required":true},
+									"\\t/) && print;\""
+								], "postproc":{"op":"concat","pad":""}}}},
+			{"subst":"pib_reanalysis_reheader_extra_flags", "required":false},
+			"-"
+		]
+	},
+	{
 		"id":"reset",
 		"type":"EXEC",
-		"comment": "WIP",
+		"comment": "reset bam stream",
 		"use_STDIN": true,
 		"use_STDOUT": true,
 		"cmd": [
@@ -46,10 +67,16 @@
 										{"subst":"reset_keep_tags","required":false, "ifnull":{"subst_constructor":{"vals":["RG","BC"], "postproc":{"op":"concat","pad":","}}}}
 									]
 								}}},
+			{"subst":"reset_reject_PG_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"--reject-PG",
+										{"subst":"reset_reject_PG_id","required":false, "ifnull":"SCS"}
+									]
+								}}},
 			{"subst":"reset_output_format_flag","ifnull":{"subst_constructor":{"vals":["--output-fmt", {"subst":"reset_output_format", "ifnull":"BAM", "required":false}]}}},
 			"--threads", {"subst":"reset_threads","required":true,"ifnull":4},
 			{"subst":"reset_extra_flags", "required":false},
-			"-",
 			"-"
 		]
 	},
@@ -68,7 +95,8 @@
 	}
 ],
 "edges":[
-	{ "id":"bamtofastq_to_int_fq", "from":"crammerge", "to":"reset" },
-	{ "id":"bwa_mem_to_s2b", "from":"reset", "to":"name_collate" }
+	{ "id":"merge_to_reheader", "from":"merge", "to":"reheader" },
+	{ "id":"reheader_to_reset", "from":"reheader", "to":"reset" },
+	{ "id":"reset_to_collate", "from":"reset", "to":"name_collate" }
 ]
 }
