@@ -27,6 +27,13 @@
 				"cram":["--input-fmt-option", "no_ref=1"],
 				"bam":["--input-fmt", "bam"]
 			}},
+			{"subst":"merge_hdr_file_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"-h",
+										{"subst":"merge_hdr_file","required":true, "ifnull":{"subst_constructor":{"vals":[{"subst":"reanalysis_root"}, "/auxdata/", {"subst":"qc_check_id_run"}, "/", {"subst":"qc_check_id_run"},"_", {"subst":"s1_lane"}, ".rg_hdr.sam"], "postproc":{"op":"concat","pad":""}}}}
+									]
+								}}},
 			"-",
 			{"subst":"incrams"}
 		],
