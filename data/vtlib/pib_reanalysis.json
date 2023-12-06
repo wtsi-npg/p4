@@ -52,7 +52,7 @@
 			{"subst":"reheader_script","required":true,
 				"ifnull":{"subst_constructor":{"vals":[
 									"perl -ne \"(!/^\\@RG/ || /\\tID:",
-									{"subst":"reheader_rg_id", "required":true},
+									{"subst":"reheader_rg_id", "required":true, "ifnull":{"subst":"i2b_rg"}},
 									"\\t/) && print;\""
 								], "postproc":{"op":"concat","pad":""}}}},
 			{"subst":"pib_reanalysis_reheader_extra_flags", "required":false},
