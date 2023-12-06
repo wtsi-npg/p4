@@ -25,7 +25,7 @@
 			"-l", "0",
 			{"select":"s1_input_format", "default":"cram", "select_range":[1], "cases":{
 				"cram":["--input-fmt-option", "no_ref=1"],
-				"bam":["--input-fmt", "bam"]
+				"bam":[]
 			}},
 			{"subst":"merge_hdr_file_flag","ifnull":{
 								"subst_constructor":{
