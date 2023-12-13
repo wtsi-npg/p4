@@ -19,6 +19,12 @@
 		"cmd": [
 			"samtools",
 			"merge",
+			{"select":"pib_merge_input_order", "default":"coord", "select_range":[1], "cases":{
+				"coord":[],
+				"qname_alpha_numeric":"-n",
+				"qname_lexicographical":"-N"
+			}},
+			{"subst_constructor":{"vals":["-t", {"subst":"pib_sort_tag", "required":false}]}},
 			"-c",
 			"-r",
 			"-O", "BAM",
@@ -34,6 +40,7 @@
 										{"subst":"merge_hdr_file","required":true, "ifnull":{"subst_constructor":{"vals":[{"subst":"reanalysis_root"}, "/auxdata/", {"subst":"qc_check_id_run"}, "/", {"subst":"qc_check_id_run"},"_", {"subst":"s1_lane"}, ".rg_hdr.sam"], "postproc":{"op":"concat","pad":""}}}}
 									]
 								}}},
+			{"subst":"pib_merge_arbitrary_flags", "required":false},
 			"-",
 			{"subst":"incrams"}
 		],
