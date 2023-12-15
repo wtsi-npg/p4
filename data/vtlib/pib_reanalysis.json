@@ -104,6 +104,13 @@
 			"-l", {"subst":"pib_reanalysis_collate_compression","required":true,"ifnull":["0"]},
 			"--threads", {"subst":"pib_reanalysis_collate_threads","required":true,"ifnull":4},
 			{"subst":"pib_reanalysis_collate_extra_flags", "required":false},
+			{"subst":"pib_collate_tempfile_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"-T",
+										{"subst":"pib_collate_tempfile_prefix","required":false, "ifnull":{"subst_constructor":{"vals":[ {"subst":"qc_check_id_run"}, {"subst":"s1_lane"}, "collate_tmp"], "postproc":{"op":"concat","pad":"_"}}}}
+									]
+								}}},
 			"-"
 		]
 	}

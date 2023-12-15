@@ -10,7 +10,6 @@ use File::Temp qw(tempdir);
 use Cwd;
 
 my $tdir = tempdir(CLEANUP => 1);
-warn q[tdir: ], $tdir;
 
 my $odir = getcwd();
 my $test = Test::Cmd->new( prog => $odir.'/bin/vtfp.pl', workdir => q());
