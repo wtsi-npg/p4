@@ -78,7 +78,7 @@
 								"subst_constructor":{
 									"vals":[
 										"--keep-tag",
-										{"subst":"reset_keep_tags","required":false, "ifnull":{"subst_constructor":{"vals":["RG","BC"], "postproc":{"op":"concat","pad":","}}}}
+										{"subst":"reset_keep_tags","required":false, "ifnull":{"subst_constructor":{"vals":["RG","BC", "QT", "FI", "RT", "TC"], "postproc":{"op":"concat","pad":","}}}}
 									]
 								}}},
 			{"subst":"reset_reject_PG_flag","ifnull":{
