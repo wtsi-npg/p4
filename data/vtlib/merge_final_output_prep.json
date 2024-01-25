@@ -59,7 +59,7 @@
        }
     },
     {
-	"id":"crai_file",
+	"id":"cram_index_file",
 	"subst_constructor":{
             "vals":[ {"subst":"outdatadir"}, "/", {"subst":"library"}, {"subst":"cram_idx_ext"} ],
 	    "postproc":{"op":"concat", "pad":""}
@@ -198,7 +198,12 @@
 	"type":"EXEC",
 	"use_STDIN": true,
 	"use_STDOUT": false,
-	"cmd":[ "cram_index", "-", {"subst":"crai_file"} ]
+	"cmd": [
+		{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "index",
+		"-o", {"port":"idx", "direction":"out"},
+		{"subst":"cram_index_extra_flags", "required":false},
+		{"port":"cram", "direction":"in"}
+	]
     },
     {
 	"id":"cram_seqchksum",
@@ -271,6 +276,7 @@
         }
    },
     { "id":"local_cram_file", "type":"OUTFILE", "name":{"subst":"local_cram_file"} },
+    { "id":"cram_index_file", "type":"OUTFILE", "name":{"subst":"cram_index_file"} },
     { "id":"cram_md5", "type":"OUTFILE", "name":{"subst":"cram_md5"} },
     { "id":"seqchksum_file", "type":"RAFILE", "name":{"subst":"seqchksum_file"} },
     { "id":"seqchksum_file_cram", "type":"RAFILE", "name":{"subst":"seqchksum_file_cram"}, "comment":"this file is a temporary fix for blocking problems at the cmp_seqchksum node" },
@@ -309,7 +315,8 @@
     { "id":"bmdmw_to_b2c", "from":"bmd_multiway:b2c", "to":"bam2cram" },
     { "id":"b2c_to_cram_tee", "from":"bam2cram", "to":"cram_tee" },
     { "id":"cram_tee_to_md5", "from":"cram_tee:md5", "to":"create_cram_md5" },
-    { "id":"cram_tee_to_crai", "from":"cram_tee:crai", "to":"cram_index" },
+    { "id":"cram_tee_to_crai", "from":"cram_tee:crai", "to":"cram_index:cram" },
+    { "id":"cidx_to_file", "from":"cram_index:idx", "to":"cram_index_file" },
     { "id":"cram_tee_to_bscs", "from":"cram_tee:seqchksum", "to":"cram_seqchksum" },
     { "id":"md5_to_postprocess", "from":"create_cram_md5", "to":"postprocess_md5" },
     { "id":"bmdmw_to_sts_F0x900", "from":"bmd_multiway:samtools_stats_F0x900", "to":"samtools_stats_F0x900" },
