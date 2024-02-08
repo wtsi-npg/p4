@@ -102,7 +102,7 @@
 				"select":"s2_ppi_switch", "default":"crammerge","select_range":[1],
 				"cases":{
 					"crammerge":"crammerge.json",
-					"aviti":"elembio_nanoseq_2_pi.json"}
+					"aviti":"elembio_nanoseq_s2_pi.json"}
 			}},
                 "subst_map":{"input_format":{"subst":"s2_input_format"}},
 		"comment":"inputs: NONE; outputs: _stdout_ (bam), subst_map_parameters:[input_format]",
