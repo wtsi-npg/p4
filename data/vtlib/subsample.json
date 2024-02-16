@@ -39,7 +39,7 @@
 		"type":"VTFLE",
 		"name":{"subst":"s2_subsample_method", "required":true,
 			"ifnull":{
-				"select":"s2_ppi_switch", "default":"tmf","select_range":[1],
+				"select":"s2_subsample_method_switch", "default":"tmf","select_range":[1],
 				"cases":{
 					"tmf":"subsample_tmf.json",
 					"spec_frac":"subsample_spec_frac.json"}
