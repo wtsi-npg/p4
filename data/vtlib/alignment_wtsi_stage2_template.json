@@ -259,7 +259,7 @@
 	}
 ],
 "edges":[
-	{ "id":"src_to_bc2", "from":"crammerge", "to":{"subst":"post_cm","required":true} },
+	{ "id":"src_to_bc2", "from":"preprocess_inputs", "to":{"subst":"post_cm","required":true} },
 	{"select":"spatial_filter_switch", "required":true, "select_range":[1], "default":"on", "allow_unspec_keys":true,
 	"cases":{
 		"on": [
