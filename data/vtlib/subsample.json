@@ -36,7 +36,7 @@
 	},
         {
                 "id":"subsample",
-		"type":"VTFLE",
+		"type":"VTFILE",
 		"name":{"subst":"s2_subsample_method", "required":true,
 			"ifnull":{
 				"select":"s2_subsample_method_switch", "default":"tmf","select_range":[1],
