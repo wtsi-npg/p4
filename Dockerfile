@@ -156,6 +156,8 @@ RUN apt-get install -q -y --no-install-recommends \
         libboost-atomic1.74.0 \
         libbz2-1.0 \
         libcurl4 \
+        libcurl3-gnutls \
+        libgomp1 \
         liblzma5 \
         libssl3 \
         libxml2 \
