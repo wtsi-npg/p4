@@ -291,7 +291,7 @@
         "type":"EXEC",
         "use_STDIN": false,
         "use_STDOUT": false,
-        "cmd":[ "chmod", "-R", "g+w,g-s", {"port":"src_stargenome_dir", "direction":"in"} ],
+        "cmd":[ "chmod", "-R", "g+rwx,g-s", {"port":"src_stargenome_dir", "direction":"in"} ],
         "comment":"This is necessary because STAR creates this transitional directory as group-read-only and cannot be deleted later"
     },
     {
