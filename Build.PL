@@ -59,7 +59,7 @@ my $builder = $class->new(
   },
 
   'test_requires' => {
-    'Test::Compile'         => '< 1.4',
+    'Test::Compile'         => 0,
   },
 
   'build_requires' => {
