@@ -5,10 +5,12 @@ ARG BIOBAMBAM2_VERSION="2.0.185-release-20221211202123"
 ARG BWA_VERSION="0.7.18"
 ARG DEFLATE_VERSION="1.20"
 ARG HTSLIB_VERSION="1.20"
+ARG IO_LIB_VERSION="1.15.0"
 ARG LIBMAUS2_VERSION="2.0.813-release-20221210220409"
 ARG NPG_SEQ_COMMON_VERSION="51.1"
 ARG SAMTOOLS_VERSION="1.20"
 ARG TEEPOT_VERSION="1.2.0"
+ARG PCAP_CORE_VERSION="5.7.0"
 
 FROM $BASE_IMAGE as build
 
@@ -55,6 +57,7 @@ RUN apt-get install -q -y --no-install-recommends \
     liblzma-dev \
     libssl-dev \
     libxml2-dev \
+    nettle-dev \
     zlib1g-dev
 
 RUN unattended-upgrade -v
@@ -69,11 +72,20 @@ RUN curl -sSL -O https://github.com/ebiggers/libdeflate/releases/download/v${DEF
     make -j $(nproc) install && \
     ldconfig
 
+ARG IO_LIB_VERSION
+RUN SLUG=$(echo ${IO_LIB_VERSION} | tr '.' '-') && \
+    curl -sSL -O https://github.com/jkbonfield/io_lib/releases/download/io_lib-${SLUG}/io_lib-${IO_LIB_VERSION}.tar.gz && \
+    tar xzf io_lib-${IO_LIB_VERSION}.tar.gz && \
+    cd io_lib-${IO_LIB_VERSION} && \
+    ./configure --with-libdeflate && \
+    make -j $(nproc) install && \
+    ldconfig
+
 ARG LIBMAUS2_VERSION
 RUN curl -sSL -O "https://gitlab.com/german.tischler/libmaus2/-/archive/${LIBMAUS2_VERSION}/libmaus2-${LIBMAUS2_VERSION}.tar.bz2" && \
     tar xfj libmaus2-${LIBMAUS2_VERSION}.tar.bz2 && \
     cd libmaus2-${LIBMAUS2_VERSION} && \
-    ./configure --prefix=/usr/local && \
+    ./configure --prefix=/usr/local --with-io_lib --with-nettle && \
     make -j $(nproc) install && \
     ldconfig
 
@@ -112,7 +124,8 @@ RUN curl -sSL -O "https://github.com/lh3/bwa/archive/refs/tags/v${BWA_VERSION}.t
     cd bwa-${BWA_VERSION} && \
     make -j $(nproc) && \
     cp ./bwa /usr/local/bin/ && \
-    chmod +x /usr/local/bin/bwa
+    chmod +x /usr/local/bin/bwa && \
+    ln -s /usr/local/bin/bwa /usr/local/bin/bwa0_6
 
 ARG BAMBI_VERSION
 RUN git clone --single-branch --branch="$BAMBI_VERSION" --depth=1 "https://github.com/wtsi-npg/bambi.git" && \
@@ -121,19 +134,28 @@ RUN git clone --single-branch --branch="$BAMBI_VERSION" --depth=1 "https://githu
     ./configure && \
     make -j $(nproc) install
 
+
+ARG PCAP_CORE_VERSION
+RUN git clone --single-branch --branch="$PCAP_CORE_VERSION" --depth=1 "https://github.com/cancerit/PCAP-core.git" && \
+    cd PCAP-core/c && \
+    make -j $(nproc) ../bin/bam_stats CC=gcc CFLAGS='-O3 -g -DVERSION=\"${PCAP_CORE_VERSION}\"' && \
+    cp ../bin/bam_stats /usr/local/bin/ && \
+    chmod +x /usr/local/bin/bam_stats
+
+
 ARG NPG_SEQ_COMMON_VERSION
 RUN git clone --single-branch --branch="$NPG_SEQ_COMMON_VERSION" --depth=1 "https://github.com/wtsi-npg/npg_seq_common.git" && \
     cd npg_seq_common && \
     cp ./bin/seqchksum_merge.pl /usr/local/bin/ && \
     chmod +x /usr/local/bin/seqchksum_merge.pl
 
-RUN cpanm --notest --local-lib /usr/local/lib Module::Build
+RUN cpanm --notest --local-lib /usr/local Module::Build
 
 COPY . ./p4
 
 RUN cd p4 && \
-    cpanm --notest --local-lib /usr/local/lib --installdeps . && \
-    cpanm --notest --local-lib /usr/local/lib .
+    cpanm --notest --local-lib /usr/local --installdeps . && \
+    cpanm --notest --local-lib /usr/local .
 
 
 FROM $BASE_IMAGE
@@ -155,10 +177,11 @@ ENV LANG=en_GB.UTF-8 \
 RUN apt-get install -q -y --no-install-recommends \
         libboost-atomic1.74.0 \
         libbz2-1.0 \
-        libcurl4 \
         libcurl3-gnutls \
+        libcurl4 \
         libgomp1 \
         liblzma5 \
+        libnettle8 \
         libssl3 \
         libxml2 \
         zlib1g \
@@ -173,14 +196,16 @@ COPY --from=build /usr/local /usr/local
 
 RUN ldconfig
 
-ARG USER=p4user
-ARG UID=1000
-ARG GID=$UID
+ARG APP_USER=appuser
+ARG APP_UID=1000
+ARG APP_GID=$APP_UID
 
-RUN groupadd --gid $GID $USER && \
-    useradd --uid $UID --gid $GID --shell /bin/bash --create-home $USER
+WORKDIR /app
 
-USER $USER
+RUN groupadd --gid $APP_GID $APP_USER && \
+    useradd --uid $APP_UID --gid $APP_GID --shell /bin/bash --create-home $APP_USER
+
+USER $APP_USER
 
 ENTRYPOINT []
 
