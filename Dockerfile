@@ -129,9 +129,15 @@ RUN curl -sSL -O "https://github.com/lh3/bwa/archive/refs/tags/v${BWA_VERSION}.t
     ln -s /usr/local/bin/bwa /usr/local/bin/bwa0_6
 
 ARG BWA_MEM2_VERSION
-RUN curl -LO "https://github.com/bwa-mem2/bwa-mem2/releases/download/v${BWA_MEM2_VERSION}/bwa-mem2${BWA_MEM2_VERSION}_x64-linux.tar.bz2" && \
-    tar jxf bwa-mem2${BWA_MEM2_VERSION}_x64-linux.tar.bz2 && \
-    cp bwa-mem2${BWA_MEM2_VERSION}_x64-linux/bwa-mem2* /usr/local/bin/
+RUN curl -LO "https://github.com/bwa-mem2/bwa-mem2/releases/download/v${BWA_MEM2_VERSION}/bwa-mem2-${BWA_MEM2_VERSION}_x64-linux.tar.bz2" && \
+    tar jxf bwa-mem2-${BWA_MEM2_VERSION}_x64-linux.tar.bz2 && \
+    cd bwa-mem2${BWA_MEM2_VERSION}_x64-linux && \
+    cp bwa-mem2 /usr/local/bin/ && \
+    cp bwa-mem2.avx /usr/local/bin/ && \
+    cp bwa-mem2.avx2 /usr/local/bin/ && \
+    cp bwa-mem2.avx512bw /usr/local/bin/ && \
+    cp bwa-mem2.sse41 /usr/local/bin/ && \
+    cp bwa-mem2.sse42 /usr/local/bin/
 
 ARG BAMBI_VERSION
 RUN git clone --single-branch --branch="$BAMBI_VERSION" --depth=1 "https://github.com/wtsi-npg/bambi.git" && \
