@@ -129,7 +129,7 @@ RUN curl -sSL -O "https://github.com/lh3/bwa/archive/refs/tags/v${BWA_VERSION}.t
     ln -s /usr/local/bin/bwa /usr/local/bin/bwa0_6
 
 ARG BWA_MEM2_VERSION
-RUN curl -LO "https://github.com/bwa-mem2/bwa-mem2/releases/download/v${BWA_MEM2_VERSION}/bwa-mem2-${BWA_MEM2_VERSION}_x64-linux.tar.bz2" && \
+RUN curl -sSL -O "https://github.com/bwa-mem2/bwa-mem2/releases/download/v${BWA_MEM2_VERSION}/bwa-mem2-${BWA_MEM2_VERSION}_x64-linux.tar.bz2" && \
     tar jxf bwa-mem2-${BWA_MEM2_VERSION}_x64-linux.tar.bz2 && \
     cd bwa-mem2${BWA_MEM2_VERSION}_x64-linux && \
     cp bwa-mem2 /usr/local/bin/ && \
