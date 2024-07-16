@@ -1,0 +1,64 @@
+{
+"version":"2.0",
+"description":"alternate pre-processing method for stage2 inputs accepting FASTQ input (for e.g. Elembio NanoSeq)",
+"subgraph_io":{
+	"ports":{
+		"inputs":{},
+		"outputs":{ "_stdout_":
+			{"select":"pp_read2tags", "required":true, "default":"off",
+				"cases":{
+					"off": "import",
+					"on": "read2tags"
+				}
+			}
+		}
+	}
+},
+"nodes":[
+	{
+		"id":"import",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "import",
+			"-R", {"subst":"fastq_s2_pi_RG_ID","required":true, "comment":"readgroup"},
+			"-1", {"subst":"fastq_s2_pi_fq1","required":true, "comment":"FASTQ read 1"},
+			"-2", {"subst":"fastq_s2_pi_fq2","required":true, "comment":"FASTQ read 2"},
+			"-i",
+			"-u",
+			"-O", "bam"
+		]
+	},
+	{
+		"id":"read2tags",
+		"type":{
+			"select":"pp_read2tags",
+			"required":true,
+			"select_range":[1],
+			"default":"off",
+			"cases":{
+				"on":"EXEC",
+				"off":"INACTIVE"
+			}
+		},
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"bambi_executable", "required":true, "ifnull":"bambi"}, "read2tags",
+			"--tags", "rb,mb,br,rb,mb,br",
+			"--qtags", "rq,mq,bq,rq,mq,bq",
+			"--positions", "1:1:1:3,1:2:1:3,1:1:4:7,2:2:1:3,2:1:1:3,2:2:4:7",
+			"--compression-level", 0,
+			"--output-fmt", "bam"
+		]
+	}
+],
+"edges":[
+	{"select":"pp_read2tags", "required":true, "default":"off", "cases":{
+		"off": [],
+		"on": [ { "id":"import_to_read2tags", "from":"import", "to":"read2tags" }]
+		}
+	}
+]
+}
