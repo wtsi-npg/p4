@@ -451,6 +451,12 @@ sub apply_subst {
 		$ewi->{removelabel}->();
 	}
 
+	if($cfg->{subgraph_io}) {
+		$ewi->{addlabel}->(q{subgraph_io});
+		$cfg->{subgraph_io} = subst_walk($cfg->{subgraph_io}, $params, $ewi);
+		$ewi->{removelabel}->();
+	}
+
 	return;
 }
 
