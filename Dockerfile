@@ -1,8 +1,9 @@
 ARG BASE_IMAGE=ubuntu:22.04
 
-ARG BAMBI_VERSION="0.17.1"
+ARG BAMBI_VERSION="0.18.0"
 ARG BIOBAMBAM2_VERSION="2.0.185-release-20221211202123"
 ARG BWA_VERSION="0.7.18"
+ARG BWA_MEM2_VERSION="2.2.1"
 ARG DEFLATE_VERSION="1.20"
 ARG HTSLIB_VERSION="1.20"
 ARG IO_LIB_VERSION="1.15.0"
@@ -126,6 +127,17 @@ RUN curl -sSL -O "https://github.com/lh3/bwa/archive/refs/tags/v${BWA_VERSION}.t
     cp ./bwa /usr/local/bin/ && \
     chmod +x /usr/local/bin/bwa && \
     ln -s /usr/local/bin/bwa /usr/local/bin/bwa0_6
+
+ARG BWA_MEM2_VERSION
+RUN curl -sSL -O "https://github.com/bwa-mem2/bwa-mem2/releases/download/v${BWA_MEM2_VERSION}/bwa-mem2-${BWA_MEM2_VERSION}_x64-linux.tar.bz2" && \
+    tar xfj ./bwa-mem2-${BWA_MEM2_VERSION}_x64-linux.tar.bz2 && \
+    cd ./bwa-mem2-${BWA_MEM2_VERSION}_x64-linux && \
+    cp ./bwa-mem2 /usr/local/bin/ && \
+    cp ./bwa-mem2.avx /usr/local/bin/ && \
+    cp ./bwa-mem2.avx2 /usr/local/bin/ && \
+    cp ./bwa-mem2.avx512bw /usr/local/bin/ && \
+    cp ./bwa-mem2.sse41 /usr/local/bin/ && \
+    cp ./bwa-mem2.sse42 /usr/local/bin/
 
 ARG BAMBI_VERSION
 RUN git clone --single-branch --branch="$BAMBI_VERSION" --depth=1 "https://github.com/wtsi-npg/bambi.git" && \
