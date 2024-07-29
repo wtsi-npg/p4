@@ -54,6 +54,7 @@ jobs:
             --label "org.opencontainers.image.revision=${GIT_COMMIT}" \
             --label "org.opencontainers.image.version=${RELEASE_VERSION}" \
             --label "org.opencontainers.image.created=$(date --utc --iso-8601=seconds)" \
+            --label "org.opencontainers.image.vendor=npg.sanger.ac.uk" \
             --tag "ghcr.io/${REPOSITORY_OWNER}/${IMAGE_NAME}:${RELEASE_VERSION}" \
             --tag "ghcr.io/${REPOSITORY_OWNER}/${IMAGE_NAME}:latest" \
             .
