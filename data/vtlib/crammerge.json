@@ -1,0 +1,37 @@
+{
+"version":"2.0",
+"description":"run bwa mem to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+		},
+		"outputs":{
+			"_stdout_":"crammerge"
+		}
+	}
+},
+"subst_params":[],
+"nodes":[
+	{
+		"id":"crammerge",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+			"samtools",
+			"merge",
+			"-n",
+			"-O", "BAM",
+			"-l", "0",
+			{"select":"input_format", "default":"cram", "select_range":[1], "cases":{
+				"cram":["--input-fmt-option", "no_ref=1"],
+				"bam":["--input-fmt", "bam"]
+			}},
+			"-",
+			{"subst":"incrams", "required":true}
+		],
+		"description":"merge individual cram files from a sample into one bam file"
+	}
+],
+"edges":[]
+}

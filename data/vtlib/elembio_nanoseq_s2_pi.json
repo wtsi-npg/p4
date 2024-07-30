@@ -1,0 +1,64 @@
+{
+"version":"2.0",
+"description":"alternate pre-processing method for stage2 inputs (Elembio NanoSeq)",
+"subgraph_io":{
+	"ports":{
+		"inputs":{},
+		"outputs":{ "_stdout_":"cram_convert" }
+	}
+},
+"nodes":[
+	{
+		"id":"import",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "import",
+			"-R", {"subst":"elembio_nanoseq_RG","required":true, "comment":"readgroup"},
+			"-1", {"subst":"elembio_nanoseq_fq1","required":true, "comment":"FASTQ read 1"},
+			"-2", {"subst":"elembio_nanoseq_fq2","required":true, "comment":"FASTQ read 2"},
+			"-i",
+			"-u",
+			"-O", "bam"
+		]
+	},
+	{
+		"id":"read2tags",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"bambi_executable", "required":true, "ifnull":"bambi"}, "read2tags",
+			"--tags", "rb,br,rb,br",
+			"--qtags", "rq,bq,rq,bq",
+			"--positions", "1:1:3,1:4:7,2:1:3,2:4:7",
+			"--output-fmt", "sam"
+		]
+	},
+        {
+                "id":"add_nanoseq_mate_tags",
+                "type":"EXEC",
+                "use_STDIN": true,
+                "use_STDOUT": true,
+                "cmd": [ "add_NanoSeq_mate_tags.pl" ]
+        },
+	{
+		"id":"cram_convert",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "view",
+			"--output-fmt-option", "level=7",
+			"--output-fmt", "cram,no_ref=1",
+			"-"
+		]
+	}
+],
+"edges":[
+	{ "id":"import_to_read2tags", "from":"import", "to":"read2tags" },
+        { "id":"read2tags_to_add_nanoseq_mate_tags", "from":"read2tags", "to":"add_nanoseq_mate_tags" },
+        { "id":"add_nanoseq_mate_tags_to_cram_convert", "from":"add_nanoseq_mate_tags", "to":"cram_convert" }
+]
+}
