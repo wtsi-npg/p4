@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - Updated image labels
+ 
 0.39.0
  - use "samtools index" instead of "cram_index to create cram indexes
  - for bam and cram index creation, use "samtools index -o <index_file>" to explicitly indicate the index file
