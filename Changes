@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.40.0
+ - change permissions of STAR working directory to allow deletion by standard pipeline tools
+ - add Dockerfile to create container with appropriate tools for basic analyses
  - Updated image labels
  
 0.39.0
