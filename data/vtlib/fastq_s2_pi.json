@@ -45,7 +45,8 @@
 				"-R", {"subst":"fastq_s2_pi_RG_ID","required":true, "comment":"readgroup"},
 				"-1", {"subst":"fastq_s2_pi_fq1","required":true, "comment":"FASTQ read 1"},
 				"-2", {"subst":"fastq_s2_pi_fq2","required":true, "comment":"FASTQ read 2"},
-				"-i",
+				{"select":"parse_casava_id", "default":"on", "select_range":[1], "cases":{ "on":["-i"], "off":[] }},
+				{"subst":"parse_import_tags_flag", "ifnull":["-T", {"subst":"parse_import_tags","required":true,"ifnull":"*"}]},
 				"-u",
 				"-O", "bam"
 			]
