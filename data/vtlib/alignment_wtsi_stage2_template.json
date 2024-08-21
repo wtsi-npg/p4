@@ -95,24 +95,19 @@
 ],
 "nodes":[
 	{
-		"id":"crammerge",
-		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
-		"cmd": [
-			"samtools",
-			"merge",
-			"-n",
-			"-O", "BAM",
-			"-l", "0",
-			{"select":"s2_input_format", "default":"cram", "select_range":[1], "cases":{
-				"cram":["--input-fmt-option", "no_ref=1"],
-				"bam":["--input-fmt", "bam"]
+		"id":"preprocess_inputs",
+		"type":"VTFILE",
+		"name":{"subst":"s2_preprocess_inputs_method", "required":true,
+			"ifnull":{
+				"select":"s2_ppi_switch", "default":"crammerge","select_range":[1],
+				"cases":{
+					"crammerge":"crammerge.json",
+					"aviti":"elembio_nanoseq_s2_pi.json"}
 			}},
-			"-",
-			{"subst":"incrams"}
-		],
-		"description":"merge individual cram files from a sample into one bam file"
+                "subst_map":{"input_format":{"subst":"s2_input_format"}},
+		"comment":"inputs: NONE; outputs: _stdout_ (bam), subst_map_parameters:[input_format]",
+		"node_prefix":"ppi_",
+		"description":"subgraph to preprocess inputs. Default: merge individual cram files from a sample into one bam file"
 	},
 	{
 		"id":"spatial_filter",
@@ -264,7 +259,7 @@
 	}
 ],
 "edges":[
-	{ "id":"src_to_bc2", "from":"crammerge", "to":{"subst":"post_cm","required":true} },
+	{ "id":"src_to_bc2", "from":"preprocess_inputs", "to":{"subst":"post_cm","required":true} },
 	{"select":"spatial_filter_switch", "required":true, "select_range":[1], "default":"on", "allow_unspec_keys":true,
 	"cases":{
 		"on": [

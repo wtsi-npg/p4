@@ -1,0 +1,31 @@
+{
+"version":"2.0",
+"description":"produce 10k subsample fastq files",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"subsample"
+		},
+		"outputs":{
+			"_stdout_":"subsample"
+		}
+	}
+},
+"subst_params":[],
+"nodes":[
+        {
+                "id":"subsample",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+			"samtools",
+			"view",
+			"-s", {"subst":"seed_frac", "required":true, "ifnull": {"subst_constructor":{"vals":[ {"subst":"subsample_seed", "ifnull":{"subst":"s2_id_run", "required":true}}, {"subst":"ss_frac", "required":true}],"postproc":{"op":"concat","pad":"."}}}},
+			"-b",
+			"-"
+		]
+        }
+],
+"edges":[]
+}

@@ -36,22 +36,15 @@
 	},
         {
                 "id":"subsample",
-                "type":"EXEC",
-		"subtype":"STRINGIFY",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"cmd":[
-			"bash -c '",
-			{"subst_constructor":{"vals":["tmfs=\"", {"subst":"tag_metrics_files", "required":true}, "\""],"postproc":{"op":"concat","pad":""}}}, "; if [ ! -z \"${tmfs}\" ]; then for tag_metrics_file in ${tmfs}; do reads_count=`jq", {"subst":"jqkey", "ifnull":{"subst_constructor":{"vals":["'\"'\"'.reads_count.\"", {"subst":"s2_tag_index", "required":true}, "\"'\"'\"'"],"postproc":{"op":"concat","pad":""}}}}, "${tag_metrics_file}`; reads_count=`echo ${reads_count} | tr -cd [:digit:]`; reads_count_total=$((${reads_count_total}+${reads_count})); done; if [[ $reads_count_total -eq 0 ]]; then reads_count_total=1; fi; frac=`echo \"10000/${reads_count_total}\" | bc -l`; fi;",
-			"if [ ! -z $frac ]; then",
-				"samtools",
-				"view",
-				"-s", {"subst":"seed_frac", "required":true, "ifnull": {"subst_constructor":{"vals":[ {"subst":"subsample_seed", "ifnull":{"subst":"s2_id_run", "required":true}}, "${frac}" ],"postproc":{"op":"concat","pad":""}}}},
-				"-b",
-				"-",
-				";",
-			"else >&2 printf \"No tag metrics, no subsample\"; fi;'"
-		]
+		"type":"VTFILE",
+		"name":{"subst":"s2_subsample_method", "required":true,
+			"ifnull":{
+				"select":"s2_subsample_method_switch", "default":"tmf","select_range":[1],
+				"cases":{
+					"tmf":"subsample_tmf.json",
+					"spec_frac":"subsample_spec_frac.json"}
+			}},
+		"node_prefix":"ssm_"
         },
         {
                 "id":"bamtofastq_ss",
