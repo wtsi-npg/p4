@@ -1,0 +1,81 @@
+{
+"version":"2.0",
+"description":"alternate pre-processing method for stage2 inputs accepting FASTQ input (for e.g. Elembio NanoSeq)",
+"subgraph_io":{
+	"ports":{
+		"inputs":{},
+		"outputs":{ "_stdout_":
+			{"select":"pp_read2tags", "required":true, "default":"off",
+				"cases":{
+					"off": "import",
+					"on": "read2tags"
+				}
+			}
+		}
+	}
+},
+"nodes":[
+	{
+		"id":"import",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": {
+			"select":"pp_import_method",
+			"required":true,
+			"select_range":[1],
+			"default":"crammerge",
+			"cases":{
+			"crammerge":
+			[
+				{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "merge",
+				"-n",
+				"-O", "BAM",
+				"-l", "0",
+				{"select":"input_format", "default":"cram", "select_range":[1], "cases":{
+					"cram":["--input-fmt-option", "no_ref=1"],
+					"bam":["--input-fmt", "bam"]
+				}},
+				"-",
+				{"subst":"incrams", "required":true}
+			],
+			"fastq":
+			[
+				{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "import",
+				"-R", {"subst":"fastq_s2_pi_RG_ID","required":true, "comment":"readgroup"},
+				"-1", {"subst":"fastq_s2_pi_fq1","required":true, "comment":"FASTQ read 1"},
+				"-2", {"subst":"fastq_s2_pi_fq2","required":true, "comment":"FASTQ read 2"},
+				{"select":"parse_casava_id", "default":"on", "select_range":[1], "cases":{ "on":["-i"], "off":[] }},
+				{"subst":"parse_import_tags_flag", "ifnull":["-T", {"subst":"parse_import_tags","required":true,"ifnull":"*"}]},
+				"-u",
+				"-O", "bam"
+			]
+			}
+		}
+	},
+	{
+		"id":"read2tags",
+		"type":{
+			"select":"pp_read2tags",
+			"required":true,
+			"select_range":[1],
+			"default":"off",
+			"cases":{
+				"on":"VTFILE",
+				"off":"INACTIVE"
+			}
+		},
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"name":"read2tags.json",
+		"node_prefix":"r2t_"
+	}
+],
+"edges":[
+	{"select":"pp_read2tags", "required":true, "default":"off", "cases":{
+		"off": [],
+		"on": [ { "id":"import_to_read2tags", "from":"import", "to":"read2tags" }]
+		}
+	}
+]
+}
