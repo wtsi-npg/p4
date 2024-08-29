@@ -1,0 +1,54 @@
+{
+"version":"2.0",
+"description":"read2tags for NanoSeq processing, including preparatory collation and reset",
+"subgraph_io":{
+	"ports":{
+		"inputs":{"_stdin_":"collate"},
+		"outputs":{ "_stdout_":"read2tags" }
+		}
+},
+"nodes":[
+	{
+		"id":"collate",
+		"type": "EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "collate",
+			"--threads", {"subst":"s2_r2t_coll_threads","required":true,"ifnull":2},
+			"-u",
+			"-O",
+			"-"
+		]
+	},
+	{
+		"id":"reset",
+		"type": "EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "reset",
+			"--threads", {"subst":"s2_r2t_rs_threads","required":true,"ifnull":4},
+			"--output-fmt", "BAM,level=0"
+		]
+	},
+	{
+		"id":"read2tags",
+		"type": "EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"bambi_executable", "required":true, "ifnull":"bambi"}, "read2tags",
+			"--tags", "rb,mb,br,rb,mb,br",
+			"--qtags", "rq,mq,bq,rq,mq,bq",
+			"--positions", "1:1:1:3,1:2:1:3,1:1:4:7,2:2:1:3,2:1:1:3,2:2:4:7",
+			"--compression-level", 0,
+			"--output-fmt", "bam"
+		]
+	}
+],
+"edges":[
+	{ "id":"collate_to_reset", "from":"collate","to":"reset" },
+	{ "id":"reset_to_read2tags", "from":"reset", "to":"read2tags" }
+]
+}
