@@ -14,7 +14,7 @@
       "s2_filter_files": "DUMMY",
       "spatial_filter_file": "DUMMY",
       "phix_reference_genome_fasta":"DUMMY",
-      "realignment_switch":1
+      "realignment_switch":0
     }
   ],
   "assign_local": {},
