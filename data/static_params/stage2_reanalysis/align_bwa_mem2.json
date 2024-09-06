@@ -1,0 +1,13 @@
+{
+  "assign": [
+    {
+      "alignment_method": "bwa_mem",
+      "bwa_executable": "bwa-mem2"
+    }
+  ],
+  "assign_local": {},
+  "ops": {
+    "splice": [],
+    "prune": []
+  }
+}
