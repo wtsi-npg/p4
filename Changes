@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - Added .github/dependabot.yml file to auto-update GitHub actions
+
 0.40.0
  - change permissions of STAR working directory to allow deletion by standard pipeline tools
  - add Dockerfile to create container with appropriate tools for basic analyses
