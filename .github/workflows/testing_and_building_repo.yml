@@ -58,7 +58,7 @@ jobs:
     # Archive logs if failure
     - name: Archive CPAN logs
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cpan_log
         path: /home/runner/.cpanm/work/*/build.log
