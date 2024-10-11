@@ -1,0 +1,16 @@
+{
+  "assign": [
+    {
+      "alignment_hs_method": "bwa_aln",
+      "hs_bwa_executable": "bwa0_6",
+      "hs_alignment_reference_genome": "/mnt/ref_repository/references/Homo_sapiens/1000Genomes/all/bwa0_6/human_g1k_v37.fasta",
+      "hs_reference_genome_fasta": "/mnt/ref_repository/references/Homo_sapiens/1000Genomes/all/fasta/human_g1k_v37.fasta",
+      "reference_dict_hs": "/mnt/ref_repository/references/Homo_sapiens/1000Genomes/all/picard/human_g1k_v37.fasta.dict"
+    }
+  ],
+  "assign_local": {},
+  "ops": {
+    "splice": [],
+    "prune": []
+  }
+}
