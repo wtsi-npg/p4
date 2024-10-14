@@ -2,7 +2,7 @@ ARG BASE_IMAGE=ubuntu:22.04
 
 ARG BAMBI_VERSION="0.18.0"
 ARG BIOBAMBAM2_VERSION="2.0.185-release-20221211202123"
-ARG BWA_VERSION="0.7.18"
+ARG BWA_VERSION="0.7.17"
 ARG BWA_MEM2_VERSION="2.2.1"
 ARG DEFLATE_VERSION="1.20"
 ARG HTSLIB_VERSION="1.21"
@@ -82,21 +82,6 @@ RUN SLUG=$(echo ${IO_LIB_VERSION} | tr '.' '-') && \
     make -j $(nproc) install && \
     ldconfig
 
-ARG LIBMAUS2_VERSION
-RUN curl -sSL -O "https://gitlab.com/german.tischler/libmaus2/-/archive/${LIBMAUS2_VERSION}/libmaus2-${LIBMAUS2_VERSION}.tar.bz2" && \
-    tar xfj libmaus2-${LIBMAUS2_VERSION}.tar.bz2 && \
-    cd libmaus2-${LIBMAUS2_VERSION} && \
-    ./configure --prefix=/usr/local --with-io_lib --with-nettle && \
-    make -j $(nproc) install && \
-    ldconfig
-
-ARG BIOBAMBAM2_VERSION
-RUN curl -sSL -O "https://gitlab.com/german.tischler/biobambam2/-/archive/${BIOBAMBAM2_VERSION}/biobambam2-${BIOBAMBAM2_VERSION}.tar.bz2" && \
-    tar xfj biobambam2-${BIOBAMBAM2_VERSION}.tar.bz2 && \
-    cd biobambam2-${BIOBAMBAM2_VERSION} && \
-    ./configure && \
-    make -j $(nproc) install
-
 ARG TEEPOT_VERSION
 RUN curl -sSL -O "https://github.com/wtsi-npg/teepot/releases/download/${TEEPOT_VERSION}/teepot-${TEEPOT_VERSION}.tar.gz" && \
     tar xzf teepot-${TEEPOT_VERSION}.tar.gz && \
@@ -121,9 +106,10 @@ RUN curl -sSL -O "https://github.com/samtools/samtools/releases/download/${SAMTO
 
 ARG BWA_VERSION
 RUN curl -sSL -O "https://github.com/lh3/bwa/archive/refs/tags/v${BWA_VERSION}.tar.gz" && \
-    tar xzf v${BWA_VERSION}.tar.gz && \
-    cd bwa-${BWA_VERSION} && \
-    make -j $(nproc) && \
+    tar xzvf ./v${BWA_VERSION}.tar.gz && \
+    cd ./bwa-${BWA_VERSION} && \
+    pwd && \
+    make CC='gcc -fcommon' -j $(nproc) && \
     cp ./bwa /usr/local/bin/ && \
     chmod +x /usr/local/bin/bwa && \
     ln -s /usr/local/bin/bwa /usr/local/bin/bwa0_6
@@ -146,6 +132,20 @@ RUN git clone --single-branch --branch="$BAMBI_VERSION" --depth=1 "https://githu
     ./configure && \
     make -j $(nproc) install
 
+ARG LIBMAUS2_VERSION
+RUN curl -sSL -O "https://gitlab.com/german.tischler/libmaus2/-/archive/${LIBMAUS2_VERSION}/libmaus2-${LIBMAUS2_VERSION}.tar.bz2" && \
+    tar xfj libmaus2-${LIBMAUS2_VERSION}.tar.bz2 && \
+    cd libmaus2-${LIBMAUS2_VERSION} && \
+    ./configure --prefix=/usr/local --with-io_lib --with-nettle && \
+    make -j $(nproc) install && \
+    ldconfig
+
+ARG BIOBAMBAM2_VERSION
+RUN curl -sSL -O "https://gitlab.com/german.tischler/biobambam2/-/archive/${BIOBAMBAM2_VERSION}/biobambam2-${BIOBAMBAM2_VERSION}.tar.bz2" && \
+    tar xfj biobambam2-${BIOBAMBAM2_VERSION}.tar.bz2 && \
+    cd biobambam2-${BIOBAMBAM2_VERSION} && \
+    ./configure && \
+    make -j $(nproc) install
 
 ARG PCAP_CORE_VERSION
 RUN git clone --single-branch --branch="$PCAP_CORE_VERSION" --depth=1 "https://github.com/cancerit/PCAP-core.git" && \
