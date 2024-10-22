@@ -16,6 +16,7 @@
       "s2_filter_files": "DUMMY",
       "spatial_filter_file": "DUMMY",
       "phix_reference_genome_fasta":"DUMMY",
+      "incrams": "DUMMY",
       "realignment_switch":0
     }
   ],
