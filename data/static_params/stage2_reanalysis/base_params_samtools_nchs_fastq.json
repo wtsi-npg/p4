@@ -1,0 +1,36 @@
+{
+  "assign": [
+    {
+      "spatial_filter_switch":"off",
+      "markdup_optical_distance_value": "100",
+      "s2_se_pe": "pe",
+      "samtools_executable": "samtools",
+      "s2_input_format": "cram",
+      "markdup_method": "samtools",
+      "s2_ppi_switch":"s2_ppi",
+      "pp_read2tags":"off",
+      "pp_import_method":"fastq",
+      "fastq_s2_pi_fq1": "DUMMY",
+      "fastq_s2_pi_fq2": "DUMMY",
+      "fastq_s2_pi_RG_ID": "DUMMY",
+      "s2_filter_files": "DUMMY",
+      "spatial_filter_file": "DUMMY",
+      "phix_reference_genome_fasta":"DUMMY",
+      "incrams": "DUMMY",
+      "realignment_switch":0
+    }
+  ],
+  "assign_local": {},
+  "ops": {
+    "splice": [],
+    "prune": [
+      "fop[ht].*_bmd_multiway:calibration_pu-",
+      "foptgt_cram_tee:c2a-",
+      "fop[ht].*samtools_stats_F0.*_target.*-",
+      "fop[ht].*samtools_stats_F0.*00_bait.*-",
+      "aln_tee4_tee4:to_phix_aln-alignment_filter:phix_bam_in",
+      "alignment_filter:phix_bam_out-scs_merge_output_seqchksum:__PHIX_CHKSUM_IN__",
+      "ssfqc_tee_ssfqc:subsample-"
+    ]
+  }
+}

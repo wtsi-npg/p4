@@ -17,7 +17,6 @@
 		"required": "no",
 		"comment":"this will expand to a set of subst_param elements"
 	},
-
 	{
 		"id":"spatial_filter_rg_flag",
 		"required":"no",
@@ -113,24 +112,20 @@
 ],
 "nodes":[
 	{
-		"id":"crammerge",
-		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
-		"cmd": [
-			"samtools",
-			"merge",
-			"-n",
-			"-O", "BAM",
-			"-l", "0",
-			{"select":"s2_input_format", "default":"cram", "select_range":[1], "cases":{
-				"cram":["--input-fmt-option", "no_ref=1"],
-				"bam":["--input-fmt", "bam"]
+		"id":"preprocess_inputs",
+		"type":"VTFILE",
+		"name":{"subst":"s2_preprocess_inputs_method", "required":true,
+			"ifnull":{
+				"select":"s2_ppi_switch", "default":"crammerge","select_range":[1],
+				"cases":{
+					"crammerge":"crammerge.json",
+					"s2_ppi":"stage2_preprocess_inputs.json"
+				}
 			}},
-			"-",
-			{"subst":"incrams"}
-		],
-		"description":"merge individual cram files from a sample into one cram file"
+                "subst_map":{"input_format":{"subst":"s2_input_format"}},
+		"comment":"inputs: NONE; outputs: _stdout_ (bam), subst_map_parameters:[input_format]",
+		"node_prefix":"ppi_",
+		"description":"subgraph to preprocess inputs. Default: merge individual cram files from a sample into one bam file"
 	},
 	{
 		"id":"spatial_filter",
@@ -172,7 +167,6 @@
 		"name":{"subst":"subsample_vtf", "ifnull":"subsample.json"},
 		"description":""
 	},
-
 	{
 		"id":"haplotag",
 		"description":"haplotagging post-processing",
@@ -190,7 +184,6 @@
 		"node_prefix":{ "subst_constructor":{ "vals": [ "ht_", {"subst":"phix_or_target", "ifnull":"pot"}, "_" ], "postproc":{"op":"concat", "pad":""} } },
 		"name":"haplotagging.json"
 	},
-
 	{
 		"id":"target_alignment",
 		"type":"VTFILE",
@@ -297,7 +290,7 @@
 	}
 ],
 "edges":[
-	{ "id":"src_to_bc2", "from":"crammerge", "to":{"subst":"post_cm","required":true} },
+	{ "id":"src_to_bc2", "from":"preprocess_inputs", "to":{"subst":"post_cm","required":true} },
 	{"select":"spatial_filter_switch", "required":true, "select_range":[1], "default":"on", "allow_unspec_keys":true,
 	"cases":{
 		"on": [
