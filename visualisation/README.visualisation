@@ -18,6 +18,6 @@ $ busybox httpd -f -v -p 8888 -h . &
 
 http://SERVER_NAME:8888/edit.html?cfg_name=bwa_aln.json
 
-If the filename has a '#' within it this should be replaced with a different character e.g.
+If the filename has a '#' within it this can be replaced with the corresponding ASCII character (%23) to avoid parsing issues e.g.
 
-realign.44601_4#3.json  ->  realign.44601_4t3.json
+realign.44601_4#3.json  ->  realign.44601_4%233.json
