@@ -684,17 +684,12 @@ sub fetch_param_entry {
 		}
 	}
 
-	my $candidate;
 	if(exists $param_entry->{_value}) {
-		$candidate = $param_entry;   # already evaluated, return cached value (allowing undef)
+		return $param_entry;   # already evaluated, return cached value (allowing undef)
 	}
 
 	push @{$aux->{irp}}, $param_name;
 	$retval = resolve_subst_constructor($param_name, $param_entry->{subst_constructor}, $params, $ewi, $aux);
-
-	if(not $retval and $candidate) {
-		$retval = $candidate->{_value};
-	}
 
 	if(defined $retval) {
 		$param_entry->{_value} = $retval;
