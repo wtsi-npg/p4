@@ -451,6 +451,12 @@ sub apply_subst {
 		$ewi->{removelabel}->();
 	}
 
+	if($cfg->{subgraph_io}) {
+		$ewi->{addlabel}->(q{subgraph_io});
+		$cfg->{subgraph_io} = subst_walk($cfg->{subgraph_io}, $params, $ewi);
+		$ewi->{removelabel}->();
+	}
+
 	return;
 }
 
@@ -1412,9 +1418,9 @@ sub validate_splice_candidates {
 		}
 	}
 
-	#  all edge termini must be unique (over replacement and pruning edges) except for STDIN/STDOUT
+	#  all edge termini must be unique (over replacement edges) except for STDIN/STDOUT
 	my %endpoints;
-	for my $edge (@{$splice_candidates->{replacement_edges}}, @{$prune_edges}) {
+	for my $edge (@{$splice_candidates->{replacement_edges}}) {
 		my $from_end = $edge->{from};
 		if($from_end and $from_end !~ /:/) { $from_end .= q[:STDOUT] };
 
@@ -1472,13 +1478,31 @@ sub final_splice {
 	# add new edges
 	push @{$flat_graph->{edges}}, @{$splice_candidates->{replacement_edges}};
 
-	# remove pruned ports - prune edges are not required to be two-ended; just disregard undefined to/from attributes
+	# remove pruned ports - prune edges are not required to be two-ended; just disregard undefined to/from attributes; only remove ports
+	#   that do not appear in splice edges (aka replacement edges)
 	for my $prune_edge (@{$splice_candidates->{prune_edges}}) {
-		if($prune_edge->{from}) { remove_port($prune_edge->{from}, $SRC, $flat_graph); }
-		if($prune_edge->{to}) { remove_port($prune_edge->{to}, $DST, $flat_graph); }
+		if($prune_edge->{from} and not _in_replacement_edges($prune_edge->{from}, $splice_candidates, $SRC)) { remove_port($prune_edge->{from}, $SRC, $flat_graph); }
+		if($prune_edge->{to} and not _in_replacement_edges($prune_edge->{to}, $splice_candidates, $DST)) { remove_port($prune_edge->{to}, $DST, $flat_graph); }
 	}
 
 	return $flat_graph;
+}
+
+sub _in_replacement_edges {
+	my ($port_spec, $splice_candidates, $type) = @_;
+
+	my $direction = ($type == $SRC)? q[from]: q[to];
+	my $std_port = ($type == $SRC)? q[STDIN]: q[STDOUT];
+
+	for my $edge (@{$splice_candidates->{replacement_edges}}) {
+		my $end = $edge->{$direction};
+		if($end and $end !~ /:/) { $end .= qq[:$std_port] };
+
+		if($end eq $port_spec) { return 1; }
+	}
+
+	return 0;
+
 }
 
 ################################################################################################

@@ -5,12 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     name: Distribution Perl on ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     # Caching cpanm external modules
     - name: Cache cpanm external modules
       id: cpanmCache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/perl5ext
         key: ${{ runner.os }}-build-cpanm-external
@@ -58,7 +58,7 @@ jobs:
     # Archive logs if failure
     - name: Archive CPAN logs
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: cpan_log
         path: /home/runner/.cpanm/work/*/build.log
