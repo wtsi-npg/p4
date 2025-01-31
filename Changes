@@ -3,6 +3,15 @@ CHANGES LOG
 
  - Added .github/dependabot.yml file to auto-update GitHub actions
 
+0.41.0
+ - allow specification of input processing for stage2 [re]analysis
+ - new subsample methods, allow selection of subsample methods (for QC)
+ - add FASTQ input option to non-consented human split analysis
+ - vtfp : extend template preprocessing to subgraph_io sections (in subgraphs)
+ - container : i) add static parameter files for container-based stage2 reanalyses; ii) downgrade bwa version to 0.17.7 (from 0.7.18) to match current production version
+ - new P4 explainer README.md
+ - update visualisation doc (alternate http servers)
+
 0.40.0
  - change permissions of STAR working directory to allow deletion by standard pipeline tools
  - add Dockerfile to create container with appropriate tools for basic analyses
