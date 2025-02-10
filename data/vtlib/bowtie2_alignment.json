@@ -1,0 +1,75 @@
+{
+"version":"2.0",
+"description":"run bwa mem to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{
+			"_stdin_":"bamtofastq",
+			"reference":"bowtie2:db_prefix_reference_genome"
+		},
+		"outputs":{
+			"_stdout_":"samtobam"
+		}
+	}
+},
+"subst_params":[
+        {
+                "id": "basic_pipeline_params",
+                "type":"SPFILE",
+		"name":{"subst":"basic_pipeline_params_file"},
+                "required": "no",
+                "comment":"this will expand to a set of subst_param elements"
+        }
+],
+"nodes":[
+	{
+		"id":"bamtofastq",
+		"type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":["bamtofastq"]
+	},
+	{
+		"id":"bowtie2",
+		"comment":"user is responsible for selecting appropriate preselect for alignment mode (all combinations allowed, but some may not be sensible)",
+		"type":"EXEC",
+		"use_STDIN":false,
+		"use_STDOUT":true,
+		"cmd":[
+			{"subst":"bowtie2_executable", "ifnull": "bowtie2"},
+			"-p", {"subst":"bowtie2_numthreads", "ifnull":{"subst":"aligner_numthreads"}},
+			{"select":"bowtie2_alignment_mode", "required":false, "select_range":[1], "default":"local", "cases":{"local":"--local","end-to-end":[]},"comment":"bowtie2 alignment mode"},
+			{"select":"bowtie2_preset_options", "required":true, "select_range":[1], "default":"very-sensitive-local",
+			"cases":{
+				"very-fast":"--very-fast",
+				"fast":"--fast",
+				"sensitive":"--sensitive",
+				"very-sensitive":"--very-sensitive",
+				"very-fast-local":"--very-fast-local",
+				"fast-local":"--fast-local",
+				"sensitive-local":"--sensitive-local",
+				"very-sensitive-local":"--very-sensitive-local"
+			}},
+			{"subst":"bowtie2_arbitrary_flags"},
+			"--interleaved", {"port":"fq","direction":"in"},
+			"-x", {"port":"db_prefix_reference_genome", "direction":"in"}
+		]
+	},
+        {
+                "id":"samtobam",
+                "type":"EXEC",
+		"use_STDIN":true,
+		"use_STDOUT":true,
+		"cmd":[
+			{"subst":"samtools_executable"}, "view", "-b",
+			{"subst_constructor":{"vals":[ "--threads", {"subst":"s2b_threads","ifnull":{"subst":"s2b_mt_val"}}]}},
+			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"s2b_compression_level","ifnull":0} ], "postproc":{"op":"concat", "pad":"="}}}]}},
+			"-"
+		]
+        }
+],
+"edges":[
+	{ "id":"bamtofastq_to_bowtie2", "from":"bamtofastq", "to":"bowtie2:fq" },
+	{ "id":"bowtie2_to_s2b", "from":"bowtie2", "to":"samtobam" }
+]
+}
