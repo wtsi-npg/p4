@@ -1,6 +1,6 @@
 {
 "version":"2.0",
-"description":"run bwa mem to to align input bam to supplied reference genome",
+"description":"run bowtie2 to to align input bam to supplied reference genome",
 "subgraph_io":{
 	"ports":{
 		"inputs":{
@@ -50,6 +50,7 @@
 				"sensitive-local":"--sensitive-local",
 				"very-sensitive-local":"--very-sensitive-local"
 			}},
+			{"subst":"bowtie2_reorder_flag", "ifnull":"--reorder"},
 			{"subst":"bowtie2_arbitrary_flags"},
 			"--interleaved", {"port":"fq","direction":"in"},
 			"-x", {"port":"db_prefix_reference_genome", "direction":"in"}
@@ -61,10 +62,12 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"cmd":[
-			{"subst":"samtools_executable"}, "view", "-b",
-			{"subst_constructor":{"vals":[ "--threads", {"subst":"s2b_threads","ifnull":{"subst":"s2b_mt_val"}}]}},
-			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"s2b_compression_level","ifnull":0} ], "postproc":{"op":"concat", "pad":"="}}}]}},
-			"-"
+			{"select":"bowtie2_post_aln_process", "required":true, "select_range":[1], "default":"fastcollate",
+			"cases":{
+				"bamconvert": [ {"subst":"samtools_executable"}, "view", "-u", "-" ],
+				"namesort": [ {"subst":"samtools_executable"}, "sort", "-n",  "-u", "-" ],
+				"fastcollate": [ {"subst":"samtools_executable"}, "collate", "-f",  "-u", "-O", "--threads", 3, "-" ]
+			}}
 		]
         }
 ],
