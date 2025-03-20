@@ -22,13 +22,16 @@
         }
 ],
 "nodes":[
-	{
-		"id":"bamtofastq",
-		"type":"EXEC",
-		"use_STDIN":true,
-		"use_STDOUT":true,
-		"cmd":["bamtofastq"]
-	},
+        {
+                "id":"bamtofastq",
+                "type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ {"subst":"samtools_executable"}, "fastq",
+			{"subst":"bt2_bamtofastq_arbitrary_flags"},
+                        "-"
+		]
+        },
 	{
 		"id":"bowtie2",
 		"comment":"user is responsible for selecting appropriate preselect for alignment mode (all combinations allowed, but some may not be sensible)",
@@ -52,9 +55,17 @@
 			}},
 			{"subst":"bowtie2_reorder_flag", "ifnull":"--reorder"},
 			{"subst":"bowtie2_arbitrary_flags"},
-			"--interleaved", {"port":"fq","direction":"in"},
+			"-U", {"port":"fq","direction":"in"},
 			"-x", {"port":"db_prefix_reference_genome", "direction":"in"}
 		]
+	},
+	{
+		"id":"remove_read_suffixes",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[ "perl", "-nale", "use strict; $,=qq(\\t); use File::Slurp; our($body,@lpg); if($body||=not m{^\\@}){if(@lpg){my$cl=read_file(q(/proc/self/cmdline));$cl=~s/\\x{000}/ /g; $cl=~s/\\t/ /g; print join qq[\\t], q(@PG),q(ID:perlfoo),q(PN:perl),q(DS:fixup paired read bits name suffixes),q(PP:).(shift@lpg),q(CL:).$cl} if($F[0]=~s{/([12])$}{}){ $F[1]= $1==1?$F[1]|0x41:$F[1]|0x81} print join qq(\\t),@F}else{@lpg=($1) if m{^\\@PG.*\\tID:([^\\t]+)}; print}" ],
+		"description":"remove /1 and /2 read suffixes, updating the flags to reflect read number"
 	},
         {
                 "id":"samtobam",
@@ -62,8 +73,9 @@
 		"use_STDIN":true,
 		"use_STDOUT":true,
 		"cmd":[
-			{"select":"bowtie2_post_aln_process", "required":true, "select_range":[1], "default":"fastcollate",
+			{"select":"bowtie2_post_aln_process", "required":true, "select_range":[1], "default":"fixmate",
 			"cases":{
+				"fixmate": [ {"subst":"samtools_executable"}, "fixmate", "-u", "-", "-" ],
 				"bamconvert": [ {"subst":"samtools_executable"}, "view", "-u", "-" ],
 				"namesort": [ {"subst":"samtools_executable"}, "sort", "-n",  "-u", "-" ],
 				"fastcollate": [ {"subst":"samtools_executable"}, "collate", "-f",  "-u", "-O", "--threads", 3, "-" ]
@@ -72,7 +84,8 @@
         }
 ],
 "edges":[
-	{ "id":"bamtofastq_to_bowtie2", "from":"bamtofastq", "to":"bowtie2:fq" },
+	{ "id":"bamtofastq1_to_bowtie2", "from":"bamtofastq:fq1", "to":"bowtie2:fq1" },
+	{ "id":"bamtofastq2_to_bowtie2", "from":"bamtofastq:fq2", "to":"bowtie2:fq2" },
 	{ "id":"bowtie2_to_s2b", "from":"bowtie2", "to":"samtobam" }
 ]
 }
