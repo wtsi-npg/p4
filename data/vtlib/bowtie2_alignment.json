@@ -84,8 +84,8 @@
         }
 ],
 "edges":[
-	{ "id":"bamtofastq1_to_bowtie2", "from":"bamtofastq:fq1", "to":"bowtie2:fq1" },
-	{ "id":"bamtofastq2_to_bowtie2", "from":"bamtofastq:fq2", "to":"bowtie2:fq2" },
-	{ "id":"bowtie2_to_s2b", "from":"bowtie2", "to":"samtobam" }
+	{ "id":"bamtofastq1_to_bowtie2", "from":"bamtofastq", "to":"bowtie2:fq" },
+	{ "id":"bowtie2_to_remove_read_suffixes", "from":"bowtie2", "to":"remove_read_suffixes" },
+	{ "id":"remove_read_suffixes_to_samtobam", "from":"remove_read_suffixes", "to":"samtobam" }
 ]
 }
