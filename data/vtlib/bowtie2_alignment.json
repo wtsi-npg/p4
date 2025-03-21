@@ -64,7 +64,7 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":[ "perl", "-nale", "use strict; $,=qq(\\t); use File::Slurp; our($body,@lpg); if($body||=not m{^\\@}){if(@lpg){my$cl=read_file(q(/proc/self/cmdline));$cl=~s/\\x{000}/ /g; $cl=~s/\\t/ /g; print join qq[\\t], q(@PG),q(ID:perlfoo),q(PN:perl),q(DS:fixup paired read bits name suffixes),q(PP:).(shift@lpg),q(CL:).$cl} if($F[0]=~s{/([12])$}{}){ $F[1]= $1==1?$F[1]|0x41:$F[1]|0x81} print join qq(\\t),@F}else{@lpg=($1) if m{^\\@PG.*\\tID:([^\\t]+)}; print}" ],
+                "cmd":[ "perl", "-nale", "use strict; $,=qq(\\t); our($body,@lpg, $pgc); if($body||=not m{^\\@}){if(@lpg){my$cl=qx{cat /proc/self/cmdline | tr '\\0\\t' ' '}; print join qq[\\t], q(@PG),qq(ID:perlfoo_$pgc),q(PN:perl),q(DS:fixup paired read bits name suffixes),q(PP:).(shift@lpg),q(CL:).$cl} if($F[0]=~s{/([12])$}{}){ $F[1]= $1==1?$F[1]|0x41:$F[1]|0x81} print join qq(\\t),@F}else{@lpg=($1); $pgc++; if m{^\\@PG.*\\tID:([^\\t]+)}; print}" ],
 		"description":"remove /1 and /2 read suffixes, updating the flags to reflect read number"
 	},
         {
