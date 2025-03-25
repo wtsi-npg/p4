@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+0.41.0
+ - add bowtie2 version 2.5.4 to container build (Dockerfile)
+ - add bowtie alignment method template
+ - switch to using samtools merge and samtools markdup in merge templates
  - Added .github/dependabot.yml file to auto-update GitHub actions
 
 0.41.0
