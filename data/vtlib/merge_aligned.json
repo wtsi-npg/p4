@@ -48,6 +48,27 @@
 		}
 	},
 	{"id":"bmd_cmd","required":"no","default":"bamstreamingmarkduplicates"},
+  {
+      "id": "stmd_metrics_file",
+      "required": "no",
+      "comment": "samtools markdup is now the standard tool",
+      "subst_constructor": {
+        "vals": [
+          {
+            "subst": "outdatadir"
+          },
+          "/",
+          {
+            "subst": "library"
+          },
+          ".markdups_metrics.txt"
+        ],
+        "postproc": {
+          "op": "concat",
+          "pad": ""
+        }
+      }
+    },
 	{ 
 		"id":"incrams_seqchksum", 
 		"required":"yes", 
@@ -65,22 +86,32 @@
 	}
 ],
 "nodes": [
-	{
-		"id":"bammarkduplicates",
-		"comment":"default tool bamstreamingmarkduplicates must be from Biobambam >= 0.0.174",
-		"type":"EXEC",
-		"use_STDIN": true,
-		"use_STDOUT": true,
-		"orig_cmd":{"subst":"bammarkduplicates"},
-		"cmd": [ {"subst":"bmd_cmd"}, "level=0", "verbose=0", {"subst":"bmd_tmpfile_flag"}, {"subst":"bmd_metrics_file_flag"}, {"subst":"bmd_resetdupflag"} ]
-	},
+  {
+      "id": "markdup",
+      "description": "mark duplicates method",
+      "type": "VTFILE",
+      "comment": "inputs: _stdin_ (filtered bam); outputs: _stdout_ (bam, same as input)",
+      "node_prefix_tba": "merged_markdup_",
+      "name": {
+        "select": "markdup_method",
+        "required": true,
+        "select_range": [
+          1
+        ],
+        "default": "samtools",
+        "cases": {
+          "samtools": "merged_markdup_samtools.json",
+          "biobambam": "merged_markdup_biobambam.json"
+        }
+      }
+    },
 	{
 		"id":"crammerge",
 		"type":"EXEC",
 		"use_STDIN": false,
 		"use_STDOUT": true,
 		"orig_cmd":{"subst":"crammerge"},
-    "cmd": [ "samtools","merge","-O","BAM","-l","0","-",{"subst":"incrams"} ],
+    "cmd": [ {"subst":"samtools_executable"}, "merge", "-O", "BAM", "-l", "0", "--input-fmt-option", "no_ref=1", "-",{"subst":"incrams"} ],
 		"description":"merge individual cram files from a sample into one cram file"
 	},
 	{
@@ -128,8 +159,8 @@
 	}
 ],
   "edges": [
-	{ "id": "crammerge_to_bammarkduplicates", "from": "crammerge", "to": "bammarkduplicates" },
-	{ "id": "bammarkduplicates_to_final_output_prep", "from": "bammarkduplicates", "to": "merge_final_output_prep" },
+	{ "id": "crammerge_to_markdup", "from": "crammerge", "to": "markdup" },
+	{ "id": "markdup_to_final_output_prep", "from": "markdup", "to": "merge_final_output_prep" },
 	{ "id": "merge_seqchksum_to_seqchksumdefault_tee", "from": "merge_seqchksum", "to": "seqchksumdefault_head5" },
 	{ "id": "seqchksumdefault_head5", "from":"seqchksumdefault_head5", "to":"cmp_seqchksumdefault:merged_seqchksum" },
 	{ "id": "final_output_prep_to_head5", "from": "merge_final_output_prep","to": "seqchksum_head5" },
