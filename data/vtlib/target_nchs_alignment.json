@@ -239,7 +239,7 @@
 			{"subst":"rankstrip_nchs_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "rankstrip", {"subst":"rankstrip_nchs_val", "required":"no", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
 			{"subst":"ranksplit_nchs_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "ranksplit", {"subst":"ranksplit_nchs_val", "required":"no", "ifnull":"0"} ],"postproc":{"op":"concat","pad":"="}}}},
 			"zztoname=0",
-			{"subst":"clipreinsert_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "clipreinsert", {"subst":"clipreinsert_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"clipreinsert_nchs_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "clipreinsert", {"subst":"clipreinsert_nchs_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
 			{"port":"no_aln_bam", "direction":"in"}
 		]
 	}
