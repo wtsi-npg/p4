@@ -17,7 +17,11 @@
 		"type":"EXEC",
 		"use_STDIN": true,
 		"use_STDOUT": true,
-		"cmd":[ "bamcollate2", "collate=3", "level=0" ],
+		"cmd":[
+			"bamcollate2", 
+			{"subst":"collate_ranking_collate_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "collate", {"subst":"collate_ranking_collate_val", "required":"yes", "ifnull":"3"} ],"postproc":{"op":"concat","pad":"="}}}},
+			"level=0"
+		],
 		"comment":"already collated suitably - just here to do the ranking in the name"
 	},
 	{
