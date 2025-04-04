@@ -40,7 +40,7 @@
 			"ifnull":"-v"},
 			{"subst":"teepot_tempdir_flag"},
 			{"subst":"tee_headerSQfix_wait_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_headerSQfix_wait_val", "required":"no", "ifnull":"300"} ]}}},
-			{"subst":"tee_headerSQfix_bufmem_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"tee_headerSQfix_bufmem_val", "required":"no", "ifnull":"100M"} ]}}},
+			{"subst":"tee_headerSQfix_bufmem_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"tee_headerSQfix_bufmem_val", "required":"no", "ifnull":"100M"} ]}}},
 			{"port":"header_fix","direction":"out"},
 			{"port":"full_bam","direction":"out"}
 		],
