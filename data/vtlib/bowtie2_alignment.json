@@ -8,7 +8,7 @@
 			"reference":"bowtie2:db_prefix_reference_genome"
 		},
 		"outputs":{
-			"_stdout_":"samtobam"
+			"_stdout_":"bt2_bam12split"
 		}
 	}
 },
@@ -81,11 +81,32 @@
 				"fastcollate": [ {"subst":"samtools_executable"}, "collate", "-f",  "-u", "-O", "--threads", 3, "-" ]
 			}}
 		]
-        }
+        },
+	{
+		"id":"bt2_bamcollate2_ranking_2",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":[
+			"bamcollate2", 
+			{"subst":"collate_ranking_collate_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "collate", {"subst":"collate_ranking_collate_val", "required":"yes", "ifnull":"2"} ],"postproc":{"op":"concat","pad":"="}}}},
+			"level=0"
+		],
+		"comment":"already collated suitably - just here to do the ranking in the name"
+	},
+	{
+		"id":"bt2_bam12split",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd":["bam12split", "verbose=0", "level=0"]
+	}
 ],
 "edges":[
 	{ "id":"bamtofastq1_to_bowtie2", "from":"bamtofastq", "to":"bowtie2:fq" },
 	{ "id":"bowtie2_to_remove_read_suffixes", "from":"bowtie2", "to":"remove_read_suffixes" },
-	{ "id":"remove_read_suffixes_to_samtobam", "from":"remove_read_suffixes", "to":"samtobam" }
+	{ "id":"remove_read_suffixes_to_samtobam", "from":"remove_read_suffixes", "to":"samtobam" },
+	{ "id":"samtobam_to_bc2_collate2", "from":"samtobam", "to":"bt2_bamcollate2_ranking_2" },
+	{ "id":"bc2_collate2_to_bam12split", "from":"bt2_bamcollate2_ranking_2", "to":"bt2_bam12split" }
 ]
 }
