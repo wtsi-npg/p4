@@ -82,8 +82,8 @@
 			"teepot",
 			{"subst":"teepot_vflag", "ifnull":"-v"},
 			{"subst":"teepot_tempdir_flag"},
-			"-w", "30000",
-			"-m", "1G",
+			{"subst":"amp_tee2_wait_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "-w", {"subst":"amp_tee2_wait_val", "required":"no", "ifnull":"30000"} ]}}},
+			{"subst":"amp_tee2_bufmem_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "-m", {"subst":"amp_tee2_bufmem_val", "required":"no", "ifnull":"1G"} ]}}},
 			{"port":"amp_for_target", "direction":"out"},
 			{"port":"amp_for_nchs", "direction":"out"}
 		]
@@ -236,10 +236,10 @@
 		"cmd":[
 			"bam12auxmerge",
 			"level=0",
-			{"subst":"rankstrip_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "rankstrip", {"subst":"rankstrip_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
-			"ranksplit=0",
+			{"subst":"rankstrip_nchs_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "rankstrip", {"subst":"rankstrip_nchs_val", "required":"no", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"ranksplit_nchs_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "ranksplit", {"subst":"ranksplit_nchs_val", "required":"no", "ifnull":"0"} ],"postproc":{"op":"concat","pad":"="}}}},
 			"zztoname=0",
-			{"subst":"clipreinsert_flag","required":"yes","ifnull":{"subst_constructor":{"vals":[ "clipreinsert", {"subst":"clipreinsert_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
+			{"subst":"clipreinsert_nchs_flag","required":"no","ifnull":{"subst_constructor":{"vals":[ "clipreinsert", {"subst":"clipreinsert_nchs_val", "required":"yes", "ifnull":"1"} ],"postproc":{"op":"concat","pad":"="}}}},
 			{"port":"no_aln_bam", "direction":"in"}
 		]
 	}
@@ -247,20 +247,20 @@
 "edges":[
 	{ "id":"bc2_to_t3", "from":"bamcollate2", "to":"tee4" },
 	{ "id":"phixaln_to_amp", "from":"tee4:amp", "to":"auxmerge_prep" },
-	{ "id":"amp_to_auxmrg", "from":"auxmerge_prep", "to":"amp_tee2" },
-	{ "id":"amp_to_auxmrg", "from":"amp_tee2:amp_for_target", "to":"bam12auxmerge:no_aln_bam" },
-	{ "id":"amp_to_auxmrg", "from":"amp_tee2:amp_for_nchs", "to":"bam12auxmerge_nchs:no_aln_bam" },
-	{ "id":"tgtaln_to_prealn", "from":"tee4:target", "to":"pre_alignment" },
-	{ "id":"prealn_to_tee", "from":"pre_alignment", "to":"alignment" },
+	{ "id":"amp_to_tee2", "from":"auxmerge_prep", "to":"amp_tee2" },
+	{ "id":"tee2_to_auxmrg_nab", "from":"amp_tee2:amp_for_target", "to":"bam12auxmerge:no_aln_bam" },
+	{ "id":"tee2_to_auxmrg_nchs_nab", "from":"amp_tee2:amp_for_nchs", "to":"bam12auxmerge_nchs:no_aln_bam" },
+	{ "id":"tee4_to_prealn", "from":"tee4:target", "to":"pre_alignment" },
+	{ "id":"prealn_to_aln", "from":"pre_alignment", "to":"alignment" },
 	{ "id":"ref_to_alignment", "from":"alignment_reference_genome", "to":"alignment:reference" },
 	{ "id":"alignment_to_postaln", "from":"alignment", "to":"post_alignment" },
         { "id":"refdict_to_postaln", "from":"alignment_reference_dict", "to":"post_alignment:reference_dict" },
 	{ "id":"postaln_to_auxmrg", "from":"post_alignment", "to":"bam12auxmerge" },
-	{ "id":"tgtaln_to_prealn", "from":"tee4:nchs", "to":"pre_alignment_nchs" },
-	{ "id":"prealn_to_tee", "from":"pre_alignment_nchs", "to":"alignment_nchs" },
-	{ "id":"ref_to_alignment", "from":"nchs_alignment_reference_genome", "to":"alignment_nchs:reference" },
-	{ "id":"alignment_to_postaln", "from":"alignment_nchs", "to":"post_alignment_nchs" },
-        { "id":"refdict_to_postaln", "from":"nchs_alignment_reference_dict", "to":"post_alignment_nchs:reference_dict" },
-	{ "id":"postaln_to_auxmrg", "from":"post_alignment_nchs", "to":"bam12auxmerge_nchs" }
+	{ "id":"tee4_to_prealn_nchs", "from":"tee4:nchs", "to":"pre_alignment_nchs" },
+	{ "id":"prealn_to_aln_nchs", "from":"pre_alignment_nchs", "to":"alignment_nchs" },
+	{ "id":"ref_to_alignment_nchs", "from":"nchs_alignment_reference_genome", "to":"alignment_nchs:reference" },
+	{ "id":"alignment_to_postaln_nchs", "from":"alignment_nchs", "to":"post_alignment_nchs" },
+        { "id":"refdict_to_postaln_nchs", "from":"nchs_alignment_reference_dict", "to":"post_alignment_nchs:reference_dict" },
+	{ "id":"postaln_to_auxmrg_nchs", "from":"post_alignment_nchs", "to":"bam12auxmerge_nchs" }
 ]
 }
