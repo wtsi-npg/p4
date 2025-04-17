@@ -40,7 +40,7 @@ These could be achieved more simply using UNIX pipes.
 
 Examples of use by the NPG team at Sanger. 
 
-Here we use `singualrity` to run the container containing P4, its templates, and (many of) the bioinformatics tools we use (but not reference data).
+Here we use `singularity` to run the container containing P4, its templates, and (many of) the bioinformatics tools we use (but not reference data).
 
 The reference data
 
