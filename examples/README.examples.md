@@ -82,8 +82,6 @@ export reference_genome_fasta="references/Homo_sapiens/GRCh38_full_analysis_set_
 export reference_dict="references/Homo_sapiens/GRCh38_full_analysis_set_plus_decoy_hla/all/picard/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa.dict"
 export alignment_reference_genome="references/Homo_sapiens/GRCh38_full_analysis_set_plus_decoy_hla/all/bwa-mem2/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa"
 
-export alignment_reference_genome="references/Homo_sapiens/GRCh38_full_analysis_set_plus_decoy_hla/all/bwa0_6/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa"
-
 singularity exec --bind "${ref_repository}:/mnt/ref_repository,${inputs}:/mnt/inputs,${outputs}:/mnt/outputs,${workarea}:/mnt/workarea" "${container_url}" \
 bash <<EOF
 export REF_PATH=/mnt/ref_repository/cram_cache/%2s/%2s/%s:URL=http://refcache.dnapipelines.sanger.ac.uk::8000/%s && \
