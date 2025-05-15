@@ -44,8 +44,8 @@ my $logger = mklogger($verbosity_level, $logfile, q[viv]);
 $logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
-my $raf_list = process_raf_list($opts{r});    # insert inline RAFILE nodes
-my $tee_list = process_raf_list($opts{t});    # insert tee with branch to RAFILE
+my $raf_list = preprocess_raf_list($opts{r});    # insert inline RAFILE nodes
+my $tee_list = preprocess_raf_list($opts{t});    # insert tee with branch to RAFILE
 $tee_list ||= {};
 
 my $s = read_file($cfg_file_name, binmode => ':utf8' );
@@ -54,10 +54,11 @@ my $cfg = from_json($s);
 
 if($cfg->{version}) { $TEMPLATE_VERSION = $cfg->{version}; }
 
-###############################################
-# insert any tees requested into the main graph
-###############################################
+###############################################################
+# insert any tees or RAFILE nodes requested into the main graph
+###############################################################
 process_tee_list($tee_list, $cfg);
+process_raf_list($raf_list, $cfg);
 
 my %all_nodes = (map { $_->{id} => $_ } @{$cfg->{nodes}});
 
@@ -729,7 +730,7 @@ sub mklogger {
 	}
 }
 
-sub process_raf_list {
+sub preprocess_raf_list {
 	my ($rafs) = @_;
 	my $raf_map;
 
@@ -738,6 +739,58 @@ sub process_raf_list {
 	}
 
 	return $raf_map;
+}
+
+###################################################################################################################
+# process raf_list, adding an RAFILE node between the "from" and "to" ports of the edge with specified id.
+#  In the raf_list hash, key identies edge, value specifies output file name
+#  Note: this will modify the master graph if $raf_list is defined and not empty. It is intended to be a debugging
+#   utility
+###################################################################################################################
+sub process_raf_list {
+	my ($raf_list, $cfg) = @_;
+
+	unless(defined $raf_list) {
+		return;
+	}
+
+$logger->($VLMAX, "Checking raf_list\n", Dumper($raf_list), "\n");
+
+	for my $target_edge_id (keys %{$raf_list}) {
+		my ($target_edge) = grep { $_->{id} eq $target_edge_id} @{$cfg->{edges}};
+
+		next unless(defined $target_edge);
+
+$logger->($VLMAX, "  processing raf edge ", Dumper($target_edge), "\n");
+
+		my $new_raf_node = { id => generate_random_node_id($cfg->{nodes}, q[new_raf_node_]), type => q/RAFILE/, name => $raf_list->{$target_edge_id}};  # Note: node id values must be unique
+		my $new_edge = { id => '___NEW_RAF_EDGE___', from => $new_raf_node->{id}, to => $target_edge->{to} };	  # TBD: edge id value should really be unique
+		$target_edge->{to} = $new_raf_node->{id};
+
+$logger->($VLMAX, "  created new raf node:\n", Dumper($new_raf_node), "\n");
+$logger->($VLMAX, "  created new raf edge1:\n", Dumper($target_edge), "\n");
+$logger->($VLMAX, "  created new raf edge2:\n", Dumper($new_edge), "\n\n");
+
+		push @{$cfg->{nodes}}, $new_raf_node;
+		push @{$cfg->{edges}}, $new_edge;
+	}
+
+	return;
+}
+
+sub generate_random_node_id {
+	my ($nodes, $prefix) = @_;
+
+	my $ret;
+	my $maxtry=100000;
+
+	do {
+		$ret=sprintf "%s%03d", $prefix, int(rand(100000));
+	} while (any { $_->{id} eq $ret } @{$nodes} and ($maxtry-- > 0));
+
+	if($maxtry <= 0) { croak q[Failed to generate randon node id]; }
+
+	return $ret;
 }
 
 ###################################################################################################################

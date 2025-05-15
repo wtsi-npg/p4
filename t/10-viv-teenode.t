@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 4;
+use Test::More tests => 6;
 use Test::Cmd;
 use Perl6::Slurp;
 use JSON;
@@ -105,6 +105,58 @@ subtest 'test simple graph siphoning off output from two nodes to temporary file
 
     $read_file = $test->read(\$outdata, $teefile2);
     ok($read_file, "read intermediate output from $teefile2");
+
+    is($outdata,"POIUYTREWQ\n","expected intermediate post-rev output (POIUYTREWQ)");
+};
+
+subtest 'test simple graph siphoning off output from one edge to a RAF file using the -r option' => sub {
+    plan tests => 5;
+    my $raffile1 = q[raffile1.txt];
+
+    # create input data file
+    $test->write($infile, qq[qwertyuiop\n]);
+    if($? != 0) { croak qq[Failed to create test input file $infile]; }
+
+    my $exit_status = $test->run(chdir => $test->curdir, args => "-v 0 -r cap2rev=$raffile1 -s -x $graph_file");
+    ok($exit_status>>8 == 0, "non-zero exit for test: $exit_status");
+
+    my $outdata;
+    my $read_file = $test->read(\$outdata, $outfile);
+    ok($read_file, "read test output: $outfile");
+
+    is($outdata,"PYTRWQ\n","expected final output (PYTRWQ)");
+
+    $read_file = $test->read(\$outdata, $raffile1);
+    ok($read_file, qq[read intermediate output from $raffile1]);
+
+    is($outdata,"QWERTYUIOP\n","expected intermediate post-cap output (QWERTYUIOP)");
+};
+
+subtest 'test simple graph siphoning off output from two edges to temporary files using the -r option' => sub {
+    plan tests => 7;
+    my $raffile1 = q[raffile1.txt];
+    my $raffile2 = q[raffile2.txt];
+
+    # create input data file
+    $test->write($infile, qq[qwertyuiop\n]);
+    if($? != 0) { croak qq[Failed to create test input file $infile]; }
+
+    my $exit_status = $test->run(chdir => $test->curdir, args => qq[-v 0 -r "cap2rev=$raffile1;rev2disemvowel=$raffile2" -s -x $graph_file]);
+    ok($exit_status>>8 == 0, "non-zero exit for test: $exit_status");
+
+    my $outdata;
+    my $read_file = $test->read(\$outdata, $outfile);
+    ok($read_file, "read output from $outfile");
+
+    is($outdata,"PYTRWQ\n","expected final output (PYTRWQ)");
+
+    $read_file = $test->read(\$outdata, $raffile1);
+    ok($read_file, "read intermediate output from $raffile1");
+
+    is($outdata,"QWERTYUIOP\n","expected intermediate post-cap output (QWERTYUIOP)");
+
+    $read_file = $test->read(\$outdata, $raffile2);
+    ok($read_file, "read intermediate output from $raffile2");
 
     is($outdata,"POIUYTREWQ\n","expected intermediate post-rev output (POIUYTREWQ)");
 };
