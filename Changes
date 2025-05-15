@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+0.44.0
+ - add optional reinsert clips node to precede bam12auxmerge for human alignments in nchs (bowtie2) to handle analyses with stage1 adapter detection
+ - implement raf_list debug feature (insert RAF output file in edge)
+
 0.43.0
  - update bowtie2 alignment method (used in human alignments for non-consented human split) to post-process bowtie2 output with bamcollate2+bam12split
      to allow proper auxtag merging by the downstream bam12auxmerge (workaround for supected biobambam2 bug)
