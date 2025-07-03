@@ -3,8 +3,7 @@
 "description":"run bwa mem to to align input bam to supplied reference genome",
 "subgraph_io":{
 	"ports":{
-		"inputs":{
-		},
+		"inputs":{},
 		"outputs":{
 			"_stdout_":"crammerge"
 		}
@@ -12,82 +11,102 @@
 },
 "subst_params":[],
 "nodes":[
-	{
-		"id":"order_target",
-		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
-		"cmd": {"select":"ppi_in_target_order_command", "default":"sort", "select_range":[1], "cases":{
-			"sort":[
-				"samtools",
-				"sort",
-				{"select":"ppi_sort_input_order", "default":"name_alphanum", "select_range":[1], "cases":{
-					"name_alphanum":"-n",
-					"name_lexicog":"-N",
-					"coord":[]
-				}},
-				"-u",
-				{"select":"ppi_in_target_input_format", "default":"cram", "select_range":[1], "cases":{
-					"cram":["--input-fmt-option", "no_ref=1"],
-					"bam":["--input-fmt", "bam"]
-				}},
-				"--threads", {"subst":"ppi_in_target_threads","required":true,"ifnull":3},
-				{"subst":"ppi_in_target", "required":true}
-			],
-			"collate":[
-				"samtools",
-				"collate",
-				"-f",
-				"-u",
-				{"select":"ppi_in_target_input_format", "default":"cram", "select_range":[1], "cases":{
-					"cram":["--input-fmt-option", "no_ref=1"],
-					"bam":["--input-fmt", "bam"]
-				}},
-				"--threads", {"subst":"ppi_in_target_threads","required":true,"ifnull":3},
-				{"subst":"ppi_in_target", "required":true}
-			]
-			}
+	{"select":"ppi_sort_in_target", "default":"on", "select_range":[1], "cases":{
+	"off":
+		{
+			"id":"order_target",
+			"type":"INFILE",
+			"name":{"subst":"ppi_in_target", "required":true},
+			"description":"no sort for target input"
 		},
-		"description":"order target input files"
-	},
-	{
-		"id":"order_human",
-		"type":"EXEC",
-		"use_STDIN": false,
-		"use_STDOUT": true,
-		"cmd": {"select":"ppi_in_human_order_command", "default":"sort", "select_range":[1], "cases":{
-			"sort":[
-				"samtools",
-				"sort",
-				{"select":"ppi_sort_input_order", "default":"name_alphanum", "select_range":[1], "cases":{
-					"name_alphanum":"-n",
-					"name_lexicog":"-N",
-					"coord":[]
-				}},
-				"-u",
-				{"select":"ppi_in_human_input_format", "default":"cram", "select_range":[1], "cases":{
-					"cram":["--input-fmt-option", "no_ref=1"],
-					"bam":["--input-fmt", "bam"]
-				}},
-				"--threads", {"subst":"ppi_in_target_threads","required":true,"ifnull":3},
-				{"subst":"ppi_in_human", "required":true}
-			],
-			"collate":[
-				"samtools",
-				"collate",
-				"-f",
-				"-u",
-				{"select":"ppi_in_human_input_format", "default":"cram", "select_range":[1], "cases":{
-					"cram":["--input-fmt-option", "no_ref=1"],
-					"bam":["--input-fmt", "bam"]
-				}},
-				"--threads", {"subst":"ppi_in_human_threads","required":true,"ifnull":3},
-				{"subst":"ppi_in_human", "required":true}
-			]
-			}
+	"on":
+		{
+				"id":"order_target",
+				"type":"EXEC",
+				"use_STDIN": false,
+				"use_STDOUT": true,
+				"cmd": {"select":"ppi_in_target_order_command", "default":"sort", "select_range":[1], "cases":{
+					"sort":[
+						"samtools",
+						"sort",
+						{"select":"ppi_sort_input_order", "default":"name_alphanum", "select_range":[1], "cases":{
+							"name_alphanum":"-n",
+							"name_lexicog":"-N",
+							"coord":[]
+						}},
+						"-u",
+						{"select":"ppi_in_target_input_format", "default":"cram", "select_range":[1], "cases":{
+							"cram":["--input-fmt-option", "no_ref=1"],
+							"bam":["--input-fmt", "bam"]
+						}},
+						"--threads", {"subst":"ppi_in_target_threads","required":true,"ifnull":3},
+						{"subst":"ppi_in_target", "required":true}
+					],
+					"collate":[
+						"samtools",
+						"collate",
+						"-f",
+						"-u",
+						{"select":"ppi_in_target_input_format", "default":"cram", "select_range":[1], "cases":{
+							"cram":["--input-fmt-option", "no_ref=1"],
+							"bam":["--input-fmt", "bam"]
+						}},
+						"--threads", {"subst":"ppi_in_target_threads","required":true,"ifnull":3},
+						{"subst":"ppi_in_target", "required":true}
+					]
+					}
+				},
+			"description":"order target input files"
+		}
+	}},
+	{"select":"ppi_sort_in_human", "default":"on", "select_range":[1], "cases":{
+	"off":
+		{
+			"id":"order_human",
+			"type":"INFILE",
+			"name":{"subst":"ppi_in_human", "required":true},
+			"description":"no sort for human input"
 		},
-		"description":"order human input files"
-	},
+	"on":
+		{
+			"id":"order_human",
+			"type":"EXEC",
+			"use_STDIN": false,
+			"use_STDOUT": true,
+			"cmd": {"select":"ppi_in_human_order_command", "default":"sort", "select_range":[1], "cases":{
+				"sort":[
+					"samtools",
+					"sort",
+					{"select":"ppi_sort_input_order", "default":"name_alphanum", "select_range":[1], "cases":{
+						"name_alphanum":"-n",
+						"name_lexicog":"-N",
+						"coord":[]
+					}},
+					"-u",
+					{"select":"ppi_in_human_input_format", "default":"cram", "select_range":[1], "cases":{
+						"cram":["--input-fmt-option", "no_ref=1"],
+						"bam":["--input-fmt", "bam"]
+					}},
+					"--threads", {"subst":"ppi_in_target_threads","required":true,"ifnull":3},
+					{"subst":"ppi_in_human", "required":true}
+				],
+				"collate":[
+					"samtools",
+					"collate",
+					"-f",
+					"-u",
+					{"select":"ppi_in_human_input_format", "default":"cram", "select_range":[1], "cases":{
+						"cram":["--input-fmt-option", "no_ref=1"],
+						"bam":["--input-fmt", "bam"]
+					}},
+					"--threads", {"subst":"ppi_in_human_threads","required":true,"ifnull":3},
+					{"subst":"ppi_in_human", "required":true}
+				]
+				}
+			},
+			"description":"order human input files"
+		}
+	}},
 	{
 		"id":"crammerge",
 		"type":"EXEC",
