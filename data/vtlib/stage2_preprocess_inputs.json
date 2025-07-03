@@ -29,13 +29,20 @@
 			"crammerge":
 			[
 				{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "merge",
-				"-n",
+				{"select":"ppi_sort_input_order", "default":"name_alphanum", "select_range":[1], "cases":{
+					"name_alphanum":"-n",
+					"name_lexicog":"-N",
+					"coord":[]
+				}},
+				{"select":"ppi_merge_rg_flag", "default":"on", "select_range":[1], "cases":{ "on":"-c", "off":[] }},
+				{"select":"ppi_merge_pg_flag", "default":"on", "select_range":[1], "cases":{ "on":"-p", "off":[] }},
 				"-O", "BAM",
 				"-l", "0",
 				{"select":"input_format", "default":"cram", "select_range":[1], "cases":{
 					"cram":["--input-fmt-option", "no_ref=1"],
 					"bam":["--input-fmt", "bam"]
 				}},
+				{"subst":"ppi_merge_arbitrary_flags"},
 				"-",
 				{"subst":"incrams", "required":true}
 			],

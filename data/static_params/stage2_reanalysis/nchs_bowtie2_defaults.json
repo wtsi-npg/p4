@@ -1,0 +1,20 @@
+{
+  "assign": [
+    {
+      "alignment_hs_method": "bowtie2",
+      "hs_alignment_reference_genome": "/mnt/ref_repository/references//Homo_sapiens/T2T-CHM13v2.0/all/bowtie2/T2T-CHM13v2.0.fa",
+      "hs_reference_genome_fasta": "/mnt/ref_repository/references/Homo_sapiens/T2T-CHM13v2.0/all/fasta/T2T-CHM13v2.0.fa",
+      "reference_dict_hs": "/mnt/ref_repository/references/Homo_sapiens/T2T-CHM13v2.0/all/picard/T2T-CHM13v2.0.fa.dict",
+      "hs_reinsert_clips": "on"
+    }
+  ],
+  "assign_local": {},
+  "ops": {
+    "splice": [
+      "aln_prealn_hs_bamcollate2_ranking",
+      "aln_prealn_hs_bamadapterclip",
+      "aln_postaln_hs_bam12split"
+    ],
+    "prune": []
+  }
+}

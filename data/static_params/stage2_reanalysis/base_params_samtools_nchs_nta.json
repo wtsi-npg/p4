@@ -1,0 +1,42 @@
+{
+  "assign": [
+    {
+      "spatial_filter_switch":"off",
+      "markdup_optical_distance_value": "100",
+      "s2_se_pe": "pe",
+      "samtools_executable": "samtools",
+      "s2_input_format": "cram",
+      "markdup_method": "samtools",
+      "s2_ppi_switch":"s2_ppi",
+      "pp_read2tags":"off",
+      "pp_import_method":"crammerge",
+      "fastq_s2_pi_fq1": "DUMMY",
+      "fastq_s2_pi_fq2": "DUMMY",
+      "fastq_s2_pi_RG_ID": "DUMMY",
+      "s2_filter_files": "DUMMY",
+      "spatial_filter_file": "DUMMY",
+      "phix_reference_genome_fasta":"DUMMY",
+      "no_target_alignment": 1,
+      "realignment_switch":1,
+      "scramble_reference_flag": "-x",
+      "stats_reference_flag": null
+    }
+  ],
+  "assign_local": {},
+  "ops": {
+    "splice": [
+      "aln_amp_bamreset_pre_auxmerge:-aln_bam12auxmerge_nchs:no_aln_bam",
+      "alignment_filter:target_bam_out-foptgt_bmd_multiway:"
+    ],
+    "prune": [
+      "fop[ht].*_bmd_multiway:calibration_pu-",
+      "foptgt_cram_tee:c2a-",
+      "fop[ht].*samtools_stats_F0.*_target.*-",
+      "fop[ht].*samtools_stats_F0.*00_bait.*-",
+      "aln_tee4_tee4:to_phix_aln-alignment_filter:phix_bam_in",
+      "alignment_filter:phix_bam_out-scs_merge_output_seqchksum:__PHIX_CHKSUM_IN__",
+      "aln_tee4_tee4:to_tgtaln-alignment_filter:target_bam_in",
+      "ssfqc_tee_ssfqc:subsample-"
+    ]
+  }
+}
