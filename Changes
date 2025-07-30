@@ -1,6 +1,15 @@
 CHANGES LOG
 -----------
 
+0.44.1
+ - add static parameters for non-consented human split+no target_alignment; and for bowtie2 HRR
+ - add template to optionally perform sorts to input files for target+human reanalyses
+ - allow selection of input sort order for input files to samtools merge commands in ppi
+ - add optional -c and -p flags to samtools merge commands to correctly merge RG and PG lines
+ - add arbitrary flags parameter to ppi samtools merge commands
+ - make preprocessing input sorts for target and human optional
+ - update container samtools to version 1.22
+
 0.44.0
  - add optional reinsert clips node to precede bam12auxmerge for human alignments in nchs (bowtie2) to handle analyses with stage1 adapter detection
  - implement raf_list debug feature (insert RAF output file in edge)
