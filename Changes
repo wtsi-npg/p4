@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+0.44.2
+ - update container versions of software - samtools (1.22.1), htslib (1.22.1) and io_lib (1.15.1)
+ - add doc for human read removal
+
 0.44.1
  - add static parameters for non-consented human split+no target_alignment; and for bowtie2 HRR
  - add template to optionally perform sorts to input files for target+human reanalyses
