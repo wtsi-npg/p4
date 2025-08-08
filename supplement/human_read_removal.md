@@ -5,11 +5,11 @@ informatics team NPG at the Wellcome Sanger Institute (WSI). This is *not* an ex
 description of human read removal methods used at WSI. We recommend *not* using the "legacy"
 method.
 
-## npg2025 - Bowtie2-VSL-h38
+## npg2025 - Bowtie2-VSL-T2T
 
-Bowtie2 is used with its very-sensitive local mode and in unpaired read mode, with the GRCh38
-human reference genome. A hit to either of the reads in paired data results in both reads being
-categorised as human.
+Bowtie2 is used with its very-sensitive local mode and in unpaired read mode, with the
+T2T-CHM13v2.0 human reference genome. A hit to either of the reads in paired data results in
+both reads being categorised as human.
 
 This method was evaluated as a suitable combination of sufficient human read removal and minimal
 impact on the bioinformatic analysis of the residue (catagorised non-human) data.
