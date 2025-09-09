@@ -309,6 +309,7 @@
 			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "level", {"subst":"b2c_compression_level","ifnull":7} ], "postproc":{"op":"concat", "pad":"="}}}]}},
 			{"subst_constructor":{"vals":[ "-T", {"subst":"scramble_reference_fasta"}]}},
 			{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "embed_ref", {"subst":"scramble_embed_reference","ifnull":0} ], "postproc":{"op":"concat", "pad":"="}}}]}},
+			{"subst":"cram_product_version_option", "required":false, "ifnull":{"subst_constructor":{"vals":[ "--output-fmt-option", {"subst_constructor":{"vals":[ "version", {"subst":"cram_product_version","ifnull":"3.0"} ], "postproc":{"op":"concat", "pad":"="}}}]}}},
 			"-"
 		]
 	},
