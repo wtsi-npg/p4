@@ -1246,7 +1246,8 @@ sub register_splice_pairs {
 				if(not $to) { my $to_node = $stdout_node->($flat_graph); push @{$splice_candidates->{new_nodes}}, $to_node; $to = $to_node->{id}; }
 			}
 
-			my $eid = (($frsp->{src} and exists $frsp->{src}->{node}->{id})? $frsp->{src}->{node}->{id}: q[STDIN]) . q[_to_] . (($frsp->{dst} and exists $frsp->{dst}->{node}) ? $frsp->{dst}->{node}->{id} : q[STDOUT]);
+			my $eid = $from . q[_to_] . (($frsp->{dst} and exists $frsp->{dst}->{node}) ? $to : q[STDOUT]);
+			$eid =~ s/:?STDOUT_\d+$/:STDOUT/smx;
 			push @{$edge_list}, { id => $eid, from => $from, to => $to};
 				
 			if($frsp->{src} and exists $frsp->{src}->{node}) { $preserve_nodes->{$frsp->{src}->{node}->{id}} = 1; }
@@ -1584,7 +1585,8 @@ sub resolve_ports {
 			}
 			else { # resolve one dst endpoint per src entry
 				# TBD: I think undefined $dst_spec (with resulting undefined $dst) doesn't makes sense if a port is specified in $src_spec. Detect this and croak.
-				my $dst_entry = _resolve_endpoint($src_entry->{endpoint_spec}, $DST, $flat_graph);
+				my $pioneer_to = $src_entry->{pioneer}->{edge}->{to};
+				my $dst_entry = _resolve_endpoint($pioneer_to, $DST, $flat_graph);
 
 				$ret->{src} = $src_entry->{endpoint}->{node_info};
 				$ret->{src}->{port} = $src_entry->{endpoint}->{port};
