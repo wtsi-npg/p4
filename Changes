@@ -1,6 +1,10 @@
 CHANGES LOG
 -----------
 
+0.45.0
+ - option to select CRAM output version (default 3.0)
+ - bump actions/checkout from 4 to 5
+
 0.44.2
  - update container versions of software - samtools (1.22.1), htslib (1.22.1) and io_lib (1.15.1)
  - add doc for human read removal
