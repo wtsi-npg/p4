@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.45.1
+ - fix bug that caused unaligned y-split CRAM outputs to default to version 3.1 (now 3.0)
+
 0.45.0
  - option to select CRAM output version (default 3.0)
  - bump actions/checkout from 4 to 5
