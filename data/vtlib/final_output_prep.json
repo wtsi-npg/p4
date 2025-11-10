@@ -468,7 +468,8 @@
 		"cmd": [
 			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "index",
 			"-o", {"port":"idx", "direction":"out"},
-			{"subst":"diskbam_extra_flags", "required":false},
+			{"select":"diskbamindex_csi_flag", "required":true, "select_range":[1], "default":"on", "cases":{"on":"-c","off":[]}},
+			{"subst":"diskbamindex_extra_flags", "required":false},
 			{"port":"bam", "direction":"in"}
 		]
 	},
