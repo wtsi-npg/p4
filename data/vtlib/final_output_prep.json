@@ -474,7 +474,21 @@
 		]
 	},
 	{ "id":"bam_file", "type":"RAFILE", "name":{"subst":"bam_file"} },
-	{ "id":"bam_index_file", "type":"OUTFILE", "name":{"subst":"bam_index_file"} },
+	{
+		"id":"bam_index_file",
+		"type":"OUTFILE",
+		"name": {
+			"subst_constructor":{
+				"vals":[
+					{"subst":"outdatadir"},
+					"/",
+					{"subst":"fopid"},
+					{"select":"diskbamindex_csi_flag", "required":true, "select_range":[1], "default":"on", "cases":{"on":".csi","off":".bai"}}
+				],
+				"postproc":{"op":"concat", "pad":""}
+			}
+		}
+	},
 	{ "id":"cram_file", "type":"OUTFILE", "name":{"subst":"cram_file"} },
 	{ "id":"cram_index_file", "type":"OUTFILE", "name":{"subst":"cram_index_file"} },
 	{ "id":"bam_md5", "type":"OUTFILE", "name":{"subst":"bam_md5"} },
