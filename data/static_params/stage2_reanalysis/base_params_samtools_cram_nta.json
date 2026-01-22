@@ -1,0 +1,38 @@
+{
+  "assign": [
+    {
+      "spatial_filter_switch":"off",
+      "markdup_optical_distance_value": "100",
+      "s2_se_pe": "pe",
+      "samtools_executable": "samtools",
+      "s2_input_format": "cram",
+      "markdup_method": "samtools",
+      "s2_ppi_switch":"s2_ppi",
+      "pp_import_method":"crammerge",
+      "fastq_s2_pi_fq1": "DUMMY",
+      "fastq_s2_pi_fq2": "DUMMY",
+      "fastq_s2_pi_RG_ID": "DUMMY",
+      "s2_filter_files": "DUMMY",
+      "spatial_filter_file": "DUMMY",
+      "phix_reference_genome_fasta":"DUMMY",
+      "realignment_switch":1,
+      "scramble_reference_flag":"-x",
+      "stats_reference_flag": null
+    }
+  ],
+  "assign_local": {},
+  "ops": {
+    "splice": [
+      "ssfqc_tee_ssfqc:straight_through1:-aln_amp_bamreset_pre_auxmerge:",
+      "aln_amp_bamreset_pre_auxmerge:-foptgt_bmd_multiway:",
+      "foptgt_seqchksum_file:-scs_cmp_seqchksum:outputchk"
+    ],
+    "prune": [
+      "foptgt.*_bmd_multiway:calibration_pu-",
+      "foptgt_cram_tee:c2a-",
+      "foptgt.*samtools_stats_F0.*_target.*-",
+      "foptgt.*samtools_stats_F0.*00_bait.*-",
+      "ssfqc_tee_ssfqc:subsample-"
+    ]
+  }
+}
