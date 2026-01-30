@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.46.1
+ - retain initial collate step in nta reanalysis (stage2 reanalysis)
+
 0.46.0
  - option to select CRAM output version (default 3.0) in library merge template
  - add static parameters file for no target_alignment (stage2 reanalysis)
