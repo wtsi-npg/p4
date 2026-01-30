@@ -23,7 +23,7 @@
   "assign_local": {},
   "ops": {
     "splice": [
-      "ssfqc_tee_ssfqc:straight_through1:-aln_amp_bamreset_pre_auxmerge:",
+      "aln_bamcollate2:-aln_amp_bamreset_pre_auxmerge:",
       "aln_amp_bamreset_pre_auxmerge:-foptgt_bmd_multiway:",
       "foptgt_seqchksum_file:-scs_cmp_seqchksum:outputchk"
     ],
