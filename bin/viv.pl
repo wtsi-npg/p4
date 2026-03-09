@@ -28,6 +28,7 @@ Readonly::Scalar my $VLMAX => 3;
 
 my $TEMPLATE_VERSION = 1;
 
+my @log_args = @ARGV;
 my %opts;
 getopts('xshv:o:r:t:', \%opts);
 
@@ -41,7 +42,12 @@ my $logfile = $opts{o};
 my $verbosity_level = $opts{v};
 $verbosity_level = $VLMIN unless defined $verbosity_level;
 my $logger = mklogger($verbosity_level, $logfile, q[viv]);
-$logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0);
+$logger->($VLMIN, 'viv.pl version '.($VERSION||q(unknown_not_deployed)).', running as '.$0.' '.join q/ /, @log_args);
+
+my $exec_host_info = _fetch_exec_host_info();
+$logger->($VLMIN, 'Execution host name: ', $exec_host_info->{host_name});
+$logger->($VLMIN, 'Execution host IP: ', $exec_host_info->{host_ip});
+
 my $cfg_file_name = $ARGV[0];
 $cfg_file_name ||= q[test_cfg.json];
 my $raf_list = preprocess_raf_list($opts{r});    # insert inline RAFILE nodes
@@ -71,7 +77,7 @@ my %infile_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[INFILE]; } @{
 my %outfile_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[OUTFILE]; } @{$cfg->{nodes}}));
 my %rafile_nodes = (map { $_->{id} => $_ } (grep { $_->{type} eq q[RAFILE]; } @{$cfg->{nodes}}));
 
-$logger->($VLMAX, "==================================\nEXEC nodes(0):\n==================================\n", Dumper(%exec_nodes), "\n");
+$logger->($VLMAX, "\n==================================\nEXEC nodes(0):\n==================================\n", Dumper(%exec_nodes), "\n");
 
 # Initial pass through RAFILE and OUTFILE nodes to mark the downstream EXEC node dependencies on upstream EXEC nodes
 my %deps = ();
@@ -262,6 +268,21 @@ while((my $pid=wait) > 0) {
 &{$SIG{'ALRM'}||sub{}}(); # fire off bad exit if set
 
 $logger->($VLMIN, "Done\n");
+
+##################################################
+# _fetch_exec_host_info:
+#     determine execution host name and IP for log
+##################################################
+sub _fetch_exec_host_info {
+	my $log_exec_host_name = qx/hostname -s/;
+	$log_exec_host_name ||= q[UNKNOWN];
+	chomp $log_exec_host_name;
+	my $log_exec_host_ip = qx/hostname -I/;
+	$log_exec_host_ip ||= q[UNKNOWN];
+	chomp $log_exec_host_ip;
+
+	return({ host_name => $log_exec_host_name, host_ip => $log_exec_host_ip});
+}
 
 ##############################################################################
 # _filter_edges:
