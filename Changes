@@ -1,6 +1,11 @@
 CHANGES LOG
 -----------
 
+ - fix missing liburi-perl in container, needed for plot-bamstats
+
+0.48.0
+ - update container versions of software - samtools (1.23.1), htslib (1.23.1)
+
 0.47.0
  - extend logging of command version and full path to include command line arguments
  - add execution host name and IP address to log

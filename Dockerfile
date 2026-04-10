@@ -5,12 +5,12 @@ ARG BIOBAMBAM2_VERSION="2.0.185-release-20221211202123"
 ARG BWA_VERSION="0.7.17"
 ARG BWA_MEM2_VERSION="2.2.1"
 ARG BOWTIE2_VERSION="2.5.4"
-ARG DEFLATE_VERSION="1.24"
-ARG HTSLIB_VERSION="1.22.1"
+ARG DEFLATE_VERSION="1.25"
+ARG HTSLIB_VERSION="1.23.1"
 ARG IO_LIB_VERSION="1.15.1"
 ARG LIBMAUS2_VERSION="2.0.813-release-20221210220409"
 ARG NPG_SEQ_COMMON_VERSION="51.1"
-ARG SAMTOOLS_VERSION="1.22.1"
+ARG SAMTOOLS_VERSION="1.23.1"
 ARG TEEPOT_VERSION="1.2.0"
 ARG PCAP_CORE_VERSION="5.7.0"
 
@@ -198,6 +198,7 @@ ENV LANG=en_GB.UTF-8 \
     LANGUAGE=en_GB \
     LC_ALL=en_GB.UTF-8
 
+# liburi-perl - is required for plot-bamstats
 RUN apt-get install -q -y --no-install-recommends \
         libboost-atomic1.74.0 \
         libbz2-1.0 \
@@ -208,6 +209,7 @@ RUN apt-get install -q -y --no-install-recommends \
         libnettle8 \
         libssl3 \
         libxml2 \
+        liburi-perl \
         zlib1g \
         perl && \
         unattended-upgrade -v && \
