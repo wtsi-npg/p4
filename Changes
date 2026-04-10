@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - fix missing liburi-perl in container, needed for plot-bamstats
+
 0.48.0
  - update container versions of software - samtools (1.23.1), htslib (1.23.1)
 
