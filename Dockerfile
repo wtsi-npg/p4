@@ -198,8 +198,9 @@ ENV LANG=en_GB.UTF-8 \
     LANGUAGE=en_GB \
     LC_ALL=en_GB.UTF-8
 
-# liburi-perl - is required for plot-bamstats
+# liburi-perl and gnuplot - are required for plot-bamstats
 RUN apt-get install -q -y --no-install-recommends \
+        gnuplot \
         libboost-atomic1.74.0 \
         libbz2-1.0 \
         libcurl3-gnutls \
