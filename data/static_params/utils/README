@@ -31,7 +31,7 @@
 
  $ export P4C_REANALYSIS_CREATE_WORK_AREA="true"
  $ export P4C_REANALYSIS_PREPARE_INPUTS="true"
- $ export P4C_LSF_SUSP="true"
+ $ export P4C_LSF_SUBMIT_JOBS="true"
  $ export P4C_LSF_USER_GROUP="prod_users"
  $ export P4C_LSF_JOB_GROUP="/test/kl2"
 
