@@ -1,0 +1,39 @@
+
+# required environment variables
+ SINGULARITY_CACHEDIR - cache directory for singularity
+ P4C_REANALYSIS_BASE - path to base of work area; must be mountable by singularity; work area will be created if P4C_REANALYSIS_CREATE_WORK_AREA is set to "true"
+ P4C_REANALYSIS_OUTPUT_NAME - base name for output files
+ P4C_REANALYSIS_INPUT_NAME - path to input file used for reanalysis; possibly prefixed with "irods:"; will be copied to analysis area if P4C_REANALYSIS_PREPARE_INPUTS is set to "true"
+ P4C_REANALYSIS_REF_ORGANISM - name of organism as it appears in the reference repository path
+ P4C_REANALYSIS_REF_STRAIN - name of "strain" as it appears in the reference repository path
+ P4C_BASE_ANALYSIS - type of reanalysis (e.g. "base_params_samtools_cram", "base_params_duplexseq_cram", "base_params_samtools_cram_nta", "base_params_samtools_nchs", "base_params_samtools_nchs_nta", "base_params_samtools_ysplit_nta_cram", "base_params_duplexseq_fastq" or "base_params_samtools_nchs_fastq")
+
+# optional environment variables
+ P4C_REANALYSIS_CREATE_WORK_AREA - set to "true" to create work area for the reanalysis
+ P4C_REANALYSIS_PREPARE_INPUTS - set to "true" to cause input to be copied to work area
+ P4C_LSF_SUBMIT_JOBS - set to "true" to create LSF job; if this is not set to "true", the script will output a singularity command for the parameters supplied
+ P4C_LSF_SUSP - set to "true" to cause LSF job to be submitted in suspended state (to be run with bresume)
+ P4C_LSF_USER_GROUP - if supplied, use as argument for bsub -G flag (LSF user group)
+ P4C_LSF_JOB_GROUP - if supplied, use as argument for bsub -g flag (LSF job group)
+ P4C_REF_REPOSITORY - base of reference repository (default: "/lustre/scratch125/core/sciops_repository")
+
+#########
+# EXAMPLE - reanalyse /seq/illumina/runs/50/50131/lane7/plex3/50131_7#3.cram from iRODS as DuplexSeq using mouse reference "GRCm39" under LSF
+#########
+
+ $ export SINGULARITY_CACHEDIR=/path/to/your/singularity/cache
+ $ export P4C_REANALYSIS_BASE="/my_home_base/demo/p4c_reanalysis"
+ $ export P4C_REANALYSIS_OUTPUT_NAME="52227_5#1_redo"
+ $ export P4C_REANALYSIS_INPUT_NAME="irods:/seq/illumina/runs/50/50131/lane7/plex3/50131_7#3.cram"
+ $ export P4C_REANALYSIS_REF_ORGANISM="Mus_musculus"
+ $ export P4C_REANALYSIS_REF_STRAIN="GRCm39"
+ $ export P4C_BASE_ANALYSIS="base_params_duplexseq_cram"
+
+ $ export P4C_REANALYSIS_CREATE_WORK_AREA="true"
+ $ export P4C_REANALYSIS_PREPARE_INPUTS="true"
+ $ export P4C_LSF_SUBMIT_JOBS="true"
+ $ export P4C_LSF_USER_GROUP="prod_users"
+ $ export P4C_LSF_JOB_GROUP="/test/kl2"
+
+ $ p4c_tgtaln_reanalysis_generic.sh
+
