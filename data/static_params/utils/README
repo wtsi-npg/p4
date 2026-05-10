@@ -1,7 +1,7 @@
 
 # required environment variables
  SINGULARITY_CACHEDIR - cache directory for singularity
- P4C_REANALYSIS_BASE - path to base of work area; must be mountanle by singularity; work area will be created if P4C_REANALYSIS_CREATE_WORK_AREA is set to "true"
+ P4C_REANALYSIS_BASE - path to base of work area; must be mountable by singularity; work area will be created if P4C_REANALYSIS_CREATE_WORK_AREA is set to "true"
  P4C_REANALYSIS_OUTPUT_NAME - base name for output files
  P4C_REANALYSIS_INPUT_NAME - path to input file used for reanalysis; possibly prefixed with "irods:"; will be copied to analysis area if P4C_REANALYSIS_PREPARE_INPUTS is set to "true"
  P4C_REANALYSIS_REF_ORGANISM - name of organism as it appears in the reference repository path
@@ -11,7 +11,7 @@
 # optional environment variables
  P4C_REANALYSIS_CREATE_WORK_AREA - set to "true" to create work area for the reanalysis
  P4C_REANALYSIS_PREPARE_INPUTS - set to "true" to cause input to be copied to work area
- P4C_LSF_SUBMIT_JOBS - set to "true" to create LSF job; if this is not set to "true", the script will ouput a singularity command for the parameters supplied)
+ P4C_LSF_SUBMIT_JOBS - set to "true" to create LSF job; if this is not set to "true", the script will output a singularity command for the parameters supplied
  P4C_LSF_SUSP - set to "true" to cause LSF job to be submitted in suspended state (to be run with bresume)
  P4C_LSF_USER_GROUP - if supplied, use as argument for bsub -G flag (LSF user group)
  P4C_LSF_JOB_GROUP - if supplied, use as argument for bsub -g flag (LSF job group)
