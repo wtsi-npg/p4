@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Carp;
-use Test::More tests => 6;
+use Test::More tests => 7;
 use Test::Cmd;
 use File::Slurp;
 use Perl6::Slurp;
@@ -568,7 +568,7 @@ subtest 'multilevel_vtf_required_param' => sub {
 			{
 				id => 'vfile',
 				type => 'OUTFILE',
-				name => { subst_constructor => { vals => [ 'tmp.', {subst => 'ext', 'required' => 'true'} ], postproc => { op => 'concat', pad => ''} }, }
+				name => { subst_constructor => { vals => [ 'tmp.', {subst => 'ext', required => JSON::true} ], postproc => { op => 'concat', pad => ''} }, }
 			},
 		]
 	};
@@ -626,6 +626,188 @@ subtest 'multilevel_vtf_required_param' => sub {
 	};
 
 	is_deeply ($vtfp_results, $expected_result, 'multilevel local param reeval');
+};
+
+subtest 'multilevel_vtf_forced_undef' => sub {
+	plan tests => 4;
+
+	my $top_container = {
+				version => '2.0',
+				description => 'outermost of a nest of test VTFILEs',
+				subst_params => [
+					{ id => 'top_sp_contents', required => 'false', default => 'top SP' },
+					{
+						id => 'top_box',
+						required => 'false',
+						default => 'TB_DFLT',
+						subst_constructor => {
+							vals => [ 'TB [', {subst => 'top_sp_contents'}, '] TB' ],
+							postproc => {op => 'concat', pad => ''}
+						}
+					}
+				],
+				nodes => [
+					{
+						id => 'middle',
+						type => 'VTFILE',
+						node_prefix => 'mid_',
+						name => 'middle.json'
+					}
+				],
+				edges => []
+			};
+
+	my $middle = {
+			version => '2.0',
+			description => 'middle of a nest of test VTFILEs',
+			subst_params => [
+				{id => 'mid_sp_contents', required => 'false', default => 'mid SP'},
+				{
+					id => 'mid_box',
+					required => 'false',
+					default => 'MID_DFLT',
+					subst_constructor => {
+						vals => [ 'MIDB [', {subst => 'mid_sp_contents'}, '] MIDB' ],
+						postproc => {op => 'concat', pad => ''}
+					}
+				}
+			],
+			nodes => [
+					{
+						id => 'bottom',
+						type => 'VTFILE',
+						node_prefix => 'bot_',
+						name => 'bottom.json'
+					},
+					{
+						id => 'blather',
+						type => 'EXEC',
+						use_STDIN =>  'false',
+						use_STDOUT =>  'true',
+						cmd => [
+							'echo',
+							{subst => 'top_box'}, {subst => 'mid_box'}, {subst => 'bot_box'}
+						]
+					}
+			],
+			edges => []
+		};
+
+	my $bottom = {
+			version => '2.0',
+			description => 'innermost of a nest of test VTFILEs',
+			subst_params => [
+				{id => 'bot_sp_contents', required => 'false', default => 'bot SP'},
+				{
+					id => 'bot_box',
+					required => 'false',
+					default => 'BOT_DFLT',
+					subst_constructor => {
+						vals => [ 'BOTB [', {subst => 'bot_sp_contents'}, '] BOTB' ],
+						postproc => {op => 'concat', pad => ''}
+					}
+				}
+			],
+			nodes => [
+				{
+					id => 'haver',
+					type => 'EXEC',
+					use_STDIN => 'false',
+					use_STDOUT => 'true',
+					cmd => [
+						'echo',
+						{subst => 'top_box'}, {subst => 'mid_box'}, {subst => 'bot_box'}
+					]
+				}
+			],
+			edges => []
+		};
+
+	my ($template, $fn);
+	$fn = $template = $tdir.q[/10-vtfp-multilevel_vtf_forced_undef.json];
+	my $contents = to_json($top_container);
+	write_file($fn, $contents);
+
+	$fn = $tdir.q[/middle.json];
+	$contents = to_json($middle);
+	write_file($fn, $contents);
+
+	$fn = $tdir.q[/bottom.json];
+	$contents = to_json($bottom);
+	write_file($fn, $contents);
+
+	my $exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -template_path $tdir $template]);
+	ok($exit_status>>8 == 0, "non-zero exit: $exit_status");
+	my $vtfp_results = from_json($test->stdout);
+	my $vtfp_err = $test->stderr;
+
+	my $expected_result = {
+          'version' => '2.0',
+          'edges' => [],
+          'nodes' => [
+                       {
+                         'id' => 'mid_blather',
+                         'type' => 'EXEC',
+                         'use_STDIN' => 'false',
+                         'use_STDOUT' => 'true',
+                         'cmd' => [
+                                    'echo',
+                                    'TB [top SP] TB',
+                                    'MIDB [mid SP] MIDB'
+                                  ]
+                       },
+                       {
+                         'id' => 'mid_bot_haver',
+                         'type' => 'EXEC',
+                         'use_STDIN' => 'false',
+                         'use_STDOUT' => 'true',
+                         'cmd' => [
+                                    'echo',
+                                    'TB [top SP] TB',
+                                    'MIDB [mid SP] MIDB',
+                                    'BOTB [bot SP] BOTB'
+                                  ],
+                       }
+                     ]
+        };
+	is_deeply ($vtfp_results, $expected_result, 'multilevel vtf forced undef (no nullkeys)');
+
+	$exit_status = $test->run(chdir => $test->curdir, args => qq[-no-absolute_program_paths -verbosity_level 0 -template_path $tdir -nullkeys mid_sp_contents $template]);
+	ok($exit_status>>8 == 0, "non-zero exit: $exit_status");
+	$vtfp_results = from_json($test->stdout);
+	$vtfp_err = $test->stderr;
+
+	$expected_result = {
+          'version' => '2.0',
+          'edges' => [],
+          'nodes' => [
+                       {
+                         'id' => 'mid_blather',
+                         'type' => 'EXEC',
+                         'use_STDIN' => 'false',
+                         'use_STDOUT' => 'true',
+                         'cmd' => [
+                                    'echo',
+                                    'TB [top SP] TB',
+                                    'MID_DFLT'
+                                  ]
+                       },
+                       {
+                         'id' => 'mid_bot_haver',
+                         'type' => 'EXEC',
+                         'use_STDIN' => 'false',
+                         'use_STDOUT' => 'true',
+                         'cmd' => [
+                                    'echo',
+                                    'TB [top SP] TB',
+                                    'MID_DFLT',
+                                    'BOTB [bot SP] BOTB'
+                                  ],
+                       }
+                     ]
+        };
+
+	is_deeply ($vtfp_results, $expected_result, 'multilevel vtf forced undef (nullkeys: mid_sp_contents)');
 };
 
 1;

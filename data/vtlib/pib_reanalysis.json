@@ -1,0 +1,123 @@
+{
+"version":"2.0",
+"description":"run bwa mem to to align input bam to supplied reference genome",
+"subgraph_io":{
+	"ports":{
+		"inputs":{},
+		"outputs":{
+			"_stdout_":"name_collate"
+		}
+	}
+},
+"subst_params":[],
+"nodes":[
+	{
+		"id":"merge",
+		"type":"EXEC",
+		"use_STDIN": false,
+		"use_STDOUT": true,
+		"cmd": [
+			"samtools",
+			"merge",
+			{"select":"pib_merge_input_order", "default":"coord", "select_range":[1], "cases":{
+				"coord":[],
+				"qname_alpha_numeric":"-n",
+				"qname_lexicographical":"-N"
+			}},
+			{"subst_constructor":{"vals":["-t", {"subst":"pib_sort_tag", "required":false}]}},
+			"-c",
+			"-r",
+			"-O", "BAM",
+			"-l", "0",
+			{"select":"s1_input_format", "default":"cram", "select_range":[1], "cases":{
+				"cram":["--input-fmt-option", "no_ref=1"],
+				"bam":[]
+			}},
+			{"subst":"merge_hdr_file_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"-h",
+										{"subst":"merge_hdr_file","required":true, "ifnull":{"subst_constructor":{"vals":[{"subst":"reanalysis_root"}, "/auxdata/", {"subst":"qc_check_id_run"}, "/", {"subst":"qc_check_id_run"},"_", {"subst":"s1_lane"}, ".rg_hdr.sam"], "postproc":{"op":"concat","pad":""}}}}
+									]
+								}}},
+			{"subst":"pib_merge_arbitrary_flags", "required":false},
+			"-",
+			{"subst":"incrams"}
+		],
+		"description":"merge individual cram files from a sample into one bam file"
+	},
+	{
+		"id":"reheader",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"comment": "remove unwanted RG header lines",
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "reheader",
+			"--no-PG",
+			"-c",
+			{"subst":"reheader_script","required":true,
+				"ifnull":{"subst_constructor":{"vals":[
+									"perl -ne \"(!/^\\@RG/ || /\\tID:",
+									{"subst":"reheader_rg_id", "required":true, "ifnull":{"subst":"i2b_rg"}},
+									"\\t/) && print;\""
+								], "postproc":{"op":"concat","pad":""}}}},
+			{"subst":"pib_reanalysis_reheader_extra_flags", "required":false},
+			"-"
+		]
+	},
+	{
+		"id":"reset",
+		"type":"EXEC",
+		"comment": "reset bam stream",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "reset",
+			{"subst":"reset_keep_tag_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"--keep-tag",
+										{"subst":"reset_keep_tags","required":false, "ifnull":{"subst_constructor":{"vals":["RG","BC", "QT", "FI", "RT", "TC"], "postproc":{"op":"concat","pad":","}}}}
+									]
+								}}},
+			{"subst":"reset_reject_PG_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"--reject-PG",
+										{"subst":"reset_reject_PG_id","required":false, "ifnull":"SCS"}
+									]
+								}}},
+			{"subst":"reset_output_format_flag","ifnull":{"subst_constructor":{"vals":["--output-fmt", {"subst":"reset_output_format", "ifnull":"BAM", "required":false}]}}},
+			"--threads", {"subst":"reset_threads","required":true,"ifnull":4},
+			{"subst":"reset_extra_flags", "required":false},
+			"-"
+		]
+	},
+	{
+		"id":"name_collate",
+		"type":"EXEC",
+		"use_STDIN": true,
+		"use_STDOUT": true,
+		"cmd": [
+			{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "collate", "-O",
+			"-l", {"subst":"pib_reanalysis_collate_compression","required":true,"ifnull":["0"]},
+			"--threads", {"subst":"pib_reanalysis_collate_threads","required":true,"ifnull":4},
+			{"subst":"pib_reanalysis_collate_extra_flags", "required":false},
+			{"subst":"pib_collate_tempfile_flag","ifnull":{
+								"subst_constructor":{
+									"vals":[
+										"-T",
+										{"subst":"pib_collate_tempfile_prefix","required":false, "ifnull":{"subst_constructor":{"vals":[ {"subst":"qc_check_id_run"}, {"subst":"s1_lane"}, "collate_tmp"], "postproc":{"op":"concat","pad":"_"}}}}
+									]
+								}}},
+			"-"
+		]
+	}
+],
+"edges":[
+	{ "id":"merge_to_reheader", "from":"merge", "to":"reheader" },
+	{ "id":"reheader_to_reset", "from":"reheader", "to":"reset" },
+	{ "id":"reset_to_collate", "from":"reset", "to":"name_collate" }
+]
+}
