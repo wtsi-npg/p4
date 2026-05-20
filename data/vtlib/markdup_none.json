@@ -20,7 +20,9 @@
 					{"subst":"samtools_executable", "required":true, "ifnull":"samtools"}, "ampliconclip",
 					"-@", {"subst":"primer_clip_threads","required":true,"ifnull":4},
 					"-b", {"subst":"primer_clip_bed","required":true,"ifnull":"/nfs/srpipe_references/primer_panel/nCoV-2019/V2/SARS-CoV-2/MN908947.3/nCoV-2019.bed"},
+					{"subst":"primer_clip_unmap_len_flag","ifnull":{"subst_constructor":{"vals":["--unmap-len", {"subst":"primer_clip_unmap_len_val","required":false}]}}},
 					{"select":"primer_clip_type", "required":true, "select_range":[1], "default":"unspecified", "cases":{"hard":"--hard-clip","soft":"--soft-clip","unspecified":[]}},
+					{"subst":"primer_clip_arbitrary_flags"},
 					"-"
 				],
 				"no_clip": [
