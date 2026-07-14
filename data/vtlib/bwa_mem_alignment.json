@@ -32,7 +32,6 @@
 		"required":"no",
 		"subst_constructor":{ "vals":[ "-K", {"subst":"bwa_mem_K_value"} ] }
 	},
-	{"id":"bwa_mem_p_flag","required":"no","default":"-p","comment":"by default, paired alignment is assumed"},
 	{"id":"bwa_mem_Y_flag","required":"no","default":"-Y","comment":"by default, supplementary alignment sequences will be soft clipped instead of hard clipped"},
 	{"id":"bwa_mem_B_value","required":"no","comment":"if unspecified, -B flag is not used"},
 	{
@@ -59,7 +58,8 @@
 		"cmd":[
 			{"subst":"bwa_executable"}, "mem",
 			"-t", {"subst":"bwa_mem_numthreads", "ifnull":{"subst":"aligner_numthreads"}},
-			{"subst":"bwa_mem_p_flag"},{"subst":"bwa_mem_Y_flag"},
+			{"subst":"bwa_mem_p_flag", "ifnull":"-p", "comment":"by default, paired alignment is assumed"},
+			{"subst":"bwa_mem_Y_flag"},
 			{"subst":"bwa_mem_T_flag"},
 			{"subst":"bwa_mem_K_flag"},
 			{"select":"bwa_mem_5_flag", "required":true, "select_range":[1], "default":"off", "cases":{"on":"-5","off":[]},"comment":"for split alignment, take the alignment with the smallest coordinate as primary"},
