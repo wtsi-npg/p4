@@ -1,6 +1,8 @@
 CHANGES LOG
 -----------
 
+ - update container versions of software - samtools (1.24), htslib (1.24)
+
 0.48.2
 Remove unnecessary bwa_mem_p_flag parameter declaration from subst_params section of bwa_mem_alignment template which was incorrectly disabling nullkeys for the parameter.
 
