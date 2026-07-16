@@ -1,6 +1,7 @@
 CHANGES LOG
 -----------
 
+0.48.3
  - update container versions of software - samtools (1.24), htslib (1.24)
 
 0.48.2
