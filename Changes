@@ -1,6 +1,9 @@
 CHANGES LOG
 -----------
 
+0.48.5
+ - remove overzealous postprocessing of elements of samtools import command string that was creating malformed -r flag/value sets
+
 0.48.4
  - more flexible construction of RG header line in samtools import (-r instead of -R)
 
