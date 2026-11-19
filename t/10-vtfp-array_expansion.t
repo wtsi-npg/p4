@@ -6,8 +6,6 @@ use JSON;
 
 my $template = q[t/data/10-vtfp-array_expansion.json];
 my $template_v2 = q[t/data/10-vtfp-array_expansion.v2.json];
-my $which_echo = `which echo`;
-chomp $which_echo;
 
 {
 # the template contains a set of possibly multivalued parameters p1 - p5 which should expand into a list (array ref) in the cmd attribute of its one node

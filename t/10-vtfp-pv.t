@@ -12,8 +12,6 @@ my $tdir = tempdir(CLEANUP => 1);
 my $template = q[t/data/10-vtfp-pv.json];
 my $pv_file = $tdir.q[/10-vtfp-pv.pv];
 my $processed_template = $tdir.q[/10-vtfp-pv-processed.json];
-my $which_echo = `which echo`;
-chomp $which_echo;
 
 # just export and reimport parameter values for a template
 subtest 'pv0' => sub {

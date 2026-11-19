@@ -7,8 +7,6 @@ use JSON;
 use Cwd;
 
 my $template = q[t/data/10-vtfp-param_ring.json];
-my $which_echo = `which echo`;
-chomp $which_echo;
 
 # first, failure
 # the template contains a ring of parameter defaults p2->p3->p4->p5->p2. This will lead to an infinite recursion error
