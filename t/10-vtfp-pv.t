@@ -12,21 +12,19 @@ my $tdir = tempdir(CLEANUP => 1);
 my $template = q[t/data/10-vtfp-pv.json];
 my $pv_file = $tdir.q[/10-vtfp-pv.pv];
 my $processed_template = $tdir.q[/10-vtfp-pv-processed.json];
-my $which_echo = `which echo`;
-chomp $which_echo;
 
 # just export and reimport parameter values for a template
 subtest 'pv0' => sub {
 	plan tests => 3;
 
-	system(qq[bin/vtfp.pl -verbosity_level 0 -o $processed_template -export_param_vals $pv_file $template]) == 0 or croak q[Failed to export params];
+	system(qq[bin/vtfp.pl -verbosity_level 0 -no-absolute_program_paths -o $processed_template -export_param_vals $pv_file $template]) == 0 or croak q[Failed to export params];
 	my $pv_data = from_json(slurp $pv_file);
 	my $expected = {assign_local => {} ,param_store => [], assign => [], ops => { splice => [], prune => [], }};
 	is_deeply ($pv_data, $expected, '(ts1) exported parameter values as expected');
 
-	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
+	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -no-absolute_program_paths -param_vals $pv_file $template |");
 	my $c = from_json(slurp $processed_template);
-	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [qq~$which_echo~,q~The~,q~funeral~,q~ends~,q~with~,q~a~,q~mournful~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
+	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [q~echo~,q~The~,q~funeral~,q~ends~,q~with~,q~a~,q~mournful~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
 	is_deeply ($vtfp_results, $c, '(ts1) json config generated using pv file matches original generated config');
 	is_deeply ($vtfp_results, $expected, '(ts1) json config generated using pv file as expected');
 };
@@ -35,14 +33,14 @@ subtest 'pv0' => sub {
 subtest 'pv1' => sub {
 	plan tests => 3;
 
-	system(qq[bin/vtfp.pl -verbosity_level 0 -o $processed_template -export_param_vals $pv_file -keys subject,adj -vals party,deafening $template]) == 0 or croak q[Failed to export params];
+	system(qq[bin/vtfp.pl -verbosity_level 0 -no-absolute_program_paths -o $processed_template -export_param_vals $pv_file -keys subject,adj -vals party,deafening $template]) == 0 or croak q[Failed to export params];
 	my $pv_data = from_json(slurp $pv_file);
 	my $expected = {assign_local => {} ,param_store => [], assign => [ {subject => q~party~, adj =>q~deafening~, }], ops => { splice => [], prune => [], }};
 	is_deeply ($pv_data, $expected, '(ts2) exported parameter values as expected');
 
-	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
+	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -no-absolute_program_paths -param_vals $pv_file $template |");
 	my $c = from_json(slurp $processed_template);
-	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [qq~$which_echo~,q~The~,q~party~,q~ends~,q~with~,q~a~,q~deafening~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
+	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [q~echo~,q~The~,q~party~,q~ends~,q~with~,q~a~,q~deafening~,q~fireworks~,q~display~], type => q~EXEC~, id => q~n1~}]};
 	is_deeply ($vtfp_results, $c, '(ts2) json config generated using pv file matches original generated config');
 	is_deeply ($vtfp_results, $expected, '(ts2) json config generated using pv file as expected');
 };
@@ -51,14 +49,14 @@ subtest 'pv1' => sub {
 subtest 'pv2' => sub {
 	plan tests => 3;
 
-	system(qq[bin/vtfp.pl -verbosity_level 0 -o $processed_template -export_param_vals $pv_file -keys subject,prepobj -vals world,whimper -nullkeys adj $template]) == 0 or croak q[Failed to export params];
+	system(qq[bin/vtfp.pl -verbosity_level 0 -no-absolute_program_paths -o $processed_template -export_param_vals $pv_file -keys subject,prepobj -vals world,whimper -nullkeys adj $template]) == 0 or croak q[Failed to export params];
 	my $pv_data = from_json(slurp $pv_file);
 	my $expected = {assign_local => {} ,param_store => [], assign => [ {subject => q~world~, prepobj => q~whimper~, adj => undef}], ops => { splice => [], prune => [], }};
 	is_deeply ($pv_data, $expected, '(ts3) exported parameter values as expected');
 
-	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -param_vals $pv_file $template |");
+	my $vtfp_results = from_json(slurp "bin/vtfp.pl -verbosity_level 0 -no-absolute_program_paths -param_vals $pv_file $template |");
 	my $c = from_json(slurp $processed_template);
-	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [qq~$which_echo~,q~The~,q~world~,q~ends~,q~with~,q~a~,q~whimper~], type => q~EXEC~, id => q~n1~}]};
+	$expected = {version => q[1.0], edges=> [], nodes => [ {cmd => [q~echo~,q~The~,q~world~,q~ends~,q~with~,q~a~,q~whimper~], type => q~EXEC~, id => q~n1~}]};
 	is_deeply ($vtfp_results, $c, '(ts4) json config generated using pv file matches original generated config');
 	is_deeply ($vtfp_results, $expected, '(ts4) json config generated using pv file as expected');
 };
