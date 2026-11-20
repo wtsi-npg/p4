@@ -1,6 +1,14 @@
 CHANGES LOG
 -----------
 
+0.48.6
+ - update versions of tools in container:
+     bwa-mem2 (2.3)
+     bambi (0.18.1)
+     htslib (1.25)
+     samtools (1.25)
+ - amend some tests - remove full path determination of executables to deal with annoying CI change
+
 0.48.5
  - remove overzealous postprocessing of elements of samtools import command string that was creating malformed -r flag/value sets
 
